@@ -34,7 +34,7 @@ private:
 
 	WorkThreadInfo* m_pWorker;
 
-	std::auto_ptr<ExecutionPlan> m_pPlan;
+	std::unique_ptr<ExecutionPlan> m_pPlan;
 
 	uint64_t m_iSendTime;
 	int m_iParamNum;

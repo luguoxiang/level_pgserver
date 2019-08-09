@@ -14,14 +14,14 @@ public:
 	{
 		return m_bRangeSearch;
 	}
+	ExplicitRowKeyRange(const ExplicitRowKeyRange&) = delete;
+	ExplicitRowKeyRange& operator =(const ExplicitRowKeyRange&) = delete;
+
 protected:
 	virtual bool parseExpression(int iOpCode, ParseNode* pLeft,
 			ParseNode* pRight, ParseNode* pExpr);
 
 private:
-	ExplicitRowKeyRange(const ExplicitRowKeyRange&);
-	ExplicitRowKeyRange& operator =(const ExplicitRowKeyRange&);
-
 	void setRowKey(const char*& pszRowKey, int64_t &m_iLen, ParseNode* pNode);
 
 	bool m_bRangeSearch;

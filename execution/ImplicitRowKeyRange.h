@@ -17,6 +17,9 @@ public:
 
 	virtual bool isRangeSearch();
 
+	ImplicitRowKeyRange(const ImplicitRowKeyRange&) = delete;
+	ImplicitRowKeyRange& operator =(const ImplicitRowKeyRange&) = delete;
+
 protected:
 	virtual bool parseExpression(int iOpCode, ParseNode* pLeft,
 			ParseNode* pRight, ParseNode* pExpr);
@@ -36,9 +39,6 @@ private:
 		//store the expression of <, <=
 		ParseNode* m_pExpr2;
 	};
-
-	ImplicitRowKeyRange(const ImplicitRowKeyRange&);
-	ImplicitRowKeyRange& operator =(const ImplicitRowKeyRange&);
 
 	void setRowKeyFieldData(char* pszRowKey, int64_t iLen, ParseNode* pNode,
 			const char* pszColumn);

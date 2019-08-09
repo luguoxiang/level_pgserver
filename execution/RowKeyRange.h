@@ -59,6 +59,9 @@ public:
 	virtual void done() = 0;
 
 	virtual bool isRangeSearch() = 0;
+
+	RowKeyRange(const RowKeyRange&) = delete;
+	RowKeyRange& operator =(const RowKeyRange&) = delete;
 protected:
 	virtual bool parseExpression(int iOpCode, ParseNode* pLeft,
 			ParseNode* pRight, ParseNode* pExpr) = 0;
@@ -72,8 +75,5 @@ protected:
 	bool m_bStartInc;
 	bool m_bEndInc;
 	std::vector<ParseNode*> m_conditions;
-private:
-	RowKeyRange(const RowKeyRange&);
-	RowKeyRange& operator =(const RowKeyRange&);
 };
 

@@ -21,10 +21,10 @@ public:
 		return m_sErrMsg.c_str();
 	}
 
-private:
-	IOException& operator=(const IOException& ex);
-	IOException(const IOException& ex);
+	IOException& operator=(const IOException& ex) = delete;
+	IOException(const IOException& ex) = delete;
 
+private:
 	void addErrorNo()
 	{
 		if (errno == 0)

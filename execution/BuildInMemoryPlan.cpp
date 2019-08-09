@@ -123,7 +123,7 @@ void buildPlanForGroupBy(ParseNode* pNode)
 	if (pNode == 0)
 		return;
 
-	std::auto_ptr<ExecutionPlan> pChildPlan(Tools::popPlan());
+	std::unique_ptr<ExecutionPlan> pChildPlan(Tools::popPlan());
 	assert(pChildPlan.get());
 
 	bool bNeedSort = false;

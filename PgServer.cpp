@@ -131,9 +131,8 @@ int PgServer::bindSocket(const char* pszPort)
 	return fd;
 }
 
-void* PgServer::worker_thread(void* pArg)
+void PgServer::worker_thread(WorkThreadInfo* pInfo)
 {
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pArg;
 	pInfo->m_tid = std::this_thread::get_id();
 	WorkThreadInfo::m_pWorkThreadInfo = pInfo;
 	LOG(INFO, "Working thread is listening on %s.", pInfo->m_pszPort);
@@ -165,8 +164,8 @@ void* PgServer::worker_thread(void* pArg)
 			LOG(ERROR, "Working thread failed:Unknown Reason.");
 		}
 		pInfo->m_bRunning = false;
-	}LOG(WARN, "Working thread terminate.");
-	return NULL;
+	}
+	LOG(WARN, "Working thread terminate.");
 }
 
 static void int_handler(int code)

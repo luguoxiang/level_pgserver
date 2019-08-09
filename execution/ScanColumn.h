@@ -36,10 +36,11 @@ public:
 
 	DBDataType getType() { return m_type;}
 	void setType(DBDataType type) {m_type = type;}
-private:
-	ScanColumn(const ScanColumn&);
-	ScanColumn& operator =(const ScanColumn&);
 
+	ScanColumn(const ScanColumn&) = delete;
+	ScanColumn& operator =(const ScanColumn&) = delete;
+
+private:
 	DBDataType m_type;
 	const char* m_pszName;
 };

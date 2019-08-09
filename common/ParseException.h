@@ -27,10 +27,10 @@ public:
 		return m_iStartCol;
 	}
 	void printLocation();
-private:
-	ParseException(const ParseException& ex);
-	ParseException& operator =(const ParseException& ex);
+	ParseException(const ParseException& ex) = delete;
+	ParseException& operator =(const ParseException& ex) = delete;
 
+private:
 	std::string m_sErrorMsg;
 	int m_iStartCol;
 	int m_iEndCol;

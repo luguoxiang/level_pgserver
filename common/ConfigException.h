@@ -20,9 +20,9 @@ public:
 		return m_sErrMsg.c_str();
 	}
 
-private:
-	ConfigException& operator=(const ConfigException& ex);
-	ConfigException(const ConfigException& ex);
+	ConfigException& operator=(const ConfigException& ex) = delete;
+	ConfigException(const ConfigException& ex) = delete;
 
+private:
 	std::string m_sErrMsg;
 };

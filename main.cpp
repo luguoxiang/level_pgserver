@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	const char* pszLogLevel = "info";
 	int option_index;
 
-	std::string sMetaConfigPath("/usr/local/obconnector/conf/sell.conf");
+	std::string sMetaConfigPath("meta.conf");
 	while ((opt = getopt_long(argc, argv, "h:p:l:s", long_options,
 			&option_index)) != EOF)
 	{
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
 			pszLogLevel);
 
 	Log::getLogger().init(pszLogPath, level);
-	LOG(INFO, "OBConnector version %d.%d started, config file %s.",
+	LOG(INFO, "csv2pgserver version %d.%d started, config file %s.",
 			VERSION_MAJOR, VERSION_MINOR, sMetaConfigPath.c_str());
 	LOG(INFO, "Network buffer %d, timeout %d, Execution buffer %d, ",
 			MetaConfig::getInstance().getNetworkBuffer(),
