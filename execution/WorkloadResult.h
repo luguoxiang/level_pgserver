@@ -1,5 +1,5 @@
-#ifndef WORKLOAD_RESULT
-#define WORKLOAD_RESULT
+#pragma once
+
 #include <stdio.h>
 #include <vector>
 #include <pthread.h>
@@ -46,4 +46,4 @@ private:
 	size_t m_iIndex;
 	std::string m_tid;
 };
-#endif //WORKLOAD_RESULT
+

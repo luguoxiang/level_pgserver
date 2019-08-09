@@ -1,5 +1,4 @@
-#ifndef SORT_PLAN_H
-#define SORT_PLAN_H
+#pragma once
 
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
@@ -189,4 +188,3 @@ private:
 	int m_iCurrent;
 };
 
-#endif  // SORT_PLAN_H

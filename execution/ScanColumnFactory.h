@@ -1,5 +1,4 @@
-#ifndef SCAN_COLUMN_FACTORY_H
-#define SCAN_COLUMN_FACTORY_H
+#pragma once
 
 #include "ParseTools.h"
 #include "ExecutionPlan.h"
@@ -77,4 +76,3 @@ private:
 
 };
 
-#endif //SCAN_COLUMN_FACTORY_H

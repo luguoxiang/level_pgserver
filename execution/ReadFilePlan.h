@@ -1,5 +1,4 @@
-#ifndef READFILE_PLAN_H
-#define READFILE_PLAN_H
+#pragma once
 
 #include "common/BuildPlan.h"
 #include "common/Log.h"
@@ -102,4 +101,3 @@ private:
 	bool m_bCancel;
 	char m_seperator[2];
 };
-#endif

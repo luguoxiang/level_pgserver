@@ -1,5 +1,4 @@
-#ifndef EXPLICITROWKEYRANGE_H
-#define EXPLICITROWKEYRANGE_H
+#pragma once
 #include "RowKeyRange.h"
 class ExplicitRowKeyRange: public RowKeyRange
 {
@@ -28,4 +27,3 @@ private:
 	bool m_bRangeSearch;
 };
 
-#endif //EXPLICITROWKEYRANGE_H

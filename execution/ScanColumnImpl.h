@@ -1,5 +1,4 @@
-#ifndef SCANCOLUMN_IMPL_H
-#define SCANCOLUMN_IMPL_H
+#pragma once
 
 #include "ScanColumn.h"
 #include "common/ParseNode.h"
@@ -101,4 +100,3 @@ private:
 	const char* m_pszTable;
 	const char* m_pszForeignColumn;
 };
-#endif //SCANCOLUMN_IMPL_H

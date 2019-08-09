@@ -1,5 +1,4 @@
-#ifndef SCANCOLUMN_H
-#define SCANCOLUMN_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -107,4 +106,3 @@ private:
 	std::vector<ScanColumn*> m_columns;
 };
 
-#endif //SCANCOLUMN_H

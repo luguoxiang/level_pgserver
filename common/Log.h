@@ -1,5 +1,4 @@
-#ifndef LOG_H
-#define LOG_H
+#pragma once
 #include <mutex>
 #include <stdio.h>
 #include <stdint.h>
@@ -45,4 +44,3 @@ private:
 	std::mutex m_lock;
 };
 
-#endif //LOG_H

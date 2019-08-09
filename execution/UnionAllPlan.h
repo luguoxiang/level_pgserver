@@ -1,5 +1,4 @@
-#ifndef UNION_ALL_PLAN_H
-#define UNION_ALL_PLAN_H
+#pragma once
 
 #include "ParseTools.h"
 #include "ExecutionPlan.h"
@@ -85,4 +84,3 @@ private:
 	bool m_bLeftDone;
 };
 
-#endif //EXPLAIN_GET_PALN_H

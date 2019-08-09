@@ -1,5 +1,4 @@
-#ifndef DATA_SENDER_H
-#define DATA_SENDER_H
+#pragma once
 
 #include <stdio.h>
 #include "IOException.h"
@@ -54,4 +53,3 @@ private:
 
 	uint32_t m_iSendBuffer;
 };
-#endif  // DATA_SENDER_H

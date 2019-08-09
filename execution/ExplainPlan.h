@@ -1,5 +1,4 @@
-#ifndef EXPLAIN_GET_PALN_H
-#define EXPLAIN_GET_PALN_H
+#pragma once
 
 #include "ParseTools.h"
 #include "ExecutionPlan.h"
@@ -65,4 +64,4 @@ private:
 	ExecutionPlan* m_pPlan;
 };
 
-#endif //EXPLAIN_GET_PALN_H
+

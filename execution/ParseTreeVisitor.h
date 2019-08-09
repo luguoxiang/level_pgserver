@@ -1,5 +1,4 @@
-#ifndef PARSE_TREE_VISITOR
-#define PARSE_TREE_VISITOR
+#pragma once
 
 #include "ParseTools.h"
 #include "common/ParseException.h"
@@ -131,4 +130,3 @@ ReturnType ParseTreeVisitor<ParamType, ReturnType>::walk(ParseNode* pNode,
 				pNode->m_iType);
 	}
 }
-#endif //PARSE_TREE_VISITOR

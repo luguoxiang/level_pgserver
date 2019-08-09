@@ -1,5 +1,4 @@
-#ifndef DATA_RECEIVER_H
-#define DATA_RECEIVER_H
+#pragma once
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
@@ -54,4 +53,3 @@ private:
 	size_t m_nBufLen;
 	bool m_bNetNumber;
 };
-#endif  // DATA_RECEIVER_H

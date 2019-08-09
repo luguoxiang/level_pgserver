@@ -1,5 +1,4 @@
-#ifndef EXECUTIONEXCEPTION_H
-#define EXECUTIONEXCEPTION_H
+#pragma once
 #include <string>
 #include "common/Exception.h"
 
@@ -16,4 +15,3 @@ private:
 	std::string m_sErrMsg;
 };
 
-#endif //EXECUTIONEXCEPTION_H

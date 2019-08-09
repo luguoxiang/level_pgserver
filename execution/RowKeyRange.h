@@ -1,5 +1,5 @@
-#ifndef ROWKEYRANGE_H
-#define ROWKEYRANGE_H
+#pragma once
+
 #include <assert.h>
 #include <vector>
 #include <stdint.h>
@@ -77,4 +77,3 @@ private:
 	RowKeyRange& operator =(const RowKeyRange&);
 };
 
-#endif //ROWKEYRANGE_H

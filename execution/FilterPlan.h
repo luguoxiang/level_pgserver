@@ -1,5 +1,4 @@
-#ifndef FILTER_PLAN_H
-#define FILTER_PLAN_H
+#pragma once
 
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
@@ -123,4 +122,3 @@ private:
 	uint64_t m_iCurrent;
 	std::vector<PredicateInfo> m_predicate;
 };
-#endif  // FILTER_PLAN_H

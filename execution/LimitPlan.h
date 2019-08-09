@@ -1,5 +1,4 @@
-#ifndef LIMIT_PLAN_H
-#define LIMIT_PLAN_H
+#pragma once
 
 #include "execution/ExecutionPlan.h"
 #include <vector>
@@ -96,4 +95,3 @@ private:
 	uint64_t m_iOffset;
 	uint64_t m_iCurrent;
 };
-#endif  // LIMIT_PLAN_H

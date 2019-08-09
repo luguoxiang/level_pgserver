@@ -1,12 +1,5 @@
-/*
- * GroupByPlan.h
- *
- *  Created on: 2012-5-13
- *      Author: guoxiang.lgx
- */
 
-#ifndef GROUPBYPLAN_H_
-#define GROUPBYPLAN_H_
+#pragma once
 
 #include "ExecutionPlan.h"
 #include "execution/ParseTools.h"
@@ -136,4 +129,3 @@ private:
 	std::map<std::string, FuncType> m_typeMap;
 };
 
-#endif /* GROUPBYPLAN_H_ */

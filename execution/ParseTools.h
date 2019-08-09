@@ -1,5 +1,4 @@
-#ifndef PARSE_TOOLS
-#define PARSE_TOOLS
+#pragma once
 
 #include <string>
 #include <stdio.h>
@@ -130,4 +129,3 @@ inline ExecutionPlan* popPlan()
 	return pInfo->popPlan();
 }
 }
-#endif

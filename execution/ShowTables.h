@@ -1,5 +1,4 @@
-#ifndef SHOW_TABLES_H
-#define SHOW_TABLES_H
+#pragma once
 #include <stdio.h>
 #include <vector>
 #include <pthread.h>
@@ -60,4 +59,3 @@ private:
 	size_t m_iIndex;
 	std::vector<TableInfo*> m_tables;
 };
-#endif //SHOW_TABLES_H

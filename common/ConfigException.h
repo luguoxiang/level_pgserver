@@ -1,5 +1,4 @@
-#ifndef CONFIG_EXCEPTION_H
-#define CONFIG_EXCEPTION_H
+#pragma once
 
 #include <string>
 #include <string.h>
@@ -27,4 +26,3 @@ private:
 
 	std::string m_sErrMsg;
 };
-#endif  // CONFIG_EXCEPTION_H

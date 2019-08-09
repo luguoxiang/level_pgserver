@@ -1,5 +1,5 @@
-#ifndef PARSEEXCEPTION_H
-#define PARSEEXCEPTION_H
+#pragma once
+
 #include "ParseNode.h"
 #include "Exception.h"
 #include <string>
@@ -37,4 +37,3 @@ private:
 	int m_iLine;
 };
 
-#endif //PARSEEXCEPTION_H

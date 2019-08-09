@@ -1,5 +1,4 @@
-#ifndef EXCEPTION_H
-#define EXCEPTION_H
+#pragma once
 
 class Exception
 {
@@ -19,5 +18,3 @@ public:
 	}
 	;
 };
-
-#endif //EXCEPTION_H

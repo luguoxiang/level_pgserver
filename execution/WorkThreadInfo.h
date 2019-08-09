@@ -1,5 +1,4 @@
-#ifndef WORKTHREAD_INFO_H
-#define WORKTHREAD_INFO_H
+#pragma once
 #include <stdio.h>
 #include <vector>
 #include <thread>
@@ -108,4 +107,3 @@ private:
 	;
 	std::vector<WorkThreadInfo*> m_workers;
 };
-#endif //WORKTHREAD_INFO_H

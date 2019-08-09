@@ -1,5 +1,4 @@
-#ifndef IMPLICITROWKEYRANGE_H
-#define IMPLICITROWKEYRANGE_H
+#pragma once
 #include "RowKeyRange.h"
 #include <string>
 #include <vector>
@@ -51,4 +50,3 @@ private:
 	TableInfo* m_pTableInfo;
 };
 
-#endif //IMPLICITROWKEYRANGE_H

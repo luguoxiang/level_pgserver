@@ -1,5 +1,4 @@
-#ifndef BUILD_EXPRESSION_VISITOR_H
-#define BUILD_EXPRESSION_VISITOR_H
+#pragma once
 
 #include "ParseTreeVisitor.h"
 #include "ScanColumn.h"
@@ -41,4 +40,3 @@ private:
 	TableInfo* 		m_pTableInfo;
 	bool			m_bGroupBy;
 };
-#endif //BUILD_EXPRESSION_VISITOR_H

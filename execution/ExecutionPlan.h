@@ -1,5 +1,4 @@
-#ifndef EXECUTIONPLAN_H
-#define EXECUTIONPLAN_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -144,4 +143,3 @@ private:
 	PlanType m_type;
 };
 
-#endif

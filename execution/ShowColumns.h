@@ -1,5 +1,5 @@
-#ifndef SHOW_COLUMNS_H
-#define SHOW_COLUMNS_H
+#pragma once
+
 #include <stdio.h>
 #include <vector>
 #include <pthread.h>
@@ -44,4 +44,3 @@ private:
 	size_t        m_iIndex;
   TableInfo*  m_pEntry;
 };
-#endif //SHOW_COLUMNS_H

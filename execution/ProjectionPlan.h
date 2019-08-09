@@ -1,5 +1,4 @@
-#ifndef PROJECTION_PLAN_H
-#define PROJECTION_PLAN_H
+#pragma once
 
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
@@ -121,4 +120,3 @@ private:
 	std::map<std::string, size_t> m_map;
 	ExecutionPlan* m_pPlan;
 };
-#endif  // PROJECTION_PLAN_H

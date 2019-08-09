@@ -1,5 +1,4 @@
-#ifndef CONST_PLAN_H
-#define CONST_PLAN_H
+#pragma once
 
 #include "common/BuildPlan.h"
 #include "common/Log.h"
@@ -70,4 +69,3 @@ private:
 	std::vector<std::string> m_columns;
 	std::vector<ParseNode*> m_rows;
 };
-#endif
