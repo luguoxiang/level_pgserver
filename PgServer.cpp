@@ -1,20 +1,12 @@
 #include <thread>
 #include <vector>
+#include <csignal>
+
 #include <unistd.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <signal.h>
 #include <fcntl.h>
-#include <sys/ioctl.h>
 
 #include "common/MetaConfig.h"
 #include "PgMessageSender.h"
@@ -25,7 +17,7 @@
 #include "execution/ExecutionException.h"
 #include "execution/WorkThreadInfo.h"
 
-#include <iostream>
+
 
 #define MAX_CONNECTION 1000
 
@@ -36,7 +28,7 @@ PgServer::PgServer(const char* pszPort) :
 
 PgServer::~PgServer() {
 	if (m_iFd >= 0) {
-		close(m_iFd);
+		::close(m_iFd);
 	}
 }
 
@@ -152,14 +144,7 @@ static void int_handler(int code) {
 }
 
 void PgServer::run() {
-	struct sigaction act;
-	act.sa_handler = int_handler;
-	sigemptyset(&act.sa_mask);
-	act.sa_flags = 0;
-
-	if (sigaction(SIGINT, &act, nullptr) < 0) {
-		LOG(ERROR, "Could not set SIGINT handler!");
-	}
+	std::signal(SIGINT, int_handler);
 
 	m_iFd = bindSocket(m_pszPort);
 
