@@ -38,7 +38,7 @@ inline bool isRowCountNode(ParseNode* pNode) {
 }
 
 inline const char* byteToString(const char* p, size_t iLen) {
-	if (p == NULL) {
+	if (p == nullptr) {
 		return "null";
 	}
 	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;

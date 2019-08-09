@@ -11,7 +11,7 @@
 #include "execution/GroupByPlan.h"
 
 void buildPlanForOrderBy(ParseNode* pNode) {
-	if (pNode == NULL)
+	if (pNode == nullptr)
 		return;
 	ExecutionPlan* pPlan = Tools::popPlan();
 	assert(pPlan);
@@ -77,7 +77,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 
 	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pColumn = pNode->m_children[i];
-		const char* pszAlias = NULL;
+		const char* pszAlias = nullptr;
 		if (pColumn->m_iType == OP_NODE && OP_CODE(pColumn) == AS) {
 			assert(pColumn->m_iChildNum == 2);
 
@@ -85,7 +85,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 
 			pColumn = pColumn->m_children[0];
 		}
-		if (pszAlias == NULL) {
+		if (pszAlias == nullptr) {
 			pszAlias = pColumn->m_pszExpr;
 		}
 		bool bOK = pProjPlan->project(pColumn, pszAlias);
@@ -120,7 +120,7 @@ void buildPlanForGroupBy(ParseNode* pNode) {
 		}
 
 		const char* pszColumn = pChild->m_pszValue;
-		if (!pChildPlan->ensureSortOrder(i, pszColumn, NULL)) {
+		if (!pChildPlan->ensureSortOrder(i, pszColumn, nullptr)) {
 			bNeedSort = true;
 		}
 	}
@@ -145,7 +145,7 @@ void buildPlanForGroupBy(ParseNode* pNode) {
 }
 
 void buildPlanForLimit(ParseNode* pNode) {
-	if (pNode == NULL)
+	if (pNode == nullptr)
 		return;
 
 	ExecutionPlan* pPlan = Tools::popPlan();
@@ -184,7 +184,7 @@ static void parseQueryCondition(ParseNode* pPredicate, FilterPlan* pFilter) {
 }
 
 void buildPlanForFilter(ParseNode* pNode) {
-	if (pNode == NULL)
+	if (pNode == nullptr)
 		return;
 
 	ExecutionPlan* pPlan = Tools::popPlan();

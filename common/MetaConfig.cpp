@@ -51,7 +51,7 @@ static void removeTail(char* pszValue) {
 }
 
 void MetaConfig::addTable(std::string name, TableInfo* pTable) {
-	if (getTableInfo(name) != NULL) {
+	if (getTableInfo(name) != nullptr) {
 		throw new ConfigException("table %s already defined!", name.c_str());
 	}
 	pTable->setName(name);
@@ -60,7 +60,7 @@ void MetaConfig::addTable(std::string name, TableInfo* pTable) {
 }
 
 void MetaConfig::addServer(std::string name, ServerInfo* pServer) {
-	if (getServerInfo(name) != NULL) {
+	if (getServerInfo(name) != nullptr) {
 		throw new ConfigException("server %s already defined!", name.c_str());
 	}
 
@@ -115,10 +115,10 @@ void MetaConfig::parseTable(TableInfo* pTable, const char* pszKey,
 }
 
 void MetaConfig::load(const char* pszPath) {
-	if (pszPath == NULL || pszPath[0] == '\0')
+	if (pszPath == nullptr || pszPath[0] == '\0')
 		return;
 	FILE* pFile = fopen(pszPath, "r");
-	if (pFile == NULL) {
+	if (pFile == nullptr) {
 		throw new ConfigException("wrong st config file %s", pszPath);
 	}
 
@@ -126,8 +126,8 @@ void MetaConfig::load(const char* pszPath) {
 
 	char szBuf[1024];
 	char* pszLine = szBuf;
-	ServerInfo* pCurrentServer = NULL;
-	TableInfo* pCurrentTable = NULL;
+	ServerInfo* pCurrentServer = nullptr;
+	TableInfo* pCurrentTable = nullptr;
 	while (true) {
 		size_t len = 1024;
 		int iRead = getline(&pszLine, &len, pFile);
@@ -141,7 +141,7 @@ void MetaConfig::load(const char* pszPath) {
 			size_t pos = line.find("-server]");
 			if (pos != std::string::npos) {
 				pCurrentServer = new ServerInfo();
-				pCurrentTable = NULL;
+				pCurrentTable = nullptr;
 				line = line.substr(1, pos - 1);
 				addServer(line.c_str(), pCurrentServer);
 				continue;
@@ -149,14 +149,14 @@ void MetaConfig::load(const char* pszPath) {
 			pos = line.find("table]");
 			if (pos != std::string::npos) {
 				pCurrentTable = new TableInfo();
-				pCurrentServer = NULL;
+				pCurrentServer = nullptr;
 				continue;
 			}
 			throw new ConfigException("unknown config section %s", szBuf);
 		}
 
-		char* pszKey = NULL;
-		char* pszValue = NULL;
+		char* pszKey = nullptr;
+		char* pszValue = nullptr;
 
 		bool bValueBegin = false;
 		for (int i = 0; i < iRead; ++i) {
@@ -171,32 +171,32 @@ void MetaConfig::load(const char* pszPath) {
 				i = iRead;
 				break;
 			case '=':
-				if (pszKey == NULL) {
+				if (pszKey == nullptr) {
 					throw new ConfigException("wrong config line %s", szBuf);
 				}
 				szBuf[i] = '\0';
 				bValueBegin = true;
 				break;
 			default:
-				if (pszKey == NULL) {
+				if (pszKey == nullptr) {
 					pszKey = szBuf + i;
-				} else if (bValueBegin && pszValue == NULL) {
+				} else if (bValueBegin && pszValue == nullptr) {
 					pszValue = szBuf + i;
 				}
 				break;
 			};
 		}
-		if (pszKey == NULL)
+		if (pszKey == nullptr)
 			continue;
-		if (pszValue == NULL)
+		if (pszValue == nullptr)
 			throw new ConfigException("wrong config line %s", szBuf);
 
 		removeTail(pszKey);
 		removeTail(pszValue);
 
-		if (pCurrentServer != NULL) {
+		if (pCurrentServer != nullptr) {
 			parseServer(pCurrentServer, pszKey, pszValue);
-		} else if (pCurrentTable != NULL) {
+		} else if (pCurrentTable != nullptr) {
 			parseTable(pCurrentTable, pszKey, pszValue);
 		} else {
 			throw new ConfigException("wong config file for %s", szBuf);

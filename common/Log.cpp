@@ -16,7 +16,7 @@
 #define MAX_LOG_LEN 4096
 
 Log::Log() :
-		m_pszLogPath("log/server.log"), m_pLogFile(NULL), m_level(INFO), m_iDay(
+		m_pszLogPath("log/server.log"), m_pLogFile(nullptr), m_level(INFO), m_iDay(
 				0) {
 }
 
@@ -26,34 +26,34 @@ void Log::init(const char* pszPath, LogLevel level) {
 }
 
 Log::~Log() {
-	if (m_pLogFile != NULL) {
+	if (m_pLogFile != nullptr) {
 		fclose(m_pLogFile);
-		m_pLogFile = NULL;
+		m_pLogFile = nullptr;
 	}
 }
 
 FILE* Log::getFile(uint64_t iDay) {
-	if (m_pszLogPath == NULL)
+	if (m_pszLogPath == nullptr)
 		return stdout;
 
-	if (m_pLogFile != NULL && m_iDay == iDay)
+	if (m_pLogFile != nullptr && m_iDay == iDay)
 		return m_pLogFile;
 
 	std::lock_guard < std::mutex > guard(m_lock);
-	if (m_pLogFile == NULL || m_iDay != iDay) {
+	if (m_pLogFile == nullptr || m_iDay != iDay) {
 		char szBuf[1024];
 		snprintf(szBuf, 1024, "%s.%04llu-%02llu-%02llu", m_pszLogPath,
 				(iDay >> 16) + 1900, ((iDay & 0xffff) >> 8) + 1, iDay & 0xff);
 		FILE* pFile = fopen(szBuf, "a+");
 		if (pFile == 0) {
 			fprintf(stderr, "Failed to open log file %s!", szBuf);
-			m_pszLogPath = NULL;
+			m_pszLogPath = nullptr;
 			return stdout;
 		}
-		if (m_pLogFile != NULL) {
+		if (m_pLogFile != nullptr) {
 			sleep(1); //wait for other thread's write
 			fclose(m_pLogFile);
-			m_pLogFile = NULL;
+			m_pLogFile = nullptr;
 		}
 		m_pLogFile = pFile;
 		m_iDay = iDay;

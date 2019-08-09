@@ -118,7 +118,7 @@ public:
 		if (strcmp(pszColumn, spec.m_pszColumn) != 0)
 			return false;
 
-		if (pOrder == NULL)
+		if (pOrder == nullptr)
 			return true;
 		switch (spec.m_order) {
 		case Ascend:

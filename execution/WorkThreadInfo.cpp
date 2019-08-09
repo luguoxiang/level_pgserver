@@ -7,12 +7,12 @@
 #include "execution/ParseTools.h"
 #include "common/MetaConfig.h"
 
-thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = NULL;
+thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 
 WorkThreadInfo::WorkThreadInfo(int fd, const char* pszPort, int iIndex) :
 		m_iListenFd(fd), m_iAcceptFd(0), m_pszPort(pszPort), m_bRunning(false), m_iClientTime(
 				0), m_iIndex(iIndex), m_iSessions(0), m_iExecScanTime(0), m_iBiggestExec(
-				0), m_iSqlCount(0), m_pPlan(NULL) {
+				0), m_iSqlCount(0), m_pPlan(nullptr) {
 	memset(&m_result, 0, sizeof(m_result));
 
 	if (parseInit(&m_result)) {
@@ -64,7 +64,7 @@ WorkerManager& WorkerManager::getInstance() {
 
 WorkerManager::~WorkerManager() {
 	for (size_t i = 0; i < m_workers.size(); ++i) {
-		if (m_workers[i] != NULL) {
+		if (m_workers[i] != nullptr) {
 			delete m_workers[i];
 		}
 	}

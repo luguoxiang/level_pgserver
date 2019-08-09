@@ -5,7 +5,7 @@
 ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool) {
 	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
-	ScanColumn* pColumn = NULL;
+	ScanColumn* pColumn = nullptr;
 	switch (pNode->m_iType) {
 	case NULL_NODE:
 		return m_pFactory->addConstValue("null");
@@ -38,7 +38,7 @@ ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool) {
 		PARSE_ERROR("Unsupported data type %s,%d", pNode->m_pszExpr,
 				pNode->m_iType)
 		;
-		return NULL;
+		return nullptr;
 	};
 }
 
@@ -48,7 +48,7 @@ ScanColumn* BuildExpressionVisitor::addSimpleScanColumn(const char* pszName,
 	assert(pInfo);
 	bool bColumnProject = bProject && pColumnInfo->m_type != TYPE_DOUBLE;
 	ScanColumn* pColumn = pFactory->getScanColumnInfo(pszName, bColumnProject);
-	if (pColumn == NULL) {
+	if (pColumn == nullptr) {
 		pColumn = pFactory->addScanColumn(pszName, bColumnProject);
 	}
 
@@ -58,7 +58,7 @@ ScanColumn* BuildExpressionVisitor::addSimpleScanColumn(const char* pszName,
 		int count = snprintf(buf, 100, "%s / %d.0", pszName,
 				pColumnInfo->m_iLen);
 		pColumn = pFactory->getScanColumnInfo(buf, bProject);
-		if (pColumn == NULL) {
+		if (pColumn == nullptr) {
 			const char* pszExpr = pInfo->memdup(buf, count + 1);
 			pColumn = pFactory->addScanComplexColumn(pszExpr, pszExpr, bProject,
 					true);
@@ -73,12 +73,12 @@ ScanColumn* BuildExpressionVisitor::visitNameNode(ParseNode* pNode,
 	assert(!Tools::isRowKeyNode(pNode));
 
 	ScanColumn* pColumn = m_pFactory->getAliasColumnInfo(pNode->m_pszValue);
-	if (pColumn != NULL) {
+	if (pColumn != nullptr) {
 		return pColumn;
 	}
 	std::string name(pNode->m_pszValue);
 	DBColumnInfo* pColumnInfo = m_pTableInfo->getColumnByName(name);
-	if (pColumnInfo == NULL) {
+	if (pColumnInfo == nullptr) {
 		PARSE_ERROR("Table %s has no column named %s", m_pTableInfo->getName(),
 				pNode->m_pszValue);
 	}
@@ -93,7 +93,7 @@ ScanColumn* BuildExpressionVisitor::visitDyadicOpNode(int op, ParseNode* pNode,
 
 	ScanColumn* pColumn = m_pFactory->getScanColumnInfo(pNode->m_pszExpr,
 			bProject);
-	if (pColumn != NULL)
+	if (pColumn != nullptr)
 		return pColumn;
 
 	ScanColumn* pLeftColumn = walk(pNode->m_children[0], false);
@@ -130,7 +130,7 @@ ScanColumn* BuildExpressionVisitor::visitUnaryOpNode(int op, ParseNode* pNode,
 
 	ScanColumn* pColumn = m_pFactory->getScanColumnInfo(pNode->m_pszExpr,
 			bProject);
-	if (pColumn != NULL)
+	if (pColumn != nullptr)
 		return pColumn;
 
 	ScanColumn* pChildColumn = walk(pNode->m_children[0], false);
@@ -164,7 +164,7 @@ ScanColumn* BuildExpressionVisitor::visitFuncNode(const char* pszName,
 	m_bGroupBy = true;
 	ScanColumn* pColumn = m_pFactory->getScanColumnInfo(pNode->m_pszExpr,
 			bProject);
-	if (pColumn != NULL)
+	if (pColumn != nullptr)
 		return pColumn;
 
 	//function parameter is not supported

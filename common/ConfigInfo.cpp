@@ -8,7 +8,7 @@
 
 void TableInfo::addColumn(MetaConfig* pConfig, const char* pszValue) {
 	const char* pszType = rindex(pszValue, ':');
-	if (pszType == NULL) {
+	if (pszType == nullptr) {
 		throw new ConfigException("Illegal attribute value '%s'", pszValue);
 	}
 	++pszType;
@@ -16,7 +16,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const char* pszValue) {
 	std::string s;
 	int iLen = 0;
 	const char* pszEnd = rindex(pszValue, '(');
-	if (pszEnd != NULL) {
+	if (pszEnd != nullptr) {
 		iLen = atoi(pszEnd + 1);
 		s.assign(pszType, pszEnd - pszType);
 	} else {
@@ -67,7 +67,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const char* pszValue) {
 
 void TableInfo::addKeyColumn(std::string& name) {
 	DBColumnInfo* pColumn = getColumnByName(name);
-	if (pColumn == NULL) {
+	if (pColumn == nullptr) {
 		throw new ConfigException("Undefined rowkey column '%s'", name.c_str());
 	}
 	if (pColumn->m_iLen <= 0) {
@@ -94,7 +94,7 @@ void TableInfo::getDBColumns(ParseNode* pColumn,
 
 		for (size_t j = 0; j < pColumn->m_iChildNum; ++j) {
 			ParseNode* p = pColumn->m_children[j];
-			if (p == NULL || p->m_iType != NAME_NODE) {
+			if (p == nullptr || p->m_iType != NAME_NODE) {
 				throw new ParseException("Unsupported select expression:",
 						p->m_pszExpr);
 			}

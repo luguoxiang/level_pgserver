@@ -8,10 +8,10 @@
 void buildPlanForConst(ParseNode* pNode) {
 	ConstPlan* pPlan = new ConstPlan();
 	Tools::pushPlan(pPlan);
-	ParseNode* pLastRow = NULL;
+	ParseNode* pLastRow = nullptr;
 	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pRow = pNode->m_children[i];
-		if (pLastRow != NULL && pLastRow->m_iChildNum != pRow->m_iChildNum) {
+		if (pLastRow != nullptr && pLastRow->m_iChildNum != pRow->m_iChildNum) {
 			throw new ParseException(
 					"Values column number is not matched: %d is expected, but is %d!",
 					pLastRow->m_iChildNum, pRow->m_iChildNum);

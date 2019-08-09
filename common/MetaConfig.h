@@ -69,7 +69,7 @@ public:
 		if (iter != m_tableMap.end()) {
 			return iter->second;
 		} else {
-			return NULL;
+			return nullptr;
 		}
 	}
 	ServerInfo* getServerInfo(std::string name) {
@@ -78,7 +78,7 @@ public:
 		if (iter != m_serverMap.end()) {
 			return iter->second;
 		} else {
-			return NULL;
+			return nullptr;
 		}
 	}
 

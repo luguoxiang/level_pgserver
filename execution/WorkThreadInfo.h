@@ -52,7 +52,7 @@ struct WorkThreadInfo {
 
 	ExecutionPlan* popPlan() {
 		if (m_plans.empty())
-			return NULL;
+			return nullptr;
 		ExecutionPlan* pPlan = m_plans.back();
 		m_plans.pop_back();
 		return pPlan;

@@ -14,7 +14,7 @@
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
 
 DataReceiver::DataReceiver(int fd, bool bNetNumber) :
-		m_pszBuffer(NULL), m_pszCurrent(NULL), m_pszMark(NULL), m_nFd(fd), m_nBufLen(
+		m_pszBuffer(nullptr), m_pszCurrent(nullptr), m_pszMark(nullptr), m_nFd(fd), m_nBufLen(
 				0), m_bNetNumber(bNetNumber) {
 }
 
@@ -42,7 +42,7 @@ const char* DataReceiver::getNextStringWithLen(uint32_t* pLen) {
 	const char* pszRet = m_pszCurrent;
 
 	if (*pLen <= 0)
-		return NULL;
+		return nullptr;
 
 	m_pszCurrent += *pLen;
 	return pszRet;
@@ -56,7 +56,7 @@ const char* DataReceiver::getNextStringWithShortLen(uint16_t* pLen) {
 	const char* pszRet = m_pszCurrent;
 
 	if (*pLen <= 0)
-		return NULL;
+		return nullptr;
 
 	m_pszCurrent += *pLen;
 	return pszRet;

@@ -63,7 +63,7 @@ public:
 	virtual int getResultColumns();
 
 	virtual const char* getProjectionName(size_t index) {
-		return NULL;
+		return nullptr;
 	}
 
 	virtual DBDataType getResultType(size_t index) {

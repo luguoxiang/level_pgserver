@@ -9,9 +9,9 @@ void ReadFilePlan::explain(std::vector<std::string>& rows) {
 }
 
 ReadFilePlan::~ReadFilePlan() {
-	if (m_pHandle != NULL) {
+	if (m_pHandle != nullptr) {
 		fclose(m_pHandle);
-		m_pHandle = NULL;
+		m_pHandle = nullptr;
 	}
 }
 
@@ -30,7 +30,7 @@ int ReadFilePlan::addProjection(ParseNode* pNode) {
 void ReadFilePlan::begin() {
 	m_bCancel = false;
 	m_pHandle = fopen(m_pszPath, "r");
-	if (m_pHandle == NULL) {
+	if (m_pHandle == nullptr) {
 		char msg[200];
 		snprintf(msg, 200, "File %s does not exists!", m_pszPath);
 		throw new ExecutionException(msg, false);
@@ -52,11 +52,11 @@ bool ReadFilePlan::next() {
 
 	if (m_szBuf[ret - 1] == '\n')
 		m_szBuf[ret - 1] = '\0';
-	char *pszLast = NULL;
+	char *pszLast = nullptr;
 	for (int i = 0; i < m_columns.size(); ++i) {
-		const char* pszValue = strtok_r(pszLast == NULL ? m_szBuf : NULL,
+		const char* pszValue = strtok_r(pszLast == nullptr ? m_szBuf : nullptr,
 				m_seperator, &pszLast);
-		if (pszValue == NULL) {
+		if (pszValue == nullptr) {
 			char msg[200];
 			snprintf(msg, 200, "Missing values at line %lld!", m_iRowCount + 1);
 			throw new ExecutionException(msg, false);
@@ -101,9 +101,9 @@ bool ReadFilePlan::next() {
 }
 
 void ReadFilePlan::end() {
-	if (m_pHandle != NULL) {
+	if (m_pHandle != nullptr) {
 		fclose(m_pHandle);
-		m_pHandle = NULL;
+		m_pHandle = nullptr;
 	}
 }
 

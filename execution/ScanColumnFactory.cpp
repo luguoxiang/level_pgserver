@@ -48,7 +48,7 @@ ScanColumn* ScanColumnFactory::addScanColumn(const char* pszName,
 ScanColumn*
 ScanColumnFactory::addFunctionColumn(const char* pszFuncName,
 		const char* pszRawExpr, const char* pszArg, bool bProject) {
-	ScanColumn* pColumn = NULL;
+	ScanColumn* pColumn = nullptr;
 	if (strcmp(pszFuncName, "first") == 0) {
 		pColumn = new GroupByReturnColumn(bProject, pszArg);
 	} else {
@@ -65,7 +65,7 @@ ScanColumnFactory::addFunctionColumn(const char* pszFuncName,
 ScanColumn*
 ScanColumnFactory::addScanComplexColumn(const char* pszExpr,
 		const char* pszRawExpr, bool bProject, bool bSimple) {
-	ScanColumn* pColumn = NULL;
+	ScanColumn* pColumn = nullptr;
 	if (bSimple) {
 		pColumn = new ExprColumn(pszExpr, bProject, m_exprColumns.size());
 		m_exprColumns.push_back(pColumn);

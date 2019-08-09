@@ -110,7 +110,7 @@ void PgClient::handleParse() {
 }
 
 void PgClient::handleBind() {
-	if (m_pPlan.get() == NULL)
+	if (m_pPlan.get() == nullptr)
 		return;
 
 	size_t len1, len2;
@@ -146,7 +146,7 @@ void PgClient::handleBind() {
 }
 
 void PgClient::handleDescribe() {
-	if (m_pPlan.get() == NULL)
+	if (m_pPlan.get() == nullptr)
 		return;
 	size_t len;
 	int type = m_receiver.getNextByte();
@@ -159,7 +159,7 @@ void PgClient::handleDescribe() {
 }
 
 void PgClient::handleExecute() {
-	if (m_pPlan.get() == NULL)
+	if (m_pPlan.get() == nullptr)
 		return;
 
 	size_t columnNum = m_pPlan->getResultColumns();
@@ -183,7 +183,7 @@ void PgClient::handleExecute() {
 	m_sender.prepare('C');
 	m_sender.addString(szInfo, strlen(szInfo) + 1); //data len
 	m_sender.commit();
-	m_pWorker->m_pPlan = NULL;
+	m_pWorker->m_pPlan = nullptr;
 }
 
 void PgClient::handleException(Exception* pe) {
@@ -207,7 +207,7 @@ void PgClient::handleException(Exception* pe) {
 
 	m_sender.commit();
 	m_pWorker->clearPlan();
-	m_pPlan.reset(NULL);
+	m_pPlan.reset(nullptr);
 }
 
 void PgClient::run() {
@@ -258,7 +258,7 @@ void PgClient::run() {
 		start = std::chrono::steady_clock::now();
 #endif
 		MessageHandler handler = m_handler[qtype];
-		if (handler == NULL) {
+		if (handler == nullptr) {
 			char szBuf[100];
 			snprintf(szBuf, 100, "Unable to handler message %c", qtype);
 			throw new IOException(szBuf);
@@ -269,7 +269,7 @@ void PgClient::run() {
 		} catch (Exception* pe) {
 			handleException(pe);
 		}
-		m_pWorker->m_pPlan = NULL;
+		m_pWorker->m_pPlan = nullptr;
 		if (qtype == 'Q')
 			handleSync();
 
@@ -283,7 +283,7 @@ void PgClient::run() {
 }
 
 void PgClient::createPlan(const char* pszCmd, size_t len) {
-	m_pPlan.reset(NULL);
+	m_pPlan.reset(nullptr);
 	if (strncasecmp("DEALLOCATE", pszCmd, 10) == 0) {
 		m_pPlan.reset(new EmptyResult());
 		LOG(DEBUG, "%s", pszCmd);
@@ -293,7 +293,7 @@ void PgClient::createPlan(const char* pszCmd, size_t len) {
 	} else {
 		m_pWorker->parse(pszCmd, len);
 		m_pPlan.reset(m_pWorker->resolve());
-		if (m_pPlan.get() == NULL) {
+		if (m_pPlan.get() == nullptr) {
 			throw new ParseException("No statement!");
 		}
 	}
@@ -407,7 +407,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 		case TYPE_DATE: {
 			time_t time = info.m_value.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
-			if (pToday == NULL) {
+			if (pToday == nullptr) {
 				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
 				len = 0;
 			} else {
@@ -421,7 +421,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 		case TYPE_DATETIME: {
 			time_t time = info.m_value.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
-			if (pToday == NULL) {
+			if (pToday == nullptr) {
 				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
 				len = 0;
 			} else {

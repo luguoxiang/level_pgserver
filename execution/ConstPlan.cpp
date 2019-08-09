@@ -46,7 +46,7 @@ void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 		break;
 	}
 	case FLOAT_NODE: {
-		float fValue = strtof(pValue->m_pszValue, NULL);
+		float fValue = strtof(pValue->m_pszValue, nullptr);
 		pInfo->m_value.m_dResult = fValue;
 		break;
 	}

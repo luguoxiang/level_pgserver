@@ -78,7 +78,7 @@ public:
 		std::map<std::string, DBColumnInfo*>::iterator iter;
 		iter = m_columnMap.find(name);
 		if (iter == m_columnMap.end())
-			return NULL;
+			return nullptr;
 		return iter->second;
 	}
 

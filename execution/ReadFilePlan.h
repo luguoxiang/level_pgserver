@@ -10,14 +10,14 @@
 class ReadFilePlan: public ExecutionPlan {
 public:
 	ReadFilePlan(const char* pszPath, const char* seperator) :
-			ExecutionPlan(ReadFile), m_pszPath(pszPath), m_pHandle(NULL), m_iRowCount(
+			ExecutionPlan(ReadFile), m_pszPath(pszPath), m_pHandle(nullptr), m_iRowCount(
 					0), m_bCancel(false) {
 		m_seperator[0] = seperator[0];
 		m_seperator[1] = 0;
 	}
 
 	ReadFilePlan(const char* pszPath, int seperator) :
-			ExecutionPlan(ReadFile), m_pszPath(pszPath), m_pHandle(NULL), m_iRowCount(
+			ExecutionPlan(ReadFile), m_pszPath(pszPath), m_pHandle(nullptr), m_iRowCount(
 					0), m_bCancel(false) {
 		m_seperator[0] = seperator;
 		m_seperator[1] = 0;

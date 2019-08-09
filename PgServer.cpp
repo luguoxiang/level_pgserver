@@ -157,7 +157,7 @@ void PgServer::run() {
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 
-	if (sigaction(SIGINT, &act, NULL) < 0) {
+	if (sigaction(SIGINT, &act, nullptr) < 0) {
 		LOG(ERROR, "Could not set SIGINT handler!");
 	}
 

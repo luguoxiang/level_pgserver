@@ -12,10 +12,10 @@ ImplicitRowKeyRange::ImplicitRowKeyRange(TableInfo* pTableInfo) :
 		m_iLen1 += pColumn->m_iLen;
 		m_iLen2 += pColumn->m_iLen;
 
-		m_fields[i].m_pStartValue = NULL;
-		m_fields[i].m_pEndValue = NULL;
-		m_fields[i].m_pExpr1 = NULL;
-		m_fields[i].m_pExpr2 = NULL;
+		m_fields[i].m_pStartValue = nullptr;
+		m_fields[i].m_pEndValue = nullptr;
+		m_fields[i].m_pExpr1 = nullptr;
+		m_fields[i].m_pExpr2 = nullptr;
 		m_fields[i].m_bStartInclusive = true;
 		m_fields[i].m_bEndInclusive = true;
 	}
@@ -209,7 +209,7 @@ void ImplicitRowKeyRange::setColumnValue(DBColumnInfo* pColumn,
 	field.m_pStartValue = field.m_pEndValue = pValue;
 	field.m_bStartInclusive = true;
 	field.m_bEndInclusive = true;
-	field.m_pExpr1 = NULL;
+	field.m_pExpr1 = nullptr;
 }
 
 bool ImplicitRowKeyRange::parseExpression(int iOpCode, ParseNode* pLeft,
@@ -217,7 +217,7 @@ bool ImplicitRowKeyRange::parseExpression(int iOpCode, ParseNode* pLeft,
 	assert(!Tools::isRowKeyNode(pLeft));
 	std::string name(pLeft->m_pszValue);
 	DBColumnInfo* pColumn = m_pTableInfo->getColumnByName(name);
-	if (pColumn == NULL || pColumn->m_iKeyIndex < 0)
+	if (pColumn == nullptr || pColumn->m_iKeyIndex < 0)
 		return false;
 	assert(pColumn->m_iLen > 0 && pColumn->m_iKeyIndex >= 0);
 

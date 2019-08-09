@@ -40,7 +40,7 @@ void PgMessageReceiver::processStartupPacket() {
 				iCancelAuthCode);
 		ExecutionPlan* pPlan = WorkerManager::getInstance().getWorker(
 				iBackendPID)->m_pPlan;
-		if (pPlan != NULL)
+		if (pPlan != nullptr)
 			pPlan->cancel();
 		throw new IOException(buf);
 	}

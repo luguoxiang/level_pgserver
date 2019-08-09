@@ -55,7 +55,7 @@ public:
 
 	void explain(std::vector<std::string>& rows) {
 		for (size_t i = 0; i < m_columns.size(); ++i) {
-			if (m_columns[i] == NULL)
+			if (m_columns[i] == nullptr)
 				continue;
 			std::string s = m_columns[i]->explain();
 			rows.push_back(s);
@@ -64,7 +64,7 @@ public:
 
 	void clear() {
 		for (size_t i = 0; i < m_columns.size(); ++i) {
-			if (m_columns[i] == NULL)
+			if (m_columns[i] == nullptr)
 				continue;
 			delete m_columns[i];
 		}
