@@ -12,11 +12,6 @@ public:
 	{
 	}
 
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy)
-	{
-	}
-	;
-
 	virtual std::string explain()
 	{
 		return getName();
@@ -33,8 +28,6 @@ public:
 	{
 	}
 
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy);
-
 	virtual std::string explain();
 };
 
@@ -47,7 +40,6 @@ public:
 			: ScanColumn(bProject, "expr", id), m_pszExpr(pszExpr)
 	{
 	}
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy);
 	virtual std::string explain();
 private:
 	const char* m_pszExpr;
@@ -62,7 +54,6 @@ public:
 			: ScanColumn(bProject, "aggr_expr", id), m_pszExpr(pszExpr)
 	{
 	}
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy);
 	virtual std::string explain();
 private:
 	const char* m_pszExpr;
@@ -79,7 +70,6 @@ public:
 					pszArg)
 	{
 	}
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy);
 	virtual std::string explain();
 
 private:
@@ -96,7 +86,6 @@ public:
 			: ScanColumn(bProject, pszName)
 	{
 	}
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy);
 	virtual std::string explain();
 };
 
@@ -106,7 +95,6 @@ public:
 	JoinColumn(const char* pszColumn, const char* pszTable,
 			const char* pszForeignColumn);
 
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy);
 	virtual std::string explain();
 private:
 	const char* m_pszColumn;

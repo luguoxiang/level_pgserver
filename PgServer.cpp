@@ -1,3 +1,5 @@
+#include <thread>
+#include <vector>
 #include <unistd.h>
 #include <netdb.h>
 #include <sys/types.h>
@@ -12,7 +14,6 @@
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <wait.h>
 #include <sys/ioctl.h>
 
 #include "common/MetaConfig.h"
@@ -25,9 +26,6 @@
 #include "execution/WorkThreadInfo.h"
 
 #include <iostream>
-
-#include <sys/syscall.h>  
-#define gettid() syscall(__NR_gettid) 
 
 #define MAX_CONNECTION 1000
 
@@ -46,14 +44,6 @@ PgServer::~PgServer()
 	}
 }
 
-void PgServer::mysleep(long microsec)
-{
-	struct timeval delay;
-	delay.tv_sec = microsec / 1000000L;
-	delay.tv_usec = microsec % 1000000L;
-	select(0, NULL, NULL, NULL, &delay);
-}
-
 int PgServer::acceptSocket(int fd, int maxConnection)
 {
 	struct sockaddr_storage addr;
@@ -64,8 +54,7 @@ int PgServer::acceptSocket(int fd, int maxConnection)
 
 	if (acceptSock < 0)
 	{
-		//sleep 0.1 sec
-		mysleep(100000);
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		throw new IOException("accept() failed");
 	}
 
@@ -145,8 +134,8 @@ int PgServer::bindSocket(const char* pszPort)
 void* PgServer::worker_thread(void* pArg)
 {
 	WorkThreadInfo* pInfo = (WorkThreadInfo*) pArg;
-	pthread_setspecific(WorkThreadInfo::tls_key, pInfo);
-	pInfo->m_tid = gettid();
+	pInfo->m_tid = std::this_thread::get_id();
+	WorkThreadInfo::m_pWorkThreadInfo = pInfo;
 	LOG(INFO, "Working thread is listening on %s.", pInfo->m_pszPort);
 	while (true)
 	{
@@ -206,25 +195,19 @@ void PgServer::run()
 		throw new IOException("could not listen!");
 	}
 
-	pthread_key_create(&WorkThreadInfo::tls_key, NULL);
-
 	int iWorkerNum = MetaConfig::getInstance().getWorkerNum();
+
+	std::vector<std::thread> threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i)
 	{
 		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_pszPort, i);
-		if (::pthread_create(&(pInfo->m_pthread), NULL, worker_thread,
-				(void *) pInfo) != 0)
-		{
-			::close(m_iFd);
-			throw new IOException("Failed to create thread!");
-		}
+		threads[i] = std::thread(worker_thread, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}
 
-	for (size_t i = 0; i < WorkerManager::getInstance().getWorkerCount(); ++i)
+	for (auto& th : threads)
 	{
-		void* pResult = 0;
-		WorkThreadInfo* pInfo = WorkerManager::getInstance().getWorker(i);
-		::pthread_join(pInfo->m_pthread, &pResult);
-	}LOG(INFO, "Main Server shutdown!");
+		th.join();
+	}
+	LOG(INFO, "Main Server shutdown!");
 }

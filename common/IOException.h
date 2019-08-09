@@ -1,5 +1,4 @@
-#ifndef IO_EXCEPTION_H
-#define IO_EXCEPTION_H
+#pragma once
 
 #include <string>
 #include <string.h>
@@ -38,4 +37,3 @@ private:
 
 	std::string m_sErrMsg;
 };
-#endif  // IO_EXCEPTION_H

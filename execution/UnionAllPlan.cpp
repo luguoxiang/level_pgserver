@@ -9,7 +9,7 @@
 
 void UnionAllPlan::getInfoString(char* szBuf, int len)
 {
-	snprintf(szBuf, len, "SELECT %lu", m_iCurrentRow);
+	snprintf(szBuf, len, "SELECT %llu", m_iCurrentRow);
 }
 
 void UnionAllPlan::getResult(size_t index, ResultInfo* pInfo)

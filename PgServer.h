@@ -1,6 +1,4 @@
-#ifndef OBSERVER_H
-#define OBSERVER_H
-#include "execution/ObConnection.h"
+#pragma once
 
 class PgServer
 {
@@ -22,4 +20,3 @@ private:
 
 	int m_iFd;
 };
-#endif

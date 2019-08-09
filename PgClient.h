@@ -1,5 +1,4 @@
-#ifndef OBCLIENT_H
-#define OBCLIENT_H
+#pragma once
 
 #include <memory>
 #include "PgMessageSender.h"
@@ -42,4 +41,3 @@ private:
 	const char* m_pszSql;
 	MessageHandler m_handler[100];
 };
-#endif

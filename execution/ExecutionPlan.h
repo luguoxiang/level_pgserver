@@ -6,7 +6,6 @@
 
 #include "common/ParseNode.h"
 #include "common/ConfigInfo.h"
-#include "oceanbase.h"
 
 class SqlRunner;
 class ScanColumn;
@@ -21,10 +20,6 @@ public:
 
 	enum PlanType
 	{
-		OBInsert,
-		OBDelete,
-		OBScan,
-		OBLeftJoin,
 		HBaseScan,
 		HBaseInsert,
 		HBaseDelete,

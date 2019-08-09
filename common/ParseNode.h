@@ -1,5 +1,4 @@
-#ifndef PARSENODE_H
-#define PARSENODE_H
+#pragma once
 
 #include <assert.h>
 #include <stdlib.h>
@@ -108,4 +107,3 @@ extern size_t parseString(const char* pszSrc, char* pszDest, size_t iLen);
 }
 #endif
 
-#endif //PARSENODE_H

@@ -6,8 +6,11 @@
 #include "execution/WorkloadResult.h"
 #include "execution/ShowTables.h"
 #include "execution/ShowColumns.h"
-#include "execution/OBInsertPlan.h"
 #include "execution/ReadFilePlan.h"
+
+void buildPlanForLeftJoin(ParseNode* pNode)
+{
+}
 
 void buildPlanForDesc(ParseNode* pNode)
 {

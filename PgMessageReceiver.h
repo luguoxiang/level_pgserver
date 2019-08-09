@@ -1,5 +1,4 @@
-#ifndef PG_MESSAGE_RECEIVER_H
-#define PG_MESSAGE_RECEIVER_H
+#pragma once
 #include <stdio.h>
 #include <stdint.h>
 #include "common/DataReceiver.h"
@@ -19,4 +18,3 @@ private:
 	typedef unsigned int ProtocolVersion;
 	typedef unsigned int PacketLen;
 };
-#endif

@@ -1,9 +1,9 @@
 #ifndef LOG_H
 #define LOG_H
+#include <mutex>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <pthread.h>
 
 #define LOG(LEVEL, FORMAT, ...) \
 	Log::getLogger().log(Log::LEVEL, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); 
@@ -42,7 +42,7 @@ private:
 	FILE* m_pLogFile;
 	LogLevel m_level;
 	uint64_t m_iDay;
-	pthread_mutex_t m_lock;
+	std::mutex m_lock;
 };
 
 #endif //LOG_H

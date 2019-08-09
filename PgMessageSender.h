@@ -1,5 +1,4 @@
-#ifndef PG_MESSAGE_SENDER_H
-#define PG_MESSAGE_SENDER_H
+#pragma once
 
 #include "common/DataSender.h"
 
@@ -34,4 +33,3 @@ public:
 		addShort(0); //format
 	}
 };
-#endif

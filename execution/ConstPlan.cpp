@@ -1,10 +1,11 @@
 #include "execution/ConstPlan.h"
+#include <sstream>
 
 void ConstPlan::explain(std::vector<std::string>& rows)
 {
-	char buf[100];
-	snprintf(buf, 100, "Const %d rows, %d columns", m_rows.size(), m_columns.size());
-	rows.push_back(buf);
+	std::stringstream ss;
+	ss << "Const " << m_rows.size() << " rows, " << m_columns.size()<<" columns";
+	rows.push_back(ss.str());
 }
 
 DBDataType ConstPlan::getResultType(size_t index)
@@ -81,9 +82,9 @@ void ConstPlan::addRow(ParseNode* pRow)
 	{
 		for(size_t i=0;i<pRow->m_iChildNum;++i)
 		{
-			char buf[100];
-			snprintf(buf, 100, "c%d", i + 1);
-			m_columns.push_back(buf);
+		        std::stringstream ss;
+			ss << i + 1;
+			m_columns.push_back(ss.str());
 		}
 	}
 	assert(pRow->m_iChildNum == m_columns.size());

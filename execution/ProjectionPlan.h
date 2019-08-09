@@ -13,7 +13,6 @@ class ProjectionPlan: public ExecutionPlan
 		const char* m_pszName;
 		const char* m_pszRaw;
 	};
-	typedef std::map<const char*, size_t, Tools::StringCompare> IndexMap;
 public:
 	ProjectionPlan(ExecutionPlan* pPlan)
 			: ExecutionPlan(Projection), m_pPlan(pPlan)
@@ -50,7 +49,7 @@ public:
 
 	virtual int addProjection(ParseNode* pNode)
 	{
-		IndexMap::iterator iter = m_map.find(pNode->m_pszExpr);
+		auto iter = m_map.find(pNode->m_pszExpr);
 		if (iter == m_map.end())
 			return -1;
 		return iter->second;
@@ -73,7 +72,7 @@ public:
 	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
 			bool* pOrder)
 	{
-		IndexMap::iterator iter = m_map.find(pszColumn);
+		auto iter = m_map.find(pszColumn);
 		if (iter == m_map.end())
 			return false;
 		size_t iIndex = iter->second;
@@ -119,7 +118,7 @@ public:
 	}
 private:
 	std::vector<ProjectionInfo> m_proj;
-	std::map<const char*, size_t, Tools::StringCompare> m_map;
+	std::map<std::string, size_t> m_map;
 	ExecutionPlan* m_pPlan;
 };
 #endif  // PROJECTION_PLAN_H

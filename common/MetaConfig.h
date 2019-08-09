@@ -1,5 +1,4 @@
-#ifndef META_CONFIG_H
-#define META_CONFIG_H
+#pragma once
 
 #include <map>
 #include <assert.h>
@@ -130,4 +129,3 @@ private:
 	uint32_t m_iExecBuffer;
 
 };
-#endif  // META_CONFIG_H

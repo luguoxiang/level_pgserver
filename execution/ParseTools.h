@@ -48,8 +48,7 @@ inline const char* byteToString(const char* p, size_t iLen)
 	{
 		return "null";
 	}
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	char* pszRet = pInfo->alloc(iLen * 2 + 3);
 	snprintf(pszRet, 3, "0x");
@@ -89,8 +88,7 @@ inline const char* escapeString(const char* pszSrc, int64_t iLen)
 	}
 	s.append("'");
 
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	return pInfo->memdup(s.c_str(), s.size() + 1);
 }
@@ -118,26 +116,16 @@ inline bool hasRowKey(ParseNode* pPredicate)
 			throw new ExecutionException(msg, true);\
 		}\
 
-struct StringCompare
-{
-	bool operator()(const char* a, const char* b)
-	{
-		return strcmp(a, b) < 0;
-	}
-};
-
 inline void pushPlan(ExecutionPlan* pPlan)
 {
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	pInfo->pushPlan(pPlan);
 }
 
 inline ExecutionPlan* popPlan()
 {
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	return pInfo->popPlan();
 }

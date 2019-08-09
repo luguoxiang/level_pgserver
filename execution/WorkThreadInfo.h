@@ -2,10 +2,8 @@
 #define WORKTHREAD_INFO_H
 #include <stdio.h>
 #include <vector>
-#include <pthread.h>
+#include <thread>
 #include "execution/ExecutionPlan.h"
-#include "execution/HBaseConnection.h"
-#include "execution/ObConnection.h"
 
 struct WorkThreadInfo
 {
@@ -22,10 +20,8 @@ struct WorkThreadInfo
 		m_plans.clear();
 	}
 
-	static pthread_key_t tls_key;
-
-	pthread_t m_pthread;
-	int m_tid;
+	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
+	std::thread::id m_tid;
 	int m_iListenFd;
 	int m_iAcceptFd;
 	const char* m_pszPort;
@@ -68,21 +64,7 @@ struct WorkThreadInfo
 		m_plans.pop_back();
 		return pPlan;
 	}
-	ObConnection& getOBConnection() 
-	{
-		return *ObConnection::getInstance();
-	}
-
-	HBaseConnection& getHBaseConnection()
-	{
-		if(m_pHBase == NULL)
-		{
-			m_pHBase = new HBaseConnection();
-		}
-		return *m_pHBase;
-	}
 private:
-	HBaseConnection* m_pHBase;
 	ParseResult m_result;
 	std::vector<ExecutionPlan*> m_plans;
 };

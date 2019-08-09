@@ -60,7 +60,7 @@ bool ReadFilePlan::next()
 		const char* pszValue = strtok_r(pszLast==NULL?m_szBuf:NULL, m_seperator, &pszLast);
 		if (pszValue == NULL) {
 			char msg[200];
-			snprintf(msg, 200, "Missing values at line %d!", m_iRowCount + 1);
+			snprintf(msg, 200, "Missing values at line %lld!", m_iRowCount + 1);
 			throw new ExecutionException(msg, false);
 		}
 		m_result[i].m_bNull = false;

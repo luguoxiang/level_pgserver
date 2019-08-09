@@ -2,8 +2,8 @@
 #define BUILD_EXPRESSION_VISITOR_H
 
 #include "ParseTreeVisitor.h"
-#include "OBScanPlan.h"
 #include "ScanColumn.h"
+#include "ScanColumnFactory.h"
 #include <string>
 
 /*

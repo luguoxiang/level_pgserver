@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <vector>
 #include <pthread.h>
-#include "execution/ExecutionPlan.h"
-#include "execution/WorkThreadInfo.h"
+#include "ExecutionPlan.h"
+#include "WorkThreadInfo.h"
 
 class WorkloadResult: public ExecutionPlan
 {
@@ -44,5 +44,6 @@ public:
 	virtual int addProjection(ParseNode* pNode);
 private:
 	size_t m_iIndex;
+	std::string m_tid;
 };
 #endif //WORKLOAD_RESULT

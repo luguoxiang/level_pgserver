@@ -7,13 +7,13 @@
 #include "execution/ParseTools.h"
 #include "common/MetaConfig.h"
 
-pthread_key_t WorkThreadInfo::tls_key;
+thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = NULL;
 
 WorkThreadInfo::WorkThreadInfo(int fd, const char* pszPort, int iIndex)
 		: m_iListenFd(fd), m_iAcceptFd(0), m_pszPort(pszPort), 
 		m_bRunning(false), m_iClientTime(0), m_iIndex(iIndex),m_iSessions(0), 
 		m_iExecScanTime(0), m_iBiggestExec(0), 
-		m_iSqlCount(0), m_pPlan(NULL), m_pHBase(NULL)
+		m_iSqlCount(0), m_pPlan(NULL)
 {
 	memset(&m_result, 0, sizeof(m_result));
 
@@ -21,17 +21,12 @@ WorkThreadInfo::WorkThreadInfo(int fd, const char* pszPort, int iIndex)
 	{
 		throw new ParseException("Failed to init parser!");
 	}
-	ObConnection::getInstance();//initiate static value
 }
 
 WorkThreadInfo::~WorkThreadInfo()
 {
 	parseTerminate(&m_result);
 	clearPlan();
-	if(m_pHBase != NULL)
-	{
-		delete m_pHBase;
-	}
 }
 
 void WorkThreadInfo::parse(const char* pszSQL, size_t iLen)

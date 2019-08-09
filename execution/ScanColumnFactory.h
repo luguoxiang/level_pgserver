@@ -71,9 +71,9 @@ private:
 	 * 'sum item_price' entry is used to avoid generating two ScanColumn for same expression,
 	 *                continue above example: select ... having sum(item_price) > 0.
 	 */
-	std::map<const char*, ScanColumn*, Tools::StringCompare> m_columnMap;
+	std::map<std::string, ScanColumn*> m_columnMap;
 
-	std::map<const char*, ScanColumn*, Tools::StringCompare> m_aliasMap;
+	std::map<std::string, ScanColumn*> m_aliasMap;
 
 };
 

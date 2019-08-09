@@ -63,7 +63,7 @@ public:
 
 	virtual void getInfoString(char* szBuf, int len)
 	{
-		snprintf(szBuf, len, "SELECT %lu", m_iCurrent);
+		snprintf(szBuf, len, "SELECT %llu", m_iCurrent);
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo)

@@ -44,7 +44,6 @@ struct DbPlanBuilder
 };
 
 static struct DbPlanBuilder g_dbPlanBuilder[] = {
-	{"ob", buildPlanForOBSelect, buildPlanForOBInsert, buildPlanForOBDelete},
 	{"hbase", buildPlanForHBaseSelect, buildPlanForHBaseInsert, buildPlanForHBaseDelete},
 	{"file", buildPlanForFileSelect, NULL, NULL},
 };

@@ -4,8 +4,7 @@
 
 ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool)
 {
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	ScanColumn* pColumn = NULL;
 	switch (pNode->m_iType)
@@ -47,8 +46,7 @@ ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool)
 ScanColumn* BuildExpressionVisitor::addSimpleScanColumn(const char* pszName,
 		ScanColumnFactory* pFactory, DBColumnInfo* pColumnInfo, bool bProject)
 {
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	bool bColumnProject = bProject && pColumnInfo->m_type != TYPE_DOUBLE;
 	ScanColumn* pColumn = pFactory->getScanColumnInfo(pszName, bColumnProject);
@@ -109,8 +107,7 @@ ScanColumn* BuildExpressionVisitor::visitDyadicOpNode(int op, ParseNode* pNode, 
 	ScanColumn* pRightColumn = walk(pNode->m_children[1], false);
 	assert(pRightColumn);
 
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 
 	char szBuf[101];
@@ -161,8 +158,7 @@ ScanColumn* BuildExpressionVisitor::visitUnaryOpNode(int op, ParseNode* pNode, b
 		break;
 	}
 
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	pColumn = m_pFactory->addScanComplexColumn(pInfo->memdup(szBuf, c + 1),
 			pNode->m_pszExpr, bProject, !m_bGroupBy);

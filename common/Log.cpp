@@ -1,5 +1,7 @@
 #include "Log.h"
-#include <time.h>
+#include <thread>
+#include <sstream>
+#include <chrono>
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
@@ -11,16 +13,10 @@
 #include<time.h>
 #include "common/IOException.h"
 
-#include <sys/syscall.h>  
-#define gettid() syscall(__NR_gettid) 
-
 #define MAX_LOG_LEN 4096
 
-Log::Log()
-		: m_pszLogPath("log/server.log"), m_pLogFile(NULL), m_level(INFO), m_iDay(
-				0)
+Log::Log() : m_pszLogPath("log/server.log"), m_pLogFile(NULL), m_level(INFO), m_iDay(0)
 {
-  pthread_mutex_init(&m_lock, 0);
 }
 
 void Log::init(const char* pszPath, LogLevel level)
@@ -31,7 +27,6 @@ void Log::init(const char* pszPath, LogLevel level)
 
 Log::~Log()
 {
-  pthread_mutex_destroy(&m_lock);
 	if (m_pLogFile != NULL)
 	{
 		fclose(m_pLogFile);
@@ -47,18 +42,17 @@ FILE* Log::getFile(uint64_t iDay)
 	if (m_pLogFile != NULL && m_iDay == iDay)
 		return m_pLogFile;
 
-	pthread_mutex_lock(&m_lock);
+	std::lock_guard<std::mutex> guard(m_lock);
 	if (m_pLogFile == NULL || m_iDay != iDay)
 	{
 		char szBuf[1024];
-		snprintf(szBuf, 1024, "%s.%04lu-%02lu-%02lu", m_pszLogPath,
+		snprintf(szBuf, 1024, "%s.%04llu-%02llu-%02llu", m_pszLogPath,
 				(iDay >> 16) + 1900, ((iDay & 0xffff) >> 8) + 1, iDay & 0xff);
 		FILE* pFile = fopen(szBuf, "a+");
 		if (pFile == 0)
 		{
 			fprintf(stderr, "Failed to open log file %s!", szBuf);
 			m_pszLogPath = NULL;
-			pthread_mutex_unlock(&m_lock);
 			return stdout;
 		}
 		if (m_pLogFile != NULL)
@@ -70,7 +64,6 @@ FILE* Log::getFile(uint64_t iDay)
 		m_pLogFile = pFile;
 		m_iDay = iDay;
 	}
-	pthread_mutex_unlock(&m_lock);
 	return m_pLogFile;
 }
 
@@ -80,10 +73,9 @@ void Log::log(LogLevel level, const char* pszPath, int iLine,
 	if (m_level > level)
 		return;
 
-	time_t curtime = time(0);
-	tm time = {0};
-	localtime_r(&curtime, &time);
-
+	auto now = std::chrono::system_clock::now();
+	auto tt = std::chrono::system_clock::to_time_t(now);
+	tm time = *localtime(&tt);
 
 	const char* pszLevel = "UNKNOWN";
 	switch (level)
@@ -114,15 +106,18 @@ void Log::log(LogLevel level, const char* pszPath, int iLine,
 	vsnprintf(szBuf, MAX_LOG_LEN, pszFormat, var_args);
 	va_end(var_args);
 
+	std::stringstream ss;
+	ss << std::this_thread::get_id();
+	std::string tid = ss.str();
 	//fprintf is thread safe
 #ifndef NDEBUG
-	fprintf(pFile, "%s %02d:%02d:%02d(%lu %s:%d) %s\n", pszLevel, time.tm_hour,
-			time.tm_min, time.tm_sec, gettid(), pszPath, iLine, szBuf);
+	fprintf(pFile, "%s %02d:%02d:%02d(%s %s:%d) %s\n", pszLevel, time.tm_hour,
+			time.tm_min, time.tm_sec, tid.c_str(), pszPath, iLine, szBuf);
 #else
-	fprintf(pFile, "%s %02d:%02d:%02d(%lu) %s\n",
+	fprintf(pFile, "%s %02d:%02d:%02d(%s) %s\n",
 			pszLevel,
 			time.tm_hour, time.tm_min, time.tm_sec,
-			gettid(), szBuf);
+			tid.c_str(), szBuf);
 #endif
 	fflush(pFile);
 }

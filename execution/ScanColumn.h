@@ -5,14 +5,13 @@
 #include <vector>
 #include <assert.h>
 #include <stdio.h>
-#include "oceanbase.h"
 #include "common/ConfigInfo.h"
 
 class ScanColumn
 {
 public:
 	ScanColumn(bool bProject, const char* pszName)
-			: m_bProject(bProject), m_pCell(0), m_pszName(pszName), m_type(TYPE_UNKNOWN)
+			: m_bProject(bProject), m_pszName(pszName), m_type(TYPE_UNKNOWN)
 	{
 	}
 
@@ -22,14 +21,9 @@ public:
 	{
 	}
 
-	virtual void add(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy) = 0;
-
 	virtual std::string explain() = 0;
 
 	bool m_bProject;
-
-	//store the result ob_cell object fetched in next() method.
-	OB_CELL* m_pCell;
 
 	const char* getName() const
 	{
@@ -74,15 +68,6 @@ public:
 		}
 	}
 
-	void apply(OB_SCAN* pScan, OB_GROUPBY_PARAM* pGroupBy)
-	{
-		for (size_t i = 0; i < m_columns.size(); ++i)
-		{
-			if (m_columns[i] == NULL)
-				continue;
-			m_columns[i]->add(pScan, pGroupBy);
-		}
-	}
 	void clear()
 	{
 		for (size_t i = 0; i < m_columns.size(); ++i)

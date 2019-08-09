@@ -1,5 +1,4 @@
-#ifndef BUILD_PLAN_H
-#define BUILD_PLAN_H
+#pragma once
 
 #include "ParseNode.h"
 
@@ -8,15 +7,6 @@ extern "C"
 {
 #endif
 extern void buildPlanDefault(ParseNode* pNode);
-
-extern void buildPlanForOBDelete(ParseNode* pNode);
-extern void buildPlanForHBaseDelete(ParseNode* pNode);
-
-extern void buildPlanForOBInsert(ParseNode* pNode);
-extern void buildPlanForHBaseInsert(ParseNode* pNode);
-
-extern void buildPlanForOBSelect(ParseNode* pNode);
-extern void buildPlanForHBaseSelect(ParseNode* pNode);
 
 extern void buildPlanForFileSelect(ParseNode* pNode);
 
@@ -37,4 +27,3 @@ extern void buildPlanForReadFile(ParseNode* pNode);
 }
 #endif
 
-#endif //BUILD_PLAN_H

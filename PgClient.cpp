@@ -1,5 +1,7 @@
 #include "PgClient.h"
 #include <assert.h>
+#include <unistd.h>
+#include <chrono>
 #define AUTH_REQ_OK             0       /* User is authenticated  */
 #define AUTH_REQ_PASSWORD       3       /* Password */
 
@@ -76,7 +78,7 @@ PgClient::PgClient(WorkThreadInfo* pInfo)
 
 PgClient::~PgClient()
 {
-	close(m_pWorker->m_iAcceptFd);
+	::close(m_pWorker->m_iAcceptFd);
 }
 
 void PgClient::handleSync()
@@ -238,8 +240,7 @@ void PgClient::handleException(Exception* pe)
 void PgClient::run()
 {
 #ifndef NO_TIMEING
-	struct timeval start, end;
-	gettimeofday(&start, NULL);
+	auto start = std::chrono::steady_clock::now();
 #endif
 	m_receiver.processStartupPacket();
 
@@ -269,11 +270,9 @@ void PgClient::run()
 
 	handleSync();
 #ifndef NO_TIMEING
-	gettimeofday(&end, NULL);
-	uint64_t iTimeuse = 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec
-			- start.tv_usec;
+	auto end = std::chrono::steady_clock::now();
 
-	m_pWorker->m_iClientTime += iTimeuse;
+	m_pWorker->m_iClientTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 #endif
 
 	while (true)
@@ -285,7 +284,7 @@ void PgClient::run()
 			break;
 		}
 #ifndef NO_TIMEING
-		gettimeofday(&start, NULL);
+		start = std::chrono::steady_clock::now();
 #endif
 		MessageHandler handler = m_handler[qtype];
 		if (handler == NULL)
@@ -308,11 +307,9 @@ void PgClient::run()
 			handleSync();
 
 #ifndef NO_TIMEING
-		gettimeofday(&end, NULL);
-		iTimeuse = 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec
-				- start.tv_usec;
+        	auto end = std::chrono::steady_clock::now();
 
-		m_pWorker->m_iClientTime += iTimeuse;
+	        m_pWorker->m_iClientTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 #endif
 	} //while
 }
@@ -433,7 +430,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan)
 		case TYPE_INT32:
 		case TYPE_INT64:
 		case TYPE_INT16:
-			len = snprintf(szBuf, 100, "%ld", info.m_value.m_lResult);
+			len = snprintf(szBuf, 100, "%lld", info.m_value.m_lResult);
 			m_sender.addInt(len);
 			m_sender.addString(szBuf, len);
 			break;

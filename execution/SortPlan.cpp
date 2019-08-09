@@ -11,8 +11,7 @@ SortPlan::SortPlan(ExecutionPlan* pPlan)
 
 void SortPlan::begin()
 {
-	WorkThreadInfo* pInfo = (WorkThreadInfo*) pthread_getspecific(
-			WorkThreadInfo::tls_key);
+	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
 	m_pPlan->begin();
 	while (m_pPlan->next())

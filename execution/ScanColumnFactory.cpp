@@ -7,8 +7,7 @@
 
 ScanColumn* ScanColumnFactory::getAliasColumnInfo(const char* pszName)
 {
-	std::map<const char*, ScanColumn*>::iterator iter;
-	iter = m_aliasMap.find(pszName);
+	auto iter = m_aliasMap.find(pszName);
 
 	if (iter == m_aliasMap.end())
 		return 0;
@@ -20,8 +19,7 @@ ScanColumn* ScanColumnFactory::getScanColumnInfo(const char* pszName,
 		bool bProject)
 {
 
-	std::map<const char*, ScanColumn*>::iterator iter;
-	iter = m_columnMap.find(pszName);
+	auto iter = m_columnMap.find(pszName);
 
 	if (iter == m_columnMap.end())
 		return 0;

@@ -10,13 +10,8 @@
 
 void printHelp()
 {
-#ifdef UPDATE_SUPPORT
-	const char* pszUpdateInfo = "Update enabled";
-#else
-	const char* pszUpdateInfo = "Update disabled";
-#endif
-	printf("AnyConnector version %s(%s)\n", VERSION, pszUpdateInfo);
-	printf("\t-p, --port=PORT\t\tOBConnector server port.\n");
+	printf("csv2pgserver version %d.%d\n", VERSION_MAJOR, VERSION_MINOR);
+	printf("\t-p, --port=PORT\t\tserver port.\n");
 	printf("\t-l, --loglevel=LEVEL\tlog level, can be DEBUG,WARN,INFO,ERROR.\n");
 	printf("\t--workernum=NUM\t\tWorking process number.\n");
 	printf("\t--timeout=NUM\t\tsocket read write timeout.\n");
@@ -134,8 +129,8 @@ int main(int argc, char** argv)
 			pszLogLevel);
 
 	Log::getLogger().init(pszLogPath, level);
-	LOG(INFO, "OBConnector version %s started, config file %s.",
-			VERSION, sMetaConfigPath.c_str());
+	LOG(INFO, "OBConnector version %d.%d started, config file %s.",
+			VERSION_MAJOR, VERSION_MINOR, sMetaConfigPath.c_str());
 	LOG(INFO, "Network buffer %d, timeout %d, Execution buffer %d, ",
 			MetaConfig::getInstance().getNetworkBuffer(),
 			MetaConfig::getInstance().getTimeout(),

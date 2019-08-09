@@ -1,5 +1,4 @@
-#ifndef CONFIG_INFO_H
-#define CONFIG_INFO_H
+#pragma once
 #include <map>
 #include <vector>
 #include <string>
@@ -167,4 +166,3 @@ private:
 	std::map<std::string, std::string> m_attr; 
 };
 
-#endif  // CONFIG_INFO_H

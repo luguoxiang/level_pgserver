@@ -1,4 +1,5 @@
 #include "WorkloadResult.h"
+#include <sstream>
 namespace
 {
 const char* WorkloadColumns[] = { "TID", "Running", "Session", "ObExec",
@@ -53,6 +54,9 @@ const char* WorkloadResult::getProjectionName(size_t index)
 
 DBDataType WorkloadResult::getResultType(size_t index)
 {
+	if( index == 0) {
+		return TYPE_STRING;
+	}
 	return TYPE_INT32;
 }
 
@@ -64,9 +68,13 @@ void WorkloadResult::getResult(size_t index, ResultInfo* pInfo)
 	pInfo->m_bNull = false;
 	switch (index)
 	{
-	case 0:
-		pInfo->m_value.m_lResult = pWorker->m_tid;
+	case 0: {
+		std::stringstream ss;
+		ss <<  pWorker->m_tid;
+		m_tid = ss.str();
+		pInfo->m_value.m_pszResult = m_tid.c_str();
 		break;
+	}
 	case 1:
 		pInfo->m_value.m_lResult = pWorker->m_bRunning;
 		break;

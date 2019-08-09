@@ -24,7 +24,7 @@ public:
 	{
 		m_pPlan->explain(rows);
 		char buf[100];
-		snprintf(buf, 100, "Limit %lu, Offset %lu", m_iLimit, m_iOffset);
+		snprintf(buf, 100, "Limit %llu, Offset %llu", m_iLimit, m_iOffset);
 		rows.push_back(buf);
 	}
 
@@ -60,7 +60,7 @@ public:
 
 	virtual void getInfoString(char* szBuf, int len)
 	{
-		snprintf(szBuf, len, "SELECT %lu", m_iCurrent - m_iOffset);
+		snprintf(szBuf, len, "SELECT %llu", m_iCurrent - m_iOffset);
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo)

@@ -1,4 +1,4 @@
-#ifndef UNION_ALL_PLNN_H
+#ifndef UNION_ALL_PLAN_H
 #define UNION_ALL_PLAN_H
 
 #include "ParseTools.h"
