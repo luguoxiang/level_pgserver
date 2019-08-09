@@ -1,7 +1,7 @@
 #include "PgMessageReceiver.h"
 #include "common/IOException.h"
 #include <stdio.h>
-#include <assert.h>
+#include <cassert>
 #include <stdio.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -16,51 +16,46 @@
 #define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)
 #define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
 
-PgMessageReceiver::PgMessageReceiver(int fd)
-		: DataReceiver(fd, true)
-{
+PgMessageReceiver::PgMessageReceiver(int fd) :
+		DataReceiver(fd, true) {
 }
 
-PgMessageReceiver::~PgMessageReceiver()
-{
+PgMessageReceiver::~PgMessageReceiver() {
 }
 
-void PgMessageReceiver::processStartupPacket()
-{
+void PgMessageReceiver::processStartupPacket() {
 	readData();
 
 	size_t iLen = getDataLen();
-	if (iLen < sizeof(ProtocolVersion) || iLen > MAX_STARTUP_PACKET_LENGTH)
-	{
+	if (iLen < sizeof(ProtocolVersion) || iLen > MAX_STARTUP_PACKET_LENGTH) {
 		throw new IOException("Illegal startup packet length!");
 	}
 
 	ProtocolVersion proto = (ProtocolVersion) getNextInt();
-	if (proto == CANCEL_REQUEST_CODE)
-	{
+	if (proto == CANCEL_REQUEST_CODE) {
 		char buf[100];
-		uint32_t iBackendPID =  getNextInt();
-		uint32_t iCancelAuthCode =  getNextInt();
-		snprintf(buf, 100, "Cacnel WorkerID=%d, CancelAuthCode=%d", iBackendPID, iCancelAuthCode);
-		ExecutionPlan* pPlan = WorkerManager::getInstance().getWorker(iBackendPID)->m_pPlan;
-		if(pPlan != NULL) pPlan->cancel();
+		uint32_t iBackendPID = getNextInt();
+		uint32_t iCancelAuthCode = getNextInt();
+		snprintf(buf, 100, "Cacnel WorkerID=%d, CancelAuthCode=%d", iBackendPID,
+				iCancelAuthCode);
+		ExecutionPlan* pPlan = WorkerManager::getInstance().getWorker(
+				iBackendPID)->m_pPlan;
+		if (pPlan != NULL)
+			pPlan->cancel();
 		throw new IOException(buf);
 	}
-	if (proto == NEGOTIATE_SSL_CODE)
-	{
+	if (proto == NEGOTIATE_SSL_CODE) {
 		if (write(getFd(), "N", 1) != 1) // SSL is not supported
-		{
+				{
 			throw new IOException("send() failed!");
 		}
 		processStartupPacket();
 		return;
 	}
-	if (PG_PROTOCOL_MAJOR(proto) < 3)
-	{
+	if (PG_PROTOCOL_MAJOR(proto) < 3) {
 		throw new IOException("Unsupported protocol!");
 	}
-	while (hasData())
-	{
+	while (hasData()) {
 		size_t iLen;
 		const char* pszName = getNextString(&iLen);
 		if (*pszName == '\0')
@@ -74,11 +69,9 @@ void PgMessageReceiver::processStartupPacket()
 
 }
 
-char PgMessageReceiver::readMessage()
-{
+char PgMessageReceiver::readMessage() {
 	char qtype = readByte();
-	if (qtype == EOF || qtype == 'X')
-	{
+	if (qtype == EOF || qtype == 'X') {
 		return 'X';
 	}
 	readData();

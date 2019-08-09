@@ -12,24 +12,20 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-class UnionAllPlan: public ExecutionPlan
-{
+class UnionAllPlan: public ExecutionPlan {
 public:
-	UnionAllPlan(ExecutionPlan* pLeft, ExecutionPlan* pRight)
-			: ExecutionPlan(Explain), m_pLeft(pLeft), m_pRight(pRight), m_iCurrentRow(
-					0), m_bLeftDone(false)
-	{
+	UnionAllPlan(ExecutionPlan* pLeft, ExecutionPlan* pRight) :
+			ExecutionPlan(Explain), m_pLeft(pLeft), m_pRight(pRight), m_iCurrentRow(
+					0), m_bLeftDone(false) {
 		assert(m_pLeft && m_pRight);
 	}
 
-	virtual ~UnionAllPlan()
-	{
+	virtual ~UnionAllPlan() {
 		delete m_pLeft;
 		delete m_pRight;
 	}
 
-	virtual void explain(std::vector<std::string>& rows)
-	{
+	virtual void explain(std::vector<std::string>& rows) {
 		m_pLeft->explain(rows);
 		m_pRight->explain(rows);
 		rows.push_back("Union All");
@@ -39,26 +35,21 @@ public:
 	virtual bool next();
 	virtual void end();
 
-	virtual int addProjection(ParseNode* pColumn)
-	{
-    return m_pLeft->addProjection(pColumn);
+	virtual int addProjection(ParseNode* pColumn) {
+		return m_pLeft->addProjection(pColumn);
 	}
 
-	virtual const char* getProjectionName(size_t index)
-	{
+	virtual const char* getProjectionName(size_t index) {
 		return m_pLeft->getProjectionName(index);
 	}
 
-	virtual void getAllColumns(std::vector<const char*>& columns)
-	{
-    return m_pLeft->getAllColumns(columns);
+	virtual void getAllColumns(std::vector<const char*>& columns) {
+		return m_pLeft->getAllColumns(columns);
 	}
 
-	virtual DBDataType getResultType(size_t index)
-	{
+	virtual DBDataType getResultType(size_t index) {
 		DBDataType type = m_pLeft->getResultType(index);
-		switch (type)
-		{
+		switch (type) {
 		case TYPE_INT16:
 		case TYPE_INT32:
 		case TYPE_INT64:
@@ -68,8 +59,7 @@ public:
 		}
 	}
 
-	virtual int getResultColumns()
-	{
+	virtual int getResultColumns() {
 		return m_pLeft->getResultColumns();
 	}
 

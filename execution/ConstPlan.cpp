@@ -1,20 +1,18 @@
 #include "execution/ConstPlan.h"
 #include <sstream>
 
-void ConstPlan::explain(std::vector<std::string>& rows)
-{
+void ConstPlan::explain(std::vector<std::string>& rows) {
 	std::stringstream ss;
-	ss << "Const " << m_rows.size() << " rows, " << m_columns.size()<<" columns";
+	ss << "Const " << m_rows.size() << " rows, " << m_columns.size()
+			<< " columns";
 	rows.push_back(ss.str());
 }
 
-DBDataType ConstPlan::getResultType(size_t index)
-{
+DBDataType ConstPlan::getResultType(size_t index) {
 	assert(!m_rows.empty());
 	ParseNode* pRow = m_rows[0];
 	assert(pRow->m_iChildNum == m_columns.size());
-	switch (pRow->m_children[index]->m_iType)
-	{
+	switch (pRow->m_children[index]->m_iType) {
 	case INT_NODE:
 		return TYPE_INT64;
 	case STR_NODE:
@@ -22,33 +20,32 @@ DBDataType ConstPlan::getResultType(size_t index)
 	case FLOAT_NODE:
 		return TYPE_DOUBLE;
 	case DATE_NODE:
-		return strlen(pRow->m_children[index]->m_pszValue) < 12 ? TYPE_DATE:TYPE_DATETIME;
+		return strlen(pRow->m_children[index]->m_pszValue) < 12 ?
+				TYPE_DATE : TYPE_DATETIME;
 	default:
 		assert(0);
 		return TYPE_UNKNOWN;
 	}
 }
 
-void ConstPlan::getResult(size_t index, ResultInfo* pInfo)
-{
+void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 	assert(m_iCurrent > 0 && m_iCurrent <= m_rows.size());
 	ParseNode* pRow = m_rows[m_iCurrent - 1];
 	assert(pRow->m_iChildNum == m_columns.size());
 	pInfo->m_bNull = false;
 	ParseNode* pValue = pRow->m_children[index];
-	switch (pValue->m_iType)
-	{
+	switch (pValue->m_iType) {
 	case INT_NODE:
 		pInfo->m_value.m_lResult = pValue->m_iValue;
 		break;
-	case DATE_NODE:{
+	case DATE_NODE: {
 		struct timeval time;
 		time.tv_sec = (pValue->m_iValue / 1000000);
 		time.tv_usec = (pValue->m_iValue % 1000000);
 		pInfo->m_value.m_time = time;
 		break;
 	}
-	case FLOAT_NODE:{
+	case FLOAT_NODE: {
 		float fValue = strtof(pValue->m_pszValue, NULL);
 		pInfo->m_value.m_dResult = fValue;
 		break;
@@ -62,27 +59,22 @@ void ConstPlan::getResult(size_t index, ResultInfo* pInfo)
 	}
 }
 
-int ConstPlan::addProjection(ParseNode* pNode)
-{
+int ConstPlan::addProjection(ParseNode* pNode) {
 	assert(pNode);
-	if(pNode->m_iType != NAME_NODE) return -1;
-	for (size_t i = 0; i < m_columns.size(); ++i)
-	{
-		if (strcmp(m_columns[i].c_str(), pNode->m_pszValue) == 0)
-		{
+	if (pNode->m_iType != NAME_NODE)
+		return -1;
+	for (size_t i = 0; i < m_columns.size(); ++i) {
+		if (strcmp(m_columns[i].c_str(), pNode->m_pszValue) == 0) {
 			return i;
 		}
 	}
 	return -1;
 }
 
-void ConstPlan::addRow(ParseNode* pRow)
-{
-	if(m_rows.empty())
-	{
-		for(size_t i=0;i<pRow->m_iChildNum;++i)
-		{
-		        std::stringstream ss;
+void ConstPlan::addRow(ParseNode* pRow) {
+	if (m_rows.empty()) {
+		for (size_t i = 0; i < pRow->m_iChildNum; ++i) {
+			std::stringstream ss;
 			ss << i + 1;
 			m_columns.push_back(ss.str());
 		}

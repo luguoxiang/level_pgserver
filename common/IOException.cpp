@@ -1,11 +1,10 @@
 #include "IOException.h"
 #include <stdio.h>
 #include <arpa/inet.h>
-#include <assert.h>
+#include <cassert>
 #include "common/Log.h"
 
-IOException::IOException(const char* pszValue, const char* pszIP)
-{
+IOException::IOException(const char* pszValue, const char* pszIP) {
 	assert(pszIP);
 
 	m_sErrMsg.append(pszValue);
@@ -17,8 +16,7 @@ IOException::IOException(const char* pszValue, const char* pszIP)
 	LOG(ERROR, m_sErrMsg.c_str());
 }
 
-IOException::IOException(const char* pszValue)
-{
+IOException::IOException(const char* pszValue) {
 	m_sErrMsg.append(pszValue);
 	addErrorNo();
 

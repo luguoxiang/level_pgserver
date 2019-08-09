@@ -6,18 +6,15 @@
 #include <errno.h>
 #include "common/Exception.h"
 
-class IOException: public Exception
-{
+class IOException: public Exception {
 public:
 	IOException(const char* pszValue);
 	IOException(const char* pszValue, const char* pszIP);
 
-	virtual ~IOException()
-	{
+	virtual ~IOException() {
 	}
 
-	const char* what() const
-	{
+	const char* what() const {
 		return m_sErrMsg.c_str();
 	}
 
@@ -25,8 +22,7 @@ public:
 	IOException(const IOException& ex) = delete;
 
 private:
-	void addErrorNo()
-	{
+	void addErrorNo() {
 		if (errno == 0)
 			return;
 		m_sErrMsg.append("(");

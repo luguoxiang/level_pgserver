@@ -8,8 +8,7 @@
 
 class Exception;
 
-class PgClient
-{
+class PgClient {
 public:
 	PgClient(WorkThreadInfo* pInfo);
 	~PgClient();

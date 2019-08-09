@@ -1,54 +1,45 @@
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 #include <vector>
 #include <stdint.h>
 #include "common/ParseNode.h"
 
-class RowKeyRange
-{
+class RowKeyRange {
 public:
 	RowKeyRange();
 	virtual ~RowKeyRange();
 
-	const char* getStartRowKey()
-	{
+	const char* getStartRowKey() {
 		return m_pszRowKey1;
 	}
 
-	const char* getEndRowKey()
-	{
+	const char* getEndRowKey() {
 		return m_pszRowKey2;
 	}
 
-	int64_t getStartLength()
-	{
+	int64_t getStartLength() {
 		return m_iLen1;
 	}
 
-	int64_t getEndLength()
-	{
+	int64_t getEndLength() {
 		return m_iLen2;
 	}
 
-	bool isStartInclusive()
-	{
+	bool isStartInclusive() {
 		return m_bStartInc;
 	}
 
-	bool isEndInclusive()
-	{
+	bool isEndInclusive() {
 		return m_bEndInc;
 	}
 
-	size_t getConditionNum()
-	{
+	size_t getConditionNum() {
 		return m_conditions.size();
 	}
 
-	ParseNode* getCondition(size_t i)
-	{
-		assert(i>=0 && i< m_conditions.size());
+	ParseNode* getCondition(size_t i) {
+		assert(i >= 0 && i < m_conditions.size());
 		return m_conditions[i];
 	}
 

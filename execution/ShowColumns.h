@@ -7,17 +7,13 @@
 #include "execution/ExecutionPlan.h"
 #include "execution/WorkThreadInfo.h"
 
-class ShowColumns: public ExecutionPlan
-{
+class ShowColumns: public ExecutionPlan {
 public:
-	ShowColumns(TableInfo* pEntry) 
-  : ExecutionPlan(Other)
-  , m_pEntry(pEntry)
-	{
+	ShowColumns(TableInfo* pEntry) :
+			ExecutionPlan(Other), m_pEntry(pEntry) {
 	}
 
-	virtual void explain(std::vector<std::string>& rows)
-	{
+	virtual void explain(std::vector<std::string>& rows) {
 		rows.push_back("ShowColumns");
 	}
 
@@ -25,11 +21,12 @@ public:
 
 	virtual bool next();
 
-	virtual void end() { }
+	virtual void end() {
+	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo);
 
-  	virtual const char* getProjectionName(size_t index);
+	virtual const char* getProjectionName(size_t index);
 
 	virtual DBDataType getResultType(size_t index);
 
@@ -41,6 +38,6 @@ public:
 
 	virtual int addProjection(ParseNode* pNode);
 private:
-	size_t        m_iIndex;
-  TableInfo*  m_pEntry;
+	size_t m_iIndex;
+	TableInfo* m_pEntry;
 };

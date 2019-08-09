@@ -11,35 +11,28 @@
  * It is caller's responsibility to call walk() on child nodes in each visit method.
  */
 template<typename ParamType, typename ReturnType>
-class ParseTreeVisitor
-{
+class ParseTreeVisitor {
 public:
-	virtual ~ParseTreeVisitor()
-	{
+	virtual ~ParseTreeVisitor() {
 	}
 	;
 
-	virtual ReturnType visitDataNode(ParseNode* pNode, ParamType param)
-	{
+	virtual ReturnType visitDataNode(ParseNode* pNode, ParamType param) {
 		throw new ParseException("Unimplemented method");
 	}
-	virtual ReturnType visitNameNode(ParseNode* pNode, ParamType param)
-	{
+	virtual ReturnType visitNameNode(ParseNode* pNode, ParamType param) {
 		throw new ParseException("Unimplemented method");
 	}
 	virtual ReturnType visitDyadicOpNode(int op, ParseNode* pNode,
-			ParamType param)
-	{
+			ParamType param) {
 		throw new ParseException("Unimplemented method");
 	}
 	virtual ReturnType visitUnaryOpNode(int op, ParseNode* pNode,
-			ParamType param)
-	{
+			ParamType param) {
 		throw new ParseException("Unimplemented method");
 	}
 	virtual ReturnType visitFuncNode(const char* pszName, ParseNode* pNode,
-			ParamType param)
-	{
+			ParamType param) {
 		throw new ParseException("Unimplemented method");
 	}
 
@@ -50,10 +43,8 @@ public:
 
 template<typename ParamType, typename ReturnType>
 const char*
-ParseTreeVisitor<ParamType, ReturnType>::getOpString(int opcode)
-{
-	switch (opcode)
-	{
+ParseTreeVisitor<ParamType, ReturnType>::getOpString(int opcode) {
+	switch (opcode) {
 	case LIKE:
 		return "like";
 	case COMP_GE:
@@ -81,17 +72,16 @@ ParseTreeVisitor<ParamType, ReturnType>::getOpString(int opcode)
 	case '/':
 		return "/";
 	default:
-		LOG(ERROR, "Unsupported expression operator %d!", opcode);
+		LOG(ERROR, "Unsupported expression operator %d!", opcode)
+		;
 		throw new ParseException("Unsupported expression operator %d!", opcode);
 	}
 }
 
 template<typename ParamType, typename ReturnType>
 ReturnType ParseTreeVisitor<ParamType, ReturnType>::walk(ParseNode* pNode,
-		ParamType param)
-{
-	switch (pNode->m_iType)
-	{
+		ParamType param) {
+	switch (pNode->m_iType) {
 	case NAME_NODE:
 		return visitNameNode(pNode, param);
 
@@ -104,16 +94,11 @@ ReturnType ParseTreeVisitor<ParamType, ReturnType>::walk(ParseNode* pNode,
 		return visitDataNode(pNode, param);
 	}
 	case OP_NODE:
-		if (pNode->m_iChildNum == 2)
-		{
+		if (pNode->m_iChildNum == 2) {
 			return visitDyadicOpNode(OP_CODE(pNode), pNode, param);
-		}
-		else if (pNode->m_iChildNum == 1)
-		{
+		} else if (pNode->m_iChildNum == 1) {
 			return visitUnaryOpNode(OP_CODE(pNode), pNode, param);
-		}
-		else
-		{
+		} else {
 			LOG(ERROR, "Operator node with %d operators is not supported!",
 					pNode->m_iChildNum);
 			throw new ParseException(
@@ -125,7 +110,8 @@ ReturnType ParseTreeVisitor<ParamType, ReturnType>::walk(ParseNode* pNode,
 		return visitFuncNode(pNode->m_pszValue, pNode, param);
 	}
 	default:
-		LOG(ERROR, "Unsupported ParseNode type %d", pNode->m_iType);
+		LOG(ERROR, "Unsupported ParseNode type %d", pNode->m_iType)
+		;
 		throw new ParseException("Unsupported ParseNode type %d",
 				pNode->m_iType);
 	}

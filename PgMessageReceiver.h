@@ -3,8 +3,7 @@
 #include <stdint.h>
 #include "common/DataReceiver.h"
 
-class PgMessageReceiver: public DataReceiver
-{
+class PgMessageReceiver: public DataReceiver {
 public:
 	PgMessageReceiver(int fd);
 	~PgMessageReceiver();

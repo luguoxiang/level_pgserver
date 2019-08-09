@@ -1,5 +1,5 @@
 #include "PgClient.h"
-#include <assert.h>
+#include <cassert>
 #include <unistd.h>
 #include <chrono>
 #define AUTH_REQ_OK             0       /* User is authenticated  */
@@ -32,36 +32,26 @@
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
 
-namespace
-{
-class EmptyResult: public ExecutionPlan
-{
+namespace {
+class EmptyResult: public ExecutionPlan {
 public:
-	EmptyResult()
-			: ExecutionPlan(Other)
-	{
+	EmptyResult() :
+			ExecutionPlan(Other) {
 	}
 
-	virtual void explain(std::vector<std::string>& rows)
-	{
+	virtual void explain(std::vector<std::string>& rows) {
 		rows.push_back("Empty");
 	}
 
-	virtual void getInfoString(char* szBuf, int len)
-	{
+	virtual void getInfoString(char* szBuf, int len) {
 		snprintf(szBuf, len, "SELECT 0");
 	}
 };
 }
 
-PgClient::PgClient(WorkThreadInfo* pInfo)
-		: m_receiver(pInfo->m_iAcceptFd)
-		, m_sender(pInfo->m_iAcceptFd)
-		, m_pWorker(pInfo)
-		, m_iSendTime(0)
-		, m_iParamNum(0)
-		, m_pszSql("")
-{
+PgClient::PgClient(WorkThreadInfo* pInfo) :
+		m_receiver(pInfo->m_iAcceptFd), m_sender(pInfo->m_iAcceptFd), m_pWorker(
+				pInfo), m_iSendTime(0), m_iParamNum(0), m_pszSql("") {
 	assert(pInfo->m_iAcceptFd >= 0);
 
 	memset(m_handler, 0, sizeof(m_handler));
@@ -76,13 +66,11 @@ PgClient::PgClient(WorkThreadInfo* pInfo)
 	m_handler['E'] = &PgClient::handleExecute;
 }
 
-PgClient::~PgClient()
-{
+PgClient::~PgClient() {
 	::close(m_pWorker->m_iAcceptFd);
 }
 
-void PgClient::handleSync()
-{
+void PgClient::handleSync() {
 	LOG(DEBUG, "sync");
 	m_sender.prepare('Z');
 	m_sender.addString("I", 1);
@@ -90,12 +78,10 @@ void PgClient::handleSync()
 	m_sender.flush();
 }
 
-void PgClient::handleQuery()
-{
+void PgClient::handleQuery() {
 	size_t len;
 	m_pszSql = m_receiver.getNextString(&len);
-	if (len >= POOL_BLOCK_SIZE)
-	{
+	if (len >= POOL_BLOCK_SIZE) {
 		throw new ParseException(" Sql length could not exceeds 32KB");
 	}
 	LOG(DEBUG, "Q:%s", m_pszSql);
@@ -105,13 +91,11 @@ void PgClient::handleQuery()
 	handleExecute();
 }
 
-void PgClient::handleParse()
-{
+void PgClient::handleParse() {
 	size_t len1, len2;
 	const char* pszStmt = m_receiver.getNextString(&len1); //statement name
 	const char* pszSql = m_receiver.getNextString(&len2);
-	if (len1 >= POOL_BLOCK_SIZE || len2 >= POOL_BLOCK_SIZE)
-	{
+	if (len1 >= POOL_BLOCK_SIZE || len2 >= POOL_BLOCK_SIZE) {
 		throw new ParseException(" Sql length could not exceeds 32KB");
 	}
 
@@ -125,8 +109,7 @@ void PgClient::handleParse()
 	m_sender.commit();
 }
 
-void PgClient::handleBind()
-{
+void PgClient::handleBind() {
 	if (m_pPlan.get() == NULL)
 		return;
 
@@ -137,38 +120,32 @@ void PgClient::handleBind()
 	LOG(DEBUG, "B:portal %d,stmt %d.", len1, len2);
 
 	int num = m_receiver.getNextShort();
-	if (num != m_iParamNum)
-	{
+	if (num != m_iParamNum) {
 		throw new ParseException(
 				"Parameter format number unmatch!, expect %d, actual %d!",
 				m_iParamNum, num);
 	}
-	for (int i = 0; i < m_iParamNum; ++i)
-	{
-		if (m_receiver.getNextShort() != PARAM_TEXT_MODE)
-		{
+	for (int i = 0; i < m_iParamNum; ++i) {
+		if (m_receiver.getNextShort() != PARAM_TEXT_MODE) {
 			throw new ParseException(
 					"Only text mode bind parameter is supported!");
 		}
 	}
 
 	num = m_receiver.getNextShort();
-	if (num != m_iParamNum)
-	{
+	if (num != m_iParamNum) {
 		throw new ParseException(
 				"Parameter number unmatch, expect %d, actual %d!", m_iParamNum,
 				num);
 	}
-	if (m_iParamNum > 0)
-	{
+	if (m_iParamNum > 0) {
 		throw new ParseException("Bind Param is not supported!");
 	}
 	m_sender.prepare('2');
 	m_sender.commit();
 }
 
-void PgClient::handleDescribe()
-{
+void PgClient::handleDescribe() {
 	if (m_pPlan.get() == NULL)
 		return;
 	size_t len;
@@ -181,8 +158,7 @@ void PgClient::handleDescribe()
 
 }
 
-void PgClient::handleExecute()
-{
+void PgClient::handleExecute() {
 	if (m_pPlan.get() == NULL)
 		return;
 
@@ -191,8 +167,7 @@ void PgClient::handleExecute()
 	m_pWorker->m_pPlan = m_pPlan.get();
 	m_pPlan->begin();
 
-	while (m_pPlan->next())
-	{
+	while (m_pPlan->next()) {
 		if (columnNum == 0)
 			continue;
 		sendRow(m_pPlan.get());
@@ -211,8 +186,7 @@ void PgClient::handleExecute()
 	m_pWorker->m_pPlan = NULL;
 }
 
-void PgClient::handleException(Exception* pe)
-{
+void PgClient::handleException(Exception* pe) {
 	m_sender.prepare('E');
 	m_sender.addByte(PG_DIAG_SEVERITY);
 	m_sender.addString("ERROR", 6);
@@ -222,8 +196,7 @@ void PgClient::handleException(Exception* pe)
 	m_sender.addString(pe->what(), strlen(pe->what()) + 1);
 	LOG(ERROR, "Error:%s:%s!", m_pszSql, pe->what());
 
-	if (pe->getLine() >= 0)
-	{
+	if (pe->getLine() >= 0) {
 		m_sender.addByte(PG_DIAG_STATEMENT_POSITION);
 		char szBuf[10];
 		sprintf(szBuf, "%d", pe->getStartPos());
@@ -237,8 +210,7 @@ void PgClient::handleException(Exception* pe)
 	m_pPlan.reset(NULL);
 }
 
-void PgClient::run()
-{
+void PgClient::run() {
 #ifndef NO_TIMEING
 	auto start = std::chrono::steady_clock::now();
 #endif
@@ -272,14 +244,13 @@ void PgClient::run()
 #ifndef NO_TIMEING
 	auto end = std::chrono::steady_clock::now();
 
-	m_pWorker->m_iClientTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+	m_pWorker->m_iClientTime += std::chrono::duration_cast
+			< std::chrono::microseconds > (end - start).count();
 #endif
 
-	while (true)
-	{
+	while (true) {
 		char qtype = m_receiver.readMessage();
-		if (qtype == 'X')
-		{
+		if (qtype == 'X') {
 			LOG(DEBUG, "Client Terminate!\n");
 			break;
 		}
@@ -287,19 +258,15 @@ void PgClient::run()
 		start = std::chrono::steady_clock::now();
 #endif
 		MessageHandler handler = m_handler[qtype];
-		if (handler == NULL)
-		{
+		if (handler == NULL) {
 			char szBuf[100];
 			snprintf(szBuf, 100, "Unable to handler message %c", qtype);
 			throw new IOException(szBuf);
 		}
 
-		try
-		{
+		try {
 			(this->*handler)();
-		} 
-		catch (Exception* pe)
-		{
+		} catch (Exception* pe) {
 			handleException(pe);
 		}
 		m_pWorker->m_pPlan = NULL;
@@ -307,39 +274,32 @@ void PgClient::run()
 			handleSync();
 
 #ifndef NO_TIMEING
-        	auto end = std::chrono::steady_clock::now();
+		auto end = std::chrono::steady_clock::now();
 
-	        m_pWorker->m_iClientTime += std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+		m_pWorker->m_iClientTime += std::chrono::duration_cast
+				< std::chrono::microseconds > (end - start).count();
 #endif
 	} //while
 }
 
-void PgClient::createPlan(const char* pszCmd, size_t len)
-{
+void PgClient::createPlan(const char* pszCmd, size_t len) {
 	m_pPlan.reset(NULL);
-	if (strncasecmp("DEALLOCATE", pszCmd, 10) == 0)
-	{
+	if (strncasecmp("DEALLOCATE", pszCmd, 10) == 0) {
 		m_pPlan.reset(new EmptyResult());
 		LOG(DEBUG, "%s", pszCmd);
-	}
-	else if (strncasecmp("SET ", pszCmd, 4) == 0)
-	{
+	} else if (strncasecmp("SET ", pszCmd, 4) == 0) {
 		m_pPlan.reset(new EmptyResult());
 		LOG(DEBUG, "%s", pszCmd);
-	}
-	else
-	{
+	} else {
 		m_pWorker->parse(pszCmd, len);
 		m_pPlan.reset(m_pWorker->resolve());
-		if (m_pPlan.get() == NULL)
-		{
+		if (m_pPlan.get() == NULL) {
 			throw new ParseException("No statement!");
 		}
 	}
 }
 
-void PgClient::describeColumn(ExecutionPlan* pPlan)
-{
+void PgClient::describeColumn(ExecutionPlan* pPlan) {
 	assert(pPlan);
 
 	size_t columnNum = pPlan->getResultColumns();
@@ -349,12 +309,10 @@ void PgClient::describeColumn(ExecutionPlan* pPlan)
 	m_sender.prepare('T');
 	m_sender.addShort(columnNum);
 
-	for (size_t i = 0; i < columnNum; ++i)
-	{
+	for (size_t i = 0; i < columnNum; ++i) {
 		const char* pszName = pPlan->getProjectionName(i);
 
-		switch (pPlan->getResultType(i))
-		{
+		switch (pPlan->getResultType(i)) {
 		case TYPE_BYTES:
 			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::Bytea, -1);
 			break;
@@ -386,7 +344,8 @@ void PgClient::describeColumn(ExecutionPlan* pPlan)
 					-1);
 			break;
 		default:
-			LOG(ERROR, "Unknown type %d\n", pPlan->getResultType(i));
+			LOG(ERROR, "Unknown type %d\n", pPlan->getResultType(i))
+			;
 			assert(0);
 			break;
 		}
@@ -395,37 +354,31 @@ void PgClient::describeColumn(ExecutionPlan* pPlan)
 	m_sender.flush();
 }
 
-void PgClient::sendRow(ExecutionPlan* pPlan)
-{
+void PgClient::sendRow(ExecutionPlan* pPlan) {
 	size_t columnNum = pPlan->getResultColumns();
 	assert(columnNum > 0);
 	m_sender.prepare('D');
 	m_sender.addShort(columnNum); //field number
-	for (size_t i = 0; i < columnNum; ++i)
-	{
+	for (size_t i = 0; i < columnNum; ++i) {
 		DBDataType type = pPlan->getResultType(i);
 
 		ExecutionPlan::ResultInfo info;
-    try
-    {
-  		pPlan->getResult(i, &info);
-    }
-    catch(...)
-    {
-      for(;i<columnNum;++i) m_sender.addInt(-1);
-      m_sender.commit();
-      m_sender.flush();
-      throw;
-    }
+		try {
+			pPlan->getResult(i, &info);
+		} catch (...) {
+			for (; i < columnNum; ++i)
+				m_sender.addInt(-1);
+			m_sender.commit();
+			m_sender.flush();
+			throw;
+		}
 		char szBuf[100];
 		size_t len;
-		if (info.m_bNull)
-		{
+		if (info.m_bNull) {
 			m_sender.addInt(-1);
 			continue;
 		}
-		switch (type)
-		{
+		switch (type) {
 		case TYPE_INT8:
 		case TYPE_INT32:
 		case TYPE_INT64:
@@ -436,8 +389,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan)
 			break;
 		case TYPE_BYTES: {
 			std::string s = "\\x";
-			for (int64_t i = 0; i < info.m_len; ++i)
-			{
+			for (int64_t i = 0; i < info.m_len; ++i) {
 				char szBuf[10];
 				snprintf(szBuf, 10, "%02x",
 						(unsigned char) info.m_value.m_pszResult[i]);
@@ -455,13 +407,10 @@ void PgClient::sendRow(ExecutionPlan* pPlan)
 		case TYPE_DATE: {
 			time_t time = info.m_value.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
-			if (pToday == NULL)
-			{
-				LOG(ERROR, "Failed to get localtime %d\n", (int) time);
+			if (pToday == NULL) {
+				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
 				len = 0;
-			}
-			else
-			{
+			} else {
 				strftime(szBuf, 30, "%Y-%m-%d", pToday);
 				len = strlen(szBuf);
 			}
@@ -472,13 +421,10 @@ void PgClient::sendRow(ExecutionPlan* pPlan)
 		case TYPE_DATETIME: {
 			time_t time = info.m_value.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
-			if (pToday == NULL)
-			{
-				LOG(ERROR, "Failed to get localtime %d\n", (int) time);
+			if (pToday == NULL) {
+				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
 				len = 0;
-			}
-			else
-			{
+			} else {
 				strftime(szBuf, 30, "%Y-%m-%d %H:%M:%S", pToday);
 				len = strlen(szBuf);
 			}
@@ -488,8 +434,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan)
 		}
 		case TYPE_DOUBLE: {
 			len = snprintf(szBuf, 100, "%f", info.m_value.m_dResult);
-			while (len > 0)
-			{
+			while (len > 0) {
 				char c = szBuf[len - 1];
 				if (c > '0' && c <= '9')
 					break;

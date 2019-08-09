@@ -41,15 +41,13 @@ typedef void (*BuildPlanFunc)(struct _ParseNode* pNode);
 
 #define POOL_BLOCK_SIZE 1024 * 32
 
-typedef struct _MemoryPoolBlock
-{
+typedef struct _MemoryPoolBlock {
 	char m_szData[POOL_BLOCK_SIZE];
 	struct _MemoryPoolBlock* m_pNext;
 	size_t m_iUsed;
 } MemoryPoolBlock;
 
-typedef struct _ParseNode
-{
+typedef struct _ParseNode {
 	int m_iType;
 	const char* m_pszValue;
 	int64_t m_iValue;
@@ -62,8 +60,7 @@ typedef struct _ParseNode
 
 #define MAX_ERROR_MSG 200
 
-typedef struct _ParseResult
-{
+typedef struct _ParseResult {
 	const char* m_pszSql;
 	void* m_scanInfo;
 	ParseNode* m_pResult;
@@ -78,8 +75,7 @@ typedef struct _ParseResult
 } ParseResult;
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 extern int64_t parseTime(const char* pszTime);

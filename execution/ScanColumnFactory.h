@@ -13,16 +13,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-class ScanColumnFactory
-{
+class ScanColumnFactory {
 	friend class OBScanPlan;
 public:
-	ScanColumnFactory()
-	{
+	ScanColumnFactory() {
 	}
 
-	~ScanColumnFactory()
-	{
+	~ScanColumnFactory() {
 	}
 
 	void clear();
@@ -35,9 +32,7 @@ public:
 	ScanColumn* addScanComplexColumn(const char* pszExpr,
 			const char* pszRawExpr, bool bProject, bool bSimple);
 	ScanColumn* addFunctionColumn(const char* pszFuncName,
-			const char* pszRawExpr,
-			const char* sArg,
-			bool bProject);
+			const char* pszRawExpr, const char* sArg, bool bProject);
 
 	ScanColumn* addConstValue(const char* pszValue);
 
@@ -45,8 +40,7 @@ public:
 
 	ScanColumn* getAliasColumnInfo(const char*);
 
-	void alias(const char* pszName, ScanColumn* pColumn)
-	{
+	void alias(const char* pszName, ScanColumn* pColumn) {
 		m_aliasMap[pszName] = pColumn;
 	}
 private:

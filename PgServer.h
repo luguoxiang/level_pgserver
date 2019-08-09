@@ -2,8 +2,7 @@
 
 #include "execution/WorkThreadInfo.h"
 
-class PgServer
-{
+class PgServer {
 public:
 	PgServer(const char* pszPort);
 	~PgServer();

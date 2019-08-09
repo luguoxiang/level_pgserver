@@ -29,31 +29,25 @@
 
 #define MAX_CONNECTION 1000
 
-
-PgServer::PgServer(const char* pszPort)
-		: m_pszPort(pszPort), m_iFd(-1)
-{
+PgServer::PgServer(const char* pszPort) :
+		m_pszPort(pszPort), m_iFd(-1) {
 	LOG(INFO, "Start server on port %s!", pszPort);
 }
 
-PgServer::~PgServer()
-{
-	if (m_iFd >= 0)
-	{
+PgServer::~PgServer() {
+	if (m_iFd >= 0) {
 		close(m_iFd);
 	}
 }
 
-int PgServer::acceptSocket(int fd, int maxConnection)
-{
+int PgServer::acceptSocket(int fd, int maxConnection) {
 	struct sockaddr_storage addr;
 	socklen_t addrlen = sizeof(addr);
 	struct sockaddr* pAddr = (struct sockaddr*) &addr;
 
 	int acceptSock = ::accept(fd, pAddr, &addrlen);
 
-	if (acceptSock < 0)
-	{
+	if (acceptSock < 0) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		throw new IOException("accept() failed");
 	}
@@ -65,14 +59,12 @@ int PgServer::acceptSocket(int fd, int maxConnection)
 	LOG(DEBUG, "Accept client:%s, timeout=%d!", pszIP, iTimeout);
 	int optval = 1;
 	if (::setsockopt(acceptSock, IPPROTO_TCP, TCP_NODELAY, (char*) &optval,
-			sizeof(optval)) < 0)
-	{
+			sizeof(optval)) < 0) {
 		::close(acceptSock);
 		throw new IOException("setsockopt(TCP_NODELAY) failed", pszIP);
 	}
 	if (::setsockopt(acceptSock, SOL_SOCKET, SO_KEEPALIVE, (char*) &optval,
-			sizeof(optval)) < 0)
-	{
+			sizeof(optval)) < 0) {
 		::close(acceptSock);
 		throw new IOException("setsockopt(SO_KEEPALIVE) failed", pszIP);
 	}
@@ -81,25 +73,21 @@ int PgServer::acceptSocket(int fd, int maxConnection)
 	timeout.tv_sec = iTimeout;
 	timeout.tv_usec = 0;
 	if (::setsockopt(acceptSock, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout,
-			sizeof(timeout)) < 0)
-	{
+			sizeof(timeout)) < 0) {
 		::close(acceptSock);
 		throw new IOException("setsockopt(SO_SNDTIMEO) failed", pszIP);
 	}
 	if (::setsockopt(acceptSock, SOL_SOCKET, SO_RCVTIMEO, (char *) &timeout,
-			sizeof(timeout)) < 0)
-	{
+			sizeof(timeout)) < 0) {
 		::close(acceptSock);
 		throw new IOException("setsockopt(SO_RCVTIMEO) failed", pszIP);
 	}
 	return acceptSock;
 }
 
-int PgServer::bindSocket(const char* pszPort)
-{
+int PgServer::bindSocket(const char* pszPort) {
 	int fd = ::socket(AF_INET, SOCK_STREAM, 0);
-	if (fd < 0)
-	{
+	if (fd < 0) {
 		throw new IOException("Could not create socket()!");
 	}
 
@@ -112,38 +100,31 @@ int PgServer::bindSocket(const char* pszPort)
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*) &optval,
-			sizeof(optval)) < 0)
-	{
+			sizeof(optval)) < 0) {
 		::close(fd);
 		throw new IOException("could not setsockopt(SO_REUSEADDR)");
 	}
 	int flags = ::fcntl(fd, F_GETFL, 0);
-	if (flags < 0)
-	{
+	if (flags < 0) {
 		::close(fd);
 		throw new IOException("could not fcntl(F_GETFL)");
 	}
-	if (::bind(fd, (struct sockaddr*) &addr, sizeof(addr)) < 0)
-	{
+	if (::bind(fd, (struct sockaddr*) &addr, sizeof(addr)) < 0) {
 		::close(fd);
 		throw new IOException("could not bind socket");
 	}
 	return fd;
 }
 
-void PgServer::worker_thread(WorkThreadInfo* pInfo)
-{
+void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 	pInfo->m_tid = std::this_thread::get_id();
 	WorkThreadInfo::m_pWorkThreadInfo = pInfo;
 	LOG(INFO, "Working thread is listening on %s.", pInfo->m_pszPort);
-	while (true)
-	{
-		try
-		{
+	while (true) {
+		try {
 			pInfo->m_iAcceptFd = acceptSocket(pInfo->m_iListenFd,
-					MAX_CONNECTION);
-		} catch (IOException* pe)
-		{
+			MAX_CONNECTION);
+		} catch (IOException* pe) {
 			LOG(ERROR, "Working thread failed:%s.", pe->what());
 			delete pe;
 			exit(0);
@@ -151,16 +132,13 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo)
 		pInfo->m_bRunning = true;
 		++pInfo->m_iSessions;
 
-		try
-		{
+		try {
 			PgClient client(pInfo);
 			client.run();
-		} catch (Exception* pe)
-		{
+		} catch (Exception* pe) {
 			LOG(ERROR, "Working thread failed:%s.", pe->what());
 			delete pe;
-		} catch (...)
-		{
+		} catch (...) {
 			LOG(ERROR, "Working thread failed:Unknown Reason.");
 		}
 		pInfo->m_bRunning = false;
@@ -168,44 +146,38 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo)
 	LOG(WARN, "Working thread terminate.");
 }
 
-static void int_handler(int code)
-{
+static void int_handler(int code) {
 	LOG(INFO, "Receive INT signal!");
 	exit(0);
 }
 
-void PgServer::run()
-{
+void PgServer::run() {
 	struct sigaction act;
 	act.sa_handler = int_handler;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 
-	if (sigaction(SIGINT, &act, NULL) < 0)
-	{
+	if (sigaction(SIGINT, &act, NULL) < 0) {
 		LOG(ERROR, "Could not set SIGINT handler!");
 	}
 
 	m_iFd = bindSocket(m_pszPort);
 
-	if (::listen(m_iFd, MAX_CONNECTION) < 0)
-	{
+	if (::listen(m_iFd, MAX_CONNECTION) < 0) {
 		::close(m_iFd);
 		throw new IOException("could not listen!");
 	}
 
 	int iWorkerNum = MetaConfig::getInstance().getWorkerNum();
 
-	std::vector<std::thread> threads(iWorkerNum);
-	for (uint32_t i = 0; i < iWorkerNum; ++i)
-	{
+	std::vector < std::thread > threads(iWorkerNum);
+	for (uint32_t i = 0; i < iWorkerNum; ++i) {
 		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_pszPort, i);
 		threads[i] = std::thread(worker_thread, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}
 
-	for (auto& th : threads)
-	{
+	for (auto& th : threads) {
 		th.join();
 	}
 	LOG(INFO, "Main Server shutdown!");

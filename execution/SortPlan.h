@@ -5,31 +5,25 @@
 #include "common/ParseException.h"
 #include "common/Log.h"
 
-class SortPlan: public ExecutionPlan
-{
-	struct SortProjection
-	{
+class SortPlan: public ExecutionPlan {
+	struct SortProjection {
 		size_t m_iSubIndex;
 		const char* m_pszName;
 	};
 public:
 	SortPlan(ExecutionPlan* pPlan);
 
-	virtual ~SortPlan()
-	{
+	virtual ~SortPlan() {
 		delete m_pPlan;
 	}
 
-	virtual void explain(std::vector<std::string>& rows)
-	{
+	virtual void explain(std::vector<std::string>& rows) {
 		m_pPlan->explain(rows);
 		std::string s = "Sort(";
-		for (size_t i = 0; i < m_sort.size(); ++i)
-		{
+		for (size_t i = 0; i < m_sort.size(); ++i) {
 			s.append(m_sort[i].m_pszColumn);
 			s.append(" ");
-			switch(m_sort[i].m_order)
-			{
+			switch (m_sort[i].m_order) {
 			case Ascend:
 			case Any:
 				s.append("ascend");
@@ -47,8 +41,7 @@ public:
 				s.append(", ");
 		}
 		s += "project:";
-		for (size_t i = 0; i < m_proj.size(); ++i)
-		{
+		for (size_t i = 0; i < m_proj.size(); ++i) {
 			s.append(m_proj[i].m_pszName);
 			if (i < m_proj.size() - 1)
 				s.append(", ");
@@ -61,41 +54,34 @@ public:
 	virtual bool next();
 	virtual void end();
 
-	virtual int getResultColumns()
-	{
+	virtual int getResultColumns() {
 		return m_proj.size();
 	}
 
-	virtual const char* getProjectionName(size_t index)
-	{
+	virtual const char* getProjectionName(size_t index) {
 		return m_proj[index].m_pszName;
 	}
 
-	virtual DBDataType getResultType(size_t index)
-	{
+	virtual DBDataType getResultType(size_t index) {
 		return m_pPlan->getResultType(m_proj[index].m_iSubIndex);
 	}
 
-	virtual void getInfoString(char* szBuf, int len)
-	{
+	virtual void getInfoString(char* szBuf, int len) {
 		return m_pPlan->getInfoString(szBuf, len);
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo);
 
-	virtual void getAllColumns(std::vector<const char*>& columns)
-	{
+	virtual void getAllColumns(std::vector<const char*>& columns) {
 		return m_pPlan->getAllColumns(columns);
 	}
 
-	virtual int addProjection(ParseNode* pNode)
-	{
+	virtual int addProjection(ParseNode* pNode) {
 		int index = m_pPlan->addProjection(pNode);
 		if (index < 0)
 			return index;
 
-		for (size_t i = 0; i < m_proj.size(); ++i)
-		{
+		for (size_t i = 0; i < m_proj.size(); ++i) {
 			if (m_proj[i].m_iSubIndex == index)
 				return i;
 		}
@@ -118,22 +104,23 @@ public:
 	 * later, when BuilSortPlan query SortPlan::ensureSortOrder,
 	 * Any order can be upgrated to Descend order.
 	 */
-	enum SortOrder
-	{
+	enum SortOrder {
 		Ascend, Descend, Any
 	};
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn, bool* pOrder)
-	{
-		if(m_sort.size() <= iSortIndex) return false;
+	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
+			bool* pOrder) {
+		if (m_sort.size() <= iSortIndex)
+			return false;
 
 		SortSpec& spec = m_sort[iSortIndex];
 
-		if(strcmp(pszColumn, spec.m_pszColumn) != 0) return false;
+		if (strcmp(pszColumn, spec.m_pszColumn) != 0)
+			return false;
 
-		if(pOrder == NULL) return true;
-		switch(spec.m_order)
-		{
+		if (pOrder == NULL)
+			return true;
+		switch (spec.m_order) {
 		case Ascend:
 			return *pOrder;
 		case Descend:
@@ -144,12 +131,11 @@ public:
 		};
 	}
 
-	void addSortSpecification(ParseNode* pNode, SortOrder order)
-	{
+	void addSortSpecification(ParseNode* pNode, SortOrder order) {
 		int i = addProjection(pNode);
-		if (i < 0)
-		{
-			throw new ParseException("unrecognized column '%s'", pNode->m_pszExpr);
+		if (i < 0) {
+			throw new ParseException("unrecognized column '%s'",
+					pNode->m_pszExpr);
 		}
 		SortSpec spec;
 		spec.m_iIndex = i;
@@ -161,19 +147,16 @@ public:
 	}
 
 private:
-	struct SortSpec
-	{
+	struct SortSpec {
 		size_t m_iIndex;
 		size_t m_iSubIndex;
 		const char* m_pszColumn;
 		SortOrder m_order;
 		DBDataType m_type;
 	};
-	struct Compare
-	{
-		Compare(size_t iColumns, const std::vector<SortSpec>& spec)
-				: m_iColumns(iColumns), m_sort(spec)
-		{
+	struct Compare {
+		Compare(size_t iColumns, const std::vector<SortSpec>& spec) :
+				m_iColumns(iColumns), m_sort(spec) {
 		}
 		bool operator()(ResultInfo* pRow1, ResultInfo* pRow2);
 	private:

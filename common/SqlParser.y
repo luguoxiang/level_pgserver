@@ -258,7 +258,7 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 		{
 			$2->m_iValue = - $2->m_iValue;
 			char szBuf[20];
-			snprintf(szBuf,20, "%ld", $2->m_iValue);
+			snprintf(szBuf,20, "%lld", $2->m_iValue);
 			$2->m_pszValue = my_strdup(pResult, szBuf);
 			$2->m_pszExpr = $2->m_pszValue;
 			$$ = $2;

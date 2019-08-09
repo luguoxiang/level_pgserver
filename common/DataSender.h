@@ -3,8 +3,7 @@
 #include <stdio.h>
 #include "IOException.h"
 
-class DataSender
-{
+class DataSender {
 public:
 	DataSender(int fd, bool bNetNumber, uint32_t iSendBuffer);
 	virtual ~DataSender();
@@ -17,8 +16,7 @@ public:
 
 	void flush();
 
-	size_t getWritten()
-	{
+	size_t getWritten() {
 		return m_iWritten - m_iLastPrepare;
 	}
 	//iOffset should lower or equals than end() - begin()
@@ -29,14 +27,11 @@ protected:
 	void end();
 
 private:
-	void check(uint32_t iSize)
-	{
-		if (m_iWritten + iSize > m_iSendBuffer)
-		{
+	void check(uint32_t iSize) {
+		if (m_iWritten + iSize > m_iSendBuffer) {
 			flush();
 		}
-		if (m_iWritten + iSize > m_iSendBuffer)
-		{
+		if (m_iWritten + iSize > m_iSendBuffer) {
 			char szBuf[1024];
 			snprintf(szBuf, 1024,
 					"Send data is too large:written=%d, total=%d, require=%d!",

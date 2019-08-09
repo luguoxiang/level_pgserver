@@ -2,8 +2,8 @@
 #include <thread>
 #include <sstream>
 #include <chrono>
+#include <cassert>
 #include <unistd.h>
-#include <assert.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -15,48 +15,42 @@
 
 #define MAX_LOG_LEN 4096
 
-Log::Log() : m_pszLogPath("log/server.log"), m_pLogFile(NULL), m_level(INFO), m_iDay(0)
-{
+Log::Log() :
+		m_pszLogPath("log/server.log"), m_pLogFile(NULL), m_level(INFO), m_iDay(
+				0) {
 }
 
-void Log::init(const char* pszPath, LogLevel level)
-{
+void Log::init(const char* pszPath, LogLevel level) {
 	m_level = level;
 	m_pszLogPath = pszPath;
 }
 
-Log::~Log()
-{
-	if (m_pLogFile != NULL)
-	{
+Log::~Log() {
+	if (m_pLogFile != NULL) {
 		fclose(m_pLogFile);
 		m_pLogFile = NULL;
 	}
 }
 
-FILE* Log::getFile(uint64_t iDay)
-{
+FILE* Log::getFile(uint64_t iDay) {
 	if (m_pszLogPath == NULL)
 		return stdout;
 
 	if (m_pLogFile != NULL && m_iDay == iDay)
 		return m_pLogFile;
 
-	std::lock_guard<std::mutex> guard(m_lock);
-	if (m_pLogFile == NULL || m_iDay != iDay)
-	{
+	std::lock_guard < std::mutex > guard(m_lock);
+	if (m_pLogFile == NULL || m_iDay != iDay) {
 		char szBuf[1024];
 		snprintf(szBuf, 1024, "%s.%04llu-%02llu-%02llu", m_pszLogPath,
 				(iDay >> 16) + 1900, ((iDay & 0xffff) >> 8) + 1, iDay & 0xff);
 		FILE* pFile = fopen(szBuf, "a+");
-		if (pFile == 0)
-		{
+		if (pFile == 0) {
 			fprintf(stderr, "Failed to open log file %s!", szBuf);
 			m_pszLogPath = NULL;
 			return stdout;
 		}
-		if (m_pLogFile != NULL)
-		{
+		if (m_pLogFile != NULL) {
 			sleep(1); //wait for other thread's write
 			fclose(m_pLogFile);
 			m_pLogFile = NULL;
@@ -68,8 +62,7 @@ FILE* Log::getFile(uint64_t iDay)
 }
 
 void Log::log(LogLevel level, const char* pszPath, int iLine,
-		const char* pszFormat, ...)
-{
+		const char* pszFormat, ...) {
 	if (m_level > level)
 		return;
 
@@ -78,8 +71,7 @@ void Log::log(LogLevel level, const char* pszPath, int iLine,
 	tm time = *localtime(&tt);
 
 	const char* pszLevel = "UNKNOWN";
-	switch (level)
-	{
+	switch (level) {
 	case WARN:
 		pszLevel = "WARN";
 		break;

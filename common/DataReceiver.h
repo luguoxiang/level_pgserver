@@ -1,10 +1,9 @@
 #pragma once
 #include <stdio.h>
 #include <stdint.h>
-#include <assert.h>
+#include <cassert>
 
-class DataReceiver
-{
+class DataReceiver {
 public:
 	DataReceiver(int fd, bool bNetNumber);
 	virtual ~DataReceiver();
@@ -17,27 +16,22 @@ public:
 	int32_t getNextInt();
 	int64_t getNextLongInt();
 
-	size_t getDataLen()
-	{
+	size_t getDataLen() {
 		return m_nBufLen;
 	}
 
-	int getFd()
-	{
+	int getFd() {
 		return m_nFd;
 	}
 
-	bool hasData()
-	{
+	bool hasData() {
 		return m_pszCurrent < m_pszBuffer + m_nBufLen;
 	}
 
-	void mark()
-	{
+	void mark() {
 		m_pszMark = m_pszCurrent;
 	}
-	void restore()
-	{
+	void restore() {
 		assert(m_pszMark);
 		m_pszCurrent = m_pszMark;
 	}

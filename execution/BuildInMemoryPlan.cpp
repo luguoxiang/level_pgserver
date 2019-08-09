@@ -10,8 +10,7 @@
 #include "execution/UnionAllPlan.h"
 #include "execution/GroupByPlan.h"
 
-void buildPlanForOrderBy(ParseNode* pNode)
-{
+void buildPlanForOrderBy(ParseNode* pNode) {
 	if (pNode == NULL)
 		return;
 	ExecutionPlan* pPlan = Tools::popPlan();
@@ -19,22 +18,19 @@ void buildPlanForOrderBy(ParseNode* pNode)
 
 	assert(pNode->m_iChildNum > 0);
 	bool bAlreadySorted = true;
-	for (size_t i = 0; i < pNode->m_iChildNum; ++i)
-	{
+	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pChild = pNode->m_children[i];
 		assert(pChild);
 
 		assert(pChild->m_iChildNum == 2);
 		ParseNode* pColumn = pChild->m_children[0];
 		bool bAscend = (OP_CODE(pChild->m_children[1]) == ASC);
-		if (!pPlan->ensureSortOrder(i, pColumn->m_pszValue, &bAscend))
-		{
+		if (!pPlan->ensureSortOrder(i, pColumn->m_pszValue, &bAscend)) {
 			bAlreadySorted = false;
 			break;
 		}
 	}
-	if (bAlreadySorted)
-	{
+	if (bAlreadySorted) {
 		Tools::pushPlan(pPlan);
 		return;
 	}
@@ -43,8 +39,7 @@ void buildPlanForOrderBy(ParseNode* pNode)
 	Tools::pushPlan(pSort);
 
 	assert(pNode->m_iChildNum > 0);
-	for (size_t i = 0; i < pNode->m_iChildNum; ++i)
-	{
+	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pChild = pNode->m_children[i];
 		ParseNode* pColumn = pChild->m_children[0];
 
@@ -54,8 +49,7 @@ void buildPlanForOrderBy(ParseNode* pNode)
 	}
 }
 
-void buildPlanForProjection(ParseNode* pNode)
-{
+void buildPlanForProjection(ParseNode* pNode) {
 	ExecutionPlan* pPlan = Tools::popPlan();
 	assert(pPlan);
 	ProjectionPlan* pProjPlan = new ProjectionPlan(pPlan);
@@ -63,17 +57,14 @@ void buildPlanForProjection(ParseNode* pNode)
 
 	assert(pNode && pNode->m_children[0]);
 	if (pNode->m_children[0]->m_iType == INFO_NODE
-			&& pNode->m_children[0]->m_iValue == ALL_COLUMN)
-	{
+			&& pNode->m_children[0]->m_iValue == ALL_COLUMN) {
 		std::vector<const char*> columns;
 		pPlan->getAllColumns(columns);
-		if (columns.size() == 0)
-		{
+		if (columns.size() == 0) {
 			PARSE_ERROR(
 					"select * is not supported in current projection context");
 		}
-		for (size_t i = 0; i < columns.size(); ++i)
-		{
+		for (size_t i = 0; i < columns.size(); ++i) {
 			ParseNode node;
 			node.m_iType = NAME_NODE;
 			node.m_iChildNum = 0;
@@ -84,42 +75,35 @@ void buildPlanForProjection(ParseNode* pNode)
 		return;
 	}
 
-	for (size_t i = 0; i < pNode->m_iChildNum; ++i)
-	{
+	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pColumn = pNode->m_children[i];
 		const char* pszAlias = NULL;
-		if (pColumn->m_iType == OP_NODE && OP_CODE(pColumn) == AS)
-		{
+		if (pColumn->m_iType == OP_NODE && OP_CODE(pColumn) == AS) {
 			assert(pColumn->m_iChildNum == 2);
 
 			pszAlias = pColumn->m_children[1]->m_pszValue;
 
 			pColumn = pColumn->m_children[0];
 		}
-		if (pszAlias == NULL)
-		{
+		if (pszAlias == NULL) {
 			pszAlias = pColumn->m_pszExpr;
 		}
 		bool bOK = pProjPlan->project(pColumn, pszAlias);
-		if (!bOK)
-		{
-			if (pColumn->m_iType != FUNC_NODE)
-			{
+		if (!bOK) {
+			if (pColumn->m_iType != FUNC_NODE) {
 				PARSE_ERROR("unrecongnized column '%s'", pColumn->m_pszExpr);
 			}
 			pPlan = new GroupByPlan(pPlan);
 			pProjPlan->setChild(pPlan);
 			bOK = pProjPlan->project(pColumn, pszAlias);
-			if (!bOK)
-			{
+			if (!bOK) {
 				PARSE_ERROR("unrecongnized column '%s'", pNode->m_pszExpr);
 			}
 		}
 	}
 }
 
-void buildPlanForGroupBy(ParseNode* pNode)
-{
+void buildPlanForGroupBy(ParseNode* pNode) {
 	if (pNode == 0)
 		return;
 
@@ -127,28 +111,23 @@ void buildPlanForGroupBy(ParseNode* pNode)
 	assert(pChildPlan.get());
 
 	bool bNeedSort = false;
-	for (size_t i = 0; i < pNode->m_iChildNum; ++i)
-	{
+	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pChild = pNode->m_children[i];
 		assert(pChild);
 
-		if (pChild->m_iType != NAME_NODE)
-		{
+		if (pChild->m_iType != NAME_NODE) {
 			PARSE_ERROR("Wrong group by clause!");
 		}
 
 		const char* pszColumn = pChild->m_pszValue;
-		if (!pChildPlan->ensureSortOrder(i, pszColumn, NULL))
-		{
+		if (!pChildPlan->ensureSortOrder(i, pszColumn, NULL)) {
 			bNeedSort = true;
 		}
 	}
-	if (bNeedSort)
-	{
+	if (bNeedSort) {
 		SortPlan* pSort = new SortPlan(pChildPlan.release());
 		pChildPlan.reset(pSort);
-		for (size_t i = 0; i < pNode->m_iChildNum; ++i)
-		{
+		for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 			ParseNode* pChild = pNode->m_children[i];
 			assert(pChild);
 
@@ -157,8 +136,7 @@ void buildPlanForGroupBy(ParseNode* pNode)
 	}
 	GroupByPlan* pPlan = new GroupByPlan(pChildPlan.release());
 	Tools::pushPlan(pPlan);
-	for (size_t i = 0; i < pNode->m_iChildNum; ++i)
-	{
+	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pChild = pNode->m_children[i];
 		assert(pChild);
 
@@ -166,8 +144,7 @@ void buildPlanForGroupBy(ParseNode* pNode)
 	}
 }
 
-void buildPlanForLimit(ParseNode* pNode)
-{
+void buildPlanForLimit(ParseNode* pNode) {
 	if (pNode == NULL)
 		return;
 
@@ -188,34 +165,25 @@ void buildPlanForLimit(ParseNode* pNode)
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
-static void parseQueryCondition(ParseNode* pPredicate, FilterPlan* pFilter)
-{
-	if (pPredicate->m_iType != OP_NODE)
-	{
+static void parseQueryCondition(ParseNode* pPredicate, FilterPlan* pFilter) {
+	if (pPredicate->m_iType != OP_NODE) {
 		PARSE_ERROR("Unsupported predicate '%s'", pPredicate->m_pszExpr);
 	}
 
 	int iOpCode = OP_CODE(pPredicate);
-	if (iOpCode == ANDOP)
-	{
-		for (int i = 0; i < pPredicate->m_iChildNum; ++i)
-		{
+	if (iOpCode == ANDOP) {
+		for (int i = 0; i < pPredicate->m_iChildNum; ++i) {
 			ParseNode* pChild = pPredicate->m_children[i];
 			parseQueryCondition(pChild, pFilter);
 		}
-	}
-	else if (pPredicate->m_iChildNum == 2)
-	{
+	} else if (pPredicate->m_iChildNum == 2) {
 		pFilter->addPredicate(pPredicate);
-	}
-	else
-	{
+	} else {
 		PARSE_ERROR("Unsupported query condition!");
 	}
 }
 
-void buildPlanForFilter(ParseNode* pNode)
-{
+void buildPlanForFilter(ParseNode* pNode) {
 	if (pNode == NULL)
 		return;
 
@@ -227,8 +195,7 @@ void buildPlanForFilter(ParseNode* pNode)
 	parseQueryCondition(pNode, pFilter);
 }
 
-void buildPlanForExplain(ParseNode* pNode)
-{
+void buildPlanForExplain(ParseNode* pNode) {
 	assert(pNode && pNode->m_iChildNum == 1);
 
 	BUILD_PLAN(pNode->m_children[0]);
@@ -238,8 +205,7 @@ void buildPlanForExplain(ParseNode* pNode)
 	Tools::pushPlan(pExplain);
 }
 
-void buildPlanForUnionAll(ParseNode* pNode)
-{
+void buildPlanForUnionAll(ParseNode* pNode) {
 	assert(pNode && pNode->m_iChildNum == 2);
 	BUILD_PLAN(pNode->m_children[0]);
 	BUILD_PLAN(pNode->m_children[1]);
@@ -249,18 +215,15 @@ void buildPlanForUnionAll(ParseNode* pNode)
 	UnionAllPlan* pPlan = new UnionAllPlan(pLeft, pRight);
 	Tools::pushPlan(pPlan);
 	int count = pLeft->getResultColumns();
-	if (count != pRight->getResultColumns())
-	{
+	if (count != pRight->getResultColumns()) {
 		PARSE_ERROR(
 				"left sub query's column number is not same with right one's!");
 	}
-	for (int i = 0; i < count; ++i)
-	{
+	for (int i = 0; i < count; ++i) {
 		DBDataType type1 = pLeft->getResultType(i);
 		DBDataType type2 = pRight->getResultType(i);
 
-		switch (type1)
-		{
+		switch (type1) {
 		case TYPE_INT16:
 		case TYPE_INT32:
 		case TYPE_INT64:
@@ -270,8 +233,7 @@ void buildPlanForUnionAll(ParseNode* pNode)
 			break;
 		}
 
-		switch (type2)
-		{
+		switch (type2) {
 		case TYPE_INT16:
 		case TYPE_INT32:
 		case TYPE_INT64:
@@ -281,8 +243,7 @@ void buildPlanForUnionAll(ParseNode* pNode)
 			break;
 		}
 
-		if (type1 != type2)
-		{
+		if (type1 != type2) {
 			PARSE_ERROR("sub query column %d's type are not match");
 		}
 	}

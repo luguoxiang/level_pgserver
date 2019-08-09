@@ -5,8 +5,7 @@
 #include "common/Log.h"
 #include "ScanColumnImpl.h"
 
-ScanColumn* ScanColumnFactory::getAliasColumnInfo(const char* pszName)
-{
+ScanColumn* ScanColumnFactory::getAliasColumnInfo(const char* pszName) {
 	auto iter = m_aliasMap.find(pszName);
 
 	if (iter == m_aliasMap.end())
@@ -16,8 +15,7 @@ ScanColumn* ScanColumnFactory::getAliasColumnInfo(const char* pszName)
 }
 
 ScanColumn* ScanColumnFactory::getScanColumnInfo(const char* pszName,
-		bool bProject)
-{
+		bool bProject) {
 
 	auto iter = m_columnMap.find(pszName);
 
@@ -31,16 +29,15 @@ ScanColumn* ScanColumnFactory::getScanColumnInfo(const char* pszName,
 }
 
 ScanColumn*
-ScanColumnFactory::addConstValue(const char* pszValue)
-{
+ScanColumnFactory::addConstValue(const char* pszValue) {
 	assert(pszValue);
 	ScanColumn* pColumn = new ConstScanColumn(pszValue);
 	m_constColumns.push_back(pColumn);
 	return pColumn;
 }
 
-ScanColumn* ScanColumnFactory::addScanColumn(const char* pszName, bool bProject)
-{
+ScanColumn* ScanColumnFactory::addScanColumn(const char* pszName,
+		bool bProject) {
 	ScanColumn* pColumn = new SimpleScanColumn(pszName, bProject);
 
 	m_scanColumns.push_back(pColumn);
@@ -50,15 +47,11 @@ ScanColumn* ScanColumnFactory::addScanColumn(const char* pszName, bool bProject)
 
 ScanColumn*
 ScanColumnFactory::addFunctionColumn(const char* pszFuncName,
-		const char* pszRawExpr, const char* pszArg, bool bProject)
-{
+		const char* pszRawExpr, const char* pszArg, bool bProject) {
 	ScanColumn* pColumn = NULL;
-	if (strcmp(pszFuncName, "first") == 0)
-	{
+	if (strcmp(pszFuncName, "first") == 0) {
 		pColumn = new GroupByReturnColumn(bProject, pszArg);
-	}
-	else
-	{
+	} else {
 		pColumn = new AggrColumn(bProject, pszFuncName, pszArg,
 				m_aggrColumns.size());
 	}
@@ -71,16 +64,12 @@ ScanColumnFactory::addFunctionColumn(const char* pszFuncName,
 
 ScanColumn*
 ScanColumnFactory::addScanComplexColumn(const char* pszExpr,
-		const char* pszRawExpr, bool bProject, bool bSimple)
-{
+		const char* pszRawExpr, bool bProject, bool bSimple) {
 	ScanColumn* pColumn = NULL;
-	if (bSimple)
-	{
+	if (bSimple) {
 		pColumn = new ExprColumn(pszExpr, bProject, m_exprColumns.size());
 		m_exprColumns.push_back(pColumn);
-	}
-	else
-	{
+	} else {
 		pColumn = new GroupByExprColumn(pszExpr, bProject,
 				m_aggrExprColumns.size());
 		m_aggrExprColumns.push_back(pColumn);
@@ -92,8 +81,7 @@ ScanColumnFactory::addScanComplexColumn(const char* pszExpr,
 }
 
 ScanColumn* ScanColumnFactory::addJoinColumn(const char* pszKey,
-		const char* pszTable, const char* pszForeignColumn)
-{
+		const char* pszTable, const char* pszForeignColumn) {
 	ScanColumn* pJoinColumn = new JoinColumn(pszKey, pszTable,
 			pszForeignColumn);
 	m_columnMap[pJoinColumn->getName()] = pJoinColumn;
@@ -101,8 +89,7 @@ ScanColumn* ScanColumnFactory::addJoinColumn(const char* pszKey,
 	return pJoinColumn;
 }
 
-void ScanColumnFactory::clear()
-{
+void ScanColumnFactory::clear() {
 	m_scanColumns.clear();
 
 	m_exprColumns.clear();

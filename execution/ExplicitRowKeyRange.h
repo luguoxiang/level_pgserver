@@ -1,17 +1,14 @@
 #pragma once
 #include "RowKeyRange.h"
-class ExplicitRowKeyRange: public RowKeyRange
-{
+class ExplicitRowKeyRange: public RowKeyRange {
 public:
 	ExplicitRowKeyRange();
 	virtual ~ExplicitRowKeyRange();
 
-	virtual void done()
-	{
+	virtual void done() {
 	}
 
-	virtual bool isRangeSearch()
-	{
+	virtual bool isRangeSearch() {
 		return m_bRangeSearch;
 	}
 	ExplicitRowKeyRange(const ExplicitRowKeyRange&) = delete;

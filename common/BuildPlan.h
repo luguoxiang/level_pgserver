@@ -3,8 +3,7 @@
 #include "ParseNode.h"
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 extern void buildPlanDefault(ParseNode* pNode);
 

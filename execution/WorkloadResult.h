@@ -6,16 +6,13 @@
 #include "ExecutionPlan.h"
 #include "WorkThreadInfo.h"
 
-class WorkloadResult: public ExecutionPlan
-{
+class WorkloadResult: public ExecutionPlan {
 public:
-	WorkloadResult()
-			: ExecutionPlan(Other)
-	{
+	WorkloadResult() :
+			ExecutionPlan(Other) {
 	}
 
-	virtual void explain(std::vector<std::string>& rows)
-	{
+	virtual void explain(std::vector<std::string>& rows) {
 		rows.push_back("Workload");
 	}
 
@@ -28,12 +25,10 @@ public:
 
 	virtual bool next();
 
-	virtual void end()
-	{
+	virtual void end() {
 	}
 
-	virtual int getResultColumns()
-	{
+	virtual int getResultColumns() {
 		return 7;
 	}
 

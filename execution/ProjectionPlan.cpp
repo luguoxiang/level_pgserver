@@ -2,12 +2,10 @@
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
 
-bool ProjectionPlan::project(ParseNode* pNode, const char* pszName)
-{
+bool ProjectionPlan::project(ParseNode* pNode, const char* pszName) {
 	ProjectionInfo info;
 	int iSubIndex = m_pPlan->addProjection(pNode);
-	if (iSubIndex < 0)
-	{
+	if (iSubIndex < 0) {
 		return false;
 	}
 	info.m_iSubIndex = iSubIndex;

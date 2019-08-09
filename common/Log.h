@@ -7,25 +7,21 @@
 #define LOG(LEVEL, FORMAT, ...) \
 	Log::getLogger().log(Log::LEVEL, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); 
 
-class Log
-{
+class Log {
 public:
-	enum LogLevel
-	{
+	enum LogLevel {
 		DEBUG = 0, INFO, WARN, ERROR
 	};
 	~Log();
 
 	void init(const char* pszPath, LogLevel level);
 
-	static Log& getLogger()
-	{
+	static Log& getLogger() {
 		static Log log;
 		return log;
 	}
 
-	LogLevel getLevel()
-	{
+	LogLevel getLevel() {
 		return m_level;
 	}
 

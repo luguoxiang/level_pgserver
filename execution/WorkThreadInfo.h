@@ -4,16 +4,13 @@
 #include <thread>
 #include "execution/ExecutionPlan.h"
 
-struct WorkThreadInfo
-{
+struct WorkThreadInfo {
 	WorkThreadInfo(int fd, const char* pszPort, int iIndex);
 
 	~WorkThreadInfo();
 
-	void clearPlan()
-	{
-		for (size_t i = 0; i < m_plans.size(); ++i)
-		{
+	void clearPlan() {
+		for (size_t i = 0; i < m_plans.size(); ++i) {
 			delete m_plans[i];
 		}
 		m_plans.clear();
@@ -44,19 +41,16 @@ struct WorkThreadInfo
 
 	char* alloc(size_t iSize);
 
-	char* memdup(const char* p, size_t len)
-	{
+	char* memdup(const char* p, size_t len) {
 		return my_memdup(&m_result, p, len);
 	}
 
-	void pushPlan(ExecutionPlan* pPlan)
-	{
+	void pushPlan(ExecutionPlan* pPlan) {
 		assert(pPlan);
 		m_plans.push_back(pPlan);
 	}
 
-	ExecutionPlan* popPlan()
-	{
+	ExecutionPlan* popPlan() {
 		if (m_plans.empty())
 			return NULL;
 		ExecutionPlan* pPlan = m_plans.back();
@@ -68,41 +62,34 @@ private:
 	std::vector<ExecutionPlan*> m_plans;
 };
 
-inline void* operator new[](size_t size, WorkThreadInfo& pool)
-{
+inline void* operator new[](size_t size, WorkThreadInfo& pool) {
 	return pool.alloc(size);
 }
 
-inline void* operator new(size_t size, WorkThreadInfo& pool)
-{
+inline void* operator new(size_t size, WorkThreadInfo& pool) {
 	return pool.alloc(size);
 }
 
-class WorkerManager
-{
+class WorkerManager {
 public:
 	static WorkerManager& getInstance();
 
 	~WorkerManager();
 
-	size_t getWorkerCount()
-	{
+	size_t getWorkerCount() {
 		return m_workers.size();
 	}
 
-	WorkThreadInfo* getWorker(size_t i)
-	{
+	WorkThreadInfo* getWorker(size_t i) {
 		assert(i < m_workers.size());
 		return m_workers[i];
 	}
 
-	void addWorker(WorkThreadInfo* pWorker)
-	{
+	void addWorker(WorkThreadInfo* pWorker) {
 		m_workers.push_back(pWorker);
 	}
 private:
-	WorkerManager()
-	{
+	WorkerManager() {
 	}
 	;
 	std::vector<WorkThreadInfo*> m_workers;

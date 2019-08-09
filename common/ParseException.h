@@ -5,25 +5,21 @@
 #include <string>
 #include <stdio.h>
 
-class ParseException: public Exception
-{
+class ParseException: public Exception {
 public:
 	ParseException(const char* pszMsg, ...);
 	ParseException(ParseResult* pResult);
 
 	virtual ~ParseException();
 
-	const char* what() const
-	{
+	const char* what() const {
 		return m_sErrorMsg.c_str();
 	}
 
-	int getLine() const
-	{
+	int getLine() const {
 		return m_iLine;
 	}
-	int getStartPos() const
-	{
+	int getStartPos() const {
 		return m_iStartCol;
 	}
 	void printLocation();

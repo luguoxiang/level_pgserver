@@ -7,13 +7,11 @@
 #include "WorkThreadInfo.h"
 #include <algorithm>
 
-void ExplainPlan::getInfoString(char* szBuf, int len)
-{
+void ExplainPlan::getInfoString(char* szBuf, int len) {
 	snprintf(szBuf, len, "SELECT %lu", m_rows.size());
 }
 
-void ExplainPlan::getResult(size_t index, ResultInfo* pInfo)
-{
+void ExplainPlan::getResult(size_t index, ResultInfo* pInfo) {
 	assert(m_iCurrentRow <= m_rows.size());
 	assert(m_iCurrentRow > 0);
 	pInfo->m_bNull = false;
@@ -22,20 +20,17 @@ void ExplainPlan::getResult(size_t index, ResultInfo* pInfo)
 	pInfo->m_len = s.size();
 }
 
-void ExplainPlan::begin()
-{
+void ExplainPlan::begin() {
 	m_rows.clear();
 	m_pPlan->explain(m_rows);
 	m_iCurrentRow = 0;
 }
 
-bool ExplainPlan::next()
-{
+bool ExplainPlan::next() {
 	++m_iCurrentRow;
 	return m_iCurrentRow <= m_rows.size();
 }
 
-void ExplainPlan::end()
-{
+void ExplainPlan::end() {
 }
 

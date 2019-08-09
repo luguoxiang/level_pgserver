@@ -2,13 +2,11 @@
 
 #include "common/DataSender.h"
 
-class PgMessageSender: public DataSender
-{
+class PgMessageSender: public DataSender {
 public:
 	PgMessageSender(int fd);
 	virtual ~PgMessageSender();
-	enum PgDataType
-	{
+	enum PgDataType {
 		Bytea = 17,
 		Int16 = 21,
 		Int32 = 23,
@@ -22,8 +20,7 @@ public:
 	void commit();
 
 	void addDataTypeMsg(const char* pszName, short columnid, PgDataType type,
-			short datalen)
-	{
+			short datalen) {
 		addString(pszName, strlen(pszName) + 1);
 		addInt(0); //oid
 		addShort(columnid);

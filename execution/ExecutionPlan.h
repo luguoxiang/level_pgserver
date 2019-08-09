@@ -8,17 +8,14 @@
 
 class SqlRunner;
 class ScanColumn;
-class ExecutionPlan
-{
+class ExecutionPlan {
 public:
 
-	enum ProjectType
-	{
+	enum ProjectType {
 		NORMAL, ROWKEY, ROWCOUNT,
 	};
 
-	enum PlanType
-	{
+	enum PlanType {
 		HBaseScan,
 		HBaseInsert,
 		HBaseDelete,
@@ -36,8 +33,7 @@ public:
 	ExecutionPlan(PlanType type);
 	virtual ~ExecutionPlan();
 
-	PlanType getType()
-	{
+	PlanType getType() {
 		return m_type;
 	}
 
@@ -46,11 +42,11 @@ public:
 	/*
 	 * To execute this plan, client must use following pattern
 	 *
-	 * ExecutionPlan* pPlan =  1�7
+	 * ExecutionPlan* pPlan =  1�7
 	 * pPlan->begin();
 	 * while(pPlan->next())
 	 * {
-	 *	  1�7//for select，use getResult fetch result set
+	 *	  1�7//for select，use getResult fetch result set
 	 *
 	 * }
 	 * pPlan->end();
@@ -66,13 +62,11 @@ public:
 	 */
 	virtual int getResultColumns();
 
-	virtual const char* getProjectionName(size_t index)
-	{
+	virtual const char* getProjectionName(size_t index) {
 		return NULL;
 	}
 
-	virtual DBDataType getResultType(size_t index)
-	{
+	virtual DBDataType getResultType(size_t index) {
 		return TYPE_UNKNOWN;
 	}
 
@@ -83,8 +77,7 @@ public:
 	 * If the column could not be projected, -1 is returned.
 	 * Note that same column must return same index.
 	 */
-	virtual int addProjection(ParseNode* pColumn)
-	{
+	virtual int addProjection(ParseNode* pColumn) {
 		return -1;
 	}
 
@@ -92,8 +85,7 @@ public:
 	 * This is used by 'select *' statement.
 	 * return all the columns needed to be project for 'select *'.
 	 */
-	virtual void getAllColumns(std::vector<const char*>& columns)
-	{
+	virtual void getAllColumns(std::vector<const char*>& columns) {
 	}
 
 	/*
@@ -101,8 +93,8 @@ public:
 	 * This method is used to avoid useless sort like
 	 * select * from (select * ..order by a) order by a;
 	 */
-	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn, bool* pOrder)
-	{
+	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
+			bool* pOrder) {
 		return false;
 	}
 	/*
@@ -114,10 +106,8 @@ public:
 	 */
 	virtual void getInfoString(char* szBuf, int len);
 
-	struct ResultInfo
-	{
-		union Value
-		{
+	struct ResultInfo {
+		union Value {
 			const char* m_pszResult;
 			int64_t m_lResult;
 			double m_dResult;

@@ -6,17 +6,14 @@
 #include <errno.h>
 #include "common/Exception.h"
 
-class ConfigException: public Exception
-{
+class ConfigException: public Exception {
 public:
 	ConfigException(const char* pszMsg, ...);
 
-	virtual ~ConfigException()
-	{
+	virtual ~ConfigException() {
 	}
 
-	const char* what() const
-	{
+	const char* what() const {
 		return m_sErrMsg.c_str();
 	}
 

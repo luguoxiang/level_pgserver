@@ -5,8 +5,7 @@
 #include "common/Log.h"
 
 ImplicitRowKeyRange::ImplicitRowKeyRange(TableInfo* pTableInfo) :
-		m_pTableInfo(pTableInfo), m_fields(pTableInfo->getKeyCount())
-{
+		m_pTableInfo(pTableInfo), m_fields(pTableInfo->getKeyCount()) {
 	for (size_t i = 0; i < m_fields.size(); ++i) {
 		DBColumnInfo* pColumn = m_pTableInfo->getKeyColumn(i);
 
@@ -22,8 +21,7 @@ ImplicitRowKeyRange::ImplicitRowKeyRange(TableInfo* pTableInfo) :
 	}
 }
 
-ImplicitRowKeyRange::~ImplicitRowKeyRange()
-{
+ImplicitRowKeyRange::~ImplicitRowKeyRange() {
 	if (m_pszRowKey1) {
 		delete[] m_pszRowKey1;
 	}
@@ -33,8 +31,7 @@ ImplicitRowKeyRange::~ImplicitRowKeyRange()
 }
 
 void ImplicitRowKeyRange::setRowKeyFieldData(char* pszRowKey, int64_t iLen,
-		ParseNode* pNode, const char* pszColumn)
-{
+		ParseNode* pNode, const char* pszColumn) {
 	int64_t iValue = 1;
 	switch (pNode->m_iType) {
 	case BINARY_NODE:
@@ -66,8 +63,7 @@ void ImplicitRowKeyRange::setRowKeyFieldData(char* pszRowKey, int64_t iLen,
 	}
 }
 
-bool ImplicitRowKeyRange::isRangeSearch()
-{
+bool ImplicitRowKeyRange::isRangeSearch() {
 	for (size_t i = 0; i < m_fields.size(); ++i) {
 		DBColumnInfo* pColumn = m_pTableInfo->getKeyColumn(i);
 		RowKeyField& field = m_fields[i];
@@ -80,8 +76,7 @@ bool ImplicitRowKeyRange::isRangeSearch()
 	return false;
 }
 
-void ImplicitRowKeyRange::done()
-{
+void ImplicitRowKeyRange::done() {
 	m_iRowkeySearchCount = 0;
 
 	for (size_t i = 0; i < m_fields.size(); ++i) {
@@ -118,8 +113,7 @@ void ImplicitRowKeyRange::done()
 	evaluate();
 }
 
-void ImplicitRowKeyRange::evaluate()
-{
+void ImplicitRowKeyRange::evaluate() {
 	assert(m_iLen1 > 0);
 	assert(m_iLen2 > 0);
 
@@ -159,23 +153,20 @@ void ImplicitRowKeyRange::evaluate()
 		iStart += pColumn->m_iLen;
 	}
 
-	if (m_iRowkeySearchCount == m_fields.size())
-	{
-		DBColumnInfo* pColumn = m_pTableInfo->getKeyColumn(m_iRowkeySearchCount - 1);
-		if(pColumn->m_type == TYPE_STRING || pColumn->m_type == TYPE_BYTES)
-		{
+	if (m_iRowkeySearchCount == m_fields.size()) {
+		DBColumnInfo* pColumn = m_pTableInfo->getKeyColumn(
+				m_iRowkeySearchCount - 1);
+		if (pColumn->m_type == TYPE_STRING || pColumn->m_type == TYPE_BYTES) {
 			int min = m_iLen1 - pColumn->m_iLen;
-			if(min <= 0) min = 1;
-			while(m_iLen2 > min && m_pszRowKey2[m_iLen2 - 1] == 0)
-			{
+			if (min <= 0)
+				min = 1;
+			while (m_iLen2 > min && m_pszRowKey2[m_iLen2 - 1] == 0) {
 				--m_iLen2;
 			}
-			while(m_iLen1 > min && m_pszRowKey1[m_iLen1 - 1] == 0)
-			{
+			while (m_iLen1 > min && m_pszRowKey1[m_iLen1 - 1] == 0) {
 				--m_iLen1;
 			}
 		}
-
 
 		return;
 	}
@@ -198,8 +189,7 @@ void ImplicitRowKeyRange::evaluate()
 }
 
 void ImplicitRowKeyRange::setColumnValue(DBColumnInfo* pColumn,
-		ParseNode* pValue)
-{
+		ParseNode* pValue) {
 	assert(pColumn && pColumn->m_iLen > 0 && pColumn->m_iKeyIndex >= 0);
 	RowKeyField& field = m_fields[pColumn->m_iKeyIndex];
 
@@ -223,8 +213,7 @@ void ImplicitRowKeyRange::setColumnValue(DBColumnInfo* pColumn,
 }
 
 bool ImplicitRowKeyRange::parseExpression(int iOpCode, ParseNode* pLeft,
-		ParseNode* pRight, ParseNode* pExpr)
-{
+		ParseNode* pRight, ParseNode* pExpr) {
 	assert(!Tools::isRowKeyNode(pLeft));
 	std::string name(pLeft->m_pszValue);
 	DBColumnInfo* pColumn = m_pTableInfo->getColumnByName(name);

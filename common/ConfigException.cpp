@@ -2,8 +2,7 @@
 #include "common/Log.h"
 
 #include <stdarg.h>
-ConfigException::ConfigException(const char* pszMsg, ...)
-{
+ConfigException::ConfigException(const char* pszMsg, ...) {
 	va_list arg;
 	va_start(arg, pszMsg);
 

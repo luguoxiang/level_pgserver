@@ -4,8 +4,7 @@
 #include <vector>
 #include "common/ConfigInfo.h"
 
-class ImplicitRowKeyRange: public RowKeyRange
-{
+class ImplicitRowKeyRange: public RowKeyRange {
 public:
 	ImplicitRowKeyRange(TableInfo* pTableInfo);
 	~ImplicitRowKeyRange();
@@ -25,8 +24,7 @@ protected:
 			ParseNode* pRight, ParseNode* pExpr);
 private:
 	void evaluate();
-	struct RowKeyField
-	{
+	struct RowKeyField {
 		ParseNode* m_pStartValue;
 		bool m_bStartInclusive;
 

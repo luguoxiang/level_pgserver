@@ -7,54 +7,43 @@
 #include "WorkThreadInfo.h"
 #include <algorithm>
 
-void UnionAllPlan::getInfoString(char* szBuf, int len)
-{
+void UnionAllPlan::getInfoString(char* szBuf, int len) {
 	snprintf(szBuf, len, "SELECT %llu", m_iCurrentRow);
 }
 
-void UnionAllPlan::getResult(size_t index, ResultInfo* pInfo)
-{
+void UnionAllPlan::getResult(size_t index, ResultInfo* pInfo) {
 	if (!m_bLeftDone)
 		return m_pLeft->getResult(index, pInfo);
 	else
 		return m_pRight->getResult(index, pInfo);
 }
 
-void UnionAllPlan::begin()
-{
+void UnionAllPlan::begin() {
 	m_pLeft->begin();
 	m_pRight->begin();
 	m_bLeftDone = false;
 	m_iCurrentRow = 0;
 }
 
-bool UnionAllPlan::next()
-{
-	if (!m_bLeftDone)
-	{
-		if (m_pLeft->next())
-		{
+bool UnionAllPlan::next() {
+	if (!m_bLeftDone) {
+		if (m_pLeft->next()) {
 			++m_iCurrentRow;
 			return true;
-		}
-		else
-		{
+		} else {
 			m_bLeftDone = true;
 		}
-	}assert(m_bLeftDone);
-	if (m_pRight->next())
-	{
+	}
+	assert(m_bLeftDone);
+	if (m_pRight->next()) {
 		++m_iCurrentRow;
 		return true;
-	}
-	else
-	{
+	} else {
 		return false;
 	}
 }
 
-void UnionAllPlan::end()
-{
+void UnionAllPlan::end() {
 	m_pLeft->end();
 	m_pRight->end();
 }
