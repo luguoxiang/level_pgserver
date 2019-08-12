@@ -11,9 +11,6 @@ public:
 		assert(pPlan);
 	}
 
-	virtual ~LimitPlan() {
-		delete m_pPlan;
-	}
 
 	virtual void explain(std::vector<std::string>& rows) {
 		m_pPlan->explain(rows);
@@ -73,7 +70,7 @@ public:
 		return m_pPlan->ensureSortOrder(iSortIndex, pszColumn, pOrder);
 	}
 private:
-	ExecutionPlan* m_pPlan;
+	std::unique_ptr<ExecutionPlan> m_pPlan;
 	uint64_t m_iLimit;
 	uint64_t m_iOffset;
 	uint64_t m_iCurrent;

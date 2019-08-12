@@ -10,9 +10,7 @@ public:
 	FilterPlan(ExecutionPlan* pPlan) : ExecutionPlan(PlanType::Limit), m_pPlan(pPlan), m_iCurrent(0) {
 		assert(pPlan);
 	}
-	virtual ~FilterPlan() {
-		delete m_pPlan;
-	}
+
 
 	virtual void explain(std::vector<std::string>& rows) {
 		m_pPlan->explain(rows);
@@ -98,7 +96,7 @@ public:
 		return m_pPlan->ensureSortOrder(iSortIndex, pszColumn, pOrder);
 	}
 private:
-	ExecutionPlan* m_pPlan;
+	std::unique_ptr<ExecutionPlan> m_pPlan;
 	uint64_t m_iCurrent;
 	std::vector<PredicateInfo> m_predicate;
 };

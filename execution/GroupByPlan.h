@@ -11,7 +11,6 @@ enum class FuncType {
 class GroupByPlan: public ExecutionPlan {
 public:
 	GroupByPlan(ExecutionPlan* pPlan);
-	virtual ~GroupByPlan();
 
 	struct AggrFunc {
 		FuncType m_func;
@@ -102,11 +101,11 @@ public:
 	}
 
 private:
-	ExecutionPlan* m_pPlan;
+	std::unique_ptr<ExecutionPlan> m_pPlan;
 	std::vector<AggrFunc> m_proj;
 	std::vector<size_t> m_groupby;
-	size_t m_iRows;
-	bool m_bHasMore;
+	size_t m_iRows = 0;
+	bool m_bHasMore = false;
 
 	std::vector<ResultInfo> m_last;
 	std::vector<DBDataType> m_type;

@@ -93,8 +93,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 			if (pColumn->m_iType != FUNC_NODE) {
 				PARSE_ERROR("unrecongnized column '%s'", pColumn->m_pszExpr);
 			}
-			pPlan = new GroupByPlan(pPlan);
-			pProjPlan->setChild(pPlan);
+			pProjPlan->addGroupBy();
 			bOK = pProjPlan->project(pColumn, pszAlias);
 			if (!bOK) {
 				PARSE_ERROR("unrecongnized column '%s'", pNode->m_pszExpr);

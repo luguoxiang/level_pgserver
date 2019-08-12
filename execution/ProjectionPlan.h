@@ -1,6 +1,6 @@
 #pragma once
 
-#include "execution/ExecutionPlan.h"
+#include "execution/GroupByPlan.h"
 #include "execution/ParseTools.h"
 #include <vector>
 #include <map>
@@ -14,10 +14,6 @@ public:
 	ProjectionPlan(ExecutionPlan* pPlan) :
 			ExecutionPlan(PlanType::Projection), m_pPlan(pPlan) {
 		assert(pPlan);
-	}
-
-	virtual ~ProjectionPlan() {
-		delete m_pPlan;
 	}
 
 	virtual void explain(std::vector<std::string>& rows) {
@@ -94,11 +90,12 @@ public:
 		return m_pPlan->getResult(iSubIndex, pInfo);
 	}
 
-	void setChild(ExecutionPlan* pPlan) {
-		m_pPlan = pPlan;
+	void addGroupBy() {
+		auto pGroupBy = new GroupByPlan(m_pPlan.release());
+		m_pPlan.reset(pGroupBy);
 	}
 private:
 	std::vector<ProjectionInfo> m_proj;
 	std::map<std::string, size_t> m_map;
-	ExecutionPlan* m_pPlan;
+	std::unique_ptr<ExecutionPlan> m_pPlan;
 };

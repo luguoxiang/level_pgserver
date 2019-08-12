@@ -15,7 +15,6 @@ class ParseTreeVisitor {
 public:
 	virtual ~ParseTreeVisitor() {
 	}
-	;
 
 	virtual ReturnType visitDataNode(ParseNode* pNode, ParamType param) {
 		throw new ParseException("Unimplemented method");

@@ -17,9 +17,7 @@ public:
 		assert(pPlan);
 	}
 
-	virtual ~ExplainPlan() {
-		delete m_pPlan;
-	}
+
 
 	virtual void explain(std::vector<std::string>& rows) {
 	}
@@ -51,6 +49,6 @@ public:
 private:
 	std::vector<std::string> m_rows;
 	size_t m_iCurrentRow;
-	ExecutionPlan* m_pPlan;
+	std::unique_ptr<ExecutionPlan> m_pPlan;
 };
 

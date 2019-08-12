@@ -8,7 +8,7 @@
 #include "GroupByPlan.h"
 
 GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
-		ExecutionPlan(PlanType::GroupBy), m_pPlan(pPlan), m_iRows(0) {
+		ExecutionPlan(PlanType::GroupBy), m_pPlan(pPlan) {
 	assert(m_pPlan);
 	m_typeMap["sum"] = FuncType::SUM;
 	m_typeMap["avg"] = FuncType::AVG;
@@ -17,9 +17,6 @@ GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
 	m_typeMap["min"] = FuncType::MIN;
 }
 
-GroupByPlan::~GroupByPlan() {
-	delete m_pPlan;
-}
 
 void GroupByPlan::explain(std::vector<std::string>& rows) {
 	m_pPlan->explain(rows);

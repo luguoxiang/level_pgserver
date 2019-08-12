@@ -29,10 +29,6 @@ class SortPlan: public ExecutionPlan {
 public:
 	SortPlan(ExecutionPlan* pPlan);
 
-	virtual ~SortPlan() {
-		delete m_pPlan;
-	}
-
 	virtual void explain(std::vector<std::string>& rows) {
 		m_pPlan->explain(rows);
 		std::string s = "Sort(";
@@ -154,17 +150,8 @@ private:
 		SortOrder m_order;
 		DBDataType m_type;
 	};
-	struct Compare {
-		Compare(size_t iColumns, const std::vector<SortSpec>& spec) :
-				m_iColumns(iColumns), m_sort(spec) {
-		}
-		bool operator()(ResultInfo* pRow1, ResultInfo* pRow2);
-	private:
-		size_t m_iColumns;
-		std::vector<SortSpec> m_sort;
-	};
 
-	ExecutionPlan* m_pPlan;
+	std::unique_ptr<ExecutionPlan> m_pPlan;
 	std::vector<ResultInfo*> m_rows;
 	std::vector<SortProjection> m_proj;
 	std::vector<SortSpec> m_sort;

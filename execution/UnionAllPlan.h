@@ -14,15 +14,10 @@
 class UnionAllPlan: public ExecutionPlan {
 public:
 	UnionAllPlan(ExecutionPlan* pLeft, ExecutionPlan* pRight) :
-			ExecutionPlan(PlanType::Explain), m_pLeft(pLeft), m_pRight(pRight), m_iCurrentRow(
-					0), m_bLeftDone(false) {
+			ExecutionPlan(PlanType::Explain), m_pLeft(pLeft), m_pRight(pRight) {
 		assert(m_pLeft && m_pRight);
 	}
 
-	virtual ~UnionAllPlan() {
-		delete m_pLeft;
-		delete m_pRight;
-	}
 
 	virtual void explain(std::vector<std::string>& rows) {
 		m_pLeft->explain(rows);
@@ -67,9 +62,9 @@ public:
 	virtual void getResult(size_t columnIndex, ResultInfo* pInfo);
 
 private:
-	ExecutionPlan* m_pLeft;
-	ExecutionPlan* m_pRight;
-	uint64_t m_iCurrentRow;
-	bool m_bLeftDone;
+	std::unique_ptr<ExecutionPlan> m_pLeft;
+	std::unique_ptr<ExecutionPlan> m_pRight;
+	uint64_t m_iCurrentRow = 0;
+	bool m_bLeftDone = false;
 };
 
