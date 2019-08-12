@@ -2,9 +2,6 @@
 
 #include "ParseNode.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 extern void buildPlanDefault(ParseNode* pNode);
 
 extern void buildPlanForFileSelect(ParseNode* pNode);
@@ -22,7 +19,4 @@ extern void buildPlanForDesc(ParseNode* pNode);
 extern void buildPlanForWorkload(ParseNode* pNode);
 extern void buildPlanForShowTables(ParseNode* pNode);
 extern void buildPlanForReadFile(ParseNode* pNode);
-#ifdef __cplusplus
-}
-#endif
 

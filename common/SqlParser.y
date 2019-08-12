@@ -1,10 +1,12 @@
 %define api.pure
 %parse-param {ParseResult* pResult}
 %locations
-%{
+%param { yyscan_t scanner }
+%code requires {
+typedef void* yyscan_t;
 #include "BuildPlan.h"
 #include <stdint.h>
-%}
+}
 
 %union{
 	struct _ParseNode* pNode;
@@ -20,7 +22,7 @@
 
 #define YYLEX_PARAM pResult->m_scanInfo
 
-extern void yyerror(YYLTYPE* yylloc, ParseResult* p, char* s,...);
+extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const char* s,...);
 
 extern ParseNode* mergeTree(ParseResult* pResult, const char* pszRootName, 
 			ParseNode* pRoot, 
@@ -44,7 +46,6 @@ struct DbPlanBuilder
 };
 
 static struct DbPlanBuilder g_dbPlanBuilder[] = {
-	{"hbase", buildPlanForHBaseSelect, buildPlanForHBaseInsert, buildPlanForHBaseDelete},
 	{"file", buildPlanForFileSelect, NULL, NULL},
 };
 
@@ -280,7 +281,7 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 	| expr LIKE STRING {
 		if($3->m_pszValue[0] != '%' || $3->m_pszValue[$3->m_iValue - 1] != '%')
 		{
-			yyerror(&@3,pResult, "missing %% for like '%s'", $3->m_pszValue);
+			yyerror(&@3,pResult, NULL,"missing %% for like '%s'", $3->m_pszValue);
 			YYERROR;
 		}
 		$3->m_iValue = $3->m_iValue - 2;
@@ -326,7 +327,7 @@ delete_stmt: DELETE FROM table_factor opt_where
 		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
 		if(pBuilder == NULL || pBuilder->m_pfnDelete == NULL)
 		{
-		  yyerror(&@3,pResult, "Delete is not supported for current database");
+		  yyerror(&@3,pResult,NULL, "Delete is not supported for current database");
 		  YYERROR;
 		}
 		$$ = newParentNode(pResult, "DeleteStmt", 2, pTable, $4);
@@ -336,7 +337,7 @@ delete_stmt: DELETE FROM table_factor opt_where
 update_stmt: UPDATE table_factor SET update_asgn_list opt_where
 	{
 		$4 = mergeTree(pResult, "AssignValueList", $4, "AssignValueList");
-		yyerror(&@1,pResult, "Update is not supported for current database");
+		yyerror(&@1,pResult,NULL, "Update is not supported for current database");
 		YYERROR;
 	}
 	;
@@ -365,7 +366,7 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
 		if(pBuilder == NULL || pBuilder->m_pfnInsert == NULL)
 		{
-			yyerror(&@3,pResult, "Insert is not supported for current database");
+			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
 		}
 		$$ = newParentNode(pResult, "InsertStmt", 3, pTable,$4,$5);
@@ -377,7 +378,7 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
 		if(pBuilder == NULL || pBuilder->m_pfnInsert == NULL)
 		{
-			yyerror(&@3,pResult, "Insert is not supported for current database");
+			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
 		}
 		$$ = newParentNode(pResult, "InsertStmt", 3, pTable,$4,$5);
@@ -412,7 +413,7 @@ load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS 
 		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
 		if(pBuilder == NULL || pBuilder->m_pfnInsert == NULL)
 		{
-			yyerror(&@3,pResult, "Insert is not supported for current database");
+			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
 		}
 
@@ -474,12 +475,12 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			ParseNode* pJoinList = mergeTree(pResult, "JoinList", pJoin, "JoinList");
 			if(pAlias == NULL)
 			{
-				yyerror(&@5,pResult, "table in left join statement  must have a alias name");
+				yyerror(&@5,pResult,NULL, "table in left join statement  must have a alias name");
 				YYERROR;
 			}
 			if(!hasSubquery)
 			{
-				yyerror(&@4,pResult, "left join target must be subquery");
+				yyerror(&@4,pResult,NULL, "left join target must be subquery");
 				YYERROR;
 			}
 
@@ -491,7 +492,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			pProject->m_fnBuildPlan = buildPlanForProjection;
 			if(pAlias != NULL)
 			{
-				yyerror(&@5,pResult, "table alias name in non-join statement  is not supported");
+				yyerror(&@5,pResult,NULL, "table alias name in non-join statement  is not supported");
 				YYERROR;
 			}
 			if(hasSubquery)
@@ -506,7 +507,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 				struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
 		    if(pBuilder == NULL || pBuilder->m_pfnSelect == NULL)
 		    {
-		      yyerror(&@3,pResult, "Select is not supported for current database");
+		      yyerror(&@3,pResult,NULL, "Select is not supported for current database");
 		      YYERROR;
 		    }
 
@@ -613,7 +614,7 @@ table_factor: NAME {
 
 %%
 
-void yyerror(YYLTYPE* yylloc, ParseResult* p, char* s, ...)
+void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,const char* s, ...)
 {
 	p->m_pResult = 0;
 	va_list ap;
@@ -654,6 +655,6 @@ void parseSql(ParseResult* p, const char* pszBuf, size_t iLen)
 
 	bp = yy_scan_string(pszBuf, p->m_scanInfo);
 	yy_switch_to_buffer(bp, p->m_scanInfo);
-	yyparse(p);
+	yyparse(p, p->m_scanInfo);
 	yy_delete_buffer(bp, p->m_scanInfo);
 }

@@ -2,16 +2,16 @@
 %option reentrant bison-bridge bison-locations
 %option header-file="SqlParser.lex.h"
 %{
+#include "ParseNode.h"
 #include "SqlParser.tab.h"
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
 #include <time.h>
-#include "ParseNode.h"
 
 #define STR_MAX_LEN     (16318)  /* 16KB length */
 
-extern void yyerror(YYLTYPE* yylloc, ParseResult* p, char* s,...);
+extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner, const char* s,...);
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = ((ParseResult*)yyextra)->m_yylineno;\
 	yylloc->first_column = ((ParseResult*)yyextra)->m_yycolumn;\
@@ -118,7 +118,7 @@ USING {return USING;}
 	pNode->m_iValue = strtol(pNode->m_pszValue, 0, 10);
 	if (errno != 0)
 	{
-		yyerror(yylloc, yyextra, "Integer Out of Range: %s", yytext);
+		yyerror(yylloc, (ParseResult*)yyextra, NULL, "Integer Out of Range: %s", yytext);
 		return ERROR;
 	}
 	else return INTNUM;
@@ -167,7 +167,7 @@ FALSE {
 	int len = strlen(pszSrc) - 1; //remove last quote charactor
 	if(len > STR_MAX_LEN)
 	{
-		yyerror(yylloc, yyextra, "String is too large: %s", yytext);
+		yyerror(yylloc, (ParseResult*)yyextra, NULL, "String is too large: %s", yytext);
 		return ERROR;
 	}
 
@@ -180,9 +180,9 @@ FALSE {
 	return STRING;
 }
 
-'(\\.|[^'\n])*$ {yyerror(yylloc, yyextra, "Unterminated string %s", yytext);}
+'(\\.|[^'\n])*$ {yyerror(yylloc, (ParseResult*)yyextra,NULL, "Unterminated string %s", yytext);}
 
-\"(\\.|[^"\n])*$ {yyerror(yylloc, yyextra, "Unterminated string %s", yytext);}
+\"(\\.|[^"\n])*$ {yyerror(yylloc, (ParseResult*)yyextra, NULL,"Unterminated string %s", yytext);}
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
@@ -220,7 +220,7 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 	pNode->m_iValue = parseTime(pszDest);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, yyextra, "Wrong date: %s", yytext);
+		yyerror(yylloc, (ParseResult*)yyextra,NULL, "Wrong date: %s", yytext);
 		return ERROR;
 	}
 	
@@ -240,7 +240,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	pNode->m_iValue = parseTime(pszDest);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, yyextra, "Wrong date: %s", yytext);
+		yyerror(yylloc, (ParseResult*)yyextra,NULL, "Wrong date: %s", yytext);
 		return ERROR;
 	}
 
@@ -279,7 +279,7 @@ $[0-9]+ {
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)
 	{
-		yyerror(yylloc, yyextra, "Illegal prepared statement param: %s", yytext);
+		yyerror(yylloc, (ParseResult*)yyextra,NULL, "Illegal prepared statement param: %s", yytext);
 		return ERROR;
 	}
 	pNode->m_iValue = index;
@@ -291,7 +291,7 @@ $[0-9]+ {
 
 <<EOF>>		{return ';';}
 .		{
-	yyerror(yylloc, yyextra, "mystery charactor '%c'", *yytext);
+	yyerror(yylloc, (ParseResult*)yyextra,NULL, "mystery charactor '%c'", *yytext);
 	return ERROR;
 }
 %%

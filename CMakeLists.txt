@@ -12,7 +12,7 @@ configure_file (
   )
 
 #However, the file(GLOB...) allows for wildcard additions:
-file(GLOB SOURCES "*.cpp" "common/*.cpp" "execution/*.cpp" "common/*.c")
+file(GLOB SOURCES "*.cpp" "common/*.cpp" "execution/*.cpp")
  
 add_executable(csv2pgserver ${SOURCES})
 target_compile_features(csv2pgserver PUBLIC cxx_std_14)
