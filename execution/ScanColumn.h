@@ -9,7 +9,7 @@
 class ScanColumn {
 public:
 	ScanColumn(bool bProject, const char* pszName) :
-			m_bProject(bProject), m_pszName(pszName), m_type(TYPE_UNKNOWN) {
+			m_bProject(bProject), m_pszName(pszName), m_type(DBDataType::UNKNOWN) {
 	}
 
 	ScanColumn(bool bProject, const char* pszBase, size_t id);

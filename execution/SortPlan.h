@@ -5,6 +5,22 @@
 #include "common/ParseException.h"
 #include "common/Log.h"
 
+/**
+ * SortPlan support an order named Any, normally it is same with Ascend,
+ * But it can be upgraded to Ascend or Descend. It is used in following situation:
+ * select a from (select * from t) group by a order by a desc;
+ * group by will generate a SortPlan so that it can do sort group-by.
+ * Because this sql has a 'order by a desc', it better to sort by desc order,
+ * But BuildGroupBy plan is called before BuildSortPlan, it has no idea about the latter sort 
+ * requirement. At this time, Any order take effect:
+ * GroupBy Plan can generate a SortPlan which sort a by order Any.
+ * later, when BuilSortPlan query SortPlan::ensureSortOrder,
+ * Any order can be upgrated to Descend order.
+ */
+enum class SortOrder {
+	Ascend, Descend, Any
+};
+
 class SortPlan: public ExecutionPlan {
 	struct SortProjection {
 		size_t m_iSubIndex;
@@ -24,11 +40,11 @@ public:
 			s.append(m_sort[i].m_pszColumn);
 			s.append(" ");
 			switch (m_sort[i].m_order) {
-			case Ascend:
-			case Any:
+			case SortOrder::Ascend:
+			case SortOrder::Any:
 				s.append("ascend");
 				break;
-			case Descend:
+			case SortOrder::Descend:
 				s.append("descend");
 				break;
 			default:
@@ -92,22 +108,6 @@ public:
 		return m_proj.size() - 1;
 	}
 
-	/**
-	 * SortPlan support an order named Any, normally it is same with Ascend,
-	 * But it can be upgraded to Ascend or Descend. It is used in following situation:
-	 * select a from (select * from t) group by a order by a desc;
-	 * group by will generate a SortPlan so that it can do sort group-by.
-	 * Because this sql has a 'order by a desc', it better to sort by desc order,
-	 * But BuildGroupBy plan is called before BuildSortPlan, it has no idea about the latter sort 
-	 * requirement. At this time, Any order take effect:
-	 * GroupBy Plan can generate a SortPlan which sort a by order Any.
-	 * later, when BuilSortPlan query SortPlan::ensureSortOrder,
-	 * Any order can be upgrated to Descend order.
-	 */
-	enum SortOrder {
-		Ascend, Descend, Any
-	};
-
 	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
 			bool* pOrder) {
 		if (m_sort.size() <= iSortIndex)
@@ -121,12 +121,12 @@ public:
 		if (pOrder == nullptr)
 			return true;
 		switch (spec.m_order) {
-		case Ascend:
+		case SortOrder::Ascend:
 			return *pOrder;
-		case Descend:
+		case SortOrder::Descend:
 			return *pOrder == false;
-		case Any:
-			spec.m_order = *pOrder ? Ascend : Descend;
+		case SortOrder::Any:
+			spec.m_order = *pOrder ? SortOrder::Ascend : SortOrder::Descend;
 			return true;
 		};
 	}

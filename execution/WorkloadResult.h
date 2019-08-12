@@ -9,7 +9,7 @@
 class WorkloadResult: public ExecutionPlan {
 public:
 	WorkloadResult() :
-			ExecutionPlan(Other) {
+			ExecutionPlan(PlanType::Other) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) {

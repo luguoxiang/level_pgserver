@@ -8,17 +8,7 @@
 
 class SqlRunner;
 class ScanColumn;
-class ExecutionPlan {
-public:
-
-	enum ProjectType {
-		NORMAL, ROWKEY, ROWCOUNT,
-	};
-
-	enum PlanType {
-		HBaseScan,
-		HBaseInsert,
-		HBaseDelete,
+enum class PlanType {
 		Sort,
 		Projection,
 		GroupBy,
@@ -28,7 +18,9 @@ public:
 		Explain,
 		LzStQuery,
 		Other,
-	};
+};
+class ExecutionPlan {
+public:
 
 	ExecutionPlan(PlanType type);
 	virtual ~ExecutionPlan();
@@ -42,11 +34,11 @@ public:
 	/*
 	 * To execute this plan, client must use following pattern
 	 *
-	 * ExecutionPlan* pPlan =  1�7
+	 * ExecutionPlan* pPlan =  ...
 	 * pPlan->begin();
 	 * while(pPlan->next())
 	 * {
-	 *	  1�7//for select，use getResult fetch result set
+	 *	  ...//for select，use getResult fetch result set
 	 *
 	 * }
 	 * pPlan->end();
@@ -67,7 +59,7 @@ public:
 	}
 
 	virtual DBDataType getResultType(size_t index) {
-		return TYPE_UNKNOWN;
+		return DBDataType::UNKNOWN;
 	}
 
 	/*

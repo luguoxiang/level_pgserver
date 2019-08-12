@@ -4,7 +4,6 @@
 #include "ExecutionPlan.h"
 #include "ScanColumn.h"
 #include "ScanColumnImpl.h"
-#include "RowKeyRange.h"
 
 #include <vector>
 #include <string>

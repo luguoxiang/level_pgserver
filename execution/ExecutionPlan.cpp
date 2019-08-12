@@ -60,18 +60,18 @@ bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
 		return true;
 	}
 	switch (type) {
-	case TYPE_STRING:
-	case TYPE_BYTES:
-	case TYPE_DATE:
-	case TYPE_DATETIME:
+	case DBDataType::STRING:
+	case DBDataType::BYTES:
+	case DBDataType::DATE:
+	case DBDataType::DATETIME:
 		return false;
-	case TYPE_DOUBLE: {
+	case DBDataType::DOUBLE: {
 		m_value.m_dResult /= value;
 		return true;
 	}
-	case TYPE_INT16:
-	case TYPE_INT32:
-	case TYPE_INT64: {
+	case DBDataType::INT16:
+	case DBDataType::INT32:
+	case DBDataType::INT64: {
 		m_value.m_lResult /= value;
 		return true;
 	}
@@ -91,18 +91,18 @@ bool ExecutionPlan::ResultInfo::add(const ResultInfo& result, DBDataType type) {
 		return true;
 
 	switch (type) {
-	case TYPE_STRING:
-	case TYPE_BYTES:
+	case DBDataType::STRING:
+	case DBDataType::BYTES:
 		return false;
-	case TYPE_DOUBLE: {
+	case DBDataType::DOUBLE: {
 		m_value.m_dResult += result.m_value.m_dResult;
 		return true;
 	}
-	case TYPE_INT16:
-	case TYPE_INT32:
-	case TYPE_INT64:
-	case TYPE_DATE:
-	case TYPE_DATETIME: {
+	case DBDataType::INT16:
+	case DBDataType::INT32:
+	case DBDataType::INT64:
+	case DBDataType::DATE:
+	case DBDataType::DATETIME: {
 		m_value.m_lResult += result.m_value.m_lResult;
 		return true;
 	}
@@ -123,11 +123,11 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 		return 1;
 
 	switch (type) {
-	case TYPE_STRING:
-	case TYPE_BYTES:
+	case DBDataType::STRING:
+	case DBDataType::BYTES:
 		return string_compare(m_value.m_pszResult, m_len,
 				result.m_value.m_pszResult, result.m_len);
-	case TYPE_DOUBLE: {
+	case DBDataType::DOUBLE: {
 		double aa = m_value.m_dResult;
 		double bb = result.m_value.m_dResult;
 		if (aa == bb)
@@ -137,12 +137,12 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 		else
 			return 1;
 	}
-	case TYPE_INT8:
-	case TYPE_INT16:
-	case TYPE_INT32:
-	case TYPE_INT64:
-	case TYPE_DATE:
-	case TYPE_DATETIME: {
+	case DBDataType::INT8:
+	case DBDataType::INT16:
+	case DBDataType::INT32:
+	case DBDataType::INT64:
+	case DBDataType::DATE:
+	case DBDataType::DATETIME: {
 		int64_t aa = m_value.m_lResult;
 		int64_t bb = result.m_value.m_lResult;
 		if (aa == bb)
@@ -165,9 +165,9 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 		return pValue->m_iType == NULL_NODE ? 0 : -1;
 	}
 	switch (type) {
-	case TYPE_INT16:
-	case TYPE_INT32:
-	case TYPE_INT64: {
+	case DBDataType::INT16:
+	case DBDataType::INT32:
+	case DBDataType::INT64: {
 		if (pValue->m_iType != INT_NODE) {
 			PARSE_ERROR("Wrong data type for %s, expect int",
 					pValue->m_pszValue);
@@ -181,7 +181,7 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 		else
 			return 1;
 	}
-	case TYPE_STRING: {
+	case DBDataType::STRING: {
 		if (pValue->m_iType != STR_NODE) {
 			PARSE_ERROR("Wrong data type for %s, expect string",
 					pValue->m_pszValue);
@@ -189,10 +189,10 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 		return string_compare(m_value.m_pszResult, m_len, pValue->m_pszValue,
 				pValue->m_iValue);
 	}
-		//case TYPE_DATE:
-		//case TYPE_DATETIME:
-		//case TYPE_DOUBLE:
-		//case TYPE_BYTES:
+		//case DBDataType::DATE:
+		//case DBDataType::DATETIME:
+		//case DBDataType::DOUBLE:
+		//case DBDataType::BYTES:
 	default:
 		PARSE_ERROR("Unsupported compare for %s", pValue->m_pszValue)
 		;

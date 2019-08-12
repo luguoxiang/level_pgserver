@@ -8,13 +8,13 @@
 #include "GroupByPlan.h"
 
 GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
-		ExecutionPlan(GroupBy), m_pPlan(pPlan), m_iRows(0) {
+		ExecutionPlan(PlanType::GroupBy), m_pPlan(pPlan), m_iRows(0) {
 	assert(m_pPlan);
-	m_typeMap["sum"] = SUM;
-	m_typeMap["avg"] = AVG;
-	m_typeMap["count"] = COUNT;
-	m_typeMap["max"] = MAX;
-	m_typeMap["min"] = MIN;
+	m_typeMap["sum"] = FuncType::SUM;
+	m_typeMap["avg"] = FuncType::AVG;
+	m_typeMap["count"] = FuncType::COUNT;
+	m_typeMap["max"] = FuncType::MAX;
+	m_typeMap["min"] = FuncType::MIN;
 }
 
 GroupByPlan::~GroupByPlan() {
@@ -87,17 +87,17 @@ bool GroupByPlan::next() {
 				GroupByPlan::AggrFunc& proj = m_proj[i];
 				proj.m_iCount++;
 
-				if (proj.m_func == FIRST || proj.m_func == COUNT) {
+				if (proj.m_func == FuncType::FIRST || proj.m_func == FuncType::COUNT) {
 					continue;
 				}
 				DBDataType type = m_pPlan->getResultType(proj.m_iIndex);
 				ResultInfo info;
 				m_pPlan->getResult(proj.m_iIndex, &info);
-				if (proj.m_func == MIN || proj.m_func == MAX) {
+				if (proj.m_func == FuncType::MIN || proj.m_func == FuncType::MAX) {
 					int n = info.compare(proj.m_value, type);
-					if (n < 0 && proj.m_func == MIN) {
+					if (n < 0 && proj.m_func == FuncType::MIN) {
 						proj.m_value = info;
-					} else if (n > 0 && proj.m_func == MAX) {
+					} else if (n > 0 && proj.m_func == FuncType::MAX) {
 						proj.m_value = info;
 					}
 				} else {
@@ -125,7 +125,7 @@ int GroupByPlan::addProjection(ParseNode* pNode) {
 					pNode->m_pszValue);
 		}
 		AggrFunc func;
-		func.m_func = FIRST;
+		func.m_func = FuncType::FIRST;
 		func.m_pszName = pNode->m_pszValue;
 		func.m_iIndex = i;
 		m_proj.push_back(func);

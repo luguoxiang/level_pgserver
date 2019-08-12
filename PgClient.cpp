@@ -35,8 +35,7 @@
 namespace {
 class EmptyResult: public ExecutionPlan {
 public:
-	EmptyResult() :
-			ExecutionPlan(Other) {
+	EmptyResult() : ExecutionPlan(PlanType::Other) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) {
@@ -313,34 +312,34 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 		const char* pszName = pPlan->getProjectionName(i);
 
 		switch (pPlan->getResultType(i)) {
-		case TYPE_BYTES:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::Bytea, -1);
+		case DBDataType::BYTES:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Bytea, -1);
 			break;
-		case TYPE_INT8:
-		case TYPE_INT16:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::Int16, 2);
+		case DBDataType::INT8:
+		case DBDataType::INT16:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Int16, 2);
 			break;
-		case TYPE_INT32:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::Int32, 4);
+		case DBDataType::INT32:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Int32, 4);
 			break;
-		case TYPE_INT64:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::Int64, 8);
+		case DBDataType::INT64:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Int64, 8);
 			break;
 
-		case TYPE_STRING:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::Varchar,
+		case DBDataType::STRING:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Varchar,
 					-1);
 			break;
-		case TYPE_DATETIME:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::DateTime,
+		case DBDataType::DATETIME:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime,
 					-1);
 			break;
-		case TYPE_DATE:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::DateTime,
+		case DBDataType::DATE:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime,
 					-1);
 			break;
-		case TYPE_DOUBLE:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgMessageSender::Double,
+		case DBDataType::DOUBLE:
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Double,
 					-1);
 			break;
 		default:
@@ -379,15 +378,15 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			continue;
 		}
 		switch (type) {
-		case TYPE_INT8:
-		case TYPE_INT32:
-		case TYPE_INT64:
-		case TYPE_INT16:
+		case DBDataType::INT8:
+		case DBDataType::INT32:
+		case DBDataType::INT64:
+		case DBDataType::INT16:
 			len = snprintf(szBuf, 100, "%lld", info.m_value.m_lResult);
 			m_sender.addInt(len);
 			m_sender.addString(szBuf, len);
 			break;
-		case TYPE_BYTES: {
+		case DBDataType::BYTES: {
 			std::string s = "\\x";
 			for (int64_t i = 0; i < info.m_len; ++i) {
 				char szBuf[10];
@@ -399,12 +398,12 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.addString(s.c_str(), s.size());
 			break;
 		}
-		case TYPE_STRING:
+		case DBDataType::STRING:
 			len = info.m_len;
 			m_sender.addInt(len);
 			m_sender.addString(info.m_value.m_pszResult, len);
 			break;
-		case TYPE_DATE: {
+		case DBDataType::DATE: {
 			time_t time = info.m_value.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
@@ -418,7 +417,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.addString(szBuf, len);
 			break;
 		}
-		case TYPE_DATETIME: {
+		case DBDataType::DATETIME: {
 			time_t time = info.m_value.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
@@ -432,7 +431,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.addString(szBuf, len);
 			break;
 		}
-		case TYPE_DOUBLE: {
+		case DBDataType::DOUBLE: {
 			len = snprintf(szBuf, 100, "%f", info.m_value.m_dResult);
 			while (len > 0) {
 				char c = szBuf[len - 1];

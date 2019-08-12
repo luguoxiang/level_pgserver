@@ -7,8 +7,7 @@
 
 class ShowTables: public ExecutionPlan {
 public:
-	ShowTables() :
-			ExecutionPlan(Other) {
+	ShowTables() : ExecutionPlan(PlanType::Other) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) {
@@ -21,7 +20,7 @@ public:
 		return index == 0 ? "TableName" : "Info";
 	}
 	virtual DBDataType getResultType(size_t index) {
-		return TYPE_STRING;
+		return DBDataType::STRING;
 	}
 
 	virtual void begin();

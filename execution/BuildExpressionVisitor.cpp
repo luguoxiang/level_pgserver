@@ -11,11 +11,11 @@ ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool) {
 		return m_pFactory->addConstValue("null");
 	case INT_NODE:
 		pColumn = m_pFactory->addConstValue(pNode->m_pszValue);
-		pColumn->setType(TYPE_INT64);
+		pColumn->setType(DBDataType::INT64);
 		return pColumn;
 	case FLOAT_NODE:
 		pColumn = m_pFactory->addConstValue(pNode->m_pszValue);
-		pColumn->setType(TYPE_DOUBLE);
+		pColumn->setType(DBDataType::DOUBLE);
 		return pColumn;
 	case BINARY_NODE:
 		pColumn = m_pFactory->addConstValue(pNode->m_pszValue);
@@ -23,7 +23,7 @@ ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool) {
 	case STR_NODE:
 		pColumn = m_pFactory->addConstValue(
 				Tools::escapeString(pNode->m_pszValue, pNode->m_iValue));
-		pColumn->setType(TYPE_STRING);
+		pColumn->setType(DBDataType::STRING);
 		return pColumn;
 	case DATE_NODE: {
 		std::string sExpr = "#";
@@ -31,7 +31,7 @@ ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool) {
 		sExpr.append("#");
 		pColumn = m_pFactory->addConstValue(
 				pInfo->memdup(sExpr.c_str(), sExpr.size() + 1));
-		pColumn->setType(TYPE_DOUBLE);
+		pColumn->setType(DBDataType::DOUBLE);
 		return pColumn;
 	}
 	default:
@@ -46,13 +46,13 @@ ScanColumn* BuildExpressionVisitor::addSimpleScanColumn(const char* pszName,
 		ScanColumnFactory* pFactory, DBColumnInfo* pColumnInfo, bool bProject) {
 	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
 	assert(pInfo);
-	bool bColumnProject = bProject && pColumnInfo->m_type != TYPE_DOUBLE;
+	bool bColumnProject = bProject && pColumnInfo->m_type != DBDataType::DOUBLE;
 	ScanColumn* pColumn = pFactory->getScanColumnInfo(pszName, bColumnProject);
 	if (pColumn == nullptr) {
 		pColumn = pFactory->addScanColumn(pszName, bColumnProject);
 	}
 
-	if (pColumnInfo->m_type == TYPE_DOUBLE) {
+	if (pColumnInfo->m_type == DBDataType::DOUBLE) {
 		char buf[100];
 		assert(pColumnInfo->m_iLen > 0);
 		int count = snprintf(buf, 100, "%s / %d.0", pszName,
@@ -113,12 +113,12 @@ ScanColumn* BuildExpressionVisitor::visitDyadicOpNode(int op, ParseNode* pNode,
 	pColumn = m_pFactory->addScanComplexColumn(pInfo->memdup(szBuf, c + 1),
 			pNode->m_pszExpr, bProject, !m_bGroupBy);
 
-	if (pLeftColumn->getType() == TYPE_DOUBLE
-			|| pRightColumn->getType() == TYPE_DOUBLE) {
-		pColumn->setType(TYPE_DOUBLE);
-	} else if (pLeftColumn->getType() != TYPE_UNKNOWN) {
+	if (pLeftColumn->getType() == DBDataType::DOUBLE
+			|| pRightColumn->getType() == DBDataType::DOUBLE) {
+		pColumn->setType(DBDataType::DOUBLE);
+	} else if (pLeftColumn->getType() != DBDataType::UNKNOWN) {
 		pColumn->setType(pLeftColumn->getType());
-	} else if (pRightColumn->getType() != TYPE_UNKNOWN) {
+	} else if (pRightColumn->getType() != DBDataType::UNKNOWN) {
 		pColumn->setType(pRightColumn->getType());
 	}
 	return pColumn;
@@ -175,7 +175,7 @@ ScanColumn* BuildExpressionVisitor::visitFuncNode(const char* pszName,
 	pColumn = m_pFactory->addFunctionColumn(pszName, pNode->m_pszExpr,
 			pParamExpr->getName(), bProject);
 	if (strcmp(pNode->m_pszValue, "count") == 0) {
-		pColumn->setType(TYPE_INT64);
+		pColumn->setType(DBDataType::INT64);
 	} else {
 		pColumn->setType(pParamExpr->getType());
 	}

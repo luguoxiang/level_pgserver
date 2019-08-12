@@ -9,14 +9,14 @@
 MetaConfig::MetaConfig() :
 		m_iWorkerNum(20), m_iTimeout(60), m_iNetBuffer(1024 * 1024), m_iExecBuffer(
 				64 * 1024 * 1024) {
-	m_dataTypeMap["int8"] = TYPE_INT8;
-	m_dataTypeMap["int16"] = TYPE_INT16;
-	m_dataTypeMap["int32"] = TYPE_INT32;
-	m_dataTypeMap["int64"] = TYPE_INT64;
-	m_dataTypeMap["double"] = TYPE_DOUBLE;
-	m_dataTypeMap["varchar"] = TYPE_STRING;
-	m_dataTypeMap["datetime"] = TYPE_DATETIME;
-	m_dataTypeMap["date"] = TYPE_DATE;
+	m_dataTypeMap["int8"] = DBDataType::INT8;
+	m_dataTypeMap["int16"] = DBDataType::INT16;
+	m_dataTypeMap["int32"] = DBDataType::INT32;
+	m_dataTypeMap["int64"] = DBDataType::INT64;
+	m_dataTypeMap["double"] = DBDataType::DOUBLE;
+	m_dataTypeMap["varchar"] = DBDataType::STRING;
+	m_dataTypeMap["datetime"] = DBDataType::DATETIME;
+	m_dataTypeMap["date"] = DBDataType::DATE;
 }
 
 void MetaConfig::clean() {

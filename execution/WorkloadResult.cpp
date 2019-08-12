@@ -45,9 +45,9 @@ const char* WorkloadResult::getProjectionName(size_t index) {
 
 DBDataType WorkloadResult::getResultType(size_t index) {
 	if (index == 0) {
-		return TYPE_STRING;
+		return DBDataType::STRING;
 	}
-	return TYPE_INT32;
+	return DBDataType::INT32;
 }
 
 void WorkloadResult::getResult(size_t index, ResultInfo* pInfo) {

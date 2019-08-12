@@ -34,9 +34,9 @@ DBDataType ShowColumns::getResultType(size_t index) {
 	switch (index) {
 	case 0:
 	case 1:
-		return TYPE_STRING;
+		return DBDataType::STRING;
 	default:
-		return TYPE_INT64;
+		return DBDataType::INT64;
 	}
 }
 
@@ -69,31 +69,31 @@ void ShowColumns::getResult(size_t index, ResultInfo* pInfo) {
 		break;
 	case 1:
 		switch (pColumn->m_type) {
-		case TYPE_INT8:
+		case DBDataType::INT8:
 			pInfo->m_value.m_pszResult = "int8";
 			break;
-		case TYPE_INT16:
+		case DBDataType::INT16:
 			pInfo->m_value.m_pszResult = "int16";
 			break;
-		case TYPE_INT32:
+		case DBDataType::INT32:
 			pInfo->m_value.m_pszResult = "int32";
 			break;
-		case TYPE_INT64:
+		case DBDataType::INT64:
 			pInfo->m_value.m_pszResult = "int64";
 			break;
-		case TYPE_STRING:
+		case DBDataType::STRING:
 			pInfo->m_value.m_pszResult = "varchar";
 			break;
-		case TYPE_DATETIME:
+		case DBDataType::DATETIME:
 			pInfo->m_value.m_pszResult = "datetime";
 			break;
-		case TYPE_DATE:
+		case DBDataType::DATE:
 			pInfo->m_value.m_pszResult = "date";
 			break;
-		case TYPE_DOUBLE:
+		case DBDataType::DOUBLE:
 			pInfo->m_value.m_pszResult = "double";
 			break;
-		case TYPE_BYTES:
+		case DBDataType::BYTES:
 			pInfo->m_value.m_pszResult = "bytes";
 			break;
 		default:

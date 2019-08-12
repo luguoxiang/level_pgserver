@@ -81,15 +81,15 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	Log::LogLevel level = Log::INFO;
+	LogLevel level = LogLevel::INFO;
 	if (strcasecmp(pszLogLevel, "debug") == 0) {
-		level = Log::DEBUG;
+		level = LogLevel::DEBUG;
 	} else if (strcasecmp(pszLogLevel, "warn") == 0) {
-		level = Log::WARN;
+		level = LogLevel::WARN;
 	} else if (strcasecmp(pszLogLevel, "info") == 0) {
-		level = Log::INFO;
+		level = LogLevel::INFO;
 	} else if (strcasecmp(pszLogLevel, "error") == 0) {
-		level = Log::ERROR;
+		level = LogLevel::ERROR;
 	} else {
 		fprintf(stderr, "Unknown log level %s!", pszLogLevel);
 		return 1;

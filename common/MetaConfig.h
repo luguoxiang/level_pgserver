@@ -33,7 +33,7 @@ public:
 		std::map<std::string, DBDataType>::iterator iter = m_dataTypeMap.find(
 				name);
 		if (iter == m_dataTypeMap.end())
-			return TYPE_UNKNOWN;
+			return DBDataType::UNKNOWN;
 		return iter->second;
 	}
 

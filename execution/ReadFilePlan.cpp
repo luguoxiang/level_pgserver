@@ -64,18 +64,18 @@ bool ReadFilePlan::next() {
 		m_result[i].m_bNull = false;
 
 		switch (m_columns[i]->m_type) {
-		case TYPE_INT8:
-		case TYPE_INT16:
-		case TYPE_INT32:
-		case TYPE_INT64:
+		case DBDataType::INT8:
+		case DBDataType::INT16:
+		case DBDataType::INT32:
+		case DBDataType::INT64:
 			m_result[i].m_value.m_lResult = atoll(pszValue);
 			break;
-		case TYPE_STRING:
+		case DBDataType::STRING:
 			m_result[i].m_value.m_pszResult = pszValue;
 			m_result[i].m_len = strlen(pszValue);
 			break;
-		case TYPE_DATETIME:
-		case TYPE_DATE: {
+		case DBDataType::DATETIME:
+		case DBDataType::DATE: {
 			int64_t iValue = parseTime(pszValue);
 			if (iValue == 0) {
 				char msg[200];
@@ -88,7 +88,7 @@ bool ReadFilePlan::next() {
 			m_result[i].m_value.m_time = time;
 			break;
 		}
-		case TYPE_DOUBLE:
+		case DBDataType::DOUBLE:
 			m_result[i].m_value.m_dResult = atof(pszValue);
 			break;
 		default:

@@ -3,7 +3,6 @@
 #include "ParseTools.h"
 #include "ExecutionPlan.h"
 #include "ScanColumn.h"
-#include "RowKeyRange.h"
 
 #include <vector>
 #include <string>
@@ -14,8 +13,7 @@
 
 class ExplainPlan: public ExecutionPlan {
 public:
-	ExplainPlan(ExecutionPlan* pPlan) :
-			ExecutionPlan(Explain), m_iCurrentRow(0), m_pPlan(pPlan) {
+	ExplainPlan(ExecutionPlan* pPlan) : ExecutionPlan(PlanType::Explain), m_iCurrentRow(0), m_pPlan(pPlan) {
 		assert(pPlan);
 	}
 
@@ -39,7 +37,7 @@ public:
 	}
 
 	virtual DBDataType getResultType(size_t index) {
-		return TYPE_STRING;
+		return DBDataType::STRING;
 	}
 
 	virtual int getResultColumns() {

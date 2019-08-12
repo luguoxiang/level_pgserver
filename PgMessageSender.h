@@ -2,19 +2,19 @@
 
 #include "common/DataSender.h"
 
+enum class PgDataType {
+	Bytea = 17,
+	Int16 = 21,
+	Int32 = 23,
+	Int64 = 20,
+	Varchar = 1043,
+	DateTime = 1114,
+	Double = 701,
+};
 class PgMessageSender: public DataSender {
 public:
 	PgMessageSender(int fd);
 	virtual ~PgMessageSender();
-	enum PgDataType {
-		Bytea = 17,
-		Int16 = 21,
-		Int32 = 23,
-		Int64 = 20,
-		Varchar = 1043,
-		DateTime = 1114,
-		Double = 701,
-	};
 
 	void prepare(char cMsgType);
 	void commit();
@@ -24,7 +24,7 @@ public:
 		addString(pszName, strlen(pszName) + 1);
 		addInt(0); //oid
 		addShort(columnid);
-		addInt(type);
+		addInt(static_cast<int32_t>(type));
 		addShort(datalen);
 		addInt(-1); //typemod
 		addShort(0); //format

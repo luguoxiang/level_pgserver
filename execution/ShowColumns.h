@@ -10,7 +10,7 @@
 class ShowColumns: public ExecutionPlan {
 public:
 	ShowColumns(TableInfo* pEntry) :
-			ExecutionPlan(Other), m_pEntry(pEntry) {
+			ExecutionPlan(PlanType::Other), m_pEntry(pEntry) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) {

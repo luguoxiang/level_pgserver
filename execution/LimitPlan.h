@@ -6,8 +6,7 @@
 
 class LimitPlan: public ExecutionPlan {
 public:
-	LimitPlan(ExecutionPlan* pPlan) :
-			ExecutionPlan(Limit), m_pPlan(pPlan), m_iLimit(0), m_iOffset(0), m_iCurrent(
+	LimitPlan(ExecutionPlan* pPlan) : ExecutionPlan(PlanType::Limit), m_pPlan(pPlan), m_iLimit(0), m_iOffset(0), m_iCurrent(
 					0) {
 		assert(pPlan);
 	}

@@ -5,14 +5,14 @@
 #include "common/ParseException.h"
 #include "common/Log.h"
 
+enum class FuncType {
+	FIRST, SUM, AVG, COUNT, MAX, MIN
+};
 class GroupByPlan: public ExecutionPlan {
 public:
 	GroupByPlan(ExecutionPlan* pPlan);
 	virtual ~GroupByPlan();
 
-	enum FuncType {
-		FIRST, SUM, AVG, COUNT, MAX, MIN
-	};
 	struct AggrFunc {
 		FuncType m_func;
 		const char* m_pszName;
@@ -34,34 +34,34 @@ public:
 	virtual DBDataType getResultType(size_t index) {
 		AggrFunc func = m_proj[index];
 		switch (func.m_func) {
-		case FIRST:
-		case MIN:
-		case MAX:
-		case SUM:
-		case AVG:
+		case FuncType::FIRST:
+		case FuncType::MIN:
+		case FuncType::MAX:
+		case FuncType::SUM:
+		case FuncType::AVG:
 			return m_pPlan->getResultType(func.m_iIndex);
-		case COUNT:
-			return TYPE_INT64;
+		case FuncType::COUNT:
+			return DBDataType::INT64;
 		default:
 			assert(0);
-			return TYPE_UNKNOWN;
+			return DBDataType::UNKNOWN;
 		}
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo) {
 		AggrFunc func = m_proj[index];
 		switch (func.m_func) {
-		case FIRST:
-		case MIN:
-		case MAX:
-		case SUM:
+		case FuncType::FIRST:
+		case FuncType::MIN:
+		case FuncType::MAX:
+		case FuncType::SUM:
 			*pInfo = func.m_value;
 			break;
-		case COUNT:
+		case FuncType::COUNT:
 			pInfo->m_bNull = false;
 			pInfo->m_value.m_lResult = func.m_iCount;
 			break;
-		case AVG:
+		case FuncType::AVG:
 			*pInfo = func.m_value;
 			pInfo->div(m_proj[index].m_iCount,
 					m_pPlan->getResultType(func.m_iIndex));

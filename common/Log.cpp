@@ -15,8 +15,7 @@
 
 #define MAX_LOG_LEN 4096
 
-Log::Log() :
-		m_pszLogPath("log/server.log"), m_pLogFile(nullptr), m_level(INFO), m_iDay(
+Log::Log() : m_pszLogPath("log/server.log"), m_pLogFile(nullptr), m_level(LogLevel::INFO), m_iDay(
 				0) {
 }
 
@@ -72,16 +71,16 @@ void Log::log(LogLevel level, const char* pszPath, int iLine,
 
 	const char* pszLevel = "UNKNOWN";
 	switch (level) {
-	case WARN:
+	case LogLevel::WARN:
 		pszLevel = "WARN";
 		break;
-	case INFO:
+	case LogLevel::INFO:
 		pszLevel = "INFO";
 		break;
-	case DEBUG:
+	case LogLevel::DEBUG:
 		pszLevel = "DEBUG";
 		break;
-	case ERROR:
+	case LogLevel::ERROR:
 		pszLevel = "ERROR";
 		break;
 	default:

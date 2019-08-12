@@ -3,7 +3,6 @@
 #include "ParseTools.h"
 #include "ExecutionPlan.h"
 #include "ScanColumn.h"
-#include "RowKeyRange.h"
 
 #include <vector>
 #include <string>
@@ -15,7 +14,7 @@
 class UnionAllPlan: public ExecutionPlan {
 public:
 	UnionAllPlan(ExecutionPlan* pLeft, ExecutionPlan* pRight) :
-			ExecutionPlan(Explain), m_pLeft(pLeft), m_pRight(pRight), m_iCurrentRow(
+			ExecutionPlan(PlanType::Explain), m_pLeft(pLeft), m_pRight(pRight), m_iCurrentRow(
 					0), m_bLeftDone(false) {
 		assert(m_pLeft && m_pRight);
 	}
@@ -50,10 +49,10 @@ public:
 	virtual DBDataType getResultType(size_t index) {
 		DBDataType type = m_pLeft->getResultType(index);
 		switch (type) {
-		case TYPE_INT16:
-		case TYPE_INT32:
-		case TYPE_INT64:
-			return TYPE_INT64;
+		case DBDataType::INT16:
+		case DBDataType::INT32:
+		case DBDataType::INT64:
+			return DBDataType::INT64;
 		default:
 			return type;
 		}

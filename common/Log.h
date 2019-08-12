@@ -5,13 +5,13 @@
 #include <stdarg.h>
 
 #define LOG(LEVEL, FORMAT, ...) \
-	Log::getLogger().log(Log::LEVEL, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); 
+	Log::getLogger().log(LogLevel::LEVEL, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); 
 
+enum class LogLevel {
+    DEBUG, INFO, WARN, ERROR
+};
 class Log {
 public:
-	enum LogLevel {
-		DEBUG = 0, INFO, WARN, ERROR
-	};
 	~Log();
 
 	void init(const char* pszPath, LogLevel level);

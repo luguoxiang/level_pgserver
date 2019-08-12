@@ -14,17 +14,17 @@ DBDataType ConstPlan::getResultType(size_t index) {
 	assert(pRow->m_iChildNum == m_columns.size());
 	switch (pRow->m_children[index]->m_iType) {
 	case INT_NODE:
-		return TYPE_INT64;
+		return DBDataType::INT64;
 	case STR_NODE:
-		return TYPE_STRING;
+		return DBDataType::STRING;
 	case FLOAT_NODE:
-		return TYPE_DOUBLE;
+		return DBDataType::DOUBLE;
 	case DATE_NODE:
 		return strlen(pRow->m_children[index]->m_pszValue) < 12 ?
-				TYPE_DATE : TYPE_DATETIME;
+				DBDataType::DATE : DBDataType::DATETIME;
 	default:
 		assert(0);
-		return TYPE_UNKNOWN;
+		return DBDataType::UNKNOWN;
 	}
 }
 

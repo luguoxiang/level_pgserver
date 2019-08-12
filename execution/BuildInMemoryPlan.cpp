@@ -45,7 +45,7 @@ void buildPlanForOrderBy(ParseNode* pNode) {
 
 		bool bAscend = (OP_CODE(pChild->m_children[1]) == ASC);
 		pSort->addSortSpecification(pColumn,
-				bAscend ? SortPlan::Ascend : SortPlan::Descend);
+				bAscend ? SortOrder::Ascend : SortOrder::Descend);
 	}
 }
 
@@ -131,7 +131,7 @@ void buildPlanForGroupBy(ParseNode* pNode) {
 			ParseNode* pChild = pNode->m_children[i];
 			assert(pChild);
 
-			pSort->addSortSpecification(pChild, SortPlan::Any);
+			pSort->addSortSpecification(pChild, SortOrder::Any);
 		}
 	}
 	GroupByPlan* pPlan = new GroupByPlan(pChildPlan.release());
@@ -224,20 +224,20 @@ void buildPlanForUnionAll(ParseNode* pNode) {
 		DBDataType type2 = pRight->getResultType(i);
 
 		switch (type1) {
-		case TYPE_INT16:
-		case TYPE_INT32:
-		case TYPE_INT64:
-			type1 = TYPE_INT64;
+		case DBDataType::INT16:
+		case DBDataType::INT32:
+		case DBDataType::INT64:
+			type1 = DBDataType::INT64;
 			break;
 		default:
 			break;
 		}
 
 		switch (type2) {
-		case TYPE_INT16:
-		case TYPE_INT32:
-		case TYPE_INT64:
-			type2 = TYPE_INT64;
+		case DBDataType::INT16:
+		case DBDataType::INT32:
+		case DBDataType::INT64:
+			type2 = DBDataType::INT64;
 			break;
 		default:
 			break;

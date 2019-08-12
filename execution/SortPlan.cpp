@@ -4,7 +4,7 @@
 #include "execution/WorkThreadInfo.h"
 
 SortPlan::SortPlan(ExecutionPlan* pPlan) :
-		ExecutionPlan(Sort), m_pPlan(pPlan), m_iCurrent(0) {
+		ExecutionPlan(PlanType::Sort), m_pPlan(pPlan), m_iCurrent(0) {
 	assert(m_pPlan);
 }
 
@@ -22,8 +22,8 @@ void SortPlan::begin() {
 				continue;
 
 			switch (m_pPlan->getResultType(iSubIndex)) {
-			case TYPE_STRING:
-			case TYPE_BYTES:
+			case DBDataType::STRING:
+			case DBDataType::BYTES:
 				pResult->m_value.m_pszResult = pInfo->memdup(
 						pResult->m_value.m_pszResult, pResult->m_len);
 				break;
@@ -65,10 +65,10 @@ bool SortPlan::Compare::operator()(ResultInfo* pRow1, ResultInfo* pRow2) {
 			continue;
 
 		switch (spec.m_order) {
-		case Ascend:
-		case Any:
+		case SortOrder::Ascend:
+		case SortOrder::Any:
 			return n < 0;
-		case Descend:
+		case SortOrder::Descend:
 			return n > 0;
 		default:
 			assert(0);

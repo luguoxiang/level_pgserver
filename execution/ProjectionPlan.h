@@ -12,7 +12,7 @@ class ProjectionPlan: public ExecutionPlan {
 	};
 public:
 	ProjectionPlan(ExecutionPlan* pPlan) :
-			ExecutionPlan(Projection), m_pPlan(pPlan) {
+			ExecutionPlan(PlanType::Projection), m_pPlan(pPlan) {
 		assert(pPlan);
 	}
 

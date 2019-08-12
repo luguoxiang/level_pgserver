@@ -53,7 +53,7 @@ bool FilterPlan::next() {
 				bMatch = false;
 				break;
 			}
-			if (type == TYPE_STRING && info.m_iOpCode == LIKE) {
+			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
 				if (info.m_pValue->m_iType != STR_NODE) {
 					PARSE_ERROR("Wrong data type for %s, expect string",
 							info.m_pValue->m_pszValue);

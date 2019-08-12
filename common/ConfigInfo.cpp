@@ -24,7 +24,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const char* pszValue) {
 	}
 
 	DBDataType type = pConfig->getDataType(s.c_str());
-	if (type == TYPE_UNKNOWN) {
+	if (type == DBDataType::UNKNOWN) {
 		throw new ConfigException("Unknown data type %s", s.c_str());
 	}
 
@@ -38,24 +38,24 @@ void TableInfo::addColumn(MetaConfig* pConfig, const char* pszValue) {
 
 	if (iLen <= 0) {
 		switch (type) {
-		case TYPE_INT8:
+		case DBDataType::INT8:
 			pColumn->m_iLen = 1;
 			break;
-		case TYPE_INT16:
+		case DBDataType::INT16:
 			pColumn->m_iLen = 2;
 			break;
-		case TYPE_INT32:
+		case DBDataType::INT32:
 			pColumn->m_iLen = 4;
 			break;
-		case TYPE_INT64:
-		case TYPE_DATETIME:
-		case TYPE_DATE:
+		case DBDataType::INT64:
+		case DBDataType::DATETIME:
+		case DBDataType::DATE:
 			pColumn->m_iLen = 8;
 			break;
-		case TYPE_DOUBLE:
+		case DBDataType::DOUBLE:
 			throw new ConfigException("Missing precision for type %s ",
 					s.c_str());
-		case TYPE_STRING:
+		case DBDataType::STRING:
 			pColumn->m_iLen = -1;
 			break;
 		default:
@@ -73,7 +73,7 @@ void TableInfo::addKeyColumn(std::string& name) {
 	if (pColumn->m_iLen <= 0) {
 		throw new ConfigException("Missing length for rowkey column config!");
 	}
-	if (pColumn->m_type == TYPE_DOUBLE) {
+	if (pColumn->m_type == DBDataType::DOUBLE) {
 		throw new ConfigException(
 				"rowkey column with double type is not supported");
 	}

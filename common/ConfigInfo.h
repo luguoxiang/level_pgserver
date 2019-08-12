@@ -5,22 +5,22 @@
 #include <netdb.h>
 #include "common/ParseNode.h"
 
-enum DBDataType {
-	TYPE_UNKNOWN,
-	TYPE_INT8,
-	TYPE_INT16,
-	TYPE_INT32,
-	TYPE_INT64,
-	TYPE_STRING,
-	TYPE_DATETIME,
-	TYPE_DATE,
-	TYPE_DOUBLE,
-	TYPE_BYTES,
+enum class DBDataType {
+	UNKNOWN,
+	INT8,
+	INT16,
+	INT32,
+	INT64,
+	STRING,
+	DATETIME,
+	DATE,
+	DOUBLE,
+	BYTES,
 };
 
 struct DBColumnInfo {
 	DBColumnInfo() :
-			m_type(TYPE_UNKNOWN), m_iLen(0), m_iIndex(0), m_iKeyIndex(-1) {
+			m_type(DBDataType::UNKNOWN), m_iLen(0), m_iIndex(0), m_iKeyIndex(-1) {
 	}
 
 	DBColumnInfo(DBDataType type) :

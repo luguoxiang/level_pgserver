@@ -8,8 +8,7 @@
 
 class ConstPlan: public ExecutionPlan {
 public:
-	ConstPlan() :
-			ExecutionPlan(Const), m_iCurrent(0) {
+	ConstPlan() : ExecutionPlan(PlanType::Const), m_iCurrent(0) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows);
