@@ -10,10 +10,4 @@ public:
 
 	void processStartupPacket();
 	char readMessage();
-private:
-	static const size_t MAX_STARTUP_PACKET_LENGTH = 10000;
-
-	/* FE/BE protocol version number */
-	using ProtocolVersion=unsigned int;
-	using PacketLen=unsigned int;
 };

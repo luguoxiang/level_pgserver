@@ -6,16 +6,9 @@
 #include <netdb.h>
 #include "common/Log.h"
 
-#define PG_PROTOCOL(m,n)        (((m) << 16) | (n))
-#define PG_PROTOCOL_MAJOR(v)    ((v) >> 16)
-#define PG_PROTOCOL_MINOR(v)    ((v) & 0x0000ffff)
-
-#define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)
-#define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
-
 DataReceiver::DataReceiver(int fd, bool bNetNumber) :
-		m_pszBuffer(nullptr), m_pszCurrent(nullptr), m_pszMark(nullptr), m_nFd(fd), m_nBufLen(
-				0), m_bNetNumber(bNetNumber) {
+		m_pszBuffer(nullptr), m_pszCurrent(nullptr), m_pszMark(nullptr), m_nFd(
+				fd), m_nBufLen(0), m_bNetNumber(bNetNumber) {
 }
 
 DataReceiver::~DataReceiver() {

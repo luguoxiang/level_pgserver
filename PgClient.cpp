@@ -2,24 +2,6 @@
 #include <cassert>
 #include <unistd.h>
 #include <chrono>
-#define AUTH_REQ_OK             0       /* User is authenticated  */
-#define AUTH_REQ_PASSWORD       3       /* Password */
-
-#define PG_DIAG_SEVERITY		'S'
-#define PG_DIAG_SQLSTATE		'C'
-#define PG_DIAG_MESSAGE_PRIMARY 'M'
-#define PG_DIAG_MESSAGE_DETAIL	'D'
-#define PG_DIAG_MESSAGE_HINT	'H'
-#define PG_DIAG_STATEMENT_POSITION 'P'
-#define PG_DIAG_INTERNAL_POSITION 'p'
-#define PG_DIAG_INTERNAL_QUERY	'q'
-#define PG_DIAG_CONTEXT			'W'
-#define PG_DIAG_SOURCE_FILE		'F'
-#define PG_DIAG_SOURCE_LINE		'L'
-#define PG_DIAG_SOURCE_FUNCTION 'R'
-
-#define PARAM_TEXT_MODE 0
-#define PARAM_BINARY_MODE 1
 
 #include <signal.h>
 #include <iostream>
@@ -33,9 +15,29 @@
 #include "execution/ParseTools.h"
 
 namespace {
+constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
+constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
+
+constexpr char PG_DIAG_SEVERITY = 'S';
+constexpr char PG_DIAG_SQLSTATE = 'C';
+constexpr char PG_DIAG_MESSAGE_PRIMARY = 'M';
+constexpr char PG_DIAG_MESSAGE_DETAIL = 'D';
+constexpr char PG_DIAG_MESSAGE_HINT = 'H';
+constexpr char PG_DIAG_STATEMENT_POSITION = 'P';
+constexpr char PG_DIAG_INTERNAL_POSITION = 'p';
+constexpr char PG_DIAG_INTERNAL_QUERY = 'q';
+constexpr char PG_DIAG_CONTEXT = 'W';
+constexpr char PG_DIAG_SOURCE_FILE = 'F';
+constexpr char PG_DIAG_SOURCE_LINE = 'L';
+constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
+
+constexpr int16_t PARAM_TEXT_MODE = 0;
+constexpr int16_t PARAM_BINARY_MODE = 1;
+
 class EmptyResult: public ExecutionPlan {
 public:
-	EmptyResult() : ExecutionPlan(PlanType::Other) {
+	EmptyResult() :
+			ExecutionPlan(PlanType::Other) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) {
@@ -327,20 +329,16 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 			break;
 
 		case DBDataType::STRING:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Varchar,
-					-1);
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Varchar, -1);
 			break;
 		case DBDataType::DATETIME:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime,
-					-1);
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime, -1);
 			break;
 		case DBDataType::DATE:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime,
-					-1);
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime, -1);
 			break;
 		case DBDataType::DOUBLE:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Double,
-					-1);
+			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Double, -1);
 			break;
 		default:
 			LOG(ERROR, "Unknown type %d\n", pPlan->getResultType(i))

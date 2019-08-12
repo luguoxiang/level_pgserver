@@ -13,7 +13,9 @@
 #include<time.h>
 #include "common/IOException.h"
 
-#define MAX_LOG_LEN 4096
+namespace {
+constexpr size_t MAX_LOG_LEN = 4096;
+}
 
 Log::Log() : m_pszLogPath("log/server.log"), m_pLogFile(nullptr), m_level(LogLevel::INFO), m_iDay(
 				0) {

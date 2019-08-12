@@ -9,13 +9,27 @@
 #include "execution/ExecutionPlan.h"
 #include "execution/WorkThreadInfo.h"
 
-#define PG_PROTOCOL(m,n)        (((m) << 16) | (n))
-#define PG_PROTOCOL_MAJOR(v)    ((v) >> 16)
-#define PG_PROTOCOL_MINOR(v)    ((v) & 0x0000ffff)
+namespace {
+constexpr size_t MAX_STARTUP_PACKET_LENGTH = 10000;
 
-#define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)
-#define NEGOTIATE_SSL_CODE PG_PROTOCOL(1234,5679)
+/* FE/BE protocol version number */
+using ProtocolVersion=unsigned int;
+using PacketLen=unsigned int;
 
+constexpr ProtocolVersion PG_PROTOCOL(int m, int n) {
+	return (((m) << 16) | (n));
+}
+constexpr ProtocolVersion PG_PROTOCOL_MAJOR(int v) {
+	return ((v) >> 16);
+}
+constexpr ProtocolVersion PG_PROTOCOL_MINOR(int v) {
+	return ((v) & 0x0000ffff);
+}
+
+constexpr ProtocolVersion CANCEL_REQUEST_CODE = PG_PROTOCOL(1234, 5678);
+constexpr ProtocolVersion NEGOTIATE_SSL_CODE = PG_PROTOCOL(1234, 5679);
+
+}
 PgMessageReceiver::PgMessageReceiver(int fd) :
 		DataReceiver(fd, true) {
 }
