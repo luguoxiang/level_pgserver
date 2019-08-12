@@ -10,9 +10,6 @@ struct WorkThreadInfo {
 	~WorkThreadInfo();
 
 	void clearPlan() {
-		for (ExecutionPlan* pPlan : m_plans) {
-			delete pPlan;
-		}
 		m_plans.clear();
 	}
 
@@ -49,19 +46,19 @@ struct WorkThreadInfo {
 
 	void pushPlan(ExecutionPlan* pPlan) {
 		assert(pPlan);
-		m_plans.push_back(pPlan);
+		m_plans.emplace_back(pPlan);
 	}
 
 	ExecutionPlan* popPlan() {
 		if (m_plans.empty())
 			return nullptr;
-		ExecutionPlan* pPlan = m_plans.back();
+		ExecutionPlan* pPlan = m_plans.back().release();
 		m_plans.pop_back();
 		return pPlan;
 	}
 private:
 	ParseResult m_result;
-	std::vector<ExecutionPlan*> m_plans;
+	std::vector<std::unique_ptr<ExecutionPlan>> m_plans;
 };
 
 inline void* operator new[](size_t size, WorkThreadInfo& pool) {
@@ -76,7 +73,6 @@ class WorkerManager {
 public:
 	static WorkerManager& getInstance();
 
-	~WorkerManager();
 
 	size_t getWorkerCount() {
 		return m_workers.size();
@@ -84,15 +80,15 @@ public:
 
 	WorkThreadInfo* getWorker(size_t i) {
 		assert(i < m_workers.size());
-		return m_workers[i];
+		return m_workers[i].get();
 	}
 
 	void addWorker(WorkThreadInfo* pWorker) {
-		m_workers.push_back(pWorker);
+		m_workers.emplace_back(pWorker);
 	}
 private:
 	WorkerManager() {
 	}
-	;
-	std::vector<WorkThreadInfo*> m_workers;
+
+	std::vector<std::unique_ptr<WorkThreadInfo>> m_workers;
 };

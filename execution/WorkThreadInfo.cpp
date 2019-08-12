@@ -22,7 +22,7 @@ WorkThreadInfo::WorkThreadInfo(int fd, const char* pszPort, int iIndex) :
 
 WorkThreadInfo::~WorkThreadInfo() {
 	parseTerminate(&m_result);
-	clearPlan();
+	m_plans.clear();
 }
 
 void WorkThreadInfo::parse(const char* pszSQL, size_t iLen) {
@@ -62,11 +62,5 @@ WorkerManager& WorkerManager::getInstance() {
 	return manager;
 }
 
-WorkerManager::~WorkerManager() {
-	for (size_t i = 0; i < m_workers.size(); ++i) {
-		if (m_workers[i] != nullptr) {
-			delete m_workers[i];
-		}
-	}
-}
+
 
