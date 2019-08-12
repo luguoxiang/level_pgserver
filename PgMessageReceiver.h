@@ -14,6 +14,6 @@ private:
 	static const size_t MAX_STARTUP_PACKET_LENGTH = 10000;
 
 	/* FE/BE protocol version number */
-	typedef unsigned int ProtocolVersion;
-	typedef unsigned int PacketLen;
+	using ProtocolVersion=unsigned int;
+	using PacketLen=unsigned int;
 };

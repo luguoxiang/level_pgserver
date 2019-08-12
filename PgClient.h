@@ -14,7 +14,7 @@ public:
 	~PgClient();
 
 	void run();
-	typedef void (PgClient::*MessageHandler)();
+	using MessageHandler = void (PgClient::*)();
 private:
 	void describeColumn(ExecutionPlan* pPlan);
 	void sendRow(ExecutionPlan* pPlan);

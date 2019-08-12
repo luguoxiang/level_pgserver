@@ -7,11 +7,7 @@
 #include "execution/WorkThreadInfo.h"
 #include "execution/ExecutionPlan.h"
 
-#ifndef NDEBUG
-#define DYNAMIC_CAST dynamic_cast
-#else
-#define DYNAMIC_CAST static_cast
-#endif
+
 
 #define PARSE_ERROR(FORMAT, ...) \
 	Log::getLogger().log(Log::ERROR, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); \

@@ -10,14 +10,16 @@ struct WorkThreadInfo {
 	~WorkThreadInfo();
 
 	void clearPlan() {
-		for (size_t i = 0; i < m_plans.size(); ++i) {
-			delete m_plans[i];
+		for (ExecutionPlan* pPlan : m_plans) {
+			delete pPlan;
 		}
 		m_plans.clear();
 	}
 
 	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
+
 	std::thread::id m_tid;
+
 	int m_iListenFd;
 	int m_iAcceptFd;
 	const char* m_pszPort;
