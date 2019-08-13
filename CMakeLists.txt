@@ -51,5 +51,6 @@ include_directories(PUBLIC .)
 add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} )
 add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
 
+add_dependencies(ExecutionLib CommonLib)
 add_executable(${APP_EXEC} ${SOURCES} )
 target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib )
