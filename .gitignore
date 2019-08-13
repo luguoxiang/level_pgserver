@@ -27,6 +27,14 @@
 *.lib
 
 # Executables
-*.exe
-*.out
-*.app
+bin
+
+# flex/bison
+common/SqlParser.tab.*
+common/SqlParser.lex.*
+
+#CMake
+Makefile
+CMakeFiles
+*.cmake
+CMakeCache.txt
