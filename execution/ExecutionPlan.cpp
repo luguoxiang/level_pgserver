@@ -162,13 +162,13 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 		DBDataType type) {
 	if (m_bNull) {
-		return pValue->m_iType == NULL_NODE ? 0 : -1;
+		return pValue->m_iType == NodeType::NONE ? 0 : -1;
 	}
 	switch (type) {
 	case DBDataType::INT16:
 	case DBDataType::INT32:
 	case DBDataType::INT64: {
-		if (pValue->m_iType != INT_NODE) {
+		if (pValue->m_iType != NodeType::INT) {
 			PARSE_ERROR("Wrong data type for %s, expect int",
 					pValue->m_pszValue);
 		}
@@ -182,7 +182,7 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 			return 1;
 	}
 	case DBDataType::STRING: {
-		if (pValue->m_iType != STR_NODE) {
+		if (pValue->m_iType != NodeType::STR) {
 			PARSE_ERROR("Wrong data type for %s, expect string",
 					pValue->m_pszValue);
 		}

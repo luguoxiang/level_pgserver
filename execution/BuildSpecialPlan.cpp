@@ -16,14 +16,14 @@ void buildPlanForDesc(ParseNode* pNode) {
 	ParseNode* pTable = pNode->m_children[0];
 
 	TableInfo* pEntry = nullptr;
-	if (pTable->m_iType != NAME_NODE) {
+	if (pTable->m_iType != NodeType::NAME) {
 		assert(pTable->m_iChildNum == 2);
 
 		ParseNode* pDB = pTable->m_children[0];
 		pTable = pTable->m_children[1];
 
-		assert(pDB->m_iType == NAME_NODE);
-		assert(pTable->m_iType == NAME_NODE);
+		assert(pDB->m_iType == NodeType::NAME);
+		assert(pTable->m_iType == NodeType::NAME);
 
 		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_pszValue);
 	} else {
@@ -50,7 +50,7 @@ void buildPlanForReadFile(ParseNode* pNode) {
 	Tools::pushPlan(pValuePlan);
 
 	ParseNode* pTable = pNode->m_children[1];
-	assert(pTable && pTable->m_iType == NAME_NODE);
+	assert(pTable && pTable->m_iType == NodeType::NAME);
 
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
 			pTable->m_pszValue);
@@ -71,7 +71,7 @@ void buildPlanForFileSelect(ParseNode* pNode) {
 	assert(pNode && pNode->m_iChildNum == 7);
 
 	ParseNode* pTable = pNode->m_children[SQL_SELECT_TABLE];
-	assert(pTable && pTable->m_iType == NAME_NODE);
+	assert(pTable && pTable->m_iType == NodeType::NAME);
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
 			pTable->m_pszValue);
 	if (pTableInfo == nullptr) {

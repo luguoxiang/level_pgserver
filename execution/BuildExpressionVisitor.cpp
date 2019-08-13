@@ -7,25 +7,25 @@ ScanColumn* BuildExpressionVisitor::visitDataNode(ParseNode* pNode, bool) {
 	assert(pInfo);
 	ScanColumn* pColumn = nullptr;
 	switch (pNode->m_iType) {
-	case NULL_NODE:
+	case NodeType::NONE:
 		return m_pFactory->addConstValue("null");
-	case INT_NODE:
+	case NodeType::INT:
 		pColumn = m_pFactory->addConstValue(pNode->m_pszValue);
 		pColumn->setType(DBDataType::INT64);
 		return pColumn;
-	case FLOAT_NODE:
+	case NodeType::FLOAT:
 		pColumn = m_pFactory->addConstValue(pNode->m_pszValue);
 		pColumn->setType(DBDataType::DOUBLE);
 		return pColumn;
-	case BINARY_NODE:
+	case NodeType::BINARY:
 		pColumn = m_pFactory->addConstValue(pNode->m_pszValue);
 		return pColumn;
-	case STR_NODE:
+	case NodeType::STR:
 		pColumn = m_pFactory->addConstValue(
 				Tools::escapeString(pNode->m_pszValue, pNode->m_iValue));
 		pColumn->setType(DBDataType::STRING);
 		return pColumn;
-	case DATE_NODE: {
+	case NodeType::DATE: {
 		std::string sExpr = "#";
 		sExpr.append(pNode->m_pszValue);
 		sExpr.append("#");

@@ -94,7 +94,7 @@ void TableInfo::getDBColumns(ParseNode* pColumn,
 
 		for (size_t j = 0; j < pColumn->m_iChildNum; ++j) {
 			ParseNode* p = pColumn->m_children[j];
-			if (p == nullptr || p->m_iType != NAME_NODE) {
+			if (p == nullptr || p->m_iType != NodeType::NAME) {
 				throw new ParseException("Unsupported select expression:",
 						p->m_pszExpr);
 			}

@@ -4,7 +4,7 @@
 
 extern const char* getTypeName(int type);
 
-void buildPlanDefault(struct _ParseNode* pNode) {
+void buildPlanDefault(ParseNode* pNode) {
 	size_t i;
 	for (i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pChild = pNode->m_children[i];
@@ -24,17 +24,17 @@ void printTree(ParseNode* pRoot, int level) {
 		return;
 	}
 	switch (pRoot->m_iType) {
-	case OP_NODE:
-	case FUNC_NODE:
-	case INFO_NODE:
-	case DATATYPE_NODE:
+	case NodeType::OP:
+	case NodeType::FUNC:
+	case NodeType::INFO:
+	case NodeType::DATATYPE:
 		pszTypeName = getTypeName(pRoot->m_iValue);
 		if (pszTypeName == 0)
 			printf("%c\n", (char) pRoot->m_iValue);
 		else
 			printf("%s\n", pszTypeName);
 		break;
-	case BINARY_NODE:
+	case NodeType::BINARY:
 		printf("\\x");
 		for (i = 0; i < pRoot->m_iValue; ++i) {
 			printf("%02x", (unsigned char) pRoot->m_pszValue[i]);
@@ -50,7 +50,7 @@ void printTree(ParseNode* pRoot, int level) {
 	}
 }
 
-ParseNode* newNode(ParseResult *p, int type, int num) {
+ParseNode* newNode(ParseResult *p, NodeType type, int num) {
 	ParseNode* pNode = (ParseNode*) memPoolAlloc(sizeof(ParseNode), p);
 	memset(pNode, 0, sizeof(ParseNode));
 
@@ -73,7 +73,7 @@ static int _countChild(ParseNode* pRoot, const char* pszRemove) {
 		return 0;
 
 	int count = 0;
-	if (pRoot->m_iType != PARENT_NODE
+	if (pRoot->m_iType != NodeType::PARENT
 			|| strcmp(pRoot->m_pszValue, pszRemove) != 0) {
 		return 1;
 	}
@@ -90,7 +90,7 @@ static void _mergeChild(ParseNode* pNode, ParseNode* pSource, int* pIndex,
 	if (pSource == 0)
 		return;
 
-	if (pSource->m_iType == PARENT_NODE
+	if (pSource->m_iType == NodeType::PARENT
 			&& strcmp(pSource->m_pszValue, pszRemove) == 0) {
 		int i;
 		for (i = 0; i < pSource->m_iChildNum; ++i) {
@@ -110,7 +110,7 @@ ParseNode* mergeTree(ParseResult *p, const char* pszRootName, ParseNode* pRoot,
 	ParseNode* pNode;
 	assert(pRoot);
 	num = _countChild(pRoot, pszRemove);
-	pNode = newNode(p, PARENT_NODE, num);
+	pNode = newNode(p, NodeType::PARENT, num);
 	pNode->m_pszValue = pszRootName;
 	index = 0;
 	_mergeChild(pNode, pRoot, &index, pszRemove);
@@ -144,7 +144,7 @@ ParseNode* newFuncNode(ParseResult *p, const char* pszName, int firstColumn,
 		int lastColumn, int num, ...) {
 	va_list va;
 	size_t i, j;
-	ParseNode* pNode = newNode(p, FUNC_NODE, num);
+	ParseNode* pNode = newNode(p, NodeType::FUNC, num);
 	pNode->m_pszExpr = trim_dup(p, firstColumn, lastColumn);
 	pNode->m_pszValue = pszName;
 	pNode->m_iValue = 0;
@@ -160,7 +160,7 @@ ParseNode* newExprNode(ParseResult *p, int value, int firstColumn,
 	int lastColumn, int num, ...) {
 va_list va;
 size_t i, j;
-ParseNode* pNode = newNode(p, OP_NODE, num);
+ParseNode* pNode = newNode(p, NodeType::OP, num);
 pNode->m_pszExpr = trim_dup(p, firstColumn, lastColumn);
 pNode->m_iValue = value;
 va_start(va, num);
@@ -171,7 +171,7 @@ va_end(va);
 return pNode;
 }
 
-ParseNode* newIntNode(ParseResult *p, int type, int value, int num, ...) {
+ParseNode* newIntNode(ParseResult *p, NodeType type, int value, int num, ...) {
 va_list va;
 size_t i;
 ParseNode* pNode = newNode(p, type, num);
@@ -189,7 +189,7 @@ ParseNode* newParentNode(ParseResult *p, const char* pszName, int num, ...) {
 assert(num > 0);
 va_list va;
 int i;
-ParseNode* pNode = newNode(p, PARENT_NODE, num);
+ParseNode* pNode = newNode(p, NodeType::PARENT, num);
 pNode->m_pszValue = pszName;
 va_start(va, num);
 for (i = 0; i < num; ++i) {

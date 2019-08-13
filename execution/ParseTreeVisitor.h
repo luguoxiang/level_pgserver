@@ -81,18 +81,18 @@ template<typename ParamType, typename ReturnType>
 ReturnType ParseTreeVisitor<ParamType, ReturnType>::walk(ParseNode* pNode,
 		ParamType param) {
 	switch (pNode->m_iType) {
-	case NAME_NODE:
+	case NodeType::NAME:
 		return visitNameNode(pNode, param);
 
-	case STR_NODE:
-	case DATE_NODE:
-	case NULL_NODE:
-	case INT_NODE:
-	case FLOAT_NODE:
-	case BINARY_NODE: {
+	case NodeType::STR:
+	case NodeType::DATE:
+	case NodeType::NONE:
+	case NodeType::INT:
+	case NodeType::FLOAT:
+	case NodeType::BINARY: {
 		return visitDataNode(pNode, param);
 	}
-	case OP_NODE:
+	case NodeType::OP:
 		if (pNode->m_iChildNum == 2) {
 			return visitDyadicOpNode(OP_CODE(pNode), pNode, param);
 		} else if (pNode->m_iChildNum == 1) {
@@ -104,7 +104,7 @@ ReturnType ParseTreeVisitor<ParamType, ReturnType>::walk(ParseNode* pNode,
 					"Operator node with %d operators is not supported!",
 					pNode->m_iChildNum);
 		}
-	case FUNC_NODE: {
+	case NodeType::FUNC: {
 		assert(pNode->m_iChildNum == 1);
 		return visitFuncNode(pNode->m_pszValue, pNode, param);
 	}

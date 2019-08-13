@@ -18,7 +18,7 @@ extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner, const cha
 	yylloc->last_column = yylloc->first_column + yyleng - 1;\
 	((ParseResult*)yyextra)->m_yycolumn += yyleng;
 
-extern ParseNode* newNode(ParseResult* pResult, int type, int num);
+extern ParseNode* newNode(ParseResult* pResult, NodeType type, int num);
 
 static size_t parseBinary(const char* pszSrc, char* pszDest, size_t iLen)
 {
@@ -80,7 +80,7 @@ TERMINATED {return TERMINATED;}
 IS {return IS;}
 NOT 	{return NOT;}
 NULL 	{ 
-	yylval->pNode = newNode((ParseResult*)yyextra, NULL_NODE,0);
+	yylval->pNode = newNode((ParseResult*)yyextra, NodeType::NONE,0);
 	return NULLX;
 }
 ON 	{ return ON;}
@@ -110,7 +110,7 @@ USING {return USING;}
 
 [0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, INT_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::INT,0);
 	yylval->pNode = pNode;
 	pNode->m_pszValue = my_strdup(pResult, yytext);
 	pNode->m_pszExpr = pNode->m_pszValue;
@@ -129,7 +129,7 @@ USING {return USING;}
 [0-9]+"."[0-9]*E[-+]?[0-9]+ |
 "."[0-9]+E[-+]?[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, FLOAT_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::FLOAT,0);
 	yylval->pNode = pNode;
 	pNode->m_pszValue = my_strdup(pResult, yytext);
 	pNode->m_pszExpr = pNode->m_pszValue;
@@ -137,21 +137,21 @@ USING {return USING;}
 }
 
 TRUE {
-	ParseNode* pNode = newNode((ParseResult*)yyextra, BOOL_NODE,0);
+	ParseNode* pNode = newNode((ParseResult*)yyextra, NodeType::BOOL,0);
 	pNode->m_iValue = 1;
 	yylval->pNode = pNode;
 	pNode->m_pszExpr = "true";
 	return BOOL;
 }
 UNKNOWN {
-	ParseNode* pNode = newNode((ParseResult*)yyextra, BOOL_NODE,0);
+	ParseNode* pNode = newNode((ParseResult*)yyextra, NodeType::BOOL,0);
 	pNode->m_iValue = -1;
 	yylval->pNode = pNode;
 	pNode->m_pszExpr = "unknown";
 	return BOOL;
 }
 FALSE {
-	ParseNode* pNode = newNode((ParseResult*)yyextra, BOOL_NODE,0);
+	ParseNode* pNode = newNode((ParseResult*)yyextra, NodeType::BOOL,0);
 	pNode->m_iValue = 0;
 	yylval->pNode = pNode;
 	pNode->m_pszExpr = "false";
@@ -160,7 +160,7 @@ FALSE {
 
 '(\\.|''|[^'\n])*'|\"(\\.|\"\"|[^"\n])*\" {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, STR_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::STR,0);
 	yylval->pNode = pNode;
 
 	char* pszSrc = yytext+1;
@@ -186,7 +186,7 @@ FALSE {
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, BINARY_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::BINARY,0);
 	char* pszSrc = yytext + 2; 
 	char* pszDest = 0;
 	
@@ -208,7 +208,7 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 
 D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, DATE_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::DATE,0);
 	char* pszDest =  my_strdup(pResult, yytext + 2);
 	size_t len = strlen(pszDest);
 	--len;
@@ -229,7 +229,7 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 }
 D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, DATE_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::DATE,0);
 	char* pszDest =  my_strdup(pResult, yytext + 2);
 	size_t len = strlen(pszDest);
 	--len;
@@ -263,7 +263,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 [A-Za-z_][A_Za-z0-9_]* {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NAME_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::NAME,0);
 	yylval->pNode = pNode;
 	pNode->m_pszValue = my_strdup(pResult,yytext);
 	pNode->m_pszExpr = pNode->m_pszValue;
@@ -273,7 +273,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 $[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, PARAM_NODE,0);
+	ParseNode* pNode = newNode(pResult, NodeType::PARAM,0);
 	yylval->pNode = pNode;
 	pNode->m_pszValue = "unbound";
 	int index = strtol(yytext + 1, 0, 10);

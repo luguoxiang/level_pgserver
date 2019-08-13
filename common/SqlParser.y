@@ -9,7 +9,7 @@ typedef void* yyscan_t;
 }
 
 %union{
-	struct _ParseNode* pNode;
+	ParseNode* pNode;
 }
 
 %{
@@ -28,7 +28,7 @@ extern ParseNode* mergeTree(ParseResult* pResult, const char* pszRootName,
 			ParseNode* pRoot, 
 			const char* pszRemove);
 
-extern ParseNode* newIntNode(ParseResult* pResult, int type, int value, int num, ...);
+extern ParseNode* newIntNode(ParseResult* pResult, NodeType type, int value, int num, ...);
 
 extern ParseNode* newParentNode(ParseResult* pResult, const char* pszName, int childNum, ...);
 
@@ -54,12 +54,12 @@ static struct DbPlanBuilder* getPlanBuilder(ParseResult* pResult, ParseNode** pp
 		struct DbPlanBuilder* pBuilder = NULL;
 		assert(ppTable);
 		ParseNode* pTable = *ppTable;
-		if(pTable->m_iType == OP_NODE)
+		if(pTable->m_iType == NodeType::OP)
 		{
 				int i = 0;
 				assert(pTable->m_iChildNum == 2);
-				assert(pTable->m_children[0]->m_iType == NAME_NODE);
-				assert(pTable->m_children[1]->m_iType == NAME_NODE);
+				assert(pTable->m_children[0]->m_iType == NodeType::NAME);
+				assert(pTable->m_children[1]->m_iType == NodeType::NAME);
 				ParseNode* pDB = pTable->m_children[0];
 				*ppTable = pTable = pTable->m_children[1];
 				for(i=0 ; ; ++i)
@@ -255,7 +255,7 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 	| expr '%' expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, 2, $1, $3);}
 	| expr MOD expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, 2, $1, $3);}
 	| '-' expr %prec UMINUS {
-		if($2->m_iType == INT_NODE)
+		if($2->m_iType == NodeType::INT)
 		{
 			$2->m_iValue = - $2->m_iValue;
 			char szBuf[20];
@@ -388,7 +388,7 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 
 show_tables_stmt:SHOW TABLES
 	{
-		$$ = newIntNode(pResult, INFO_NODE, SHOW, 0);
+		$$ = newIntNode(pResult, NodeType::INFO, SHOW, 0);
 		$$->m_fnBuildPlan = buildPlanForShowTables;
 	}
 	;
@@ -402,7 +402,7 @@ desc_table_stmt:DESC table_factor
 
 workload_stmt:WORKLOAD
 	{
-		$$ = newIntNode(pResult, INFO_NODE, WORKLOAD, 0);
+		$$ = newIntNode(pResult, NodeType::INFO, WORKLOAD, 0);
 		$$->m_fnBuildPlan = buildPlanForWorkload;	
 	}
  	;
@@ -468,7 +468,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 		ParseNode* pPredicate = $6;
 		ParseNode* pJoin = $11;
 
-		int hasSubquery = (pTable->m_iType != NAME_NODE && pTable->m_iType != OP_NODE);
+		int hasSubquery = (pTable->m_iType != NodeType::NAME && pTable->m_iType != NodeType::OP);
 		if(pJoin != 0)
 		{
 			//This is a left join statement
@@ -569,9 +569,9 @@ sort_list: expr opt_asc_desc {
 		}
 	;
 
-opt_asc_desc:{$$ = newIntNode(pResult, INFO_NODE, ASC, 0);}
-	| ASC {$$ = newIntNode(pResult, INFO_NODE, ASC, 0);}
-	| DESC {$$ = newIntNode(pResult, INFO_NODE, DESC, 0);}
+opt_asc_desc:{$$ = newIntNode(pResult, NodeType::INFO, ASC, 0);}
+	| ASC {$$ = newIntNode(pResult, NodeType::INFO, ASC, 0);}
+	| DESC {$$ = newIntNode(pResult, NodeType::INFO, DESC, 0);}
 	;
 
 opt_having:{$$ = 0;}
@@ -592,7 +592,7 @@ opt_orderby:{$$ = 0;}
 projection: expr {
 		$$ = $1; 
 	} | expr AS NAME { 
-		$$ = newIntNode(pResult, OP_NODE, AS, 2, $1, $3); 
+		$$ = newIntNode(pResult, NodeType::OP, AS, 2, $1, $3); 
 	}
 
 select_expr_list: projection { 
@@ -602,7 +602,7 @@ select_expr_list: projection {
 		$$ = newParentNode(pResult, "ExprList", 2, $1, $3);
 	}
 	| '*' {
-		$$ = newIntNode(pResult, INFO_NODE, ALL_COLUMN, 0);
+		$$ = newIntNode(pResult, NodeType::INFO, ALL_COLUMN, 0);
 	}
 	;
 

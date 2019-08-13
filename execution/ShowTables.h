@@ -43,7 +43,7 @@ public:
 
 	virtual int addProjection(ParseNode* pNode) {
 		assert(pNode);
-		if (pNode->m_iType != NAME_NODE)
+		if (pNode->m_iType != NodeType::NAME)
 			return -1;
 		if (strcasecmp(pNode->m_pszValue, "TableName") == 0)
 			return 0;

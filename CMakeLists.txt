@@ -27,6 +27,7 @@ if(BISON_FOUND)
               --defines=${CMAKE_SOURCE_DIR}/common/SqlParser.tab.h
               --output=${BisonOutput}
               ${CMAKE_SOURCE_DIR}/common/SqlParser.y
+      DEPENDS ${CMAKE_SOURCE_DIR}/common/SqlParser.y
       COMMENT "Generating SqlParser.tab.cpp"
     )
 endif()
@@ -38,6 +39,7 @@ if(FLEX_FOUND)
       COMMAND ${FLEX_EXECUTABLE}
               --outfile=${FlexOutput}
               ${CMAKE_SOURCE_DIR}/common/SqlParser.l
+      DEPENDS ${CMAKE_SOURCE_DIR}/common/SqlParser.l
       COMMENT "Generating SqlParser.lex.cpp"
     )
 endif()
@@ -52,5 +54,6 @@ add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} )
 add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
 
 add_dependencies(ExecutionLib CommonLib)
+
 add_executable(${APP_EXEC} ${SOURCES} )
 target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib )

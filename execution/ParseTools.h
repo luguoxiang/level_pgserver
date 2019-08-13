@@ -19,17 +19,17 @@
 
 namespace Tools {
 inline bool isRowKeyNode(ParseNode* pNode) {
-	return pNode->m_iType == NAME_NODE
+	return pNode->m_iType == NodeType::NAME
 			&& strcasecmp(pNode->m_pszValue, "_rowkey") == 0;
 }
 
 inline bool isTimestampNode(ParseNode* pNode) {
-	return pNode->m_iType == NAME_NODE
+	return pNode->m_iType == NodeType::NAME
 			&& strcasecmp(pNode->m_pszValue, "_timestamp") == 0;
 }
 
 inline bool isRowCountNode(ParseNode* pNode) {
-	return pNode->m_iType == NAME_NODE
+	return pNode->m_iType == NodeType::NAME
 			&& strcasecmp(pNode->m_pszValue, "_rowcount") == 0;
 }
 

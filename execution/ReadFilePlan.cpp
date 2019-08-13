@@ -17,7 +17,7 @@ ReadFilePlan::~ReadFilePlan() {
 
 int ReadFilePlan::addProjection(ParseNode* pNode) {
 	assert(pNode);
-	if (pNode->m_iType != NAME_NODE)
+	if (pNode->m_iType != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < m_columns.size(); ++i) {
 		if (strcmp(m_columns[i]->getName(), pNode->m_pszValue) == 0) {

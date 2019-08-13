@@ -54,7 +54,7 @@ bool FilterPlan::next() {
 				break;
 			}
 			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
-				if (info.m_pValue->m_iType != STR_NODE) {
+				if (info.m_pValue->m_iType != NodeType::STR) {
 					PARSE_ERROR("Wrong data type for %s, expect string",
 							info.m_pValue->m_pszValue);
 				}

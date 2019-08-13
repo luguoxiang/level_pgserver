@@ -115,7 +115,7 @@ void GroupByPlan::end() {
 }
 
 int GroupByPlan::addProjection(ParseNode* pNode) {
-	if (pNode->m_iType == NAME_NODE) {
+	if (pNode->m_iType == NodeType::NAME) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
 			PARSE_ERROR("Unrecognized projection column '%s'",
@@ -127,7 +127,7 @@ int GroupByPlan::addProjection(ParseNode* pNode) {
 		func.m_iIndex = i;
 		m_proj.push_back(func);
 		return m_proj.size() - 1;
-	} else if (pNode->m_iType == FUNC_NODE) {
+	} else if (pNode->m_iType == NodeType::FUNC) {
 		std::map<std::string, FuncType>::iterator iter = m_typeMap.find(
 				pNode->m_pszValue);
 		if (iter == m_typeMap.end()) {

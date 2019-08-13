@@ -72,12 +72,12 @@ public:
 	};
 
 	void addPredicate(ParseNode* pPredicate) {
-		if (pPredicate->m_iType != OP_NODE || pPredicate->m_iChildNum != 2) {
+		if (pPredicate->m_iType != NodeType::OP || pPredicate->m_iChildNum != 2) {
 			PARSE_ERROR("Unsupported predicate '%s'", pPredicate->m_pszExpr);
 		}
 		assert(pPredicate);
 		assert(pPredicate->m_iChildNum == 2);
-		assert(pPredicate->m_iType == OP_NODE);
+		assert(pPredicate->m_iType == NodeType::OP);
 		PredicateInfo info;
 		info.m_pszColumn = pPredicate->m_children[0]->m_pszExpr;
 		info.m_pszExpr = pPredicate->m_pszExpr;

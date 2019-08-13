@@ -13,13 +13,13 @@ DBDataType ConstPlan::getResultType(size_t index) {
 	ParseNode* pRow = m_rows[0];
 	assert(pRow->m_iChildNum == m_columns.size());
 	switch (pRow->m_children[index]->m_iType) {
-	case INT_NODE:
+	case NodeType::INT:
 		return DBDataType::INT64;
-	case STR_NODE:
+	case NodeType::STR:
 		return DBDataType::STRING;
-	case FLOAT_NODE:
+	case NodeType::FLOAT:
 		return DBDataType::DOUBLE;
-	case DATE_NODE:
+	case NodeType::DATE:
 		return strlen(pRow->m_children[index]->m_pszValue) < 12 ?
 				DBDataType::DATE : DBDataType::DATETIME;
 	default:
@@ -35,22 +35,22 @@ void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 	pInfo->m_bNull = false;
 	ParseNode* pValue = pRow->m_children[index];
 	switch (pValue->m_iType) {
-	case INT_NODE:
+	case NodeType::INT:
 		pInfo->m_value.m_lResult = pValue->m_iValue;
 		break;
-	case DATE_NODE: {
+	case NodeType::DATE: {
 		struct timeval time;
 		time.tv_sec = (pValue->m_iValue / 1000000);
 		time.tv_usec = (pValue->m_iValue % 1000000);
 		pInfo->m_value.m_time = time;
 		break;
 	}
-	case FLOAT_NODE: {
+	case NodeType::FLOAT: {
 		float fValue = strtof(pValue->m_pszValue, nullptr);
 		pInfo->m_value.m_dResult = fValue;
 		break;
 	}
-	case STR_NODE:
+	case NodeType::STR:
 		pInfo->m_value.m_pszResult = pValue->m_pszValue;
 		pInfo->m_len = pValue->m_iValue;
 		break;
@@ -61,7 +61,7 @@ void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 
 int ConstPlan::addProjection(ParseNode* pNode) {
 	assert(pNode);
-	if (pNode->m_iType != NAME_NODE)
+	if (pNode->m_iType != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < m_columns.size(); ++i) {
 		if (strcmp(m_columns[i].c_str(), pNode->m_pszValue) == 0) {

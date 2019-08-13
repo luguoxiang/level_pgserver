@@ -56,7 +56,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 	Tools::pushPlan(pProjPlan);
 
 	assert(pNode && pNode->m_children[0]);
-	if (pNode->m_children[0]->m_iType == INFO_NODE
+	if (pNode->m_children[0]->m_iType == NodeType::INFO
 			&& pNode->m_children[0]->m_iValue == ALL_COLUMN) {
 		std::vector<const char*> columns;
 		pPlan->getAllColumns(columns);
@@ -66,7 +66,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 		}
 		for (size_t i = 0; i < columns.size(); ++i) {
 			ParseNode node;
-			node.m_iType = NAME_NODE;
+			node.m_iType = NodeType::NAME;
 			node.m_iChildNum = 0;
 			node.m_pszValue = columns[i];
 			node.m_pszExpr = columns[i];
@@ -78,7 +78,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 	for (size_t i = 0; i < pNode->m_iChildNum; ++i) {
 		ParseNode* pColumn = pNode->m_children[i];
 		const char* pszAlias = nullptr;
-		if (pColumn->m_iType == OP_NODE && OP_CODE(pColumn) == AS) {
+		if (pColumn->m_iType == NodeType::OP && OP_CODE(pColumn) == AS) {
 			assert(pColumn->m_iChildNum == 2);
 
 			pszAlias = pColumn->m_children[1]->m_pszValue;
@@ -90,7 +90,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 		}
 		bool bOK = pProjPlan->project(pColumn, pszAlias);
 		if (!bOK) {
-			if (pColumn->m_iType != FUNC_NODE) {
+			if (pColumn->m_iType != NodeType::FUNC) {
 				PARSE_ERROR("unrecongnized column '%s'", pColumn->m_pszExpr);
 			}
 			pProjPlan->addGroupBy();
@@ -114,7 +114,7 @@ void buildPlanForGroupBy(ParseNode* pNode) {
 		ParseNode* pChild = pNode->m_children[i];
 		assert(pChild);
 
-		if (pChild->m_iType != NAME_NODE) {
+		if (pChild->m_iType != NodeType::NAME) {
 			PARSE_ERROR("Wrong group by clause!");
 		}
 
@@ -157,15 +157,15 @@ void buildPlanForLimit(ParseNode* pNode) {
 	ParseNode* pCount = pNode->m_children[0];
 	ParseNode* pOffset = pNode->m_children[1];
 
-	assert(pCount->m_iType == INT_NODE);
-	assert(pOffset->m_iType == INT_NODE);
+	assert(pCount->m_iType == NodeType::INT);
+	assert(pOffset->m_iType == NodeType::INT);
 	int64_t iOffset = pOffset->m_iValue;
 	int64_t iCount = pCount->m_iValue;
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
 static void parseQueryCondition(ParseNode* pPredicate, FilterPlan* pFilter) {
-	if (pPredicate->m_iType != OP_NODE) {
+	if (pPredicate->m_iType != NodeType::OP) {
 		PARSE_ERROR("Unsupported predicate '%s'", pPredicate->m_pszExpr);
 	}
 

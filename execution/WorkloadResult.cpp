@@ -15,7 +15,7 @@ void WorkloadResult::getAllColumns(std::vector<const char*>& columns) {
 int WorkloadResult::addProjection(ParseNode* pNode) {
 	assert(pNode);
 	size_t count = sizeof(WorkloadColumns) / sizeof(const char*);
-	if (pNode->m_iType != NAME_NODE)
+	if (pNode->m_iType != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < count; ++i) {
 		if (strcasecmp(WorkloadColumns[i], pNode->m_pszValue) == 0) {

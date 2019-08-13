@@ -20,7 +20,7 @@ void ShowColumns::getAllColumns(std::vector<const char*>& columns) {
 int ShowColumns::addProjection(ParseNode* pNode) {
 	assert(pNode);
 	size_t count = sizeof(Columns) / sizeof(const char*);
-	if (pNode->m_iType != NAME_NODE)
+	if (pNode->m_iType != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < count; ++i) {
 		if (strcasecmp(Columns[i], pNode->m_pszValue) == 0) {
