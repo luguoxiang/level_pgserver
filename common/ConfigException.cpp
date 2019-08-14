@@ -11,6 +11,5 @@ ConfigException::ConfigException(const char* pszMsg, ...) {
 	m_sErrMsg = szBuf;
 
 	va_end(arg);
-	LOG(ERROR, m_sErrMsg.c_str());
 }
 

@@ -12,7 +12,7 @@ public:
 
 	void clean();
 
-	void load(const char* pszPath);
+	void load(const std::string& sPath);
 
 	static MetaConfig& getInstance() {
 		static MetaConfig config;
@@ -21,17 +21,13 @@ public:
 
 	void getTables(std::vector<TableInfo*>& tables) {
 		tables.clear();
-		std::map<std::string, TableInfo*>::iterator iter = m_tableMap.begin();
-		while (iter != m_tableMap.end()) {
-			tables.push_back(iter->second);
-			++iter;
+		for (auto& pv: m_tableMap) {
+			tables.push_back(pv.second);
 		}
 	}
 
-	DBDataType getDataType(const char* pszType) {
-		std::string name(pszType);
-		std::map<std::string, DBDataType>::iterator iter = m_dataTypeMap.find(
-				name);
+	DBDataType getDataType(const std::string& sType) {
+		auto iter = m_dataTypeMap.find(sType);
 		if (iter == m_dataTypeMap.end())
 			return DBDataType::UNKNOWN;
 		return iter->second;
@@ -63,19 +59,9 @@ public:
 		m_iExecBuffer = size;
 	}
 
-	TableInfo* getTableInfo(std::string name) {
-		std::map<std::string, TableInfo*>::iterator iter;
-		iter = m_tableMap.find(name);
+	TableInfo* getTableInfo(const std::string& name) {
+		auto iter = m_tableMap.find(name);
 		if (iter != m_tableMap.end()) {
-			return iter->second;
-		} else {
-			return nullptr;
-		}
-	}
-	ServerInfo* getServerInfo(std::string name) {
-		std::map<std::string, ServerInfo*>::iterator iter;
-		iter = m_serverMap.find(name);
-		if (iter != m_serverMap.end()) {
 			return iter->second;
 		} else {
 			return nullptr;
@@ -86,20 +72,15 @@ public:
 		return m_tableMap.size();
 	}
 
-	void addTable(std::string name, TableInfo* pTable);
+	void addTable(const std::string& name, TableInfo* pTable);
 
-	void addServer(std::string name, ServerInfo* pServer);
+	MetaConfig(const MetaConfig&) = delete;
+	MetaConfig& operator =(const MetaConfig&) = delete;
 private:
 
 	MetaConfig();
 
-	void parseServer(ServerInfo* pServer, const char* pszKey,
-			const char* pszValue);
-	void parseTable(TableInfo* pTable, const char* pszKey,
-			const char* pszValue);
-
 	std::map<std::string, TableInfo*> m_tableMap;
-	std::map<std::string, ServerInfo*> m_serverMap;
 	std::map<std::string, DBDataType> m_dataTypeMap;
 
 	uint32_t m_iWorkerNum;

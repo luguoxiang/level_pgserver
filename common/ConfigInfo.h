@@ -39,28 +39,26 @@ struct DBColumnInfo {
 };
 
 class MetaConfig;
-class ServerInfo;
 
 class TableInfo {
 public:
 	~TableInfo() {
-		for (size_t i = 0; i < m_columns.size(); ++i) {
-			delete m_columns[i];
+		for (auto p : m_columns) {
+			delete p;
 		}
 	}
 
-	void setName(std::string& name) {
+	void setName(const std::string& name) {
 		m_name = name;
 	}
 
-	const char* getName() const {
-		return m_name.c_str();
+	std::string getName() const {
+		return m_name;
 	}
-	;
 
-	void addColumn(MetaConfig* pConfig, const char* pszInfo);
+	void addColumn(MetaConfig* pConfig, const std::string& sValue);
 
-	void addKeyColumn(std::string& name);
+	void addKeyColumn(const std::string& name);
 
 	size_t getColumnCount() const {
 		return m_columns.size();
@@ -86,17 +84,16 @@ public:
 		return m_keys.size();
 	}
 
-	void addAttribute(std::string key, std::string value) {
+	void addAttribute(const std::string& key, const std::string& value) {
 		m_attr[key] = value;
 	}
 
-	const std::string& getAttribute(std::string key) {
+	const std::string& getAttribute(const std::string& key) {
 		return m_attr[key];
 	}
 
 	bool hasAttribute(std::string key) const {
-		std::map<std::string, std::string>::const_iterator iter;
-		iter = m_attr.find(key);
+		auto iter = m_attr.find(key);
 		return iter != m_attr.end();
 	}
 
@@ -109,35 +106,5 @@ private:
 	std::map<std::string, std::string> m_attr;
 
 	std::string m_name;
-};
-
-class ServerInfo {
-public:
-	void setName(std::string name) {
-		m_name = name;
-	}
-
-	const char* getName() const {
-		return m_name.c_str();
-	}
-	;
-
-	void addAttribute(std::string key, std::string value) {
-		m_attr[key] = value;
-	}
-
-	const std::string& getAttribute(std::string key) {
-		return m_attr[key];
-	}
-
-	bool hasAttribute(std::string key) const {
-		std::map<std::string, std::string>::const_iterator iter;
-		iter = m_attr.find(key);
-		return iter != m_attr.end();
-	}
-
-private:
-	std::string m_name;
-	std::map<std::string, std::string> m_attr;
 };
 

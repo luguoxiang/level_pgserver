@@ -20,8 +20,8 @@ void ShowTables::getResult(size_t index, ResultInfo* pInfo) {
 	TableInfo* pTable = m_tables[m_iIndex - 1];
 	pInfo->m_bNull = false;
 	if (index == 0) {
-		pInfo->m_value.m_pszResult = pTable->getName();
-		pInfo->m_len = strlen(pTable->getName());
+		pInfo->m_value.m_pszResult = pTable->getName().c_str();
+		pInfo->m_len = pTable->getName().length();
 	} else if (index == 1) {
 		if (pTable->hasAttribute("info")) {
 			pInfo->m_value.m_pszResult = pTable->getAttribute("info").c_str();

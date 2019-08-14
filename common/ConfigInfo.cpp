@@ -4,68 +4,65 @@
 #include "common/ParseException.h"
 #include "common/Log.h"
 #include <memory>
-#include <stdlib.h>
+#include <regex>
 
-void TableInfo::addColumn(MetaConfig* pConfig, const char* pszValue) {
-	const char* pszType = rindex(pszValue, ':');
-	if (pszType == nullptr) {
-		throw new ConfigException("Illegal attribute value '%s'", pszValue);
-	}
-	++pszType;
+void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
+	std::regex rgx("([^:\\s]+):([^:\\(\\)\\s]+)(\\([\\d]+\\))?");
+	std::smatch matches;
 
-	std::string s;
-	int iLen = 0;
-	const char* pszEnd = rindex(pszValue, '(');
-	if (pszEnd != nullptr) {
-		iLen = atoi(pszEnd + 1);
-		s.assign(pszType, pszEnd - pszType);
-	} else {
-		s = pszType;
-	}
+	DBColumnInfo* pColumn;
 
-	DBDataType type = pConfig->getDataType(s.c_str());
-	if (type == DBDataType::UNKNOWN) {
-		throw new ConfigException("Unknown data type %s", s.c_str());
-	}
-
-	DBColumnInfo* pColumn = new DBColumnInfo();
-	pColumn->m_sName.assign(pszValue, pszType - pszValue - 1);
-	pColumn->m_type = type;
-	pColumn->m_iLen = iLen;
-
-	m_columns.push_back(pColumn);
-	m_columnMap[pColumn->m_sName] = pColumn;
-
-	if (iLen <= 0) {
-		switch (type) {
-		case DBDataType::INT8:
-			pColumn->m_iLen = 1;
-			break;
-		case DBDataType::INT16:
-			pColumn->m_iLen = 2;
-			break;
-		case DBDataType::INT32:
-			pColumn->m_iLen = 4;
-			break;
-		case DBDataType::INT64:
-		case DBDataType::DATETIME:
-		case DBDataType::DATE:
-			pColumn->m_iLen = 8;
-			break;
-		case DBDataType::DOUBLE:
-			throw new ConfigException("Missing precision for type %s ",
-					s.c_str());
-		case DBDataType::STRING:
-			pColumn->m_iLen = -1;
-			break;
-		default:
-			pColumn->m_iLen = 0;
-			break;
+	if (std::regex_search(sValue, matches, rgx)) {
+		if (matches.size() < 3) {
+			throw new ConfigException("Illegal attribute value '%s'",
+					sValue.c_str());
 		}
+		DBColumnInfo* pColumn = new DBColumnInfo();
+		pColumn->m_sName = matches[1];
+		pColumn->m_type = pConfig->getDataType(matches[2]);
+
+		m_columns.push_back(pColumn);
+		m_columnMap[pColumn->m_sName] = pColumn;
+		std::string sLen = matches[3];
+		if (sLen.length() > 0) {
+			pColumn->m_iLen = atoi(sLen.c_str() + 1);
+			if (pColumn->m_iLen <= 0) {
+				throw new ConfigException("Illegal type length '%s'", sLen.c_str());
+			}
+		} else {
+			switch (pColumn->m_type) {
+			case DBDataType::INT8:
+				pColumn->m_iLen = 1;
+				break;
+			case DBDataType::INT16:
+				pColumn->m_iLen = 2;
+				break;
+			case DBDataType::INT32:
+				pColumn->m_iLen = 4;
+				break;
+			case DBDataType::INT64:
+			case DBDataType::DATETIME:
+			case DBDataType::DATE:
+				pColumn->m_iLen = 8;
+				break;
+			case DBDataType::DOUBLE:
+				throw new ConfigException("Missing precision for double type");
+			case DBDataType::STRING:
+				pColumn->m_iLen = -1;
+				break;
+			default:
+				pColumn->m_iLen = 0;
+				break;
+			}
+		}
+	} else {
+		throw new ConfigException("Illegal attribute value '%s'",
+				sValue.c_str());
 	}
+
 }
 
-void TableInfo::addKeyColumn(std::string& name) {
+void TableInfo::addKeyColumn(const std::string& name) {
 	DBColumnInfo* pColumn = getColumnByName(name);
 	if (pColumn == nullptr) {
 		throw new ConfigException("Undefined rowkey column '%s'", name.c_str());
@@ -101,7 +98,7 @@ void TableInfo::getDBColumns(ParseNode* pColumn,
 			DBColumnInfo* pColumnInfo = getColumnByName(p->m_pszValue);
 			if (pColumnInfo == 0) {
 				throw new ParseException(
-						"Table %s does not have column named %s!", getName(),
+						"Table %s does not have column named %s!", getName().c_str(),
 						p->m_pszValue);
 			}
 			columns.push_back(pColumnInfo);

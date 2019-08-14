@@ -79,7 +79,7 @@ ScanColumn* BuildExpressionVisitor::visitNameNode(ParseNode* pNode,
 	std::string name(pNode->m_pszValue);
 	DBColumnInfo* pColumnInfo = m_pTableInfo->getColumnByName(name);
 	if (pColumnInfo == nullptr) {
-		PARSE_ERROR("Table %s has no column named %s", m_pTableInfo->getName(),
+		PARSE_ERROR("Table %s has no column named %s", m_pTableInfo->getName().c_str(),
 				pNode->m_pszValue);
 	}
 
