@@ -2,7 +2,6 @@
 
 #include "ParseTools.h"
 #include "ExecutionPlan.h"
-#include "ScanColumn.h"
 
 #include <vector>
 #include <string>

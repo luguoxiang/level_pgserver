@@ -3,7 +3,6 @@
 #include "ExecutionException.h"
 #include "common/SqlParser.tab.h"
 #include "common/Log.h"
-#include "ScanColumnImpl.h"
 #include "WorkThreadInfo.h"
 #include <algorithm>
 
