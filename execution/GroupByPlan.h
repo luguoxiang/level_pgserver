@@ -4,6 +4,7 @@
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
 #include "common/Log.h"
+#include <sstream>
 
 enum class FuncType {
 	FIRST, SUM, AVG, COUNT, MAX, MIN
@@ -14,24 +15,26 @@ public:
 
 	struct AggrFunc {
 		FuncType m_func;
-		const char* m_pszName;
+		std::string m_sName;
 		size_t m_iIndex;
 		size_t m_iCount;
 		ResultInfo m_value;
 	};
 
-	virtual void explain(std::vector<std::string>& rows);
+	virtual void explain(std::vector<std::string>& rows) override;
 
-	virtual void getInfoString(char* szBuf, int len) {
-		snprintf(szBuf, len, "SELECT %lu", m_iRows);
+	virtual std::string getInfoString()override {
+		std::ostringstream os;
+		os << "SELECT " << m_iRows;
+		return os.str();
 	}
 
-	virtual int getResultColumns() {
+	virtual int getResultColumns() override{
 		return m_proj.size();
 	}
 
-	virtual DBDataType getResultType(size_t index) {
-		AggrFunc func = m_proj[index];
+	virtual DBDataType getResultType(size_t index)override {
+		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
 		case FuncType::FIRST:
 		case FuncType::MIN:
@@ -47,8 +50,8 @@ public:
 		}
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo) {
-		AggrFunc func = m_proj[index];
+	virtual void getResult(size_t index, ResultInfo* pInfo)override {
+		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
 		case FuncType::FIRST:
 		case FuncType::MIN:
@@ -58,7 +61,7 @@ public:
 			break;
 		case FuncType::COUNT:
 			pInfo->m_bNull = false;
-			pInfo->m_value.m_lResult = func.m_iCount;
+			pInfo->m_lResult = func.m_iCount;
 			break;
 		case FuncType::AVG:
 			*pInfo = func.m_value;
@@ -71,31 +74,31 @@ public:
 		}
 	}
 
-	virtual int addProjection(ParseNode* pNode);
+	virtual int addProjection(ParseNode* pNode) override;
 
-	virtual void getAllColumns(std::vector<const char*>& columns) {
+	virtual void getAllColumns(std::vector<std::string>& columns) override{
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			columns.push_back(m_proj[i].m_pszName);
+			columns.push_back(m_proj[i].m_sName);
 		}
 	}
 
-	virtual const char* getProjectionName(size_t index) {
-		return m_proj[index].m_pszName;
+	virtual std::string getProjectionName(size_t index)override {
+		return m_proj[index].m_sName;
 	}
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
-			bool* pOrder) {
-		return m_pPlan->ensureSortOrder(iSortIndex, pszColumn, pOrder);
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+			bool* pOrder) override{
+		return m_pPlan->ensureSortOrder(iSortIndex, sColumn, pOrder);
 	}
 
-	virtual void begin();
-	virtual bool next();
-	virtual void end();
+	virtual void begin() override;
+	virtual bool next() override;
+	virtual void end() override;
 
 	void addGroupByColumn(ParseNode* pNode) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
-			PARSE_ERROR("Unrecognized sort column '%s'", pNode->m_pszExpr);
+			PARSE_ERROR("Unrecognized sort column '%s'", pNode->m_sExpr.c_str());
 		}
 		m_groupby.push_back(i);
 	}

@@ -16,43 +16,43 @@ DataReceiver::~DataReceiver() {
 		delete[] m_pszBuffer;
 }
 
-const char* DataReceiver::getNextString(size_t* pLen) {
+std::string DataReceiver::getNextString() {
 	assert(m_pszCurrent);
 	assert(m_pszCurrent < m_pszBuffer + m_nBufLen);
 	const char* pszRet = m_pszCurrent;
-	*pLen = strlen(m_pszCurrent);
-	m_pszCurrent += *pLen + 1;
+	size_t len = strlen(m_pszCurrent);
+	m_pszCurrent += len + 1;
 
-	return pszRet;
+	return std::string(pszRet, len);
 }
 
-const char* DataReceiver::getNextStringWithLen(uint32_t* pLen) {
+std::string DataReceiver::getNextStringWithLen() {
 	assert(m_pszCurrent);
 	assert(m_pszCurrent < m_pszBuffer + m_nBufLen);
-	*pLen = m_bNetNumber ?
+	size_t len = m_bNetNumber ?
 			htonl(*(uint32_t*) m_pszCurrent) : *(uint32_t*) m_pszCurrent;
 	m_pszCurrent += 4;
 	const char* pszRet = m_pszCurrent;
 
-	if (*pLen <= 0)
+	if (len <= 0)
 		return nullptr;
 
-	m_pszCurrent += *pLen;
-	return pszRet;
+	m_pszCurrent += len;
+	return std::string(pszRet, len);
 }
-const char* DataReceiver::getNextStringWithShortLen(uint16_t* pLen) {
+std::string DataReceiver::getNextStringWithShortLen() {
 	assert(m_pszCurrent);
 	assert(m_pszCurrent < m_pszBuffer + m_nBufLen);
-	*pLen = m_bNetNumber ?
+	size_t len = m_bNetNumber ?
 			htons(*(uint16_t*) m_pszCurrent) : *(uint16_t*) m_pszCurrent;
 	m_pszCurrent += 2;
 	const char* pszRet = m_pszCurrent;
 
-	if (*pLen <= 0)
-		return nullptr;
+	if (len <= 0)
+		return "";
 
-	m_pszCurrent += *pLen;
-	return pszRet;
+	m_pszCurrent += len;
+	return std::string(pszRet, len);
 }
 
 int16_t DataReceiver::getNextShort() {

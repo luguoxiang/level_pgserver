@@ -1,26 +1,19 @@
 #include "execution/ReadFilePlan.h"
 #include "execution/ExecutionException.h"
-#include <string.h>
 
 void ReadFilePlan::explain(std::vector<std::string>& rows) {
-	char buf[100];
-	snprintf(buf, 100, "ReadFile %s, seperator %d", m_pszPath, m_seperator[0]);
-	rows.push_back(buf);
+	std::ostringstream os;
+	os << "ReadFile " << m_sPath << ", seperator " << m_seperator[0];
+	rows.push_back(os.str());
 }
 
-ReadFilePlan::~ReadFilePlan() {
-	if (m_pHandle != nullptr) {
-		fclose(m_pHandle);
-		m_pHandle = nullptr;
-	}
-}
 
 int ReadFilePlan::addProjection(ParseNode* pNode) {
 	assert(pNode);
-	if (pNode->m_iType != NodeType::NAME)
+	if (pNode->m_type != NodeType::NAME)
 		return -1;
-	for (size_t i = 0; i < m_columns.size(); ++i) {
-		if (strcmp(m_columns[i]->getName(), pNode->m_pszValue) == 0) {
+	 for (size_t i = 0; i < m_columns.size(); ++i) {
+		if (m_columns[i]->m_sName == pNode->m_sValue) {
 			return i;
 		}
 	}
@@ -29,11 +22,11 @@ int ReadFilePlan::addProjection(ParseNode* pNode) {
 
 void ReadFilePlan::begin() {
 	m_bCancel = false;
-	m_pHandle = fopen(m_pszPath, "r");
-	if (m_pHandle == nullptr) {
-		char msg[200];
-		snprintf(msg, 200, "File %s does not exists!", m_pszPath);
-		throw new ExecutionException(msg, false);
+	m_pFile.reset(new std::ifstream(m_sPath));
+	if (m_pFile->fail()) {
+		std::ostringstream os;
+		os << "File " << m_sPath << " does not exists!";
+		throw new ExecutionException(os.str(), false);
 	}
 }
 
@@ -41,25 +34,25 @@ bool ReadFilePlan::next() {
 	if (m_bCancel)
 		return false;
 
-	size_t iSize = 4096;
-	char* pszBuf = m_szBuf;
-	int ret = getline(&pszBuf, &iSize, m_pHandle);
-	if (ret == 4096) {
-		throw new ExecutionException("input line is too long!", false);
-	}
-	if (ret < 0)
+	std::string line;
+	if (!std::getline(*m_pFile, line)) {
 		return false;
-
-	if (m_szBuf[ret - 1] == '\n')
-		m_szBuf[ret - 1] = '\0';
-	char *pszLast = nullptr;
+	}
+	auto start = 0U;
+	auto end = line.find(m_seperator);
 	for (int i = 0; i < m_columns.size(); ++i) {
-		const char* pszValue = strtok_r(pszLast == nullptr ? m_szBuf : nullptr,
-				m_seperator, &pszLast);
-		if (pszValue == nullptr) {
-			char msg[200];
-			snprintf(msg, 200, "Missing values at line %lld!", m_iRowCount + 1);
-			throw new ExecutionException(msg, false);
+		if(start >= line.length()) {
+			m_result[i].m_bNull = true;
+			continue;
+		}
+		std::string token;
+		if (end == std::string::npos) {
+			token = line.substr(start);
+			start = line.length();
+		} else {
+			token = line.substr(start, end - start);
+			start = end + m_seperator.length();
+			end = line.find(m_seperator, start);
 		}
 		m_result[i].m_bNull = false;
 
@@ -68,42 +61,39 @@ bool ReadFilePlan::next() {
 		case DBDataType::INT16:
 		case DBDataType::INT32:
 		case DBDataType::INT64:
-			m_result[i].m_value.m_lResult = atoll(pszValue);
+			m_result[i].m_lResult = atoll(token.c_str());
 			break;
 		case DBDataType::STRING:
-			m_result[i].m_value.m_pszResult = pszValue;
-			m_result[i].m_len = strlen(pszValue);
+			m_result[i].m_sResult = token;
 			break;
 		case DBDataType::DATETIME:
 		case DBDataType::DATE: {
-			int64_t iValue = parseTime(pszValue);
+			int64_t iValue = parseTime(token.c_str());
 			if (iValue == 0) {
-				char msg[200];
-				snprintf(msg, 200, "Wrong Time Format:%s", pszValue);
-				throw new ExecutionException(msg, false);
+				std::ostringstream os;
+				os << "Wrong Time Format:" << token;
+				throw new ExecutionException(os.str(), false);
 			}
 			struct timeval time;
 			time.tv_sec = (iValue / 1000000);
 			time.tv_usec = (iValue % 1000000);
-			m_result[i].m_value.m_time = time;
+			m_result[i].m_time = time;
 			break;
 		}
 		case DBDataType::DOUBLE:
-			m_result[i].m_value.m_dResult = atof(pszValue);
+			m_result[i].m_dResult = atof(token.c_str());
 			break;
 		default:
 			break;
 		}
 	}
+
 	++m_iRowCount;
 	return true;
 
 }
 
 void ReadFilePlan::end() {
-	if (m_pHandle != nullptr) {
-		fclose(m_pHandle);
-		m_pHandle = nullptr;
-	}
+	m_pFile.reset(nullptr);
 }
 

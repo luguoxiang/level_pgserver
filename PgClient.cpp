@@ -4,7 +4,7 @@
 #include <chrono>
 
 #include <signal.h>
-#include <iostream>
+#include <sstream>
 #include <vector>
 
 #include "common/ParseException.h"
@@ -40,19 +40,19 @@ public:
 			ExecutionPlan(PlanType::Other) {
 	}
 
-	virtual void explain(std::vector<std::string>& rows) {
+	virtual void explain(std::vector<std::string>& rows) override {
 		rows.push_back("Empty");
 	}
 
-	virtual void getInfoString(char* szBuf, int len) {
-		snprintf(szBuf, len, "SELECT 0");
+	virtual std::string getInfoString() override {
+		return "SELECT 0";
 	}
 };
 }
 
 PgClient::PgClient(WorkThreadInfo* pInfo) :
 		m_receiver(pInfo->m_iAcceptFd), m_sender(pInfo->m_iAcceptFd), m_pWorker(
-				pInfo), m_iSendTime(0), m_iParamNum(0), m_pszSql("") {
+				pInfo), m_iSendTime(0), m_iParamNum(0){
 	assert(pInfo->m_iAcceptFd >= 0);
 
 	memset(m_handler, 0, sizeof(m_handler));
@@ -74,35 +74,29 @@ PgClient::~PgClient() {
 void PgClient::handleSync() {
 	LOG(DEBUG, "sync");
 	m_sender.prepare('Z');
-	m_sender.addString("I", 1);
+	m_sender.addChar('I');
 	m_sender.commit();
 	m_sender.flush();
 }
 
 void PgClient::handleQuery() {
-	size_t len;
-	m_pszSql = m_receiver.getNextString(&len);
-	if (len >= POOL_BLOCK_SIZE) {
-		throw new ParseException(" Sql length could not exceeds 32KB");
-	}
-	LOG(DEBUG, "Q:%s", m_pszSql);
-	createPlan(m_pszSql, len);
+
+	m_sSql = m_receiver.getNextString();
+
+	LOG(DEBUG, "Q:%s", m_sSql.c_str());
+	createPlan(m_sSql);
 
 	describeColumn(m_pPlan.get());
 	handleExecute();
 }
 
 void PgClient::handleParse() {
-	size_t len1, len2;
-	const char* pszStmt = m_receiver.getNextString(&len1); //statement name
-	const char* pszSql = m_receiver.getNextString(&len2);
-	if (len1 >= POOL_BLOCK_SIZE || len2 >= POOL_BLOCK_SIZE) {
-		throw new ParseException(" Sql length could not exceeds 32KB");
-	}
+	auto sStmt = m_receiver.getNextString(); //statement name
+	auto sSql= m_receiver.getNextString();
 
-	LOG(DEBUG, "STMT:%d,P:%s", len1, pszSql);
+	LOG(DEBUG, "STMT:%s,P:%s", sStmt.c_str(), sSql.c_str());
 
-	createPlan(pszSql, len2);
+	createPlan(sSql);
 
 	m_iParamNum = m_receiver.getNextShort();
 
@@ -114,11 +108,10 @@ void PgClient::handleBind() {
 	if (m_pPlan.get() == nullptr)
 		return;
 
-	size_t len1, len2;
-	m_receiver.getNextString(&len1);
-	m_receiver.getNextString(&len2);
+	auto portal = m_receiver.getNextString();
+	auto stmt = m_receiver.getNextString();
 
-	LOG(DEBUG, "B:portal %d,stmt %d.", len1, len2);
+	LOG(DEBUG, "B:portal %s,stmt %s.", portal.c_str(), stmt.c_str());
 
 	int num = m_receiver.getNextShort();
 	if (num != m_iParamNum) {
@@ -149,11 +142,10 @@ void PgClient::handleBind() {
 void PgClient::handleDescribe() {
 	if (m_pPlan.get() == nullptr)
 		return;
-	size_t len;
 	int type = m_receiver.getNextByte();
-	const char* pszName = m_receiver.getNextString(&len);
+	auto sName = m_receiver.getNextString();
 
-	LOG(DEBUG, "D:type %d,name %s.", type, pszName);
+	LOG(DEBUG, "D:type %d,name %s.", type, sName.c_str());
 
 	describeColumn(m_pPlan.get());
 
@@ -175,14 +167,13 @@ void PgClient::handleExecute() {
 	} //while
 	m_sender.flush();
 
-	char szInfo[100];
-	m_pPlan->getInfoString(szInfo, 100);
+	auto sInfo = m_pPlan->getInfoString();
 
 	m_pPlan->end();
-	LOG(DEBUG, "Execute result:%s!", szInfo);
+	LOG(DEBUG, "Execute result:%s!", sInfo.c_str());
 
 	m_sender.prepare('C');
-	m_sender.addString(szInfo, strlen(szInfo) + 1); //data len
+	m_sender.addString(sInfo); //data len
 	m_sender.commit();
 	m_pWorker->m_pPlan = nullptr;
 }
@@ -190,18 +181,18 @@ void PgClient::handleExecute() {
 void PgClient::handleException(Exception* pe) {
 	m_sender.prepare('E');
 	m_sender.addByte(PG_DIAG_SEVERITY);
-	m_sender.addString("ERROR", 6);
+	m_sender.addString("ERROR");
 	m_sender.addByte(PG_DIAG_SQLSTATE);
-	m_sender.addString("00000", 6);
+	m_sender.addString("00000");
 	m_sender.addByte(PG_DIAG_MESSAGE_PRIMARY);
-	m_sender.addString(pe->what(), strlen(pe->what()) + 1);
-	LOG(ERROR, "Error:%s:%s!", m_pszSql, pe->what());
+	m_sender.addString(pe->what());
+	LOG(ERROR, "Error:%s:%s!", m_sSql.c_str(), pe->what().c_str());
 
 	if (pe->getLine() >= 0) {
 		m_sender.addByte(PG_DIAG_STATEMENT_POSITION);
 		char szBuf[10];
 		sprintf(szBuf, "%d", pe->getStartPos());
-		m_sender.addString(szBuf, strlen(szBuf) + 1);
+		m_sender.addString(szBuf);
 	}
 	m_sender.addByte('\0');
 	delete pe;
@@ -222,18 +213,18 @@ void PgClient::run() {
 	m_sender.commit();
 
 	m_sender.prepare('S');
-	m_sender.addString("server_encoding", 16);
-	m_sender.addString("UTF8", 5);
+	m_sender.addString("server_encoding");
+	m_sender.addString("UTF8");
 	m_sender.commit();
 
 	m_sender.prepare('S');
-	m_sender.addString("client_encoding", 16);
-	m_sender.addString("UTF8", 5);
+	m_sender.addString("client_encoding");
+	m_sender.addString("UTF8");
 	m_sender.commit();
 
 	m_sender.prepare('S');
-	m_sender.addString("server_version", 15);
-	m_sender.addString("9.0.4", 6);
+	m_sender.addString("server_version");
+	m_sender.addString("9.0.4");
 	m_sender.commit();
 
 	m_sender.prepare('K');
@@ -283,16 +274,16 @@ void PgClient::run() {
 	} //while
 }
 
-void PgClient::createPlan(const char* pszCmd, size_t len) {
+void PgClient::createPlan(const std::string sql) {
 	m_pPlan.reset(nullptr);
-	if (strncasecmp("DEALLOCATE", pszCmd, 10) == 0) {
+	if (strncasecmp("DEALLOCATE", sql.c_str(), 10) == 0) {
 		m_pPlan.reset(new EmptyResult());
-		LOG(DEBUG, "%s", pszCmd);
-	} else if (strncasecmp("SET ", pszCmd, 4) == 0) {
+		LOG(DEBUG, "%s", sql.c_str());
+	} else if (strncasecmp("SET ", sql.c_str(), 4) == 0) {
 		m_pPlan.reset(new EmptyResult());
-		LOG(DEBUG, "%s", pszCmd);
+		LOG(DEBUG, "%s", sql.c_str());
 	} else {
-		m_pWorker->parse(pszCmd, len);
+		m_pWorker->parse(sql);
 		m_pPlan.reset(m_pWorker->resolve());
 		if (m_pPlan.get() == nullptr) {
 			throw new ParseException("No statement!");
@@ -311,34 +302,34 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 	m_sender.addShort(columnNum);
 
 	for (size_t i = 0; i < columnNum; ++i) {
-		const char* pszName = pPlan->getProjectionName(i);
+		auto sName = pPlan->getProjectionName(i);
 
 		switch (pPlan->getResultType(i)) {
 		case DBDataType::BYTES:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Bytea, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1);
 			break;
 		case DBDataType::INT8:
 		case DBDataType::INT16:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Int16, 2);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2);
 			break;
 		case DBDataType::INT32:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Int32, 4);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int32, 4);
 			break;
 		case DBDataType::INT64:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Int64, 8);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8);
 			break;
 
 		case DBDataType::STRING:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Varchar, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1);
 			break;
 		case DBDataType::DATETIME:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1);
 			break;
 		case DBDataType::DATE:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::DateTime, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1);
 			break;
 		case DBDataType::DOUBLE:
-			m_sender.addDataTypeMsg(pszName, i + 1, PgDataType::Double, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Double, -1);
 			break;
 		default:
 			LOG(ERROR, "Unknown type %d\n", pPlan->getResultType(i))
@@ -369,79 +360,62 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.flush();
 			throw;
 		}
-		char szBuf[100];
-		size_t len;
+
 		if (info.m_bNull) {
 			m_sender.addInt(-1);
 			continue;
 		}
+		std::ostringstream os;
+
 		switch (type) {
 		case DBDataType::INT8:
 		case DBDataType::INT32:
 		case DBDataType::INT64:
 		case DBDataType::INT16:
-			len = snprintf(szBuf, 100, "%lld", info.m_value.m_lResult);
-			m_sender.addInt(len);
-			m_sender.addString(szBuf, len);
+			os << info.m_lResult;
+			m_sender.addStringAndLength(os.str());
 			break;
 		case DBDataType::BYTES: {
+			os << "\\x";
 			std::string s = "\\x";
-			for (int64_t i = 0; i < info.m_len; ++i) {
-				char szBuf[10];
-				snprintf(szBuf, 10, "%02x",
-						(unsigned char) info.m_value.m_pszResult[i]);
-				s.append(szBuf);
+			for (auto& c: info.m_sResult) {
+				os<< std::hex << c;
 			}
-			m_sender.addInt(s.size());
-			m_sender.addString(s.c_str(), s.size());
+			m_sender.addStringAndLength(os.str());
 			break;
 		}
 		case DBDataType::STRING:
-			len = info.m_len;
-			m_sender.addInt(len);
-			m_sender.addString(info.m_value.m_pszResult, len);
+			m_sender.addStringAndLength(info.m_sResult);
 			break;
 		case DBDataType::DATE: {
-			time_t time = info.m_value.m_time.tv_sec;
+			time_t time = info.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
 				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
-				len = 0;
+				m_sender.addInt(0);
 			} else {
+				char szBuf[100];
 				strftime(szBuf, 30, "%Y-%m-%d", pToday);
-				len = strlen(szBuf);
+				m_sender.addStringAndLength(szBuf);
 			}
-			m_sender.addInt(len);
-			m_sender.addString(szBuf, len);
 			break;
 		}
 		case DBDataType::DATETIME: {
-			time_t time = info.m_value.m_time.tv_sec;
+			time_t time = info.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
 				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
-				len = 0;
+				m_sender.addInt(0);
 			} else {
+				char szBuf[100];
 				strftime(szBuf, 30, "%Y-%m-%d %H:%M:%S", pToday);
-				len = strlen(szBuf);
+				m_sender.addStringAndLength(szBuf);
 			}
-			m_sender.addInt(len);
-			m_sender.addString(szBuf, len);
 			break;
 		}
 		case DBDataType::DOUBLE: {
-			len = snprintf(szBuf, 100, "%f", info.m_value.m_dResult);
-			while (len > 0) {
-				char c = szBuf[len - 1];
-				if (c > '0' && c <= '9')
-					break;
-				--len;
-				szBuf[len] = '\0';
-				if (c == '.')
-					break;
-			}
-			m_sender.addInt(len);
-			m_sender.addString(szBuf, len);
+			os<< info.m_dResult;
+			m_sender.addStringAndLength(os.str());
 			break;
 		}
 		default:

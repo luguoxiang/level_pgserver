@@ -9,8 +9,8 @@
 
 thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 
-WorkThreadInfo::WorkThreadInfo(int fd, const char* pszPort, int iIndex) :
-		m_iListenFd(fd), m_iAcceptFd(0), m_pszPort(pszPort), m_bRunning(false), m_iClientTime(
+WorkThreadInfo::WorkThreadInfo(int fd, const std::string& sPort, int iIndex) :
+		m_iListenFd(fd), m_iAcceptFd(0), m_sPort(sPort), m_bRunning(false), m_iClientTime(
 				0), m_iIndex(iIndex), m_iSessions(0), m_iExecScanTime(0), m_iBiggestExec(
 				0), m_iSqlCount(0), m_pPlan(nullptr) {
 	memset(&m_result, 0, sizeof(m_result));
@@ -25,8 +25,8 @@ WorkThreadInfo::~WorkThreadInfo() {
 	m_plans.clear();
 }
 
-void WorkThreadInfo::parse(const char* pszSQL, size_t iLen) {
-	parseSql(&m_result, pszSQL, iLen);
+void WorkThreadInfo::parse(const std::string& sql) {
+	parseSql(&m_result, sql);
 
 	if (m_result.m_pResult == 0) {
 		throw new ParseException(&m_result);
@@ -48,14 +48,6 @@ ExecutionPlan* WorkThreadInfo::resolve() {
 	return pPlan;
 }
 
-char* WorkThreadInfo::alloc(size_t iSize) {
-	if (memPoolUsed(&m_result) + iSize
-			> MetaConfig::getInstance().getExecutionBuffer()) {
-		throw new ExecutionException("execution memory usage exceed limitation",
-				false);
-	}
-	return memPoolAlloc(iSize, &m_result);
-}
 
 WorkerManager& WorkerManager::getInstance() {
 	static WorkerManager manager;

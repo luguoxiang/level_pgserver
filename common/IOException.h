@@ -14,8 +14,8 @@ public:
 	virtual ~IOException() {
 	}
 
-	const char* what() const {
-		return m_sErrMsg.c_str();
+	std::string what() const override {
+		return m_sErrMsg;
 	}
 
 	IOException& operator=(const IOException& ex) = delete;

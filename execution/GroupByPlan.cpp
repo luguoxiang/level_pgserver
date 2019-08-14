@@ -29,7 +29,7 @@ void GroupByPlan::explain(std::vector<std::string>& rows) {
 	}
 	s += ") project:";
 	for (size_t i = 0; i < m_proj.size(); ++i) {
-		s += m_proj[i].m_pszName;
+		s += m_proj[i].m_sName;
 		if (i + 1 < m_proj.size()) {
 			s += ",";
 		}
@@ -115,33 +115,32 @@ void GroupByPlan::end() {
 }
 
 int GroupByPlan::addProjection(ParseNode* pNode) {
-	if (pNode->m_iType == NodeType::NAME) {
+	if (pNode->m_type == NodeType::NAME) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
 			PARSE_ERROR("Unrecognized projection column '%s'",
-					pNode->m_pszValue);
+					pNode->m_sValue.c_str());
 		}
 		AggrFunc func;
 		func.m_func = FuncType::FIRST;
-		func.m_pszName = pNode->m_pszValue;
+		func.m_sName = pNode->m_sValue;
 		func.m_iIndex = i;
 		m_proj.push_back(func);
 		return m_proj.size() - 1;
-	} else if (pNode->m_iType == NodeType::FUNC) {
-		std::map<std::string, FuncType>::iterator iter = m_typeMap.find(
-				pNode->m_pszValue);
+	} else if (pNode->m_type == NodeType::FUNC) {
+		auto iter = m_typeMap.find(pNode->m_sValue);
 		if (iter == m_typeMap.end()) {
-			PARSE_ERROR("Unknown function %s", pNode->m_pszValue);
+			PARSE_ERROR("Unknown function %s", pNode->m_sValue.c_str());
 		}
 		AggrFunc func;
 		func.m_func = iter->second;
-		assert(pNode->m_iChildNum == 1);
+		assert(pNode->children() == 1);
 		int i = m_pPlan->addProjection(pNode->m_children[0]);
 		if (i < 0) {
 			PARSE_ERROR("Unrecognized projection column '%s'",
-					pNode->m_children[0]->m_pszExpr);
+					pNode->m_children[0]->m_sExpr.c_str());
 		}
-		func.m_pszName = pNode->m_pszExpr;
+		func.m_sName = pNode->m_sExpr;
 		func.m_iIndex = i;
 		m_proj.push_back(func);
 		return m_proj.size() - 1;

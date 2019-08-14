@@ -1,8 +1,9 @@
 #pragma once
 
-#include <assert.h>
+#include <vector>
+#include <cassert>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <stdarg.h>
 
 enum class NodeType {
@@ -37,33 +38,35 @@ constexpr int SQL_SELECT_HAVING = 4;
 constexpr int SQL_SELECT_ORDERBY = 5;
 constexpr int SQL_SELECT_LIMIT = 6;
 
-struct ParseNode;
+class ParseNode;
+struct ParseResult;
 
 using BuildPlanFunc = void (*)(ParseNode* pNode);
 
-constexpr size_t POOL_BLOCK_SIZE = 1024 * 32;
+class ParseNode {
+public:
+    ParseNode(ParseResult* p, NodeType type, int num);
 
-struct MemoryPoolBlock {
-	char m_szData[POOL_BLOCK_SIZE];
-	MemoryPoolBlock* m_pNext;
-	size_t m_iUsed;
-};
-
-struct ParseNode {
-	NodeType m_iType;
-	const char* m_pszValue;
+	NodeType m_type;
+	std::string m_sValue;
 	int64_t m_iValue;
-	const char* m_pszExpr;
+	std::string m_sExpr;
 
-	ParseNode** m_children;
-	size_t m_iChildNum;
 	BuildPlanFunc m_fnBuildPlan;
+    void remove(const std::string sNewName, const std::string sRemove);
+
+    const size_t children() const {return m_children.size();}
+
+	std::vector<ParseNode*> m_children;
+private:
+    bool _collect(std::vector<ParseNode*>& children, const std::string sRemove);
+
 };
 
 constexpr size_t MAX_ERROR_MSG = 200;
 
 struct ParseResult {
-	const char* m_pszSql;
+	std::string m_sSql;
 	void* m_scanInfo;
 	ParseNode* m_pResult;
 	char m_szErrorMsg[MAX_ERROR_MSG];
@@ -72,29 +75,31 @@ struct ParseResult {
 	int m_iLine;
 	int m_yycolumn;
 	int m_yylineno;
-	MemoryPoolBlock* m_pPoolHead;
-	MemoryPoolBlock* m_pPoolTail;
+
+	std::vector<std::unique_ptr<ParseNode>> m_nodes;
 };
 
-extern int64_t parseTime(const char* pszTime);
+int64_t parseTime(const char* pszTime);
 
-extern int parseInit(ParseResult* p);
+int parseInit(ParseResult* p);
 
-extern int parseTerminate(ParseResult* p);
+int parseTerminate(ParseResult* p);
 
-extern void parseSql(ParseResult *p, const char* pszSql, size_t iLen);
+void parseSql(ParseResult *p, const std::string& sql);
 
-extern void printTree(ParseNode* pRoot, int level);
+void printTree(ParseNode* pRoot, int level);
 
-extern char* memPoolAlloc(size_t iSize, ParseResult *p);
+std::string cleanString(const char* pszSrc);
+std::string parseBinary(const char* pszSrc);
 
-extern void memPoolClear(ParseResult *p, int8_t bReleaseAll);
 
-extern size_t memPoolUsed(ParseResult *p);
+ParseNode* newFuncNode(ParseResult *p, const std::string& sName, int firstColumn,
+		int lastColumn, int num, ...);
 
-extern char* my_strdup(ParseResult *p, const char* pszSrc);
+ParseNode* newExprNode(ParseResult *p, int value, int firstColumn,
+	int lastColumn, int num, ...);
 
-extern char* my_memdup(ParseResult *p, const char* pszSrc, size_t len);
+ParseNode* newIntNode(ParseResult *p, NodeType type, int value, int num, ...);
 
-extern size_t parseString(const char* pszSrc, char* pszDest, size_t iLen);
+ParseNode* newParentNode(ParseResult *p, const std::string& sName, int num, ...);
 

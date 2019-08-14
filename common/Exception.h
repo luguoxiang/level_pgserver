@@ -1,10 +1,11 @@
 #pragma once
+#include <string>
 
 class Exception {
 public:
 	Exception();
 	virtual ~Exception();
-	virtual const char* what() const = 0;
+	virtual std::string what() const = 0;
 
 	virtual int getLine() const {
 		return -1;

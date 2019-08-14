@@ -54,7 +54,7 @@ public:
 	 */
 	virtual int getResultColumns();
 
-	virtual const char* getProjectionName(size_t index) {
+	virtual std::string getProjectionName(size_t index) {
 		return nullptr;
 	}
 
@@ -77,7 +77,7 @@ public:
 	 * This is used by 'select *' statement.
 	 * return all the columns needed to be project for 'select *'.
 	 */
-	virtual void getAllColumns(std::vector<const char*>& columns) {
+	virtual void getAllColumns(std::vector<std::string>& columns) {
 	}
 
 	/*
@@ -85,7 +85,7 @@ public:
 	 * This method is used to avoid useless sort like
 	 * select * from (select * ..order by a) order by a;
 	 */
-	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
 			bool* pOrder) {
 		return false;
 	}
@@ -96,20 +96,17 @@ public:
 	 * for update, UPDATE num, num is the number of updated rows
 	 * for insert, INSERT 0, num, num is the number of inserted rows
 	 */
-	virtual void getInfoString(char* szBuf, int len);
+	virtual std::string getInfoString() = 0;
 
 	struct ResultInfo {
-		union Value {
-			const char* m_pszResult;
-			int64_t m_lResult;
-			double m_dResult;
-			struct timeval m_time;
-		} m_value;
+		std::string m_sResult;
+		int64_t m_lResult;
+		double m_dResult;
+		struct timeval m_time;
 		bool m_bNull; // if true, m_value is invalid
-		size_t m_len; // data length for string or bytes
-		int compare(const ResultInfo& result, DBDataType type);
+		int compare(const ResultInfo& result, DBDataType type) const;
 
-		int compare(const ParseNode* pValue, DBDataType type);
+		int compare(const ParseNode* pValue, DBDataType type) const;
 
 		bool add(const ResultInfo& result, DBDataType type);
 

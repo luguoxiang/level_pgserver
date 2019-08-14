@@ -11,8 +11,8 @@ void ConstPlan::explain(std::vector<std::string>& rows) {
 DBDataType ConstPlan::getResultType(size_t index) {
 	assert(!m_rows.empty());
 	ParseNode* pRow = m_rows[0];
-	assert(pRow->m_iChildNum == m_columns.size());
-	switch (pRow->m_children[index]->m_iType) {
+	assert(pRow->children() == m_columns.size());
+	switch (pRow->m_children[index]->m_type) {
 	case NodeType::INT:
 		return DBDataType::INT64;
 	case NodeType::STR:
@@ -20,7 +20,7 @@ DBDataType ConstPlan::getResultType(size_t index) {
 	case NodeType::FLOAT:
 		return DBDataType::DOUBLE;
 	case NodeType::DATE:
-		return strlen(pRow->m_children[index]->m_pszValue) < 12 ?
+		return pRow->m_children[index]->m_sValue.length() < 12 ?
 				DBDataType::DATE : DBDataType::DATETIME;
 	default:
 		assert(0);
@@ -31,28 +31,27 @@ DBDataType ConstPlan::getResultType(size_t index) {
 void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 	assert(m_iCurrent > 0 && m_iCurrent <= m_rows.size());
 	ParseNode* pRow = m_rows[m_iCurrent - 1];
-	assert(pRow->m_iChildNum == m_columns.size());
+	assert(pRow->children() == m_columns.size());
 	pInfo->m_bNull = false;
 	ParseNode* pValue = pRow->m_children[index];
-	switch (pValue->m_iType) {
+	switch (pValue->m_type) {
 	case NodeType::INT:
-		pInfo->m_value.m_lResult = pValue->m_iValue;
+		pInfo->m_lResult = pValue->m_iValue;
 		break;
 	case NodeType::DATE: {
 		struct timeval time;
 		time.tv_sec = (pValue->m_iValue / 1000000);
 		time.tv_usec = (pValue->m_iValue % 1000000);
-		pInfo->m_value.m_time = time;
+		pInfo->m_time = time;
 		break;
 	}
 	case NodeType::FLOAT: {
-		float fValue = strtof(pValue->m_pszValue, nullptr);
-		pInfo->m_value.m_dResult = fValue;
+		float fValue = strtof(pValue->m_sValue.c_str(), nullptr);
+		pInfo->m_dResult = fValue;
 		break;
 	}
 	case NodeType::STR:
-		pInfo->m_value.m_pszResult = pValue->m_pszValue;
-		pInfo->m_len = pValue->m_iValue;
+		pInfo->m_sResult = pValue->m_sValue;
 		break;
 	default:
 		throw new ParseException("wrong const value type %d");
@@ -61,10 +60,10 @@ void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 
 int ConstPlan::addProjection(ParseNode* pNode) {
 	assert(pNode);
-	if (pNode->m_iType != NodeType::NAME)
+	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < m_columns.size(); ++i) {
-		if (strcmp(m_columns[i].c_str(), pNode->m_pszValue) == 0) {
+		if (m_columns[i] == pNode->m_sValue) {
 			return i;
 		}
 	}
@@ -73,12 +72,12 @@ int ConstPlan::addProjection(ParseNode* pNode) {
 
 void ConstPlan::addRow(ParseNode* pRow) {
 	if (m_rows.empty()) {
-		for (size_t i = 0; i < pRow->m_iChildNum; ++i) {
+		for (size_t i = 0; i < pRow->children(); ++i) {
 			std::stringstream ss;
 			ss << i + 1;
 			m_columns.push_back(ss.str());
 		}
 	}
-	assert(pRow->m_iChildNum == m_columns.size());
+	assert(pRow->children() == m_columns.size());
 	m_rows.push_back(pRow);
 }

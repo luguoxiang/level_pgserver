@@ -19,40 +19,30 @@
 
 namespace Tools {
 inline bool isRowKeyNode(ParseNode* pNode) {
-	return pNode->m_iType == NodeType::NAME
-			&& strcasecmp(pNode->m_pszValue, "_rowkey") == 0;
+	return pNode->m_type == NodeType::NAME
+			&& strcasecmp(pNode->m_sValue.c_str(), "_rowkey") == 0;
 }
 
 inline bool isTimestampNode(ParseNode* pNode) {
-	return pNode->m_iType == NodeType::NAME
-			&& strcasecmp(pNode->m_pszValue, "_timestamp") == 0;
+	return pNode->m_type == NodeType::NAME
+			&& strcasecmp(pNode->m_sValue.c_str(), "_timestamp") == 0;
 }
 
 inline bool isRowCountNode(ParseNode* pNode) {
-	return pNode->m_iType == NodeType::NAME
-			&& strcasecmp(pNode->m_pszValue, "_rowcount") == 0;
+	return pNode->m_type == NodeType::NAME
+			&& strcasecmp(pNode->m_sValue.c_str(), "_rowcount") == 0;
 }
 
-inline const char* byteToString(const char* p, size_t iLen) {
-	if (p == nullptr) {
-		return "null";
-	}
-	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
-	assert(pInfo);
-	char* pszRet = pInfo->alloc(iLen * 2 + 3);
-	snprintf(pszRet, 3, "0x");
-	for (size_t i = 0; i < iLen; ++i) {
-		snprintf(pszRet + 2 + i * 2, 3, "%02x", (unsigned char) p[i]);
-	}
-	return pszRet;
-}
 
-inline const char* escapeString(const char* pszSrc, int64_t iLen) {
+inline std::string escapeString(const char* pszSrc) {
 
 	std::string s;
 	s.append("'");
-	for (int64_t i = 0; i < iLen; ++i) {
+	for (int64_t i = 0;; ++i) {
 		char c = pszSrc[i];
+		if (c == '\0') {
+			break;
+		}
 		switch (c) {
 		case '\'':
 			s.append("\\'");
@@ -73,24 +63,9 @@ inline const char* escapeString(const char* pszSrc, int64_t iLen) {
 	}
 	s.append("'");
 
-	WorkThreadInfo* pInfo = WorkThreadInfo::m_pWorkThreadInfo;
-	assert(pInfo);
-	return pInfo->memdup(s.c_str(), s.size() + 1);
+	return s;
 }
 
-inline bool hasRowKey(ParseNode* pPredicate) {
-	if (isRowKeyNode(pPredicate))
-		return true;
-
-	if (pPredicate->m_iChildNum == 0)
-		return false;
-
-	for (size_t i = 0; i < pPredicate->m_iChildNum; ++i) {
-		if (hasRowKey(pPredicate->m_children[i]))
-			return true;
-	}
-	return false;
-}
 
 #define CHECK_ERROR(err,msg) \
 		if (OB_ERR_SUCCESS != err) \

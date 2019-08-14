@@ -6,9 +6,7 @@
 #include "WorkThreadInfo.h"
 #include <algorithm>
 
-void UnionAllPlan::getInfoString(char* szBuf, int len) {
-	snprintf(szBuf, len, "SELECT %llu", m_iCurrentRow);
-}
+
 
 void UnionAllPlan::getResult(size_t index, ResultInfo* pInfo) {
 	if (!m_bLeftDone)

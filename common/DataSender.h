@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdio.h>
+#include <string>
 #include "IOException.h"
 
 class DataSender {
@@ -12,7 +12,9 @@ public:
 	void addInt(int32_t value);
 	void addShort(int16_t value);
 	void addLongInt(int64_t value);
-	void addString(const char* value, size_t len);
+	void addString(const std::string& s);
+	void addStringAndLength(const std::string& s);
+	void addChar(char c);
 
 	void flush();
 

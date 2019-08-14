@@ -5,67 +5,60 @@
 #include "common/ParseException.h"
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
-#include <iostream>
+#include <sstream>
+#include <fstream>
 
 class ReadFilePlan: public ExecutionPlan {
 public:
-	ReadFilePlan(const char* pszPath, const char* seperator) :
-			ExecutionPlan(PlanType::ReadFile), m_pszPath(pszPath), m_pHandle(nullptr), m_iRowCount(
-					0), m_bCancel(false) {
-		m_seperator[0] = seperator[0];
-		m_seperator[1] = 0;
+	ReadFilePlan(const std::string& sPath, const std::string& seperator) :
+			ExecutionPlan(PlanType::ReadFile), m_sPath(sPath), m_seperator(seperator) {
 	}
 
-	ReadFilePlan(const char* pszPath, int seperator) :
-			ExecutionPlan(PlanType::ReadFile), m_pszPath(pszPath), m_pHandle(nullptr), m_iRowCount(
-					0), m_bCancel(false) {
-		m_seperator[0] = seperator;
-		m_seperator[1] = 0;
-	}
-	virtual ~ReadFilePlan();
 
-	virtual void explain(std::vector<std::string>& rows);
+	virtual void explain(std::vector<std::string>& rows) override;
 
-	virtual void begin();
+	virtual void begin() override;
 
-	virtual bool next();
+	virtual bool next() override;
 
-	virtual void end();
+	virtual void end() override;
 
-	virtual void cancel() {
+	virtual void cancel() override{
 		m_bCancel = true;
 	}
 
 	/*
 	 * number of projection column
 	 */
-	virtual int getResultColumns() {
+	virtual int getResultColumns()override {
 		return m_columns.size();
 	}
 
-	virtual const char* getProjectionName(size_t index) {
-		return m_columns[index]->getName();
+	virtual std::string getProjectionName(size_t index) override{
+		return m_columns[index]->m_sName;
 	}
 
-	virtual DBDataType getResultType(size_t index) {
+	virtual DBDataType getResultType(size_t index)override {
 		return m_columns[index]->m_type;
 	}
 
-	virtual void getInfoString(char* szBuf, int len) {
-		snprintf(szBuf, len, "SELECT %llu", m_iRowCount);
+	virtual std::string getInfoString() override{
+		std::ostringstream os;
+		os << "SELECT " << m_iRowCount;
+		return os.str();
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo) {
+	virtual void getResult(size_t index, ResultInfo* pInfo)override {
 		*pInfo = m_result[index];
 	}
 
-	virtual void getAllColumns(std::vector<const char*>& columns) {
-		for (size_t i = 0; i < m_columns.size(); ++i) {
-			columns.push_back(m_columns[i]->getName());
+	virtual void getAllColumns(std::vector<std::string>& columns)override {
+		for (auto pColumn: m_columns) {
+			columns.push_back(pColumn->m_sName);
 		}
 	}
 
-	virtual int addProjection(ParseNode* pNode);
+	virtual int addProjection(ParseNode* pNode) override;
 
 	void addColumn(DBColumnInfo* pColumn) {
 		m_columns.push_back(pColumn);
@@ -75,10 +68,10 @@ public:
 private:
 	std::vector<DBColumnInfo*> m_columns;
 	std::vector<ResultInfo> m_result;
-	int64_t m_iRowCount;
-	const char* m_pszPath;
-	FILE* m_pHandle;
-	char m_szBuf[4096];
-	bool m_bCancel;
-	char m_seperator[2];
+	int64_t m_iRowCount = 0;
+	std::string m_sPath;
+
+	std::unique_ptr<std::ifstream> m_pFile;
+	bool m_bCancel = false;
+	std::string m_seperator;
 };

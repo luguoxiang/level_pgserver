@@ -19,9 +19,9 @@ public:
 	void prepare(char cMsgType);
 	void commit();
 
-	void addDataTypeMsg(const char* pszName, short columnid, PgDataType type,
+	void addDataTypeMsg(std::string sName, short columnid, PgDataType type,
 			short datalen) {
-		addString(pszName, strlen(pszName) + 1);
+		addString(sName);
 		addInt(0); //oid
 		addShort(columnid);
 		addInt(static_cast<int32_t>(type));

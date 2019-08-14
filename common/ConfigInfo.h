@@ -19,23 +19,18 @@ enum class DBDataType {
 };
 
 struct DBColumnInfo {
-	DBColumnInfo() :
-			m_type(DBDataType::UNKNOWN), m_iLen(0), m_iIndex(0), m_iKeyIndex(-1) {
+	DBColumnInfo() : DBColumnInfo {DBDataType::UNKNOWN}{
 	}
 
 	DBColumnInfo(DBDataType type) :
-			m_type(type), m_iLen(0), m_iIndex(0), m_iKeyIndex(-1) {
+			m_type(type) {
 	}
 
 	std::string m_sName;
 	DBDataType m_type;
-	int m_iLen;
-	int m_iIndex;
-	int m_iKeyIndex;
-
-	const char* getName() {
-		return m_sName.c_str();
-	}
+	int m_iLen = 0;
+	int m_iIndex = 0;
+	int m_iKeyIndex = -1;
 };
 
 class MetaConfig;

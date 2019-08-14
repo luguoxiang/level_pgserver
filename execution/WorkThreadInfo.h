@@ -5,7 +5,7 @@
 #include "execution/ExecutionPlan.h"
 
 struct WorkThreadInfo {
-	WorkThreadInfo(int fd, const char* pszPort, int iIndex);
+	WorkThreadInfo(int fd, const std::string& sPort, int iIndex);
 
 	~WorkThreadInfo();
 
@@ -19,7 +19,7 @@ struct WorkThreadInfo {
 
 	int m_iListenFd;
 	int m_iAcceptFd;
-	const char* m_pszPort;
+	const std::string m_sPort;
 
 	bool m_bRunning;
 	uint64_t m_iClientTime;
@@ -32,17 +32,12 @@ struct WorkThreadInfo {
 	ExecutionPlan* m_pPlan;
 
 	//throws ParseException
-	void parse(const char* pszSQL, size_t iLen);
+	void parse(const std::string& sql);
 
 	void print();
 
 	ExecutionPlan* resolve();
 
-	char* alloc(size_t iSize);
-
-	char* memdup(const char* p, size_t len) {
-		return my_memdup(&m_result, p, len);
-	}
 
 	void pushPlan(ExecutionPlan* pPlan) {
 		assert(pPlan);
@@ -61,13 +56,7 @@ private:
 	std::vector<std::unique_ptr<ExecutionPlan>> m_plans;
 };
 
-inline void* operator new[](size_t size, WorkThreadInfo& pool) {
-	return pool.alloc(size);
-}
 
-inline void* operator new(size_t size, WorkThreadInfo& pool) {
-	return pool.alloc(size);
-}
 
 class WorkerManager {
 public:

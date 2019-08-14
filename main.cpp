@@ -1,4 +1,4 @@
-#include <string.h>
+#include <string>
 #include <getopt.h>
 #include <unistd.h>
 
@@ -33,20 +33,21 @@ static struct option long_options[] = { { "port", 1, 0, 'p' }, { "logpath", 1,
 		{ "help", 0, 0, 0 }, { 0, 0, 0, 0 }, };
 
 int main(int argc, char** argv) {
-	const char* pszPort = "5433";
+	std::string sPort = "5433";
 	int opt;
-	const char* pszLogPath = 0;
-	const char* pszLogLevel = "info";
+	std::string sLogPath = "";
+	std::string sLogLevel = "info";
 	int option_index;
 
-	std::string sMetaConfigPath("meta.conf");
+	std::string sMetaConfigPath ="meta.conf";
+
 	while ((opt = getopt_long(argc, argv, "h:p:l:s", long_options,
 			&option_index)) != EOF) {
 		switch (opt) {
 		case 0: {
 			std::string sArgName = long_options[option_index].name;
 			if (sArgName == "logpath") {
-				pszLogPath = optarg;
+				sLogPath = optarg;
 			} else if (sArgName == "workernum") {
 				MetaConfig::getInstance().setWorkerNum(atoi(optarg));
 			} else if (sArgName == "timeout") {
@@ -64,40 +65,37 @@ int main(int argc, char** argv) {
 			break;
 		}
 		case 'p':
-			pszPort = optarg;
+			sPort = optarg;
 			break;
 		case 'l':
-			pszLogLevel = optarg;
+			sLogLevel = optarg;
+			for(auto& c : sLogLevel)
+			{
+			   c = std::tolower(c);
+			}
 			break;
 		default:
 			printHelp();
 			return 1;
 		}
 	}
-	int64_t iValue = 1;
-	bool bLittleEnd = ((*(char*) &iValue) == 1);
-	if (!bLittleEnd) {
-		fprintf(stderr, "little end is not support!");
-		return 1;
-	}
 
 	LogLevel level = LogLevel::INFO;
-	if (strcasecmp(pszLogLevel, "debug") == 0) {
+	if (sLogLevel == "debug") {
 		level = LogLevel::DEBUG;
-	} else if (strcasecmp(pszLogLevel, "warn") == 0) {
+	} else if (sLogLevel ==  "warn") {
 		level = LogLevel::WARN;
-	} else if (strcasecmp(pszLogLevel, "info") == 0) {
+	} else if (sLogLevel == "info") {
 		level = LogLevel::INFO;
-	} else if (strcasecmp(pszLogLevel, "error") == 0) {
+	} else if (sLogLevel ==  "error") {
 		level = LogLevel::ERROR;
 	} else {
-		fprintf(stderr, "Unknown log level %s!", pszLogLevel);
+		fprintf(stderr, "Unknown log level %s!", sLogLevel.c_str());
 		return 1;
 	}
-	printf("Log on %s, level %s.\n", pszLogPath == 0 ? "stdout" : pszLogPath,
-			pszLogLevel);
+	printf("Log on %s, level %s.\n", sLogPath == "" ? "stdout" : sLogPath.c_str(), sLogLevel.c_str());
 
-	Log::getLogger().init(pszLogPath, level);
+	Log::getLogger().init(sLogPath, level);
 	LOG(INFO, "csv2pgserver version %d.%d started, config file %s.",
 			VERSION_MAJOR, VERSION_MINOR, sMetaConfigPath.c_str());
 	LOG(INFO, "Network buffer %d, timeout %d, Execution buffer %d, ",
@@ -106,11 +104,11 @@ int main(int argc, char** argv) {
 			MetaConfig::getInstance().getExecutionBuffer());
 
 	try {
-		MetaConfig::getInstance().load(sMetaConfigPath.c_str());
-		PgServer server(pszPort);
+		MetaConfig::getInstance().load(sMetaConfigPath);
+		PgServer server(sPort);
 		server.run();
 	} catch (Exception* pe) {
-		LOG(ERROR, "start server failed:%s", pe->what());
+		LOG(ERROR, "start server failed:%s", pe->what().c_str());
 		delete pe;
 		return 1;
 	}

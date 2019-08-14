@@ -7,7 +7,7 @@
 #include <string>
 #include <map>
 #include <memory>
-#include <stdio.h>
+#include <sstream>
 #include <stdarg.h>
 
 class ExplainPlan: public ExecutionPlan {
@@ -18,32 +18,36 @@ public:
 
 
 
-	virtual void explain(std::vector<std::string>& rows) {
+	virtual void explain(std::vector<std::string>& rows)override {
 	}
 
-	virtual void begin();
-	virtual bool next();
-	virtual void end();
+	virtual void begin()override ;
+	virtual bool next()override;
+	virtual void end()override;
 
-	virtual const char* getProjectionName(size_t index) {
+	virtual std::string getProjectionName(size_t index) override{
 		return "explain";
 	}
 
-	virtual void getAllColumns(std::vector<const char*>& columns) {
+	virtual void getAllColumns(std::vector<std::string>& columns)override {
 		columns.push_back("explain");
 	}
 
-	virtual DBDataType getResultType(size_t index) {
+	virtual DBDataType getResultType(size_t index) override{
 		return DBDataType::STRING;
 	}
 
-	virtual int getResultColumns() {
+	virtual int getResultColumns() override{
 		return 1;
 	}
 
-	virtual void getInfoString(char* szBuf, int len);
+	virtual std::string getInfoString()override {
+		std::ostringstream os;
+		os << "EXPLAIN " << m_rows.size();
+		return os.str();
+	}
 
-	virtual void getResult(size_t columnIndex, ResultInfo* pInfo);
+	virtual void getResult(size_t columnIndex, ResultInfo* pInfo)override;
 
 private:
 	std::vector<std::string> m_rows;

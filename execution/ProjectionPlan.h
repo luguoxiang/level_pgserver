@@ -7,8 +7,8 @@
 class ProjectionPlan: public ExecutionPlan {
 	struct ProjectionInfo {
 		size_t m_iSubIndex;
-		const char* m_pszName;
-		const char* m_pszRaw;
+		std::string m_sName;
+		std::string m_sRaw;
 	};
 public:
 	ProjectionPlan(ExecutionPlan* pPlan) :
@@ -16,75 +16,74 @@ public:
 		assert(pPlan);
 	}
 
-	virtual void explain(std::vector<std::string>& rows) {
+	virtual void explain(std::vector<std::string>& rows) override{
 		m_pPlan->explain(rows);
 		std::string s = "Projection ";
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			s.append(m_proj[i].m_pszName);
+			s.append(m_proj[i].m_sName);
 			s.append(", ");
 		}
 		rows.push_back(s);
 	}
 
-	bool project(ParseNode* pNode, const char* pszName);
+	bool project(ParseNode* pNode, const std::string& sName);
 
-	virtual void getAllColumns(std::vector<const char*>& columns) {
+	virtual void getAllColumns(std::vector<std::string>& columns) override{
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			columns.push_back(m_proj[i].m_pszName);
+			columns.push_back(m_proj[i].m_sName);
 		}
 	}
 
-	virtual int addProjection(ParseNode* pNode) {
-		auto iter = m_map.find(pNode->m_pszExpr);
+	virtual int addProjection(ParseNode* pNode)override{
+		auto iter = m_map.find(pNode->m_sExpr);
 		if (iter == m_map.end())
 			return -1;
 		return iter->second;
 	}
 
-	virtual void begin() {
+	virtual void begin()override {
 		m_pPlan->begin();
 	}
-	virtual bool next() {
+	virtual bool next() override{
 		return m_pPlan->next();
 	}
 
-	virtual void end() {
+	virtual void end()override {
 		return m_pPlan->end();
 	}
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
-			bool* pOrder) {
-		auto iter = m_map.find(pszColumn);
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+			bool* pOrder) override {
+		auto iter = m_map.find(sColumn);
 		if (iter == m_map.end())
 			return false;
 		size_t iIndex = iter->second;
-		return m_pPlan->ensureSortOrder(iSortIndex, m_proj[iIndex].m_pszRaw,
-				pOrder);
+		return m_pPlan->ensureSortOrder(iSortIndex, m_proj[iIndex].m_sRaw, pOrder);
 	}
 	/*
 	 * number of projection column
 	 */
-	virtual int getResultColumns() {
+	virtual int getResultColumns()override {
 		return m_proj.size();
 	}
 
-	virtual const char* getProjectionName(size_t index) {
+	virtual std::string getProjectionName(size_t index) override{
 		assert(index < m_proj.size());
 		size_t iSubIndex = m_proj[index].m_iSubIndex;
-		return m_proj[index].m_pszName;
+		return m_proj[index].m_sName;
 	}
 
-	virtual DBDataType getResultType(size_t index) {
+	virtual DBDataType getResultType(size_t index)override {
 		assert(index < m_proj.size());
 		size_t iSubIndex = m_proj[index].m_iSubIndex;
 		return m_pPlan->getResultType(iSubIndex);
 	}
 
-	virtual void getInfoString(char* szBuf, int len) {
-		return m_pPlan->getInfoString(szBuf, len);
+	virtual std::string getInfoString() override{
+		return m_pPlan->getInfoString();
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo) {
+	virtual void getResult(size_t index, ResultInfo* pInfo)override {
 		assert(index < m_proj.size());
 		size_t iSubIndex = m_proj[index].m_iSubIndex;
 		return m_pPlan->getResult(iSubIndex, pInfo);

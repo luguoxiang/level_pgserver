@@ -24,16 +24,17 @@ enum class SortOrder {
 class SortPlan: public ExecutionPlan {
 	struct SortProjection {
 		size_t m_iSubIndex;
-		const char* m_pszName;
+		std::string m_sName;
 	};
 public:
 	SortPlan(ExecutionPlan* pPlan);
+	virtual ~SortPlan() {end();}
 
-	virtual void explain(std::vector<std::string>& rows) {
+	virtual void explain(std::vector<std::string>& rows)override {
 		m_pPlan->explain(rows);
 		std::string s = "Sort(";
 		for (size_t i = 0; i < m_sort.size(); ++i) {
-			s.append(m_sort[i].m_pszColumn);
+			s.append(m_sort[i].m_sColumn);
 			s.append(" ");
 			switch (m_sort[i].m_order) {
 			case SortOrder::Ascend:
@@ -52,9 +53,9 @@ public:
 			else
 				s.append(", ");
 		}
-		s += "project:";
+		s.append("project:");
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			s.append(m_proj[i].m_pszName);
+			s.append(m_proj[i].m_sName);
 			if (i < m_proj.size() - 1)
 				s.append(", ");
 		}
@@ -62,33 +63,33 @@ public:
 		rows.push_back(s);
 	}
 
-	virtual void begin();
-	virtual bool next();
-	virtual void end();
+	virtual void begin() override;
+	virtual bool next() override;
+	virtual void end() override;
 
-	virtual int getResultColumns() {
+	virtual int getResultColumns()override {
 		return m_proj.size();
 	}
 
-	virtual const char* getProjectionName(size_t index) {
-		return m_proj[index].m_pszName;
+	virtual std::string getProjectionName(size_t index) override{
+		return m_proj[index].m_sName;
 	}
 
-	virtual DBDataType getResultType(size_t index) {
+	virtual DBDataType getResultType(size_t index) override {
 		return m_pPlan->getResultType(m_proj[index].m_iSubIndex);
 	}
 
-	virtual void getInfoString(char* szBuf, int len) {
-		return m_pPlan->getInfoString(szBuf, len);
+	virtual std::string getInfoString() override{
+		return m_pPlan->getInfoString();
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo);
+	virtual void getResult(size_t index, ResultInfo* pInfo) override;
 
-	virtual void getAllColumns(std::vector<const char*>& columns) {
+	virtual void getAllColumns(std::vector<std::string>& columns)  override{
 		return m_pPlan->getAllColumns(columns);
 	}
 
-	virtual int addProjection(ParseNode* pNode) {
+	virtual int addProjection(ParseNode* pNode) override{
 		int index = m_pPlan->addProjection(pNode);
 		if (index < 0)
 			return index;
@@ -99,19 +100,19 @@ public:
 		}
 		SortProjection proj;
 		proj.m_iSubIndex = index;
-		proj.m_pszName = pNode->m_pszExpr;
+		proj.m_sName = pNode->m_sExpr;
 		m_proj.push_back(proj);
 		return m_proj.size() - 1;
 	}
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const char* pszColumn,
-			bool* pOrder) {
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+			bool* pOrder)override  {
 		if (m_sort.size() <= iSortIndex)
 			return false;
 
 		SortSpec& spec = m_sort[iSortIndex];
 
-		if (strcmp(pszColumn, spec.m_pszColumn) != 0)
+		if (sColumn != spec.m_sColumn)
 			return false;
 
 		if (pOrder == nullptr)
@@ -131,11 +132,11 @@ public:
 		int i = addProjection(pNode);
 		if (i < 0) {
 			throw new ParseException("unrecognized column '%s'",
-					pNode->m_pszExpr);
+					pNode->m_sExpr.c_str());
 		}
 		SortSpec spec;
 		spec.m_iIndex = i;
-		spec.m_pszColumn = pNode->m_pszExpr;
+		spec.m_sColumn = pNode->m_sExpr;
 		spec.m_iSubIndex = m_proj[i].m_iSubIndex;
 		spec.m_order = order;
 		spec.m_type = m_pPlan->getResultType(spec.m_iSubIndex);
@@ -146,13 +147,15 @@ private:
 	struct SortSpec {
 		size_t m_iIndex;
 		size_t m_iSubIndex;
-		const char* m_pszColumn;
+		std::string m_sColumn;
 		SortOrder m_order;
 		DBDataType m_type;
 	};
 
 	std::unique_ptr<ExecutionPlan> m_pPlan;
-	std::vector<ResultInfo*> m_rows;
+
+	using RowInfo = std::vector<ResultInfo>;
+	std::vector<RowInfo*> m_rows;
 	std::vector<SortProjection> m_proj;
 	std::vector<SortSpec> m_sort;
 	int m_iCurrent;

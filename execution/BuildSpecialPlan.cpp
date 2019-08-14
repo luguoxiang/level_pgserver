@@ -12,25 +12,25 @@ void buildPlanForLeftJoin(ParseNode* pNode) {
 }
 
 void buildPlanForDesc(ParseNode* pNode) {
-	assert(pNode->m_iChildNum == 1);
+	assert(pNode->children() == 1);
 	ParseNode* pTable = pNode->m_children[0];
 
 	TableInfo* pEntry = nullptr;
-	if (pTable->m_iType != NodeType::NAME) {
-		assert(pTable->m_iChildNum == 2);
+	if (pTable->m_type != NodeType::NAME) {
+		assert(pTable->children() == 2);
 
 		ParseNode* pDB = pTable->m_children[0];
 		pTable = pTable->m_children[1];
 
-		assert(pDB->m_iType == NodeType::NAME);
-		assert(pTable->m_iType == NodeType::NAME);
+		assert(pDB->m_type == NodeType::NAME);
+		assert(pTable->m_type == NodeType::NAME);
 
-		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_pszValue);
+		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
 	} else {
-		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_pszValue);
+		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
 	}
 	if (pEntry == nullptr) {
-		PARSE_ERROR("Undefined table %s", pTable->m_pszValue);
+		PARSE_ERROR("Undefined table %s", pTable->m_sValue.c_str());
 	}
 	Tools::pushPlan(new ShowColumns(pEntry));
 }
@@ -45,50 +45,50 @@ void buildPlanForShowTables(ParseNode* pNode) {
 
 void buildPlanForReadFile(ParseNode* pNode) {
 	ReadFilePlan* pValuePlan = new ReadFilePlan(
-			pNode->m_children[0]->m_pszValue, //path
-			pNode->m_children[3]->m_pszValue); //seperator
+			pNode->m_children[0]->m_sValue, //path
+			pNode->m_children[3]->m_sValue); //seperator
 	Tools::pushPlan(pValuePlan);
 
 	ParseNode* pTable = pNode->m_children[1];
-	assert(pTable && pTable->m_iType == NodeType::NAME);
+	assert(pTable && pTable->m_type == NodeType::NAME);
 
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
-			pTable->m_pszValue);
+			pTable->m_sValue);
 	if (pTableInfo == nullptr) {
 		throw new ParseException("Table %s does not exist!",
-				pTable->m_pszValue);
+				pTable->m_sValue.c_str());
 	}
 
 	ParseNode* pColumn = pNode->m_children[2];
 	std::vector<DBColumnInfo*> columns;
 	pTableInfo->getDBColumns(pColumn, columns);
-	for (int i = 0; i < columns.size(); ++i) {
-		pValuePlan->addColumn(columns[i]);
+	for (auto p: columns) {
+		pValuePlan->addColumn(p);
 	}
 }
 
 void buildPlanForFileSelect(ParseNode* pNode) {
-	assert(pNode && pNode->m_iChildNum == 7);
+	assert(pNode && pNode->children() == 7);
 
 	ParseNode* pTable = pNode->m_children[SQL_SELECT_TABLE];
-	assert(pTable && pTable->m_iType == NodeType::NAME);
+	assert(pTable && pTable->m_type == NodeType::NAME);
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
-			pTable->m_pszValue);
+			pTable->m_sValue);
 	if (pTableInfo == nullptr) {
-		LOG(ERROR, "Undefined hbase table %s", pTable->m_pszValue);
+		LOG(ERROR, "Undefined hbase table %s", pTable->m_sValue.c_str());
 		throw new ParseException("Undefined hbase table %s",
-				pTable->m_pszValue);
+				pTable->m_sValue.c_str());
 	}
 
 	ReadFilePlan* pValuePlan = new ReadFilePlan(
-			pTableInfo->getAttribute("path").c_str(),
-			atoi(pTableInfo->getAttribute("seperator").c_str()));
+			pTableInfo->getAttribute("path"),
+			pTableInfo->getAttribute("seperator"));
 	Tools::pushPlan(pValuePlan);
 
 	std::vector<DBColumnInfo*> columns;
 	pTableInfo->getDBColumns(nullptr, columns);
-	for (int i = 0; i < columns.size(); ++i) {
-		pValuePlan->addColumn(columns[i]);
+	for (auto p:columns) {
+		pValuePlan->addColumn(p);
 	}
 	BUILD_PLAN(pNode->m_children[SQL_SELECT_PREDICATE]);
 	BUILD_PLAN(pNode->m_children[SQL_SELECT_GROUPBY]);

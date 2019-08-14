@@ -4,10 +4,10 @@
 
 class ExecutionException: public Exception {
 public:
-	ExecutionException(const char* pszMsg, bool appendOBError);
+	ExecutionException(const std::string& sMsg, bool appendOBError);
 	virtual ~ExecutionException();
-	const char* what() const {
-		return m_sErrMsg.c_str();
+	std::string what() const {
+		return m_sErrMsg;
 	}
 private:
 	std::string m_sErrMsg;

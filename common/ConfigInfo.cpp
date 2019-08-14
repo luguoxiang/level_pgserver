@@ -83,25 +83,24 @@ void TableInfo::getDBColumns(ParseNode* pColumn,
 	if (pColumn == 0) {
 		//insert into t values(....)
 		//add all columns in table
-		for (size_t j = 0; j < getColumnCount(); ++j) {
-			columns.push_back(getColumn(j));
+		for (auto p : m_columns) {
+			columns.push_back(p);
 		}
 	} else {
-		assert(pColumn->m_iChildNum > 0);
-
-		for (size_t j = 0; j < pColumn->m_iChildNum; ++j) {
-			ParseNode* p = pColumn->m_children[j];
-			if (p == nullptr || p->m_iType != NodeType::NAME) {
+		assert(pColumn->children() > 0);
+		for(auto p: pColumn->m_children) {
+			if (p == nullptr || p->m_type != NodeType::NAME) {
 				throw new ParseException("Unsupported select expression:",
-						p->m_pszExpr);
+						p->m_sExpr.c_str());
 			}
-			DBColumnInfo* pColumnInfo = getColumnByName(p->m_pszValue);
+			DBColumnInfo* pColumnInfo = getColumnByName(p->m_sValue);
 			if (pColumnInfo == 0) {
 				throw new ParseException(
-						"Table %s does not have column named %s!", getName().c_str(),
-						p->m_pszValue);
+						"Table %s does not have column named %s!", m_name.c_str(),
+						p->m_sValue.c_str());
 			}
 			columns.push_back(pColumnInfo);
 		}
+
 	}
 }

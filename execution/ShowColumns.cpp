@@ -1,29 +1,29 @@
 #include "ShowColumns.h"
 #include "common/MetaConfig.h"
-
+#include <sstream>
+#include <array>
 namespace {
-const char* Columns[] = { "Field", "Type", "KeyPosition", "Precision" };
+std::vector<const char*> Columns = { "Field", "Type", "KeyPosition", "Precision" };
 }
 
-const char* ShowColumns::getProjectionName(size_t index) {
+std::string ShowColumns::getProjectionName(size_t index) {
 	assert(index < 4);
 	return Columns[index];
 }
 
-void ShowColumns::getAllColumns(std::vector<const char*>& columns) {
-	size_t count = sizeof(Columns) / sizeof(const char*);
-	for (int i = 0; i < count; ++i) {
-		columns.push_back(Columns[i]);
+void ShowColumns::getAllColumns(std::vector<std::string>& columns) {
+	for (auto column: Columns) {
+		columns.push_back(column);
 	}
 }
 
 int ShowColumns::addProjection(ParseNode* pNode) {
 	assert(pNode);
-	size_t count = sizeof(Columns) / sizeof(const char*);
-	if (pNode->m_iType != NodeType::NAME)
+
+	if (pNode->m_type != NodeType::NAME)
 		return -1;
-	for (size_t i = 0; i < count; ++i) {
-		if (strcasecmp(Columns[i], pNode->m_pszValue) == 0) {
+	for (size_t i = 0; i < Columns.size(); ++i) {
+		if (strcasecmp(Columns[i], pNode->m_sValue.c_str()) == 0) {
 			return i;
 		}
 	}
@@ -44,8 +44,10 @@ int ShowColumns::getResultColumns() {
 	return 4;
 }
 
-void ShowColumns::getInfoString(char* szBuf, int len) {
-	snprintf(szBuf, len, "SELECT %lu", m_pEntry->getColumnCount());
+std::string ShowColumns::getInfoString() {
+	std::ostringstream os;
+	os << "SELECT " << m_pEntry->getColumnCount();
+	return os.str();
 }
 
 void ShowColumns::begin() {
@@ -64,50 +66,48 @@ void ShowColumns::getResult(size_t index, ResultInfo* pInfo) {
 	pInfo->m_bNull = false;
 	switch (index) {
 	case 0:
-		pInfo->m_value.m_pszResult = pColumn->m_sName.c_str();
-		pInfo->m_len = pColumn->m_sName.size();
+		pInfo->m_sResult = pColumn->m_sName;
 		break;
 	case 1:
 		switch (pColumn->m_type) {
 		case DBDataType::INT8:
-			pInfo->m_value.m_pszResult = "int8";
+			pInfo->m_sResult = "int8";
 			break;
 		case DBDataType::INT16:
-			pInfo->m_value.m_pszResult = "int16";
+			pInfo->m_sResult = "int16";
 			break;
 		case DBDataType::INT32:
-			pInfo->m_value.m_pszResult = "int32";
+			pInfo->m_sResult = "int32";
 			break;
 		case DBDataType::INT64:
-			pInfo->m_value.m_pszResult = "int64";
+			pInfo->m_sResult = "int64";
 			break;
 		case DBDataType::STRING:
-			pInfo->m_value.m_pszResult = "varchar";
+			pInfo->m_sResult = "varchar";
 			break;
 		case DBDataType::DATETIME:
-			pInfo->m_value.m_pszResult = "datetime";
+			pInfo->m_sResult = "datetime";
 			break;
 		case DBDataType::DATE:
-			pInfo->m_value.m_pszResult = "date";
+			pInfo->m_sResult = "date";
 			break;
 		case DBDataType::DOUBLE:
-			pInfo->m_value.m_pszResult = "double";
+			pInfo->m_sResult = "double";
 			break;
 		case DBDataType::BYTES:
-			pInfo->m_value.m_pszResult = "bytes";
+			pInfo->m_sResult = "bytes";
 			break;
 		default:
-			pInfo->m_value.m_pszResult = "unknown";
+			pInfo->m_sResult = "unknown";
 			break;
 		}
-		pInfo->m_len = strlen(pInfo->m_value.m_pszResult);
 		break;
 	case 2:
 		if (pColumn->m_iKeyIndex < 0) {
 			pInfo->m_bNull = true;
 		} else {
 			pInfo->m_bNull = false;
-			pInfo->m_value.m_lResult = pColumn->m_iKeyIndex;
+			pInfo->m_lResult = pColumn->m_iKeyIndex;
 		}
 		break;
 	case 3:
@@ -115,7 +115,7 @@ void ShowColumns::getResult(size_t index, ResultInfo* pInfo) {
 			pInfo->m_bNull = true;
 		} else {
 			pInfo->m_bNull = false;
-			pInfo->m_value.m_lResult = pColumn->m_iLen;
+			pInfo->m_lResult = pColumn->m_iLen;
 		}
 		break;
 	default:

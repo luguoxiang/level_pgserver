@@ -24,19 +24,6 @@ typedef void* yyscan_t;
 
 extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const char* s,...);
 
-extern ParseNode* mergeTree(ParseResult* pResult, const char* pszRootName, 
-			ParseNode* pRoot, 
-			const char* pszRemove);
-
-extern ParseNode* newIntNode(ParseResult* pResult, NodeType type, int value, int num, ...);
-
-extern ParseNode* newParentNode(ParseResult* pResult, const char* pszName, int childNum, ...);
-
-extern ParseNode* newExprNode(ParseResult *pResult, 
-				int value, int firstColumn, int lastColumn, int num, ...);
-extern ParseNode* newFuncNode(ParseResult *p, 
-				const char* pszName, int firstColumn, int lastColumn, int num, ...);
-
 struct DbPlanBuilder
 {
 	const char* m_db;
@@ -54,12 +41,12 @@ static struct DbPlanBuilder* getPlanBuilder(ParseResult* pResult, ParseNode** pp
 		struct DbPlanBuilder* pBuilder = NULL;
 		assert(ppTable);
 		ParseNode* pTable = *ppTable;
-		if(pTable->m_iType == NodeType::OP)
+		if(pTable->m_type == NodeType::OP)
 		{
 				int i = 0;
-				assert(pTable->m_iChildNum == 2);
-				assert(pTable->m_children[0]->m_iType == NodeType::NAME);
-				assert(pTable->m_children[1]->m_iType == NodeType::NAME);
+				assert(pTable->children() == 2);
+				assert(pTable->m_children[0]->m_type == NodeType::NAME);
+				assert(pTable->m_children[1]->m_type == NodeType::NAME);
 				ParseNode* pDB = pTable->m_children[0];
 				*ppTable = pTable = pTable->m_children[1];
 				for(i=0 ; ; ++i)
@@ -68,7 +55,7 @@ static struct DbPlanBuilder* getPlanBuilder(ParseResult* pResult, ParseNode** pp
 					{
 						break;
 					}
-					if(strcasecmp(pDB->m_pszValue, g_dbPlanBuilder[i].m_db) == 0)
+					if(strcasecmp(pDB->m_sValue.c_str(), g_dbPlanBuilder[i].m_db) == 0)
 					{
 						return g_dbPlanBuilder+ i;
 					}
@@ -255,13 +242,13 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 	| expr '%' expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, 2, $1, $3);}
 	| expr MOD expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, 2, $1, $3);}
 	| '-' expr %prec UMINUS {
-		if($2->m_iType == NodeType::INT)
+		if($2->m_type == NodeType::INT)
 		{
 			$2->m_iValue = - $2->m_iValue;
 			char szBuf[20];
 			snprintf(szBuf,20, "%lld", $2->m_iValue);
-			$2->m_pszValue = my_strdup(pResult, szBuf);
-			$2->m_pszExpr = $2->m_pszValue;
+			$2->m_sValue = szBuf;
+			$2->m_sExpr = $2->m_sValue;
 			$$ = $2;
 		}
 		else
@@ -279,13 +266,13 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 	| expr COMP_GT expr {$$ = newExprNode(pResult, COMP_GT, @$.first_column, @$.last_column, 2, $1, $3);}
 	| expr COMP_NE expr {$$ = newExprNode(pResult, COMP_NE, @$.first_column, @$.last_column, 2, $1, $3);}
 	| expr LIKE STRING {
-		if($3->m_pszValue[0] != '%' || $3->m_pszValue[$3->m_iValue - 1] != '%')
+		auto len =  $3->m_sValue.length();
+		if($3->m_sValue[0] != '%' || $3->m_sValue[len - 1] != '%')
 		{
-			yyerror(&@3,pResult, NULL,"missing %% for like '%s'", $3->m_pszValue);
+			yyerror(&@3,pResult, NULL,"missing %% for like '%s'", $3->m_sValue.c_str());
 			YYERROR;
 		}
-		$3->m_iValue = $3->m_iValue - 2;
-		strncpy((char*)$3->m_pszValue, $3->m_pszValue + 1, $3->m_iValue);
+		$3->m_sValue =  $3->m_sValue.substr(1, len -2);
 		$$ = newExprNode(pResult, LIKE, @$.first_column, @$.last_column, 2, $1, $3);
 	}
 	| expr ANDOP expr {$$ = newExprNode(pResult, ANDOP, @$.first_column, @$.last_column, 2, $1, $3);}
@@ -303,17 +290,17 @@ expr: expr IS NULLX {
 	;
 
 expr: expr IN '(' val_list ')' {
-		$$ = newExprNode(pResult, IN, @$.first_column, @$.last_column, 2, $1, 
-			mergeTree(pResult, "ValueList", $4, "ValueList"));
+		$4->remove("ValueList", "ValueList");
+		$$ = newExprNode(pResult, IN, @$.first_column, @$.last_column, 2, $1, $4);
 		}
 	| expr NOT IN '(' val_list ')' { 
-		$$ = newExprNode(pResult, NOT_IN, @$.first_column, @$.last_column, 2, $1, 
-			mergeTree(pResult, "ValueList", $5, "ValueList"));
+		$5->remove("ValueList", "ValueList");
+		$$ = newExprNode(pResult, NOT_IN, @$.first_column, @$.last_column, 2, $1, $5);
 	}
 	;
 	
 expr: NAME '(' expr ')' {
-        $$ = newFuncNode(pResult, $1->m_pszValue, @$.first_column, @$.last_column, 1, $3);
+        $$ = newFuncNode(pResult, $1->m_sValue, @$.first_column, @$.last_column, 1, $3);
 }       
 ;
 
@@ -336,7 +323,7 @@ delete_stmt: DELETE FROM table_factor opt_where
 
 update_stmt: UPDATE table_factor SET update_asgn_list opt_where
 	{
-		$4 = mergeTree(pResult, "AssignValueList", $4, "AssignValueList");
+		$4->remove("AssignValueList", "AssignValueList");
 		yyerror(&@1,pResult,NULL, "Update is not supported for current database");
 		YYERROR;
 	}
@@ -355,7 +342,8 @@ update_asgn_list:NAME COMP_EQ expr
 	;
 values_stmt:VALUES value_list
 	{
-		$$ = mergeTree(pResult, "ValueList", $2, "ValueList");
+		$2->remove("ValueList","ValueList");
+		$$ = $2;
 		$$->m_fnBuildPlan = buildPlanForConst;
 	}
 	;
@@ -426,14 +414,18 @@ load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS 
 	;
 	
 opt_col_names: /* empty */{$$ = 0;}
-	| '(' column_list ')' { $$ = mergeTree(pResult, "ColumnList", $2, "ColumnList");}
+	| '(' column_list ')' {
+		$2->remove("ColumnList", "ColumnList");
+		$$ = $2;
+	}
 	;
 
 value_list: '(' row_value ')' { 
-		$$ = mergeTree(pResult, "ExprList",$2,"ExprList");
+		$2->remove("ExprList", "ExprList");
+		$$ = $2;
 	}
 	| value_list ',' '(' row_value ')' {
-		$4 = mergeTree(pResult, "ExprList", $4, "ExprList");
+		$4->remove("ExprList", "ExprList");
 		$$ = newParentNode(pResult, "ValueList", 2, $1, $4);
 	}
 
@@ -462,17 +454,18 @@ opt_join: {$$ = 0;}
 select_stmt: SELECT select_expr_list FROM table_or_query opt_alias 
 			opt_where opt_groupby opt_having opt_orderby opt_limit opt_join
 	{
-		ParseNode* pProject = mergeTree(pResult, "SelectExprList", $2, "ExprList");
+		$2->remove("SelectExprList","ExprList");
+		ParseNode* pProject = $2;
 		ParseNode* pTable = $4;
 		ParseNode* pAlias = $5;
 		ParseNode* pPredicate = $6;
 		ParseNode* pJoin = $11;
 
-		int hasSubquery = (pTable->m_iType != NodeType::NAME && pTable->m_iType != NodeType::OP);
+		int hasSubquery = (pTable->m_type != NodeType::NAME && pTable->m_type != NodeType::OP);
 		if(pJoin != 0)
 		{
 			//This is a left join statement
-			ParseNode* pJoinList = mergeTree(pResult, "JoinList", pJoin, "JoinList");
+			pJoin->remove("JoinList", "JoinList");
 			if(pAlias == NULL)
 			{
 				yyerror(&@5,pResult,NULL, "table in left join statement  must have a alias name");
@@ -484,7 +477,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 				YYERROR;
 			}
 
-			$$ = newParentNode(pResult, "LeftJoinStmt", 4, pProject, pTable, pAlias, pJoinList);
+			$$ = newParentNode(pResult, "LeftJoinStmt", 4, pProject, pTable, pAlias, pJoin);
 			$$->m_fnBuildPlan = buildPlanForLeftJoin;
 		}	
 		else
@@ -520,8 +513,8 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 
 join_clause : LEFT JOIN table_factor USING '(' column_list ')'
 	{
-		$6 = mergeTree(pResult, "Using", $6, "ColumnList");
-    $$ = newParentNode(pResult, "LeftJoin", 2, $3, $6);
+		$6->remove("Using", "ColumnList");
+    	$$ = newParentNode(pResult, "LeftJoin", 2, $3, $6);
 	}
 	;
 
@@ -555,7 +548,8 @@ opt_limit:{$$ = 0;}
 
 opt_groupby:{$$ = 0;}
 	| GROUP BY column_list {
-		$$ = mergeTree(pResult, "GroupBy", $3, "ColumnList");
+		$3->remove("GroupBy",  "ColumnList");
+		$$ = $3;
 		$$->m_fnBuildPlan = buildPlanForGroupBy;
 	}
 	;
@@ -584,7 +578,8 @@ opt_having:{$$ = 0;}
 	
 opt_orderby:{$$ = 0;}
 	| ORDER BY sort_list {
-		$$ = mergeTree(pResult, "OrderBy", $3, "SortList");
+		$3->remove("OrderBy", "SortList");
+		$$ = $3;
 		$$->m_fnBuildPlan = buildPlanForOrderBy;
 	}
 	;
@@ -627,33 +622,30 @@ void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,const char* s, ..
 
 int parseInit(ParseResult* p)
 {
+    p->m_nodes.clear();
 	p->m_yycolumn = 1;
 	p->m_yylineno = 1;
-	p->m_pPoolHead = NULL;
-	p->m_pPoolTail = NULL;
 	return yylex_init_extra(p, &(p->m_scanInfo));
 }
 
 int parseTerminate(ParseResult* p)
 {
-	memPoolClear(p, 1);
+	p->m_nodes.clear();
 	return yylex_destroy(p->m_scanInfo);
 }
 
-void parseSql(ParseResult* p, const char* pszBuf, size_t iLen)
+void parseSql(ParseResult* p, const std::string& sql)
 {
-	p->m_pResult = 0;
-	p->m_pszSql = pszBuf;
+	p->m_pResult = nullptr;
+	p->m_sSql = sql;
 	p->m_szErrorMsg[0]=0;
 	
 	p->m_yycolumn = 1;
 	p->m_yylineno = 1;
-	
-	memPoolClear(p, 0);
 
 	YY_BUFFER_STATE bp;
 
-	bp = yy_scan_string(pszBuf, p->m_scanInfo);
+	bp = yy_scan_string(sql.c_str(), p->m_scanInfo);
 	yy_switch_to_buffer(bp, p->m_scanInfo);
 	yyparse(p, p->m_scanInfo);
 	yy_delete_buffer(bp, p->m_scanInfo);

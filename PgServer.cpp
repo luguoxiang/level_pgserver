@@ -21,9 +21,9 @@
 
 #define MAX_CONNECTION 1000
 
-PgServer::PgServer(const char* pszPort) :
-		m_pszPort(pszPort), m_iFd(-1) {
-	LOG(INFO, "Start server on port %s!", pszPort);
+PgServer::PgServer(const std::string& sPort) :
+		m_sPort(sPort), m_iFd(-1) {
+	LOG(INFO, "Start server on port %s!", sPort.c_str());
 }
 
 PgServer::~PgServer() {
@@ -77,7 +77,7 @@ int PgServer::acceptSocket(int fd, int maxConnection) {
 	return acceptSock;
 }
 
-int PgServer::bindSocket(const char* pszPort) {
+int PgServer::bindSocket(const std::string& sPort) {
 	int fd = ::socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0) {
 		throw new IOException("Could not create socket()!");
@@ -88,7 +88,7 @@ int PgServer::bindSocket(const char* pszPort) {
 	struct sockaddr_in addr;
 	::memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
-	addr.sin_port = htons(atoi(pszPort));
+	addr.sin_port = htons(atoi(sPort.c_str()));
 	addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
 	if (::setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char*) &optval,
@@ -111,13 +111,13 @@ int PgServer::bindSocket(const char* pszPort) {
 void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 	pInfo->m_tid = std::this_thread::get_id();
 	WorkThreadInfo::m_pWorkThreadInfo = pInfo;
-	LOG(INFO, "Working thread is listening on %s.", pInfo->m_pszPort);
+	LOG(INFO, "Working thread is listening on %s.", pInfo->m_sPort.c_str());
 	while (true) {
 		try {
 			pInfo->m_iAcceptFd = acceptSocket(pInfo->m_iListenFd,
 			MAX_CONNECTION);
 		} catch (IOException* pe) {
-			LOG(ERROR, "Working thread failed:%s.", pe->what());
+			LOG(ERROR, "Working thread failed:%s.", pe->what().c_str());
 			delete pe;
 			exit(0);
 		}
@@ -128,7 +128,7 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 			PgClient client(pInfo);
 			client.run();
 		} catch (Exception* pe) {
-			LOG(ERROR, "Working thread failed:%s.", pe->what());
+			LOG(ERROR, "Working thread failed:%s.", pe->what().c_str());
 			delete pe;
 		} catch (...) {
 			LOG(ERROR, "Working thread failed:Unknown Reason.");
@@ -146,7 +146,7 @@ static void int_handler(int code) {
 void PgServer::run() {
 	std::signal(SIGINT, int_handler);
 
-	m_iFd = bindSocket(m_pszPort);
+	m_iFd = bindSocket(m_sPort);
 
 	if (::listen(m_iFd, MAX_CONNECTION) < 0) {
 		::close(m_iFd);
@@ -157,7 +157,7 @@ void PgServer::run() {
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {
-		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_pszPort, i);
+		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_sPort, i);
 		threads[i] = std::thread(worker_thread, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}

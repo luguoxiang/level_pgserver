@@ -71,14 +71,14 @@ void PgMessageReceiver::processStartupPacket() {
 	}
 	while (hasData()) {
 		size_t iLen;
-		const char* pszName = getNextString(&iLen);
-		if (*pszName == '\0')
+		auto sName = getNextString();
+		if (sName == "")
 			break;
 		if (!hasData())
 			break;
 
-		const char* pszValue = getNextString(&iLen);
-		LOG(DEBUG, "option:%s=%s", pszName, pszValue);
+		auto sValue = getNextString();
+		LOG(DEBUG, "option:%s=%s", sName.c_str(), sValue.c_str());
 	}
 
 }

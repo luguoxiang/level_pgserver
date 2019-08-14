@@ -5,9 +5,7 @@
 extern const char* getTypeName(int type);
 
 void buildPlanDefault(ParseNode* pNode) {
-	size_t i;
-	for (i = 0; i < pNode->m_iChildNum; ++i) {
-		ParseNode* pChild = pNode->m_children[i];
+	for (auto pChild : pNode->m_children) {
 		if (pChild && pChild->m_fnBuildPlan) {
 			BUILD_PLAN(pChild);
 		}
@@ -23,7 +21,7 @@ void printTree(ParseNode* pRoot, int level) {
 		printf("NULL\n");
 		return;
 	}
-	switch (pRoot->m_iType) {
+	switch (pRoot->m_type) {
 	case NodeType::OP:
 	case NodeType::FUNC:
 	case NodeType::INFO:
@@ -37,94 +35,57 @@ void printTree(ParseNode* pRoot, int level) {
 	case NodeType::BINARY:
 		printf("\\x");
 		for (i = 0; i < pRoot->m_iValue; ++i) {
-			printf("%02x", (unsigned char) pRoot->m_pszValue[i]);
+			printf("%02x", (unsigned char) pRoot->m_sValue[i]);
 		}
 		printf("\n");
 		break;
 	default:
-		printf("%s\n", pRoot->m_pszValue);
+		printf("%s\n", pRoot->m_sValue.c_str());
 		break;
 	}
-	for (i = 0; i < pRoot->m_iChildNum; ++i) {
-		printTree(pRoot->m_children[i], level + 1);
+	for (auto pChild : pRoot->m_children) {
+		printTree(pChild, level + 1);
 	}
 }
 
-ParseNode* newNode(ParseResult *p, NodeType type, int num) {
-	ParseNode* pNode = (ParseNode*) memPoolAlloc(sizeof(ParseNode), p);
-	memset(pNode, 0, sizeof(ParseNode));
-
-	pNode->m_iType = type;
-	pNode->m_iChildNum = num;
-	pNode->m_pszExpr = NULL;
-	pNode->m_fnBuildPlan = buildPlanDefault;
-	if (num > 0) {
-		size_t allocSize = sizeof(ParseNode*) * num;
-		pNode->m_children = (ParseNode**) memPoolAlloc(allocSize, p);
-		memset(pNode->m_children, 0, allocSize);
-	} else {
-		pNode->m_children = 0;
+ParseNode::ParseNode(ParseResult* p, NodeType type, int num) :
+		m_type(type), m_fnBuildPlan(buildPlanDefault) {
+	m_children.reserve(num);
+	if (p != nullptr) {
+		p->m_nodes.emplace_back(this);
 	}
-	return pNode;
 }
 
-static int _countChild(ParseNode* pRoot, const char* pszRemove) {
-	if (pRoot == 0)
-		return 0;
-
-	int count = 0;
-	if (pRoot->m_iType != NodeType::PARENT
-			|| strcmp(pRoot->m_pszValue, pszRemove) != 0) {
-		return 1;
-	}
-	int i;
-	for (i = 0; i < pRoot->m_iChildNum; ++i) {
-		count += _countChild(pRoot->m_children[i], pszRemove);
-	}
-	return count;
-}
-
-static void _mergeChild(ParseNode* pNode, ParseNode* pSource, int* pIndex,
-		const char* pszRemove) {
-	assert(pNode);
-	if (pSource == 0)
-		return;
-
-	if (pSource->m_iType == NodeType::PARENT
-			&& strcmp(pSource->m_pszValue, pszRemove) == 0) {
-		int i;
-		for (i = 0; i < pSource->m_iChildNum; ++i) {
-			_mergeChild(pNode, pSource->m_children[i], pIndex, pszRemove);
-			pSource->m_children[i] = 0;
+bool ParseNode::_collect(std::vector<ParseNode*>& result,
+		const std::string sRemove) {
+	if (m_type == NodeType::PARENT && m_sValue == sRemove) {
+		for (auto pChild : m_children) {
+			if (!pChild->_collect(result, sRemove)) {
+				result.push_back(pChild);
+			}
 		}
+		return true;
 	} else {
-		assert(*pIndex >= 0 && *pIndex < pNode->m_iChildNum);
-		pNode->m_children[*pIndex] = pSource;
-		++(*pIndex);
+		return false;
 	}
+
 }
 
-ParseNode* mergeTree(ParseResult *p, const char* pszRootName, ParseNode* pRoot,
-		const char* pszRemove) {
-	int index, num;
-	ParseNode* pNode;
-	assert(pRoot);
-	num = _countChild(pRoot, pszRemove);
-	pNode = newNode(p, NodeType::PARENT, num);
-	pNode->m_pszValue = pszRootName;
-	index = 0;
-	_mergeChild(pNode, pRoot, &index, pszRemove);
-	assert(index == num);
-	return pNode;
+void ParseNode::remove(const std::string sNewName, const std::string sRemove) {
+	std::vector<ParseNode*> new_children;
+	if (this->_collect(new_children, sRemove)) {
+		m_children.swap(new_children);
+		m_sValue = sNewName;
+	}
+
 }
 
-static const char* trim_dup(ParseResult *p, int firstColumn, int lastColumn) {
-	size_t i = 0;
+static std::string trim_dup(ParseResult *p, int firstColumn, int lastColumn) {
 	size_t j = 0;
 	size_t iLen = lastColumn - firstColumn + 1;
-	char* pszColumn = memPoolAlloc(iLen + 1, p);
-	for (i = firstColumn; i <= lastColumn; ++i) {
-		char c = p->m_pszSql[i - 1];
+	std::string result;
+	for (size_t i = firstColumn; i <= lastColumn; ++i) {
+		char c = p->m_sSql[i - 1];
 		switch (c) {
 		case ' ':
 		case '\r':
@@ -134,208 +95,152 @@ static const char* trim_dup(ParseResult *p, int firstColumn, int lastColumn) {
 		default:
 			break;
 		}
-		pszColumn[j++] = c;
+		result += c;
 	}
-	pszColumn[j] = '\0';
-	return pszColumn;
+	return result;
 }
 
-ParseNode* newFuncNode(ParseResult *p, const char* pszName, int firstColumn,
+ParseNode* newFuncNode(ParseResult *p, const std::string& sName, int firstColumn,
 		int lastColumn, int num, ...) {
 	va_list va;
-	size_t i, j;
-	ParseNode* pNode = newNode(p, NodeType::FUNC, num);
-	pNode->m_pszExpr = trim_dup(p, firstColumn, lastColumn);
-	pNode->m_pszValue = pszName;
+	ParseNode* pNode = new ParseNode(p, NodeType::FUNC, num);
+	pNode->m_sExpr = trim_dup(p, firstColumn, lastColumn);
+	pNode->m_sValue = sName;
 	pNode->m_iValue = 0;
 	va_start(va, num);
-	for (i = 0; i < num; ++i) {
-	pNode->m_children[i] = va_arg(va, ParseNode*);
-}
-va_end(va);
-return pNode;
+	for (size_t i = 0; i < num; ++i) {
+		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
+	}
+	va_end(va);
+	return pNode;
 }
 
 ParseNode* newExprNode(ParseResult *p, int value, int firstColumn,
 	int lastColumn, int num, ...) {
-va_list va;
-size_t i, j;
-ParseNode* pNode = newNode(p, NodeType::OP, num);
-pNode->m_pszExpr = trim_dup(p, firstColumn, lastColumn);
-pNode->m_iValue = value;
-va_start(va, num);
-for (i = 0; i < num; ++i) {
-pNode->m_children[i] = va_arg(va, ParseNode*);
-}
-va_end(va);
-return pNode;
+	va_list va;
+	ParseNode* pNode = new ParseNode(p, NodeType::OP, num);
+	pNode->m_sExpr = trim_dup(p, firstColumn, lastColumn);
+	pNode->m_iValue = value;
+	va_start(va, num);
+	for (size_t i = 0; i < num; ++i) {
+		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
+	}
+	va_end(va);
+	return pNode;
 }
 
 ParseNode* newIntNode(ParseResult *p, NodeType type, int value, int num, ...) {
-va_list va;
-size_t i;
-ParseNode* pNode = newNode(p, type, num);
-
-pNode->m_iValue = value;
-va_start(va, num);
-for (i = 0; i < num; ++i) {
-pNode->m_children[i] = va_arg(va, ParseNode*);
-}
-va_end(va);
-return pNode;
+	va_list va;
+	ParseNode* pNode = new ParseNode(p, type, num);
+	pNode->m_iValue = value;
+	va_start(va, num);
+	for (size_t i = 0; i < num; ++i) {
+		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
+	}
+	va_end(va);
+	return pNode;
 }
 
-ParseNode* newParentNode(ParseResult *p, const char* pszName, int num, ...) {
-assert(num > 0);
-va_list va;
-int i;
-ParseNode* pNode = newNode(p, NodeType::PARENT, num);
-pNode->m_pszValue = pszName;
-va_start(va, num);
-for (i = 0; i < num; ++i) {
-pNode->m_children[i] = va_arg(va, ParseNode*);
-}
-va_end(va);
-return pNode;
+ParseNode* newParentNode(ParseResult *p, const std::string& sName, int num, ...) {
+	assert(num > 0);
+	va_list va;
+	ParseNode* pNode = new ParseNode(p, NodeType::PARENT, num);
+	pNode->m_sValue = sName;
+	va_start(va, num);
+	for (size_t i = 0; i < num; ++i) {
+		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
+	}
+	va_end(va);
+	return pNode;
 }
 
 int64_t parseTime(const char* pszTime) {
-int iYear = 0;
-int iMonth = 0;
-int iDay = 0;
-int iHour = 0;
-int iMinute = 0;
-int iSecond = 0;
+	int iYear = 0;
+	int iMonth = 0;
+	int iDay = 0;
+	int iHour = 0;
+	int iMinute = 0;
+	int iSecond = 0;
 
-struct tm time;
-int ret = sscanf(pszTime, "%4d-%2d-%2d %2d:%2d:%2d", &iYear, &iMonth, &iDay,
-&iHour, &iMinute, &iSecond);
-if (ret != 3 && ret != 6) {
-return 0;
-}
+	struct tm time;
+	int ret = sscanf(pszTime, "%4d-%2d-%2d %2d:%2d:%2d", &iYear, &iMonth, &iDay,
+	&iHour, &iMinute, &iSecond);
+	if (ret != 3 && ret != 6) {
+		return 0;
+	}
 
-memset(&time, 0, sizeof(struct tm));
-time.tm_year = iYear - 1900;
-time.tm_mon = iMonth - 1;
-time.tm_mday = iDay;
-time.tm_hour = iHour;
-time.tm_min = iMinute;
-time.tm_sec = iSecond;
+	memset(&time, 0, sizeof(struct tm));
+	time.tm_year = iYear - 1900;
+	time.tm_mon = iMonth - 1;
+	time.tm_mday = iDay;
+	time.tm_hour = iHour;
+	time.tm_min = iMinute;
+	time.tm_sec = iSecond;
 
-time_t iRetTime = mktime(&time);
-if (iYear - 1900 != time.tm_year || iMonth - 1 != time.tm_mon
-|| iDay != time.tm_mday) {
-return 0;
-}
-return iRetTime * 1000000; // unit is microseconds
-}
-
-char* memPoolAlloc(size_t iSize, ParseResult *p) {
-assert(iSize < POOL_BLOCK_SIZE);
-MemoryPoolBlock* pBlock = NULL;
-if (p->m_pPoolHead == NULL) {
-pBlock = (MemoryPoolBlock*) malloc(sizeof(MemoryPoolBlock));
-pBlock->m_pNext = NULL;
-pBlock->m_iUsed = 0;
-p->m_pPoolHead = pBlock;
-p->m_pPoolTail = pBlock;
-} else {
-pBlock = p->m_pPoolTail;
-if (pBlock->m_iUsed + iSize > POOL_BLOCK_SIZE) {
-pBlock->m_pNext = (MemoryPoolBlock*) malloc(sizeof(MemoryPoolBlock));
-pBlock = pBlock->m_pNext;
-pBlock->m_iUsed = 0;
-pBlock->m_pNext = NULL;
-p->m_pPoolTail = pBlock;
-}
-}
-char* pRet = pBlock->m_szData + pBlock->m_iUsed;
-pBlock->m_iUsed += iSize;
-return pRet;
+	time_t iRetTime = mktime(&time);
+	if (iYear - 1900 != time.tm_year || iMonth - 1 != time.tm_mon
+	|| iDay != time.tm_mday) {
+		return 0;
+	}
+	return iRetTime * 1000000; // unit is microseconds
 }
 
-size_t memPoolUsed(ParseResult *p) {
-MemoryPoolBlock* pBlock = p->m_pPoolHead;
-if (pBlock == NULL)
-return 0;
-size_t iSize = 0;
-while (pBlock != NULL) {
-iSize += pBlock->m_iUsed;
-pBlock = pBlock->m_pNext;
-}
-return iSize;
 
-}
-void memPoolClear(ParseResult *p, int8_t bReleaseAll) {
-MemoryPoolBlock* pBlock = p->m_pPoolHead;
-if (pBlock == NULL)
-return;
 
-if (!bReleaseAll) {
-p->m_pPoolHead = pBlock;
-p->m_pPoolTail = pBlock;
-pBlock->m_iUsed = 0;
-pBlock = pBlock->m_pNext;
-p->m_pPoolHead->m_pNext = NULL;
-} else {
-p->m_pPoolHead = NULL;
-p->m_pPoolTail = NULL;
-}
-while (pBlock != NULL) {
-MemoryPoolBlock* pLast = pBlock;
-pBlock = pBlock->m_pNext;
-free(pLast);
-}
-}
 
-char* my_memdup(ParseResult *p, const char* pszSrc, size_t iLen) {
-assert(p && pszSrc);
-char* pszDest = memPoolAlloc(iLen, p);
-memcpy(pszDest, pszSrc, iLen);
-return pszDest;
+constexpr bool IS_DIGIT(char c) {
+	return c >='0' && c<='9';
 }
-
-char* my_strdup(ParseResult *p, const char* pszSrc) {
-assert(p && pszSrc);
-size_t iLen = strlen(pszSrc) + 1;
-char* pszDest = memPoolAlloc(iLen, p);
-strncpy(pszDest, pszSrc, iLen);
-return pszDest;
+// pszSrc is quoted string, this function remove the quote and change \x to real value.
+std::string cleanString(const char* pszSrc) {
+	std::string result;
+	for (size_t i = 1; ; ++i) {
+		char c = pszSrc[i];
+		if (c == pszSrc[0] || c =='\0') {
+			//ignore end quote
+			break;
+		} else if (c == '\\') {
+			if (IS_DIGIT(pszSrc[i + 1]) && IS_DIGIT(pszSrc[i + 2]) && IS_DIGIT(pszSrc[i + 3])) {
+					c = (pszSrc[++i] - '0') * 64;
+					c += (pszSrc[++i] - '0') * 8;
+					c += pszSrc[++i] - '0';
+			} else {
+				c = pszSrc[++i];
+				switch (c) {
+				case 'n':
+					c = '\n';
+					break;
+				case 'r':
+					c = '\r';
+					break;
+				case 't':
+					c = '\t';
+					break;
+				default:
+					break;
+				}
+			}
+		}
+		result += c;
+	}
+	return result;
 }
 
-#define IS_DIGIT(c) (c >='0' && c<='9')
-size_t parseString(const char* pszSrc, char* pszDest, size_t iLen) {
-int i, copyIndex = 0;
-for (i = 0; i < iLen; ++i) {
-char c = pszSrc[i];
-if (c == '\\') {
-if (i + 3
-	< iLen&& IS_DIGIT(pszSrc[i + 1]) && IS_DIGIT(pszSrc[i + 2]) && IS_DIGIT(pszSrc[i + 3])) {
-c = (pszSrc[++i] - '0') * 64;
-c += (pszSrc[++i] - '0') * 8;
-c += pszSrc[++i] - '0';
-} else {
-++i;
-c = pszSrc[i];
-switch (c) {
-case 'n':
-	c = '\n';
-	break;
-case 'r':
-	c = '\r';
-	break;
-case 't':
-	c = '\t';
-	break;
-default:
-	break;
+std::string parseBinary(const char* pszSrc)
+{
+	std::string result;
+	for (size_t i = 1; ; ++i) {
+		char c = pszSrc[i];
+		if (c == pszSrc[0] || c =='\0') {
+			//ignore end quote
+			break;
+		}
+		char szBuf[3];
+		szBuf[0] = c;
+		szBuf[1] = pszSrc[++i];
+		szBuf[2] = 0;
+		unsigned char a = strtol(szBuf,0, 16);
+		result += (char)a;
+	}
+	return result;
 }
-}
-}
-pszDest[copyIndex++] = c;
-}
-assert(copyIndex <= iLen);
-pszDest[copyIndex] = '\0';
-return copyIndex;
-}
-

@@ -12,17 +12,18 @@ public:
 
 	virtual ~ParseException();
 
-	const char* what() const {
-		return m_sErrorMsg.c_str();
+	std::string what() const override{
+		return m_sErrorMsg;
 	}
 
-	int getLine() const {
+	int getLine() const override{
 		return m_iLine;
 	}
-	int getStartPos() const {
+	int getStartPos() const override{
 		return m_iStartCol;
 	}
 	void printLocation();
+
 	ParseException(const ParseException& ex) = delete;
 	ParseException& operator =(const ParseException& ex) = delete;
 

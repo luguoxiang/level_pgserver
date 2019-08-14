@@ -2,21 +2,6 @@
 #include "common/ParseException.h"
 
 namespace {
-bool doLike(const char* a, size_t la, const char* b, size_t lb) {
-
-	if (la < lb)
-		return false;
-	for (size_t i = 0; i <= la - lb; ++i) {
-		size_t j = 0;
-		for (j = 0; j < lb; ++j) {
-			if (a[i + j] != b[j])
-				break;
-		}
-		if (j == lb)
-			return true;
-	}
-	return false;
-}
 
 bool checkFilter(int iOpCode, int n) {
 	switch (iOpCode) {
@@ -54,12 +39,12 @@ bool FilterPlan::next() {
 				break;
 			}
 			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
-				if (info.m_pValue->m_iType != NodeType::STR) {
+				if (info.m_pValue->m_type != NodeType::STR) {
 					PARSE_ERROR("Wrong data type for %s, expect string",
-							info.m_pValue->m_pszValue);
+							info.m_pValue->m_sValue.c_str());
 				}
-				if (!doLike(result.m_value.m_pszResult, result.m_len,
-						info.m_pValue->m_pszValue, info.m_pValue->m_iValue)) {
+				auto pos = result.m_sResult.find(info.m_pValue->m_sValue);
+				if (pos == std::string::npos) {
 					bMatch = false;
 					break;
 				}

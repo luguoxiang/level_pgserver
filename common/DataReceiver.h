@@ -1,6 +1,5 @@
 #pragma once
-#include <stdio.h>
-#include <stdint.h>
+#include <string>
 #include <cassert>
 
 class DataReceiver {
@@ -8,11 +7,11 @@ public:
 	DataReceiver(int fd, bool bNetNumber);
 	virtual ~DataReceiver();
 
-	const char* getNextString(size_t* pLen);
 	int8_t getNextByte();
 	int16_t getNextShort();
-	const char* getNextStringWithLen(uint32_t* pLen);
-	const char* getNextStringWithShortLen(uint16_t* pLen);
+	std::string getNextString();
+	std::string getNextStringWithLen();
+	std::string getNextStringWithShortLen();
 	int32_t getNextInt();
 	int64_t getNextLongInt();
 

@@ -9,7 +9,6 @@
 #include <assert.h>
 #include <time.h>
 
-#define STR_MAX_LEN     (16318)  /* 16KB length */
 
 extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner, const char* s,...);
 
@@ -17,24 +16,6 @@ extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner, const cha
 	yylloc->first_column = ((ParseResult*)yyextra)->m_yycolumn;\
 	yylloc->last_column = yylloc->first_column + yyleng - 1;\
 	((ParseResult*)yyextra)->m_yycolumn += yyleng;
-
-extern ParseNode* newNode(ParseResult* pResult, NodeType type, int num);
-
-static size_t parseBinary(const char* pszSrc, char* pszDest, size_t iLen)
-{
-	size_t i,j;
-	j = 0;
-	for(i = 0; i< iLen; i+=2)
-	{
-		char szBuf[3];
-		szBuf[0] = pszSrc[i];
-		szBuf[1] = pszSrc[i+1];
-		szBuf[2] = 0;
-		unsigned char a = strtol(szBuf,0, 16);
-		pszDest[j++] = (char)a;
-	}
-	return j;
-}
 
 %}
 
@@ -80,7 +61,7 @@ TERMINATED {return TERMINATED;}
 IS {return IS;}
 NOT 	{return NOT;}
 NULL 	{ 
-	yylval->pNode = newNode((ParseResult*)yyextra, NodeType::NONE,0);
+	yylval->pNode = new ParseNode((ParseResult*)yyextra, NodeType::NONE,0);
 	return NULLX;
 }
 ON 	{ return ON;}
@@ -110,15 +91,15 @@ USING {return USING;}
 
 [0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::INT,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::INT,0);
 	yylval->pNode = pNode;
-	pNode->m_pszValue = my_strdup(pResult, yytext);
-	pNode->m_pszExpr = pNode->m_pszValue;
+	pNode->m_sValue = yytext;
+	pNode->m_sExpr = pNode->m_sValue;
 	errno = 0;
-	pNode->m_iValue = strtol(pNode->m_pszValue, 0, 10);
+	pNode->m_iValue = strtol(yytext, 0, 10);
 	if (errno != 0)
 	{
-		yyerror(yylloc, (ParseResult*)yyextra, NULL, "Integer Out of Range: %s", yytext);
+		yyerror(yylloc, pResult, NULL, "Integer Out of Range: %s", yytext);
 		return ERROR;
 	}
 	else return INTNUM;
@@ -129,53 +110,44 @@ USING {return USING;}
 [0-9]+"."[0-9]*E[-+]?[0-9]+ |
 "."[0-9]+E[-+]?[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::FLOAT,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::FLOAT,0);
 	yylval->pNode = pNode;
-	pNode->m_pszValue = my_strdup(pResult, yytext);
-	pNode->m_pszExpr = pNode->m_pszValue;
+	pNode->m_sValue = yytext;
+	pNode->m_sExpr = pNode->m_sValue;
 	return APPROXNUM;
 }
 
 TRUE {
-	ParseNode* pNode = newNode((ParseResult*)yyextra, NodeType::BOOL,0);
+	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,0);
 	pNode->m_iValue = 1;
 	yylval->pNode = pNode;
-	pNode->m_pszExpr = "true";
+	pNode->m_sExpr = "true";
 	return BOOL;
 }
 UNKNOWN {
-	ParseNode* pNode = newNode((ParseResult*)yyextra, NodeType::BOOL,0);
+	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,0);
 	pNode->m_iValue = -1;
 	yylval->pNode = pNode;
-	pNode->m_pszExpr = "unknown";
+	pNode->m_sExpr = "unknown";
 	return BOOL;
 }
 FALSE {
-	ParseNode* pNode = newNode((ParseResult*)yyextra, NodeType::BOOL,0);
+	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,0);
 	pNode->m_iValue = 0;
 	yylval->pNode = pNode;
-	pNode->m_pszExpr = "false";
+	pNode->m_sExpr = "false";
 	return BOOL;
 }
 
 '(\\.|''|[^'\n])*'|\"(\\.|\"\"|[^"\n])*\" {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::STR,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::STR,0);
 	yylval->pNode = pNode;
 
-	char* pszSrc = yytext+1;
-	int len = strlen(pszSrc) - 1; //remove last quote charactor
-	if(len > STR_MAX_LEN)
-	{
-		yyerror(yylloc, (ParseResult*)yyextra, NULL, "String is too large: %s", yytext);
-		return ERROR;
-	}
-
-	char* pszDest = (char*) memPoolAlloc(len + 1, pResult);
-
-	pNode->m_pszValue = pszDest;
-	pNode->m_pszExpr = pszDest;
-	pNode->m_iValue = parseString(pszSrc, pszDest, len);
+	//remove first and last quote charactors
+	pNode->m_sValue.assign(yytext + 1, strlen(yytext) - 2);
+	pNode->m_sExpr = pNode->m_sValue;
+	pNode->m_iValue = 0;
 
 	return STRING;
 }
@@ -186,21 +158,11 @@ FALSE {
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::BINARY,0);
-	char* pszSrc = yytext + 2; 
-	char* pszDest = 0;
-	
-	size_t len = strlen(pszSrc);
-	if(pszSrc[len - 1] == '\'')
-	{
-		--len;
-	}
-	assert((len % 2) == 0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::BINARY,0);
 
-	pszDest = (char*) memPoolAlloc(len/2, pResult);
-	pNode->m_pszValue = pszDest;
-	pNode->m_iValue = parseBinary(pszSrc, pszDest, len);
-	pNode->m_pszExpr = my_strdup(pResult, yytext);
+	pNode->m_sValue = parseBinary(yytext + 1);
+	pNode->m_iValue = 0;
+	pNode->m_sExpr = yytext + 1;
 
 	yylval->pNode = pNode;
 	return BINARY;
@@ -208,19 +170,15 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 
 D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::DATE,0);
-	char* pszDest =  my_strdup(pResult, yytext + 2);
-	size_t len = strlen(pszDest);
-	--len;
-	pszDest[len] = '\0';//remove final '
+	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE,0);
 
-	pNode->m_pszValue = pszDest;
-	pNode->m_pszExpr = pszDest;
+	pNode->m_sValue = yytext + 1;
+	pNode->m_sExpr = pNode->m_sValue;
 
-	pNode->m_iValue = parseTime(pszDest);
+	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, (ParseResult*)yyextra,NULL, "Wrong date: %s", yytext);
+		yyerror(yylloc, pResult ,NULL, "Wrong date: %s", yytext);
 		return ERROR;
 	}
 	
@@ -229,18 +187,14 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 }
 D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::DATE,0);
-	char* pszDest =  my_strdup(pResult, yytext + 2);
-	size_t len = strlen(pszDest);
-	--len;
-	pszDest[len] = '\0';//remove final '
-	pNode->m_pszValue = pszDest;
-	pNode->m_pszExpr = pszDest;
+	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE,0);
+	pNode->m_sValue = yytext + 1;
+	pNode->m_sExpr = pNode->m_sValue;
 
-	pNode->m_iValue = parseTime(pszDest);
+	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, (ParseResult*)yyextra,NULL, "Wrong date: %s", yytext);
+		yyerror(yylloc, pResult, NULL, "Wrong date: %s", yytext);
 		return ERROR;
 	}
 
@@ -263,23 +217,23 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 [A-Za-z_][A_Za-z0-9_]* {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::NAME,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::NAME,0);
 	yylval->pNode = pNode;
-	pNode->m_pszValue = my_strdup(pResult,yytext);
-	pNode->m_pszExpr = pNode->m_pszValue;
+	pNode->m_sValue = yytext;
+	pNode->m_sExpr = pNode->m_sValue;
 	pNode->m_iValue = 0;
 	return NAME;
 }
 
 $[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newNode(pResult, NodeType::PARAM,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::PARAM,0);
 	yylval->pNode = pNode;
-	pNode->m_pszValue = "unbound";
+	pNode->m_sValue = "unbound";
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)
 	{
-		yyerror(yylloc, (ParseResult*)yyextra,NULL, "Illegal prepared statement param: %s", yytext);
+		yyerror(yylloc, pResult,NULL, "Illegal prepared statement param: %s", yytext);
 		return ERROR;
 	}
 	pNode->m_iValue = index;

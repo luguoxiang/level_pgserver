@@ -14,7 +14,7 @@ class Log {
 public:
 	~Log();
 
-	void init(const char* pszPath, LogLevel level);
+	void init(const std::string& sPath, LogLevel level);
 
 	static Log& getLogger() {
 		static Log log;
@@ -25,14 +25,14 @@ public:
 		return m_level;
 	}
 
-	void log(LogLevel level, const char* pszPath, int iLine,
+	void log(LogLevel level, const std::string& sPath, int iLine,
 			const char* pszFormat, ...);
 private:
 	Log();
 
 	FILE* getFile(uint64_t iDay);
 
-	const char* m_pszLogPath;
+	std::string m_sLogPath;
 
 	FILE* m_pLogFile;
 	LogLevel m_level;

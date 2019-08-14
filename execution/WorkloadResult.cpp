@@ -1,33 +1,34 @@
 #include "WorkloadResult.h"
 #include <sstream>
 namespace {
-const char* WorkloadColumns[] = { "TID", "Running", "Session", "ObExec",
+std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session", "ObExec",
 		"BiggestExec", "SessionTime", "SqlCount" };
 }
 
-void WorkloadResult::getAllColumns(std::vector<const char*>& columns) {
+void WorkloadResult::getAllColumns(std::vector<std::string>& columns) {
 	size_t count = sizeof(WorkloadColumns) / sizeof(const char*);
-	for (int i = 0; i < count; ++i) {
-		columns.push_back(WorkloadColumns[i]);
+	for (auto& column : WorkloadColumns) {
+		columns.push_back(column);
 	}
 }
 
 int WorkloadResult::addProjection(ParseNode* pNode) {
 	assert(pNode);
 	size_t count = sizeof(WorkloadColumns) / sizeof(const char*);
-	if (pNode->m_iType != NodeType::NAME)
+	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < count; ++i) {
-		if (strcasecmp(WorkloadColumns[i], pNode->m_pszValue) == 0) {
+		if (strcasecmp(WorkloadColumns[i], pNode->m_sValue.c_str()) == 0) {
 			return i;
 		}
 	}
 	return -1;
 }
 
-void WorkloadResult::getInfoString(char* szBuf, int len) {
-	snprintf(szBuf, len, "SELECT %lu",
-			WorkerManager::getInstance().getWorkerCount());
+std::string WorkloadResult::getInfoString() {
+	std::ostringstream os;
+	os << "SELECT " << WorkerManager::getInstance().getWorkerCount();
+	return os.str();
 }
 
 void WorkloadResult::begin() {
@@ -39,7 +40,7 @@ bool WorkloadResult::next() {
 	return m_iIndex <= WorkerManager::getInstance().getWorkerCount();
 }
 
-const char* WorkloadResult::getProjectionName(size_t index) {
+std::string WorkloadResult::getProjectionName(size_t index) {
 	return WorkloadColumns[index];
 }
 
@@ -60,26 +61,26 @@ void WorkloadResult::getResult(size_t index, ResultInfo* pInfo) {
 		std::stringstream ss;
 		ss << pWorker->m_tid;
 		m_tid = ss.str();
-		pInfo->m_value.m_pszResult = m_tid.c_str();
+		pInfo->m_sResult = m_tid.c_str();
 		break;
 	}
 	case 1:
-		pInfo->m_value.m_lResult = pWorker->m_bRunning;
+		pInfo->m_lResult = pWorker->m_bRunning;
 		break;
 	case 2:
-		pInfo->m_value.m_lResult = pWorker->m_iSessions;
+		pInfo->m_lResult = pWorker->m_iSessions;
 		break;
 	case 3:
-		pInfo->m_value.m_lResult = pWorker->m_iExecScanTime / 1000;
+		pInfo->m_lResult = pWorker->m_iExecScanTime / 1000;
 		break;
 	case 4:
-		pInfo->m_value.m_lResult = pWorker->m_iBiggestExec / 1000;
+		pInfo->m_lResult = pWorker->m_iBiggestExec / 1000;
 		break;
 	case 5:
-		pInfo->m_value.m_lResult = pWorker->m_iClientTime / 1000;
+		pInfo->m_lResult = pWorker->m_iClientTime / 1000;
 		break;
 	case 6:
-		pInfo->m_value.m_lResult = pWorker->m_iSqlCount;
+		pInfo->m_lResult = pWorker->m_iSqlCount;
 		break;
 	default:
 		assert(0);

@@ -19,7 +19,7 @@ private:
 	void describeColumn(ExecutionPlan* pPlan);
 	void sendRow(ExecutionPlan* pPlan);
 
-	void createPlan(const char* pszSql, size_t len);
+	void createPlan(const std::string sql);
 	void handleException(Exception* pe);
 	void handleSync();
 	void handleQuery();
@@ -37,6 +37,6 @@ private:
 
 	uint64_t m_iSendTime;
 	int m_iParamNum;
-	const char* m_pszSql;
+	std::string m_sSql;
 	MessageHandler m_handler[100];
 };
