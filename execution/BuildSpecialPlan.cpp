@@ -1,5 +1,4 @@
 #include "common/BuildPlan.h"
-#include "common/Log.h"
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
 #include "execution/ParseTools.h"
@@ -30,7 +29,9 @@ void buildPlanForDesc(ParseNode* pNode) {
 		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
 	}
 	if (pEntry == nullptr) {
-		PARSE_ERROR("Undefined table %s", pTable->m_sValue.c_str());
+		std::ostringstream os;
+		os << "Undefined table " << pTable->m_sValue;
+		throw new ParseException(os.str());
 	}
 	Tools::pushPlan(new ShowColumns(pEntry));
 }
@@ -55,8 +56,9 @@ void buildPlanForReadFile(ParseNode* pNode) {
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
 			pTable->m_sValue);
 	if (pTableInfo == nullptr) {
-		throw new ParseException("Table %s does not exist!",
-				pTable->m_sValue.c_str());
+		std::ostringstream os;
+		os << "Table " << pTable->m_sValue <<" does not exist!";
+		throw new ParseException(os.str());
 	}
 
 	ParseNode* pColumn = pNode->m_children[2];
@@ -75,9 +77,9 @@ void buildPlanForFileSelect(ParseNode* pNode) {
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
 			pTable->m_sValue);
 	if (pTableInfo == nullptr) {
-		LOG(ERROR, "Undefined hbase table %s", pTable->m_sValue.c_str());
-		throw new ParseException("Undefined hbase table %s",
-				pTable->m_sValue.c_str());
+		std::ostringstream os;
+		os << "Table " << pTable->m_sValue <<" does not exist!";
+		throw new ParseException(os.str());
 	}
 
 	ReadFilePlan* pValuePlan = new ReadFilePlan(

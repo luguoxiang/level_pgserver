@@ -1,5 +1,4 @@
 #include "common/BuildPlan.h"
-#include "common/Log.h"
 #include "common/ParseException.h"
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
@@ -11,9 +10,9 @@ void buildPlanForConst(ParseNode* pNode) {
 	ParseNode* pLastRow = nullptr;
 	for (auto pRow:pNode->m_children) {
 		if (pLastRow != nullptr && pLastRow->children() != pRow->children()) {
-			throw new ParseException(
-					"Values column number is not matched: %d is expected, but is %d!",
-					pLastRow->children(), pRow->children());
+			std::ostringstream os;
+			os <<"Values column number does not match: expect " << pLastRow->children() << " but got " << pRow->children();
+			throw new ParseException(os.str());
 		}
 		pPlan->addRow(pRow);
 		pLastRow = pRow;

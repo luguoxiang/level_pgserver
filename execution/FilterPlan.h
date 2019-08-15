@@ -2,7 +2,6 @@
 
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
-#include "common/Log.h"
 #include "common/ParseException.h"
 #include <vector>
 #include <sstream>
@@ -76,25 +75,7 @@ public:
 		ParseNode* m_pValue;
 	};
 
-	void addPredicate(ParseNode* pPredicate) {
-		if (pPredicate->m_type != NodeType::OP || pPredicate->children() != 2) {
-			PARSE_ERROR("Unsupported predicate '%s'", pPredicate->m_sExpr.c_str());
-		}
-		assert(pPredicate);
-		assert(pPredicate->children() == 2);
-		assert(pPredicate->m_type == NodeType::OP);
-		PredicateInfo info;
-		info.m_sColumn = pPredicate->m_children[0]->m_sExpr;
-		info.m_sExpr = pPredicate->m_sExpr;
-		int i = m_pPlan->addProjection(pPredicate->m_children[0]);
-		if (i < 0) {
-			PARSE_ERROR("Unrecognized column '%s'", info.m_sColumn.c_str());
-		}
-		info.m_iSubIndex = i;
-		info.m_iOpCode = OP_CODE(pPredicate);
-		info.m_pValue = pPredicate->m_children[1];
-		m_predicate.push_back(info);
-	}
+	void addPredicate(ParseNode* pPredicate);
 
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
 			bool* pOrder) override {

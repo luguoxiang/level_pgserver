@@ -18,8 +18,9 @@ bool checkFilter(int iOpCode, int n) {
 	case COMP_GE:
 		return n >= 0;
 	default:
-		PARSE_ERROR("Unsupported operation %d", iOpCode)
-		;
+		std::ostringstream os;
+		os << "Unsupported operation " << iOpCode;
+		throw new ParseException(os.str());
 		return 0;
 	}
 }
@@ -40,8 +41,9 @@ bool FilterPlan::next() {
 			}
 			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
 				if (info.m_pValue->m_type != NodeType::STR) {
-					PARSE_ERROR("Wrong data type for %s, expect string",
-							info.m_pValue->m_sValue.c_str());
+					std::ostringstream os;
+					os << "Wrong data type for "<< info.m_pValue->m_sExpr <<", expect string";
+					throw new ParseException(os.str());
 				}
 				auto pos = result.m_sResult.find(info.m_pValue->m_sValue);
 				if (pos == std::string::npos) {
@@ -62,4 +64,28 @@ bool FilterPlan::next() {
 		return true;
 	}
 	return false;
+}
+
+void FilterPlan::addPredicate(ParseNode* pPredicate) {
+	if (pPredicate->m_type != NodeType::OP || pPredicate->children() != 2) {
+		std::ostringstream os;
+		os << "Unsupported predicate " << pPredicate->m_sExpr;
+		throw new ParseException(os.str());
+	}
+	assert(pPredicate);
+	assert(pPredicate->children() == 2);
+	assert(pPredicate->m_type == NodeType::OP);
+	PredicateInfo info;
+	info.m_sColumn = pPredicate->m_children[0]->m_sExpr;
+	info.m_sExpr = pPredicate->m_sExpr;
+	int i = m_pPlan->addProjection(pPredicate->m_children[0]);
+	if (i < 0) {
+		std::ostringstream os;
+		os << "Unrecognized column " << info.m_sColumn;
+		throw new ParseException(os.str());
+	}
+	info.m_iSubIndex = i;
+	info.m_iOpCode = OP_CODE(pPredicate);
+	info.m_pValue = pPredicate->m_children[1];
+	m_predicate.push_back(info);
 }

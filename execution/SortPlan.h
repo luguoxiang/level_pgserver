@@ -3,7 +3,6 @@
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
-#include "common/Log.h"
 
 /**
  * SortPlan support an order named Any, normally it is same with Ascend,
@@ -89,60 +88,12 @@ public:
 		return m_pPlan->getAllColumns(columns);
 	}
 
-	virtual int addProjection(ParseNode* pNode) override{
-		int index = m_pPlan->addProjection(pNode);
-		if (index < 0)
-			return index;
-
-		for (size_t i = 0; i < m_proj.size(); ++i) {
-			if (m_proj[i].m_iSubIndex == index)
-				return i;
-		}
-		SortProjection proj;
-		proj.m_iSubIndex = index;
-		proj.m_sName = pNode->m_sExpr;
-		m_proj.push_back(proj);
-		return m_proj.size() - 1;
-	}
+	virtual int addProjection(ParseNode* pNode) override;
 
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
-			bool* pOrder)override  {
-		if (m_sort.size() <= iSortIndex)
-			return false;
+			bool* pOrder)override;
 
-		SortSpec& spec = m_sort[iSortIndex];
-
-		if (sColumn != spec.m_sColumn)
-			return false;
-
-		if (pOrder == nullptr)
-			return true;
-		switch (spec.m_order) {
-		case SortOrder::Ascend:
-			return *pOrder;
-		case SortOrder::Descend:
-			return *pOrder == false;
-		case SortOrder::Any:
-			spec.m_order = *pOrder ? SortOrder::Ascend : SortOrder::Descend;
-			return true;
-		};
-	}
-
-	void addSortSpecification(ParseNode* pNode, SortOrder order) {
-		int i = addProjection(pNode);
-		if (i < 0) {
-			throw new ParseException("unrecognized column '%s'",
-					pNode->m_sExpr.c_str());
-		}
-		SortSpec spec;
-		spec.m_iIndex = i;
-		spec.m_sColumn = pNode->m_sExpr;
-		spec.m_iSubIndex = m_proj[i].m_iSubIndex;
-		spec.m_order = order;
-		spec.m_type = m_pPlan->getResultType(spec.m_iSubIndex);
-		m_sort.push_back(spec);
-	}
-
+	void addSortSpecification(ParseNode* pNode, SortOrder order);
 private:
 	struct SortSpec {
 		size_t m_iIndex;

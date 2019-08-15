@@ -1,6 +1,5 @@
 #include "common/SqlParser.tab.h"
 #include "common/BuildPlan.h"
-#include "common/Log.h"
 #include "common/ParseException.h"
 #include "execution/SortPlan.h"
 #include "execution/LimitPlan.h"
@@ -61,7 +60,7 @@ void buildPlanForProjection(ParseNode* pNode) {
 		std::vector<std::string> columns;
 		pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
-			PARSE_ERROR(
+			throw new ParseException(
 					"select * is not supported in current projection context");
 		}
 		for (auto& column: columns) {
@@ -88,12 +87,16 @@ void buildPlanForProjection(ParseNode* pNode) {
 		bool bOK = pProjPlan->project(pColumn, sAlias);
 		if (!bOK) {
 			if (pColumn->m_type != NodeType::FUNC) {
-				PARSE_ERROR("unrecongnized column '%s'", pColumn->m_sExpr.c_str());
+				std::ostringstream os;
+					os << "Unrecognized column " << pColumn->m_sExpr;
+					throw new ParseException(os.str());
 			}
 			pProjPlan->addGroupBy();
 			bOK = pProjPlan->project(pColumn, sAlias);
 			if (!bOK) {
-				PARSE_ERROR("unrecongnized column '%s'", pNode->m_sExpr.c_str());
+				std::ostringstream os;
+				os << "Unrecognized column " << pNode->m_sExpr;
+				throw new ParseException(os.str());
 			}
 		}
 	}
@@ -112,7 +115,7 @@ void buildPlanForGroupBy(ParseNode* pNode) {
 		assert(pChild);
 
 		if (pChild->m_type != NodeType::NAME) {
-			PARSE_ERROR("Wrong group by clause!");
+			throw new ParseException("Wrong group by clause!");
 		}
 
 		if (!pChildPlan->ensureSortOrder(i, pChild->m_sValue, nullptr)) {
@@ -160,7 +163,9 @@ void buildPlanForLimit(ParseNode* pNode) {
 
 static void parseQueryCondition(ParseNode* pPredicate, FilterPlan* pFilter) {
 	if (pPredicate->m_type != NodeType::OP) {
-		PARSE_ERROR("Unsupported predicate '%s'", pPredicate->m_sExpr.c_str());
+		std::ostringstream os;
+		os << "Unsupported predicate " << pPredicate->m_sExpr;
+		throw new ParseException(os.str());
 	}
 
 	int iOpCode = OP_CODE(pPredicate);
@@ -172,7 +177,7 @@ static void parseQueryCondition(ParseNode* pPredicate, FilterPlan* pFilter) {
 	} else if (pPredicate->children() == 2) {
 		pFilter->addPredicate(pPredicate);
 	} else {
-		PARSE_ERROR("Unsupported query condition!");
+		throw new ParseException("Unsupported query condition!");
 	}
 }
 
@@ -209,7 +214,7 @@ void buildPlanForUnionAll(ParseNode* pNode) {
 	Tools::pushPlan(pPlan);
 	int count = pLeft->getResultColumns();
 	if (count != pRight->getResultColumns()) {
-		PARSE_ERROR(
+		throw new ParseException(
 				"left sub query's column number is not same with right one's!");
 	}
 	for (int i = 0; i < count; ++i) {
@@ -237,7 +242,7 @@ void buildPlanForUnionAll(ParseNode* pNode) {
 		}
 
 		if (type1 != type2) {
-			PARSE_ERROR("sub query column %d's type are not match");
+			throw new ParseException("sub query column %d's type are not match");
 		}
 	}
 }

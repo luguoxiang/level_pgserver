@@ -99,7 +99,7 @@ bool GroupByPlan::next() {
 					}
 				} else {
 					if (!proj.m_value.add(info, type)) {
-						PARSE_ERROR(
+						throw new ParseException(
 								"sum and avg is not supported on current parameter data type");
 					}
 				}
@@ -118,8 +118,9 @@ int GroupByPlan::addProjection(ParseNode* pNode) {
 	if (pNode->m_type == NodeType::NAME) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
-			PARSE_ERROR("Unrecognized projection column '%s'",
-					pNode->m_sValue.c_str());
+			std::ostringstream os;
+			os << "Unrecognized projection column " << pNode->m_sExpr;
+			throw new ParseException(os.str());
 		}
 		AggrFunc func;
 		func.m_func = FuncType::FIRST;
@@ -130,15 +131,18 @@ int GroupByPlan::addProjection(ParseNode* pNode) {
 	} else if (pNode->m_type == NodeType::FUNC) {
 		auto iter = m_typeMap.find(pNode->m_sValue);
 		if (iter == m_typeMap.end()) {
-			PARSE_ERROR("Unknown function %s", pNode->m_sValue.c_str());
+			std::ostringstream os;
+			os << "Unknown function " << pNode->m_sExpr;
+			throw new ParseException(os.str());
 		}
 		AggrFunc func;
 		func.m_func = iter->second;
 		assert(pNode->children() == 1);
 		int i = m_pPlan->addProjection(pNode->m_children[0]);
 		if (i < 0) {
-			PARSE_ERROR("Unrecognized projection column '%s'",
-					pNode->m_children[0]->m_sExpr.c_str());
+			std::ostringstream os;
+			os << "Unrecognized projection column " << pNode->m_children[0]->m_sExpr;
+			throw new ParseException(os.str());
 		}
 		func.m_sName = pNode->m_sExpr;
 		func.m_iIndex = i;

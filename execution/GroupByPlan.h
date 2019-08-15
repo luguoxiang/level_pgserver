@@ -3,7 +3,7 @@
 #include "ExecutionPlan.h"
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
-#include "common/Log.h"
+
 #include <sstream>
 
 enum class FuncType {
@@ -98,7 +98,9 @@ public:
 	void addGroupByColumn(ParseNode* pNode) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
-			PARSE_ERROR("Unrecognized sort column '%s'", pNode->m_sExpr.c_str());
+			std::ostringstream os;
+			os << "Unrecognized sort column " << pNode->m_sExpr;
+			throw new ParseException(os.str());
 		}
 		m_groupby.push_back(i);
 	}

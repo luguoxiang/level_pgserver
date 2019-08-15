@@ -7,7 +7,7 @@
 
 class ParseException: public Exception {
 public:
-	ParseException(const char* pszMsg, ...);
+	ParseException(const std::string& msg);
 	ParseException(ParseResult* pResult);
 
 	virtual ~ParseException();
@@ -29,8 +29,8 @@ public:
 
 private:
 	std::string m_sErrorMsg;
-	int m_iStartCol;
-	int m_iEndCol;
-	int m_iLine;
+	int m_iStartCol = 0;
+	int m_iEndCol = 0;
+	int m_iLine = -1;
 };
 

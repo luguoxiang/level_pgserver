@@ -1,15 +1,8 @@
 #include "ParseException.h"
-#include <stdarg.h>
-ParseException::ParseException(const char* pszMsg, ...) :
-		m_iStartCol(0), m_iEndCol(0), m_iLine(-1) {
-	va_list arg;
-	va_start(arg, pszMsg);
+#include <glog/logging.h>
 
-	char szBuf[300];
-	vsnprintf(szBuf, 300, pszMsg, arg);
-	m_sErrorMsg = szBuf;
-
-	va_end(arg);
+ParseException::ParseException(const std::string& msg) : m_sErrorMsg(msg) {
+	LOG(ERROR) << msg;
 }
 
 ParseException::ParseException(ParseResult* pResult) :

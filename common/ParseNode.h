@@ -58,6 +58,8 @@ public:
     const size_t children() const {return m_children.size();}
 
 	std::vector<ParseNode*> m_children;
+
+
 private:
     bool _collect(std::vector<ParseNode*>& children, const std::string sRemove);
 

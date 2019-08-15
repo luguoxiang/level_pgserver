@@ -7,9 +7,10 @@
 #include <sstream>
 #include <vector>
 
+#include <glog/logging.h>
+
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
-#include "common/Log.h"
 #include "execution/ExecutionException.h"
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
@@ -72,7 +73,7 @@ PgClient::~PgClient() {
 }
 
 void PgClient::handleSync() {
-	LOG(DEBUG, "sync");
+	DLOG(INFO) << "sync";
 	m_sender.prepare('Z');
 	m_sender.addChar('I');
 	m_sender.commit();
@@ -83,7 +84,7 @@ void PgClient::handleQuery() {
 
 	m_sSql = m_receiver.getNextString();
 
-	LOG(DEBUG, "Q:%s", m_sSql.c_str());
+	DLOG(INFO) << "Q:"<< m_sSql;
 	createPlan(m_sSql);
 
 	describeColumn(m_pPlan.get());
@@ -94,7 +95,7 @@ void PgClient::handleParse() {
 	auto sStmt = m_receiver.getNextString(); //statement name
 	auto sSql= m_receiver.getNextString();
 
-	LOG(DEBUG, "STMT:%s,P:%s", sStmt.c_str(), sSql.c_str());
+	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< sSql;
 
 	createPlan(sSql);
 
@@ -111,13 +112,13 @@ void PgClient::handleBind() {
 	auto portal = m_receiver.getNextString();
 	auto stmt = m_receiver.getNextString();
 
-	LOG(DEBUG, "B:portal %s,stmt %s.", portal.c_str(), stmt.c_str());
+	DLOG(INFO)<< "B:portal "<<portal <<" ,stmt "<<stmt;
 
 	int num = m_receiver.getNextShort();
 	if (num != m_iParamNum) {
-		throw new ParseException(
-				"Parameter format number unmatch!, expect %d, actual %d!",
-				m_iParamNum, num);
+		std::ostringstream os;
+		os << "Parameter format number unmatch!, expect "<< m_iParamNum << ", actual " << num;
+		throw new ParseException(os.str());
 	}
 	for (int i = 0; i < m_iParamNum; ++i) {
 		if (m_receiver.getNextShort() != PARAM_TEXT_MODE) {
@@ -128,9 +129,9 @@ void PgClient::handleBind() {
 
 	num = m_receiver.getNextShort();
 	if (num != m_iParamNum) {
-		throw new ParseException(
-				"Parameter number unmatch, expect %d, actual %d!", m_iParamNum,
-				num);
+		std::ostringstream os;
+		os << "Parameter number unmatch!, expect "<< m_iParamNum << ", actual " << num;
+		throw new ParseException(os.str());
 	}
 	if (m_iParamNum > 0) {
 		throw new ParseException("Bind Param is not supported!");
@@ -145,7 +146,7 @@ void PgClient::handleDescribe() {
 	int type = m_receiver.getNextByte();
 	auto sName = m_receiver.getNextString();
 
-	LOG(DEBUG, "D:type %d,name %s.", type, sName.c_str());
+	DLOG(INFO)<< "D:type "<<type << ",name "<< sName;
 
 	describeColumn(m_pPlan.get());
 
@@ -170,7 +171,7 @@ void PgClient::handleExecute() {
 	auto sInfo = m_pPlan->getInfoString();
 
 	m_pPlan->end();
-	LOG(DEBUG, "Execute result:%s!", sInfo.c_str());
+	DLOG(INFO)<< "Execute result:" << sInfo;
 
 	m_sender.prepare('C');
 	m_sender.addString(sInfo); //data len
@@ -186,13 +187,11 @@ void PgClient::handleException(Exception* pe) {
 	m_sender.addString("00000");
 	m_sender.addByte(PG_DIAG_MESSAGE_PRIMARY);
 	m_sender.addString(pe->what());
-	LOG(ERROR, "Error:%s:%s!", m_sSql.c_str(), pe->what().c_str());
+	LOG(ERROR) << "Error: " << m_sSql << pe->what();
 
 	if (pe->getLine() >= 0) {
 		m_sender.addByte(PG_DIAG_STATEMENT_POSITION);
-		char szBuf[10];
-		sprintf(szBuf, "%d", pe->getStartPos());
-		m_sender.addString(szBuf);
+		m_sender.addString(std::to_string(pe->getStartPos()));
 	}
 	m_sender.addByte('\0');
 	delete pe;
@@ -243,7 +242,7 @@ void PgClient::run() {
 	while (true) {
 		char qtype = m_receiver.readMessage();
 		if (qtype == 'X') {
-			LOG(DEBUG, "Client Terminate!\n");
+			DLOG(INFO)<< "Client Terminate!";
 			break;
 		}
 #ifndef NO_TIMEING
@@ -251,9 +250,9 @@ void PgClient::run() {
 #endif
 		MessageHandler handler = m_handler[qtype];
 		if (handler == nullptr) {
-			char szBuf[100];
-			snprintf(szBuf, 100, "Unable to handler message %c", qtype);
-			throw new IOException(szBuf);
+			std::ostringstream os;
+			os <<"Unable to handler message "<< qtype;
+			throw new IOException(os.str());
 		}
 
 		try {
@@ -278,10 +277,10 @@ void PgClient::createPlan(const std::string sql) {
 	m_pPlan.reset(nullptr);
 	if (strncasecmp("DEALLOCATE", sql.c_str(), 10) == 0) {
 		m_pPlan.reset(new EmptyResult());
-		LOG(DEBUG, "%s", sql.c_str());
+		DLOG(INFO) << sql;
 	} else if (strncasecmp("SET ", sql.c_str(), 4) == 0) {
 		m_pPlan.reset(new EmptyResult());
-		LOG(DEBUG, "%s", sql.c_str());
+		DLOG(INFO) << sql;
 	} else {
 		m_pWorker->parse(sql);
 		m_pPlan.reset(m_pWorker->resolve());
@@ -332,8 +331,7 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Double, -1);
 			break;
 		default:
-			LOG(ERROR, "Unknown type %d\n", pPlan->getResultType(i))
-			;
+			LOG(ERROR) << "Unknown type " << (int)pPlan->getResultType(i);
 			assert(0);
 			break;
 		}
@@ -372,8 +370,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 		case DBDataType::INT32:
 		case DBDataType::INT64:
 		case DBDataType::INT16:
-			os << info.m_lResult;
-			m_sender.addStringAndLength(os.str());
+			m_sender.addStringAndLength(std::to_string(info.m_lResult));
 			break;
 		case DBDataType::BYTES: {
 			os << "\\x";
@@ -391,7 +388,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			time_t time = info.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
-				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
+				LOG(ERROR) << "Failed to get localtime "<< (int ) time;
 				m_sender.addInt(0);
 			} else {
 				char szBuf[100];
@@ -404,7 +401,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			time_t time = info.m_time.tv_sec;
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
-				LOG(ERROR, "Failed to get localtime %d\n", (int ) time);
+				LOG(ERROR) << "Failed to get localtime "<< (int ) time;
 				m_sender.addInt(0);
 			} else {
 				char szBuf[100];
@@ -414,8 +411,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			break;
 		}
 		case DBDataType::DOUBLE: {
-			os<< info.m_dResult;
-			m_sender.addStringAndLength(os.str());
+			m_sender.addStringAndLength(std::to_string(info.m_dResult));
 			break;
 		}
 		default:

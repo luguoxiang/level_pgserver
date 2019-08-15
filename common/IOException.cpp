@@ -2,23 +2,21 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <cassert>
-#include "common/Log.h"
+#include <glog/logging.h>
 
-IOException::IOException(const char* pszValue, const char* pszIP) {
-	assert(pszIP);
-
-	m_sErrMsg.append(pszValue);
+IOException::IOException(const std::string& sValue, const std::string& sIP) {
+	m_sErrMsg.append(sValue);
 	addErrorNo();
 
 	m_sErrMsg.append(":");
-	m_sErrMsg.append(pszIP);
+	m_sErrMsg.append(sIP);
 
-	LOG(ERROR, m_sErrMsg.c_str());
+	LOG(ERROR)<<m_sErrMsg;
 }
 
-IOException::IOException(const char* pszValue) {
-	m_sErrMsg.append(pszValue);
+IOException::IOException(const std::string& sValue) {
+	m_sErrMsg.append(sValue);
 	addErrorNo();
 
-	LOG(ERROR, m_sErrMsg.c_str());
+	LOG(ERROR)<<m_sErrMsg;
 }

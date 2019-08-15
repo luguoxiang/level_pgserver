@@ -26,7 +26,7 @@ void ReadFilePlan::begin() {
 	if (m_pFile->fail()) {
 		std::ostringstream os;
 		os << "File " << m_sPath << " does not exists!";
-		throw new ExecutionException(os.str(), false);
+		throw new ExecutionException(os.str());
 	}
 }
 
@@ -72,7 +72,7 @@ bool ReadFilePlan::next() {
 			if (iValue == 0) {
 				std::ostringstream os;
 				os << "Wrong Time Format:" << token;
-				throw new ExecutionException(os.str(), false);
+				throw new ExecutionException(os.str());
 			}
 			struct timeval time;
 			time.tv_sec = (iValue / 1000000);

@@ -8,8 +8,8 @@
 
 class IOException: public Exception {
 public:
-	IOException(const char* pszValue);
-	IOException(const char* pszValue, const char* pszIP);
+	IOException(const std::string& sValue);
+	IOException(const std::string& sValue, const std::string& sIP);
 
 	virtual ~IOException() {
 	}

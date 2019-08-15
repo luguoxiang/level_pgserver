@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <netdb.h>
-#include "common/Log.h"
 
 DataReceiver::DataReceiver(int fd, bool bNetNumber) :
 		m_pszBuffer(nullptr), m_pszCurrent(nullptr), m_pszMark(nullptr), m_nFd(

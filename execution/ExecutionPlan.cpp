@@ -1,9 +1,9 @@
 #include "ExecutionPlan.h"
 #include <cassert>
+#include <sstream>
 #include "execution/ParseTools.h"
 #include "execution/ExecutionException.h"
 #include "common/ParseException.h"
-#include "common/Log.h"
 
 
 ExecutionPlan::ExecutionPlan(PlanType type) :
@@ -36,7 +36,7 @@ void ExecutionPlan::getResult(size_t index, ResultInfo* pInfo) {
 
 bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
 	if (value == 0) {
-		EXEC_ERROR("Divide zero", false);
+		throw new ExecutionException("Divide zero");
 	}
 	if (m_bNull) {
 		return true;
@@ -58,8 +58,7 @@ bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
 		return true;
 	}
 	default:
-		PARSE_ERROR("Divide is not supported on current data type!")
-		;
+		throw new ParseException("Divide is not supported on current data type!");
 		return 0;
 	}
 }
@@ -89,8 +88,7 @@ bool ExecutionPlan::ResultInfo::add(const ResultInfo& result, DBDataType type) {
 		return true;
 	}
 	default:
-		PARSE_ERROR("Unsupported data type!")
-		;
+		throw new ParseException("Unsupported data type!");
 		return 0;
 	}
 }
@@ -134,8 +132,7 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 			return 1;
 	}
 	default:
-		PARSE_ERROR("Unsupported compare data type!")
-		;
+		throw new ParseException("Unsupported compare data type!");
 		return 0;
 	}
 }
@@ -150,8 +147,9 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 	case DBDataType::INT32:
 	case DBDataType::INT64: {
 		if (pValue->m_type != NodeType::INT) {
-			PARSE_ERROR("Wrong data type for %s, expect int",
-					pValue->m_sValue.c_str());
+			std::ostringstream os;
+			os << "Wrong data type for " << pValue->m_sExpr << ", expect int";
+			throw new ParseException(os.str());
 		}
 		int64_t a = m_lResult;
 		int64_t b = pValue->m_iValue;
@@ -164,8 +162,9 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 	}
 	case DBDataType::STRING: {
 		if (pValue->m_type != NodeType::STR) {
-			PARSE_ERROR("Wrong data type for %s, expect string",
-					pValue->m_sValue.c_str());
+			std::ostringstream os;
+			os << "Wrong data type for " << pValue->m_sExpr << ", expect string";
+			throw new ParseException(os.str());
 		}
 		return m_sResult == pValue->m_sValue;
 	}
@@ -174,9 +173,9 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 		//case DBDataType::DOUBLE:
 		//case DBDataType::BYTES:
 	default:
-		PARSE_ERROR("Unsupported compare for %s", pValue->m_sValue.c_str())
-		;
-		break;
+		std::ostringstream os;
+		os << "Unsupported compare for " << pValue->m_sExpr;
+		throw new ParseException(os.str());
 	};
 	return 0;
 }

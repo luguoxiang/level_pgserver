@@ -2,7 +2,6 @@
 #include "WorkThreadInfo.h"
 #include "common/ParseException.h"
 #include "common/ParseNode.h"
-#include "common/Log.h"
 #include "execution/ExecutionException.h"
 #include "execution/ParseTools.h"
 #include "common/MetaConfig.h"

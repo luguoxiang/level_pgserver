@@ -2,9 +2,9 @@
 #include "common/MetaConfig.h"
 #include "common/ConfigException.h"
 #include "common/ParseException.h"
-#include "common/Log.h"
 #include <memory>
 #include <regex>
+#include <glog/logging.h>
 
 void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 	std::regex rgx(R"(([^:\s]+):([^:\(\)\s]+)(\([\d]+\))?)");
@@ -14,8 +14,9 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 
 	if (std::regex_search(sValue, matches, rgx)) {
 		if (matches.size() < 3) {
-			throw new ConfigException("Illegal attribute value '%s'",
-					sValue.c_str());
+			 std::ostringstream os;
+			 os<<"Illegal attribute value " << sValue;
+			 throw new ConfigException(os.str());
 		}
 		DBColumnInfo* pColumn = new DBColumnInfo();
 		pColumn->m_sName = matches[1];
@@ -27,7 +28,9 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 		if (sLen.length() > 0) {
 			pColumn->m_iLen = atoi(sLen.c_str() + 1);
 			if (pColumn->m_iLen <= 0) {
-				throw new ConfigException("Illegal type length '%s'", sLen.c_str());
+				 std::ostringstream os;
+				 os<<"Illegal type length "<< sLen;
+				 throw new ConfigException(os.str());
 			}
 		} else {
 			switch (pColumn->m_type) {
@@ -56,8 +59,9 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 			}
 		}
 	} else {
-		throw new ConfigException("Illegal attribute value '%s'",
-				sValue.c_str());
+		 std::ostringstream os;
+		 os<<"Illegal attribute value "<< sValue;
+		 throw new ConfigException(os.str());
 	}
 
 }
@@ -65,7 +69,9 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 void TableInfo::addKeyColumn(const std::string& name) {
 	DBColumnInfo* pColumn = getColumnByName(name);
 	if (pColumn == nullptr) {
-		throw new ConfigException("Undefined rowkey column '%s'", name.c_str());
+		 std::ostringstream os;
+		 os<<"Undefined rowkey column " << name;
+		 throw new ConfigException(os.str());
 	}
 	if (pColumn->m_iLen <= 0) {
 		throw new ConfigException("Missing length for rowkey column config!");
@@ -90,14 +96,15 @@ void TableInfo::getDBColumns(ParseNode* pColumn,
 		assert(pColumn->children() > 0);
 		for(auto p: pColumn->m_children) {
 			if (p == nullptr || p->m_type != NodeType::NAME) {
-				throw new ParseException("Unsupported select expression:",
-						p->m_sExpr.c_str());
+				std::ostringstream os;
+				os<<"Unsupported select expression:" << p->m_sExpr;
+				throw new ParseException(os.str());
 			}
 			DBColumnInfo* pColumnInfo = getColumnByName(p->m_sValue);
 			if (pColumnInfo == 0) {
-				throw new ParseException(
-						"Table %s does not have column named %s!", m_name.c_str(),
-						p->m_sValue.c_str());
+				std::ostringstream os;
+				os << "Table "<<m_name<< " does not have column named "<< p->m_sValue;
+				throw new ParseException(os.str());
 			}
 			columns.push_back(pColumnInfo);
 		}

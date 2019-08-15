@@ -1,10 +1,10 @@
 #include "MetaConfig.h"
-#include "common/Log.h"
 #include "common/ConfigException.h"
 #include <fstream>
 #include <string>
 #include <regex>
 #include <cassert>
+#include <glog/logging.h>
 
 MetaConfig::MetaConfig()  {
 	m_dataTypeMap["int8"] = DBDataType::INT8;
@@ -26,11 +26,13 @@ void MetaConfig::clean() {
 
 void MetaConfig::addTable(const std::string& name, TableInfo* pTable) {
 	if (getTableInfo(name) != nullptr) {
-		throw new ConfigException("table %s already defined!", name.c_str());
+		std::ostringstream os;
+		os <<"table "<<name<<" already defined!";
+		throw new ConfigException(os.str());
 	}
 	pTable->setName(name);
 	m_tableMap[name] = pTable;
-	LOG(INFO, "add table %s", name.c_str());
+	LOG(INFO)<< "add table " << name;
 }
 
 void MetaConfig::load(const std::string& sPath) {
@@ -39,7 +41,9 @@ void MetaConfig::load(const std::string& sPath) {
 
 		std::ifstream infile(sPath);
 		if(infile.fail()){
-			throw new ConfigException("reading config file %s failed", sPath.c_str());
+			std::ostringstream os;
+			os <<"reading config file "<<sPath<<" failed";
+			throw new ConfigException(os.str());
 		}
 		clean();
 		TableInfo* pCurrentTable = nullptr;
@@ -63,8 +67,7 @@ void MetaConfig::load(const std::string& sPath) {
 					} else if (sKey == "column") {
 						pCurrentTable->addColumn(this, sValue);
 					} else {
-						LOG(INFO, "add attribute %s=%s to table %s",
-								sKey.c_str(), sValue.c_str(), pCurrentTable->getName().c_str());
+						LOG(INFO) <<"add attribute %s=%s to table "<< sKey << " = " << sValue << " to table " << pCurrentTable->getName();
 						pCurrentTable->addAttribute(sKey, sValue);
 					}
 				}
@@ -72,7 +75,9 @@ void MetaConfig::load(const std::string& sPath) {
 		}
 
 	} catch (const std::ifstream::failure& e) {
-		throw new ConfigException("reading config file failure %s", e.what());
+		std::ostringstream os;
+		os <<"reading config file failure: "<<e.what();
+		throw new ConfigException(os.str());
 	}
 }
 

@@ -8,7 +8,7 @@
 
 class ConfigException: public Exception {
 public:
-	ConfigException(const char* pszMsg, ...);
+	ConfigException(const std::string& sMsg);
 
 	virtual ~ConfigException() {
 	}

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <netdb.h>
-#include "common/Log.h"
+#include <glog/logging.h>
 #include "execution/ExecutionPlan.h"
 #include "execution/WorkThreadInfo.h"
 
@@ -77,8 +77,7 @@ void PgMessageReceiver::processStartupPacket() {
 		if (!hasData())
 			break;
 
-		auto sValue = getNextString();
-		LOG(DEBUG, "option:%s=%s", sName.c_str(), sValue.c_str());
+		DLOG(INFO)<< "option:" << sName << getNextString();
 	}
 
 }

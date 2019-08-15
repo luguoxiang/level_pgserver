@@ -2,7 +2,6 @@
 
 #include <sstream>
 #include "common/BuildPlan.h"
-#include "common/Log.h"
 #include "common/ParseException.h"
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"

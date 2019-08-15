@@ -9,10 +9,6 @@
 
 
 
-#define PARSE_ERROR(FORMAT, ...) \
-	Log::getLogger().log(LogLevel::ERROR, __FILE__, __LINE__, FORMAT, ##__VA_ARGS__); \
-	throw new ParseException(FORMAT, ##__VA_ARGS__);
-
 #define EXEC_ERROR(msg, append) \
 	Log::getLogger().log(LogLevel::ERROR, __FILE__, __LINE__, msg); \
 	throw new ExecutionException(msg, append);

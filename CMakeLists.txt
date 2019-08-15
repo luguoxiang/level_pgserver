@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 2.8.9)
 cmake_policy(SET CMP0048 NEW)
 project(csv2pgserver VERSION 1.0 LANGUAGES CXX)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 set (VERSION_MAJOR 1)
 set (VERSION_MINOR 0)
@@ -15,7 +16,6 @@ set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
 set(APP_EXEC csv2pgserver)
 set(GFLAGS_NAMESPACE google)
-set(gflags_DIR ${CMAKE_SOURCE_DIR}/gflags)
 option(BUILD_TESTING "Enable unit tests" OFF) 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -23,8 +23,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(BiSON_EXECUTABLE /usr/local/opt/bison/bin/bison)
 endif()
  
-add_subdirectory(glog)
 add_subdirectory(gflags)
+add_subdirectory(glog)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -62,7 +62,7 @@ file(GLOB SOURCES "*.cpp" )
 file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
 
-include_directories(PUBLIC . glog)
+include_directories(PUBLIC . glog glog/src gflags/include)
  
 add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} )
 add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
