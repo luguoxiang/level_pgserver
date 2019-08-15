@@ -1,10 +1,10 @@
 #include <string>
 
 #include <gflags/gflags.h>
+#include <glog/logging.h>
 
 #include "PgServer.h"
 #include "common/IOException.h"
-#include "common/Log.h"
 #include "common/MetaConfig.h"
 #include "config.h"
 
@@ -17,6 +17,7 @@ DEFINE_string(metaConfigPath, "meta.conf", "configure file path.");
 int main(int argc, char** argv) {
 
 	google::ParseCommandLineFlags(&argc, &argv, true);
+	google::InitGoogleLogging(argv[0]);
 
 	LogLevel level = LogLevel::INFO;
 	if (FLAGS_logLevel == "debug") {
@@ -28,28 +29,22 @@ int main(int argc, char** argv) {
 	} else if (FLAGS_logLevel ==  "error") {
 		level = LogLevel::ERROR;
 	} else {
-		fprintf(stderr, "Unknown log level %s!", FLAGS_logLevel.c_str());
+		LOG(ERROR)<< "Unknown log level << FLAGS_logLevel;
 		return 1;
 	}
-	printf("Log on %s, level %s.\n", "stdout", FLAGS_logLevel.c_str());
 
 	MetaConfig::getInstance().setTimeout(FLAGS_timeout);
 	MetaConfig::getInstance().setWorkerNum(FLAGS_workernum);
 
-	Log::getLogger().init("", level);
-	LOG(INFO, "csv2pgserver version %d.%d started, config file %s.",
-			VERSION_MAJOR, VERSION_MINOR, FLAGS_metaConfigPath.c_str());
-	LOG(INFO, "Network buffer %d, timeout %d, Execution buffer %d, ",
-			MetaConfig::getInstance().getNetworkBuffer(),
-			MetaConfig::getInstance().getTimeout(),
-			MetaConfig::getInstance().getExecutionBuffer());
+	LOG(INFO)<< "csv2pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started, config file " <<FLAGS_metaConfigPath;
+	LOG(INFO) << "timeout "<<MetaConfig::getInstance().getTimeout();
 
 	try {
 		MetaConfig::getInstance().load(FLAGS_metaConfigPath);
 		PgServer server(FLAGS_port);
 		server.run();
 	} catch (Exception* pe) {
-		LOG(ERROR, "start server failed:%s", pe->what().c_str());
+		LOG(ERROR) << "start server failed:" << pe->what();
 		delete pe;
 		return 1;
 	}
