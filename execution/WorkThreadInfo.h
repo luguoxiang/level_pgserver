@@ -5,7 +5,7 @@
 #include "execution/ExecutionPlan.h"
 
 struct WorkThreadInfo {
-	WorkThreadInfo(int fd, const std::string& sPort, int iIndex);
+	WorkThreadInfo(int fd, int port, int iIndex);
 
 	~WorkThreadInfo();
 
@@ -19,7 +19,7 @@ struct WorkThreadInfo {
 
 	int m_iListenFd;
 	int m_iAcceptFd;
-	const std::string m_sPort;
+	int m_port;
 
 	bool m_bRunning;
 	uint64_t m_iClientTime;

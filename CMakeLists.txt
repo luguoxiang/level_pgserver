@@ -6,13 +6,15 @@ set (VERSION_MINOR 0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17 -Wno-deprecated-register")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
 
 set(BisonOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.tab.cpp)
 set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
 
 set(APP_EXEC csv2pgserver)
+set(GFLAGS_NAMESPACE google)
+option(BUILD_TESTING "Enable unit tests" OFF) 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(FLEX_EXECUTABLE /usr/local/opt/flex/bin/flex)
@@ -66,4 +68,4 @@ add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
 add_dependencies(ExecutionLib CommonLib)
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib glog::glog gflags)
+target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib glog::glog gflags::gflags)

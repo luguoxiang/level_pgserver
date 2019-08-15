@@ -6,9 +6,7 @@
 #include <regex>
 #include <cassert>
 
-MetaConfig::MetaConfig() :
-		m_iWorkerNum(20), m_iTimeout(60), m_iNetBuffer(1024 * 1024), m_iExecBuffer(
-				64 * 1024 * 1024) {
+MetaConfig::MetaConfig()  {
 	m_dataTypeMap["int8"] = DBDataType::INT8;
 	m_dataTypeMap["int16"] = DBDataType::INT16;
 	m_dataTypeMap["int32"] = DBDataType::INT32;

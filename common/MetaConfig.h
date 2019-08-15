@@ -83,9 +83,9 @@ private:
 	std::map<std::string, TableInfo*> m_tableMap;
 	std::map<std::string, DBDataType> m_dataTypeMap;
 
-	uint32_t m_iWorkerNum;
-	uint32_t m_iTimeout;
-	uint32_t m_iNetBuffer;
-	uint32_t m_iExecBuffer;
+	uint32_t m_iWorkerNum = 20;
+	uint32_t m_iTimeout = 60;
+	uint32_t m_iNetBuffer = 1024 * 1024;
+	uint32_t m_iExecBuffer = 64 * 1024 * 1024;
 
 };
