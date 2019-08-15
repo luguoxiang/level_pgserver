@@ -6,12 +6,18 @@ set (VERSION_MINOR 0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-deprecated-register")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17 -Wno-deprecated-register")
 
 set(BisonOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.tab.cpp)
 set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
+
 set(APP_EXEC csv2pgserver)
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	set(FLEX_EXECUTABLE /usr/local/opt/flex/bin/flex)
+	set(BiSON_EXECUTABLE /usr/local/opt/bison/bin/bison)
+endif()
  
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -33,7 +39,7 @@ if(BISON_FOUND)
     )
 endif()
 
-find_package(FLEX REQUIRED)
+find_package(FLEX 2.6.3 REQUIRED)
 if(FLEX_FOUND)
     add_custom_command(
       OUTPUT ${FlexOutput}

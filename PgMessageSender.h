@@ -19,7 +19,7 @@ public:
 	void prepare(char cMsgType);
 	void commit();
 
-	void addDataTypeMsg(std::string sName, short columnid, PgDataType type,
+	void addDataTypeMsg(const std::string_view sName, short columnid, PgDataType type,
 			short datalen) {
 		addString(sName);
 		addInt(0); //oid

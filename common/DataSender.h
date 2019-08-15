@@ -12,8 +12,8 @@ public:
 	void addInt(int32_t value);
 	void addShort(int16_t value);
 	void addLongInt(int64_t value);
-	void addString(const std::string& s);
-	void addStringAndLength(const std::string& s);
+	void addString(const std::string_view s);
+	void addStringAndLength(const std::string_view s);
 	void addChar(char c);
 
 	void flush();

@@ -61,16 +61,19 @@ void DataSender::addShort(int16_t value) {
 	m_iWritten += 2;
 }
 
-void DataSender::addString(const std::string& s) {
-	memcpy(m_szBuffer + m_iWritten, s.c_str(), s.length());
-	m_iWritten += s.length();
+void DataSender::addString(const std::string_view s) {
+	auto len = s.length();
+	check( len + 1);
+	memcpy(m_szBuffer + m_iWritten, s.data(), len);
+	m_iWritten += len;
 	m_szBuffer[m_iWritten] = '\0';
 	++m_iWritten;
 }
-void DataSender::addStringAndLength(const std::string& s) {
+void DataSender::addStringAndLength(const std::string_view s) {
 	auto len = s.length();
 	addInt(len);
-	memcpy(m_szBuffer + m_iWritten, s.c_str(), len);
+	check(len);
+	memcpy(m_szBuffer + m_iWritten, s.data(), len);
 	m_iWritten += len;
 }
 
