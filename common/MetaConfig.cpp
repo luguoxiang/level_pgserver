@@ -54,7 +54,7 @@ void MetaConfig::load(const std::string& sPath) {
 				pCurrentTable = new TableInfo();
 				continue;
 			}
-			std::regex rgx("([^=\\s]+)\\s*=\\s*([^=\\s]+)");
+			std::regex rgx(R"(([^=\s]+)\s*=\s*([^=\s]+))");
 			std::smatch matches;
 			if (std::regex_search(line, matches, rgx)) {
 				if (pCurrentTable != nullptr && matches.size() == 3) {

@@ -7,7 +7,7 @@
 #include <regex>
 
 void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
-	std::regex rgx("([^:\\s]+):([^:\\(\\)\\s]+)(\\([\\d]+\\))?");
+	std::regex rgx(R"(([^:\s]+):([^:\(\)\s]+)(\([\d]+\))?)");
 	std::smatch matches;
 
 	DBColumnInfo* pColumn;
