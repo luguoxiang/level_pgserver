@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.9)
-project(csv2pgserver)
+cmake_policy(SET CMP0048 NEW)
+project(csv2pgserver VERSION 1.0 LANGUAGES CXX)
 
 set (VERSION_MAJOR 1)
 set (VERSION_MINOR 0)
@@ -14,6 +15,7 @@ set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
 set(APP_EXEC csv2pgserver)
 set(GFLAGS_NAMESPACE google)
+set(gflags_DIR ${CMAKE_SOURCE_DIR}/gflags)
 option(BUILD_TESTING "Enable unit tests" OFF) 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
