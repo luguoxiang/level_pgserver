@@ -19,6 +19,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(BiSON_EXECUTABLE /usr/local/opt/bison/bin/bison)
 endif()
  
+add_subdirectory(glog)
+add_subdirectory(gflags)
+
 # configure a header file to pass some of the CMake settings
 # to the source code
 configure_file (
@@ -55,7 +58,7 @@ file(GLOB SOURCES "*.cpp" )
 file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
 
-include_directories(PUBLIC .)
+include_directories(PUBLIC . glog)
  
 add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} )
 add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
@@ -63,4 +66,4 @@ add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
 add_dependencies(ExecutionLib CommonLib)
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib )
+target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib glog::glog gflags)
