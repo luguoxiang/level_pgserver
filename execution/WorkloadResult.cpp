@@ -1,4 +1,5 @@
 #include "WorkloadResult.h"
+#include "execution/ParseTools.h"
 #include <sstream>
 namespace {
 std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session", "ObExec",
@@ -18,7 +19,7 @@ int WorkloadResult::addProjection(ParseNode* pNode) {
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < count; ++i) {
-		if (strcasecmp(WorkloadColumns[i], pNode->m_sValue.c_str()) == 0) {
+		if (Tools::case_equals(WorkloadColumns[i], pNode->m_sValue)) {
 			return i;
 		}
 	}

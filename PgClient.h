@@ -19,7 +19,7 @@ private:
 	void describeColumn(ExecutionPlan* pPlan);
 	void sendRow(ExecutionPlan* pPlan);
 
-	void createPlan(const std::string sql);
+	void createPlan(const std::string& sql);
 	void handleException(Exception* pe);
 	void handleSync();
 	void handleQuery();

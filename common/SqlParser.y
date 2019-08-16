@@ -245,9 +245,7 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 		if($2->m_type == NodeType::INT)
 		{
 			$2->m_iValue = - $2->m_iValue;
-			char szBuf[20];
-			snprintf(szBuf,20, "%lld", $2->m_iValue);
-			$2->m_sValue = szBuf;
+			$2->m_sValue = std::to_string($2->m_iValue);
 			$2->m_sExpr = $2->m_sValue;
 			$$ = $2;
 		}

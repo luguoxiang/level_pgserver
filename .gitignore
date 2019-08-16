@@ -34,6 +34,7 @@ common/SqlParser.tab.*
 common/SqlParser.lex.*
 
 #CMake
+*.cmake
 Makefile
 CMakeFiles
 CMakeCache.txt

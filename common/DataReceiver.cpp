@@ -15,17 +15,17 @@ DataReceiver::~DataReceiver() {
 		delete[] m_pszBuffer;
 }
 
-std::string DataReceiver::getNextString() {
+std::string_view DataReceiver::getNextString() {
 	assert(m_pszCurrent);
 	assert(m_pszCurrent < m_pszBuffer + m_nBufLen);
 	const char* pszRet = m_pszCurrent;
 	size_t len = strlen(m_pszCurrent);
 	m_pszCurrent += len + 1;
 
-	return std::string(pszRet, len);
+	return std::string_view(pszRet, len);
 }
 
-std::string DataReceiver::getNextStringWithLen() {
+std::string_view DataReceiver::getNextStringWithLen() {
 	assert(m_pszCurrent);
 	assert(m_pszCurrent < m_pszBuffer + m_nBufLen);
 	size_t len = m_bNetNumber ?
@@ -37,9 +37,9 @@ std::string DataReceiver::getNextStringWithLen() {
 		return nullptr;
 
 	m_pszCurrent += len;
-	return std::string(pszRet, len);
+	return std::string_view(pszRet, len);
 }
-std::string DataReceiver::getNextStringWithShortLen() {
+std::string_view DataReceiver::getNextStringWithShortLen() {
 	assert(m_pszCurrent);
 	assert(m_pszCurrent < m_pszBuffer + m_nBufLen);
 	size_t len = m_bNetNumber ?
@@ -51,7 +51,7 @@ std::string DataReceiver::getNextStringWithShortLen() {
 		return "";
 
 	m_pszCurrent += len;
-	return std::string(pszRet, len);
+	return std::string_view(pszRet, len);
 }
 
 int16_t DataReceiver::getNextShort() {

@@ -9,9 +9,9 @@ public:
 
 	int8_t getNextByte();
 	int16_t getNextShort();
-	std::string getNextString();
-	std::string getNextStringWithLen();
-	std::string getNextStringWithShortLen();
+	std::string_view getNextString();
+	std::string_view getNextStringWithLen();
+	std::string_view getNextStringWithShortLen();
 	int32_t getNextInt();
 	int64_t getNextLongInt();
 

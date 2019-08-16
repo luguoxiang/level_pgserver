@@ -4,4 +4,4 @@ sudo apt-get install flex bison (Linux)
 git submodule update --init
 cmake .
 make
-bin/csv2pgserver -alsologtostderr
+GLOG_logtostderr=1  bin/csv2pgserver 

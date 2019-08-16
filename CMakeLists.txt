@@ -15,7 +15,7 @@ set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
 
 set(APP_EXEC csv2pgserver)
-set(GFLAGS_NAMESPACE google)
+option (WITH_GFLAGS "Use gflags" OFF)
 option(BUILD_TESTING "Enable unit tests" OFF) 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -23,7 +23,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(BiSON_EXECUTABLE /usr/local/opt/bison/bin/bison)
 endif()
  
-add_subdirectory(gflags)
 add_subdirectory(glog)
 
 # configure a header file to pass some of the CMake settings
@@ -62,7 +61,7 @@ file(GLOB SOURCES "*.cpp" )
 file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
 
-include_directories(PUBLIC . glog glog/src gflags/include)
+include_directories(PUBLIC . glog glog/src)
  
 add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} )
 add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
@@ -70,4 +69,4 @@ add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
 add_dependencies(ExecutionLib CommonLib)
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib glog::glog gflags::gflags)
+target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib glog::glog)

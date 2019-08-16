@@ -12,8 +12,8 @@ WorkThreadInfo::WorkThreadInfo(int fd, int port, int iIndex) :
 		m_iListenFd(fd), m_iAcceptFd(0), m_port(port), m_bRunning(false), m_iClientTime(
 				0), m_iIndex(iIndex), m_iSessions(0), m_iExecScanTime(0), m_iBiggestExec(
 				0), m_iSqlCount(0), m_pPlan(nullptr) {
-	memset(&m_result, 0, sizeof(m_result));
 
+	m_result = {};
 	if (parseInit(&m_result)) {
 		throw new ParseException("Failed to init parser!");
 	}

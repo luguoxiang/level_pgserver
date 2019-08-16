@@ -33,31 +33,20 @@ public:
 		return iter->second;
 	}
 
-	uint32_t getWorkerNum() {
+	uint32_t getWorkerNum() const {
 		return m_iWorkerNum;
 	}
-	uint32_t getTimeout() {
+	uint32_t getTimeout() const {
 		return m_iTimeout;
 	}
-	uint32_t getNetworkBuffer() {
+	uint32_t getNetworkBuffer() const {
 		return m_iNetBuffer;
 	}
-	uint32_t getExecutionBuffer() {
+	uint32_t getExecutionBuffer() const {
 		return m_iExecBuffer;
 	}
 
-	void setWorkerNum(uint32_t num) {
-		m_iWorkerNum = num;
-	}
-	void setTimeout(uint32_t timeout) {
-		m_iTimeout = timeout;
-	}
-	void setNetworkBuffer(uint32_t size) {
-		m_iNetBuffer = size;
-	}
-	void setExecutionBuffer(uint32_t size) {
-		m_iExecBuffer = size;
-	}
+	int getPort() const { return m_iPort;}
 
 	TableInfo* getTableInfo(const std::string& name) {
 		auto iter = m_tableMap.find(name);
@@ -87,5 +76,6 @@ private:
 	uint32_t m_iTimeout = 60;
 	uint32_t m_iNetBuffer = 1024 * 1024;
 	uint32_t m_iExecBuffer = 64 * 1024 * 1024;
+	int m_iPort = 5433;
 
 };

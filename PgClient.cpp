@@ -93,11 +93,11 @@ void PgClient::handleQuery() {
 
 void PgClient::handleParse() {
 	auto sStmt = m_receiver.getNextString(); //statement name
-	auto sSql= m_receiver.getNextString();
+	m_sSql= m_receiver.getNextString();
 
-	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< sSql;
+	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< m_sSql;
 
-	createPlan(sSql);
+	createPlan(m_sSql);
 
 	m_iParamNum = m_receiver.getNextShort();
 
@@ -273,7 +273,7 @@ void PgClient::run() {
 	} //while
 }
 
-void PgClient::createPlan(const std::string sql) {
+void PgClient::createPlan(const std::string& sql) {
 	m_pPlan.reset(nullptr);
 	if (strncasecmp("DEALLOCATE", sql.c_str(), 10) == 0) {
 		m_pPlan.reset(new EmptyResult());

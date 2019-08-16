@@ -14,9 +14,9 @@ public:
 
 	virtual void explain(std::vector<std::string>& rows) override {
 		m_pPlan->explain(rows);
-		char buf[100];
-		snprintf(buf, 100, "Limit %llu, Offset %llu", m_iLimit, m_iOffset);
-		rows.push_back(buf);
+		std::ostringstream os;
+		os << "Limit " << m_iLimit << "," << m_iOffset;
+		rows.push_back(os.str());
 	}
 
 	virtual void begin() override{

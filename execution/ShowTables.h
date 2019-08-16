@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <vector>
 #include <pthread.h>
+#include "execution/ParseTools.h"
 #include "execution/ExecutionPlan.h"
 #include "execution/WorkThreadInfo.h"
 
@@ -45,9 +46,9 @@ public:
 		assert(pNode);
 		if (pNode->m_type != NodeType::NAME)
 			return -1;
-		if (strcasecmp(pNode->m_sValue.c_str(), "TableName") == 0)
+		if (Tools::case_equals(pNode->m_sValue, "TableName") )
 			return 0;
-		if (strcasecmp(pNode->m_sValue.c_str(), "Info") == 0)
+		if (Tools::case_equals(pNode->m_sValue, "Info") )
 			return 1;
 		return -1;
 	}

@@ -8,25 +8,29 @@
 #include "execution/ExecutionPlan.h"
 
 
-
-#define EXEC_ERROR(msg, append) \
-	Log::getLogger().log(LogLevel::ERROR, __FILE__, __LINE__, msg); \
-	throw new ExecutionException(msg, append);
-
 namespace Tools {
+inline bool case_equals(const std::string_view a, const std::string_view b)
+{
+    return std::equal(a.begin(), a.end(),
+                      b.begin(), b.end(),
+                      [](char a, char b) {
+                          return tolower(a) == tolower(b);
+                      });
+}
+
 inline bool isRowKeyNode(ParseNode* pNode) {
 	return pNode->m_type == NodeType::NAME
-			&& strcasecmp(pNode->m_sValue.c_str(), "_rowkey") == 0;
+			&& case_equals(pNode->m_sValue, "_rowkey");
 }
 
 inline bool isTimestampNode(ParseNode* pNode) {
 	return pNode->m_type == NodeType::NAME
-			&& strcasecmp(pNode->m_sValue.c_str(), "_timestamp") == 0;
+			&& case_equals(pNode->m_sValue, "_timestamp");
 }
 
 inline bool isRowCountNode(ParseNode* pNode) {
 	return pNode->m_type == NodeType::NAME
-			&& strcasecmp(pNode->m_sValue.c_str(), "_rowcount") == 0;
+			&& case_equals(pNode->m_sValue, "_rowcount");
 }
 
 
