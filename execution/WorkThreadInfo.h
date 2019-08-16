@@ -32,7 +32,7 @@ struct WorkThreadInfo {
 	ExecutionPlan* m_pPlan;
 
 	//throws ParseException
-	void parse(const std::string& sql);
+	void parse(const std::string_view sql);
 
 	void print();
 

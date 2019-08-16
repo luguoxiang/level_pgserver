@@ -24,7 +24,7 @@ WorkThreadInfo::~WorkThreadInfo() {
 	m_plans.clear();
 }
 
-void WorkThreadInfo::parse(const std::string& sql) {
+void WorkThreadInfo::parse(const std::string_view sql) {
 	parseSql(&m_result, sql);
 
 	if (m_result.m_pResult == 0) {

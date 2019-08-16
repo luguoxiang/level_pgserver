@@ -83,10 +83,9 @@ void PgClient::handleSync() {
 void PgClient::handleQuery() {
 
 	auto sql = m_receiver.getNextString();
-	m_sSql.assign(sql.data(), sql.length());
 
-	DLOG(INFO) << "Q:"<< m_sSql;
-	createPlan(m_sSql);
+	DLOG(INFO) << "Q:"<< sql;
+	createPlan(sql);
 
 	describeColumn(m_pPlan.get());
 	handleExecute();
@@ -96,10 +95,9 @@ void PgClient::handleParse() {
 	auto sStmt = m_receiver.getNextString(); //statement name
 	auto sql = m_receiver.getNextString();
 
-	m_sSql.assign(sql.data(), sql.length());
-	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< m_sSql;
+	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< sql;
 
-	createPlan(m_sSql);
+	createPlan(sql);
 
 	m_iParamNum = m_receiver.getNextShort();
 
@@ -189,7 +187,7 @@ void PgClient::handleException(Exception* pe) {
 	m_sender.addString("00000");
 	m_sender.addByte(PG_DIAG_MESSAGE_PRIMARY);
 	m_sender.addString(pe->what());
-	LOG(ERROR) << "Error: " << m_sSql << pe->what();
+	LOG(ERROR) << "Error: " << pe->what();
 
 	if (pe->getLine() >= 0) {
 		m_sender.addByte(PG_DIAG_STATEMENT_POSITION);
@@ -275,12 +273,12 @@ void PgClient::run() {
 	} //while
 }
 
-void PgClient::createPlan(const std::string& sql) {
+void PgClient::createPlan(const std::string_view sql) {
 	m_pPlan.reset(nullptr);
-	if (strncasecmp("DEALLOCATE", sql.c_str(), 10) == 0) {
+	if (sql.find("DEALLOCATE") == 0) {
 		m_pPlan.reset(new EmptyResult());
 		DLOG(INFO) << sql;
-	} else if (strncasecmp("SET ", sql.c_str(), 4) == 0) {
+	} else if (sql.find("SET ") == 0) {
 		m_pPlan.reset(new EmptyResult());
 		DLOG(INFO) << sql;
 	} else {

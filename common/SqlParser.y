@@ -632,10 +632,10 @@ int parseTerminate(ParseResult* p)
 	return yylex_destroy(p->m_scanInfo);
 }
 
-void parseSql(ParseResult* p, const std::string& sql)
+void parseSql(ParseResult* p, const std::string_view sql)
 {
 	p->m_pResult = nullptr;
-	p->m_sSql = sql;
+	p->m_sSql.assign(sql.data(), sql.length());
 	p->m_szErrorMsg[0]=0;
 	
 	p->m_yycolumn = 1;
@@ -643,7 +643,7 @@ void parseSql(ParseResult* p, const std::string& sql)
 
 	YY_BUFFER_STATE bp;
 
-	bp = yy_scan_string(sql.c_str(), p->m_scanInfo);
+	bp = yy_scan_string(p->m_sSql.c_str(), p->m_scanInfo);
 	yy_switch_to_buffer(bp, p->m_scanInfo);
 	yyparse(p, p->m_scanInfo);
 	yy_delete_buffer(bp, p->m_scanInfo);

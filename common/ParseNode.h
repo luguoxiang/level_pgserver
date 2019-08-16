@@ -88,7 +88,7 @@ int parseInit(ParseResult* p);
 
 int parseTerminate(ParseResult* p);
 
-void parseSql(ParseResult *p, const std::string& sql);
+void parseSql(ParseResult *p, const std::string_view sql);
 
 void printTree(ParseNode* pRoot, int level);
 
