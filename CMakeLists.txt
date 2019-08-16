@@ -63,10 +63,7 @@ file(GLOB EXECUTION_SOURCES "execution/*.cpp")
 
 include_directories(PUBLIC . glog glog/src)
  
-add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} )
-add_library( CommonLib STATIC ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
-
-add_dependencies(ExecutionLib CommonLib)
+add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} ExecutionLib CommonLib glog::glog)
+target_link_libraries( ${APP_EXEC} ExecutionLib glog::glog)
