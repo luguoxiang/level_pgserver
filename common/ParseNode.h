@@ -50,7 +50,7 @@ public:
 
 	NodeType m_type;
 	std::string m_sValue;
-	int64_t m_iValue;
+	int64_t m_iValue = 0;
 	std::string m_sExpr;
 
 	BuildPlanFunc m_fnBuildPlan;

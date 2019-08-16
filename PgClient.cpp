@@ -275,10 +275,10 @@ void PgClient::run() {
 
 void PgClient::createPlan(const std::string_view sql) {
 	m_pPlan.reset(nullptr);
-	if (sql.find("DEALLOCATE") == 0) {
+	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
 		m_pPlan.reset(new EmptyResult());
 		DLOG(INFO) << sql;
-	} else if (sql.find("SET ") == 0) {
+	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
 		m_pPlan.reset(new EmptyResult());
 		DLOG(INFO) << sql;
 	} else {

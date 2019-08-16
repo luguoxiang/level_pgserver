@@ -30,15 +30,16 @@ struct DbPlanBuilder
 	BuildPlanFunc m_pfnSelect;
 	BuildPlanFunc m_pfnInsert;
 	BuildPlanFunc m_pfnDelete;
+	
+	bool valid() const {return m_db != NULL;}
 };
 
-static struct DbPlanBuilder g_dbPlanBuilder[] = {
+static std::array<DbPlanBuilder,1> planBuilders = {
 	{"file", buildPlanForFileSelect, NULL, NULL},
 };
 
-static struct DbPlanBuilder* getPlanBuilder(ParseResult* pResult, ParseNode** ppTable)
+static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode** ppTable)
 {
-		struct DbPlanBuilder* pBuilder = NULL;
 		assert(ppTable);
 		ParseNode* pTable = *ppTable;
 		if(pTable->m_type == NodeType::OP)
@@ -49,22 +50,18 @@ static struct DbPlanBuilder* getPlanBuilder(ParseResult* pResult, ParseNode** pp
 				assert(pTable->m_children[1]->m_type == NodeType::NAME);
 				ParseNode* pDB = pTable->m_children[0];
 				*ppTable = pTable = pTable->m_children[1];
-				for(i=0 ; ; ++i)
+				for(auto& builder : planBuilders)
 				{
-					if(i == sizeof(g_dbPlanBuilder)/sizeof(struct DbPlanBuilder))
+					if(strcasecmp(pDB->m_sValue.c_str(), builder.m_db) == 0)
 					{
-						break;
-					}
-					if(strcasecmp(pDB->m_sValue.c_str(), g_dbPlanBuilder[i].m_db) == 0)
-					{
-						return g_dbPlanBuilder+ i;
+						return builder;
 					}
 				}
-				return NULL;
+				return DbPlanBuilder{};
 		}
 		else
 		{
-				return g_dbPlanBuilder;
+				return planBuilders[0];
 		}
 }
 
@@ -309,14 +306,14 @@ val_list: expr {$$ = $1;}
 delete_stmt: DELETE FROM table_factor opt_where
 	{
 		ParseNode* pTable = $3;
-		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
-		if(pBuilder == NULL || pBuilder->m_pfnDelete == NULL)
+		auto builder = getPlanBuilder(pResult, &pTable);
+		if(builder.m_pfnDelete == NULL)
 		{
 		  yyerror(&@3,pResult,NULL, "Delete is not supported for current database");
 		  YYERROR;
 		}
 		$$ = newParentNode(pResult, "DeleteStmt", 2, pTable, $4);
-		$$->m_fnBuildPlan = pBuilder->m_pfnDelete;
+		$$->m_fnBuildPlan = builder.m_pfnDelete;
 	}
 
 update_stmt: UPDATE table_factor SET update_asgn_list opt_where
@@ -349,26 +346,26 @@ values_stmt:VALUES value_list
 insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 	{
 	  ParseNode* pTable = $3;
-		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
-		if(pBuilder == NULL || pBuilder->m_pfnInsert == NULL)
+		auto builder = getPlanBuilder(pResult, &pTable);
+		if(builder.m_pfnInsert == NULL)
 		{
 			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
 		}
 		$$ = newParentNode(pResult, "InsertStmt", 3, pTable,$4,$5);
-		$$->m_fnBuildPlan = pBuilder->m_pfnInsert;
+		$$->m_fnBuildPlan = builder.m_pfnInsert;
 	}
 	| INSERT INTO table_factor opt_col_names values_stmt
 	{
 	  ParseNode* pTable = $3;
-		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
-		if(pBuilder == NULL || pBuilder->m_pfnInsert == NULL)
+		auto builder = getPlanBuilder(pResult, &pTable);
+		if(builder.m_pfnInsert == NULL)
 		{
 			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
 		}
 		$$ = newParentNode(pResult, "InsertStmt", 3, pTable,$4,$5);
-		$$->m_fnBuildPlan = pBuilder->m_pfnInsert;
+		$$->m_fnBuildPlan = builder.m_pfnInsert;
 	}
 	;
 
@@ -396,8 +393,8 @@ workload_stmt:WORKLOAD
 load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS TERMINATED BY STRING
 	{
 		ParseNode* pTable = $7;
-		struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
-		if(pBuilder == NULL || pBuilder->m_pfnInsert == NULL)
+		auto builder = getPlanBuilder(pResult, &pTable);
+		if(builder.m_pfnInsert == NULL)
 		{
 			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
@@ -407,7 +404,7 @@ load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS 
 		pFileNode->m_fnBuildPlan = buildPlanForReadFile;	
 
 		$$ = newParentNode(pResult, "Loadtmt", 3, pTable, $8, pFileNode);
-		$$->m_fnBuildPlan = pBuilder->m_pfnInsert;
+		$$->m_fnBuildPlan = builder.m_pfnInsert;
 	}
 	;
 	
@@ -495,16 +492,16 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			}
 			else
 			{
-				struct DbPlanBuilder* pBuilder = getPlanBuilder(pResult, &pTable);
-		    if(pBuilder == NULL || pBuilder->m_pfnSelect == NULL)
-		    {
-		      yyerror(&@3,pResult,NULL, "Select is not supported for current database");
-		      YYERROR;
-		    }
-
-				$$ = newParentNode(pResult, "SelectStmt", 7, pProject, pTable, pPredicate, $7, $8, $9, $10);
-				$$->m_fnBuildPlan = pBuilder->m_pfnSelect;
-			}
+				auto builder = getPlanBuilder(pResult, &pTable);
+			    if(builder.m_pfnSelect == NULL)
+			    {
+			      yyerror(&@3,pResult,NULL, "Select is not supported for current database");
+			      YYERROR;
+			    }
+	
+					$$ = newParentNode(pResult, "SelectStmt", 7, pProject, pTable, pPredicate, $7, $8, $9, $10);
+					$$->m_fnBuildPlan = builder.m_pfnSelect;
+				}
 		}
 	}
 	;

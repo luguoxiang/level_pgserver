@@ -9,6 +9,8 @@ public:
 
 	int8_t getNextByte();
 	int16_t getNextShort();
+
+	//Warning! The return value will be invalid after next getXX call
 	std::string_view getNextString();
 	std::string_view getNextStringWithLen();
 	std::string_view getNextStringWithShortLen();
