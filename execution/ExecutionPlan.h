@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-
+#include <variant>
 #include "common/ParseNode.h"
 #include "common/ConfigInfo.h"
 
@@ -99,11 +99,14 @@ public:
 	virtual std::string getInfoString() = 0;
 
 	struct ResultInfo {
-		std::string m_sResult;
-		int64_t m_lResult;
-		double m_dResult;
-		struct timeval m_time;
+		std::variant<std::string_view, int64_t, double, struct timeval> m_result;
 		bool m_bNull; // if true, m_value is invalid
+
+		std::string_view getString() const {return std::get<std::string_view>(m_result);}
+		int64_t getInt() const {return std::get<int64_t>(m_result);}
+		double getDouble() const {return std::get<double>(m_result);}
+		struct timeval getTime() const {return std::get<struct timeval>(m_result);}
+
 		int compare(const ResultInfo& result, DBDataType type) const;
 
 		int compare(const ParseNode* pValue, DBDataType type) const;

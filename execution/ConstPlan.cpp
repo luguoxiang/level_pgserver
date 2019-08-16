@@ -36,22 +36,22 @@ void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 	ParseNode* pValue = pRow->m_children[index];
 	switch (pValue->m_type) {
 	case NodeType::INT:
-		pInfo->m_lResult = pValue->m_iValue;
+		pInfo->m_result = pValue->m_iValue;
 		break;
 	case NodeType::DATE: {
 		struct timeval time;
 		time.tv_sec = (pValue->m_iValue / 1000000);
 		time.tv_usec = (pValue->m_iValue % 1000000);
-		pInfo->m_time = time;
+		pInfo->m_result = time;
 		break;
 	}
 	case NodeType::FLOAT: {
 		float fValue = strtof(pValue->m_sValue.c_str(), nullptr);
-		pInfo->m_dResult = fValue;
+		pInfo->m_result = fValue;
 		break;
 	}
 	case NodeType::STR:
-		pInfo->m_sResult = pValue->m_sValue;
+		pInfo->m_result = pValue->m_sValue;
 		break;
 	default:
 		throw new ParseException("wrong const value type %d");

@@ -48,13 +48,17 @@ bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
 	case DBDataType::DATETIME:
 		return false;
 	case DBDataType::DOUBLE: {
-		m_dResult /= value;
+		auto v = getDouble();
+		v = v / value;
+		m_result = v;
 		return true;
 	}
 	case DBDataType::INT16:
 	case DBDataType::INT32:
 	case DBDataType::INT64: {
-		m_lResult /= value;
+		auto v = getInt();
+		v = v/ value;
+		m_result = v;
 		return true;
 	}
 	default:
@@ -64,32 +68,19 @@ bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
 }
 
 bool ExecutionPlan::ResultInfo::add(const ResultInfo& result, DBDataType type) {
-	if (m_bNull) {
-		*this = result;
-		return true;
-	}
-	if (result.m_bNull)
-		return true;
-
 	switch (type) {
-	case DBDataType::STRING:
-	case DBDataType::BYTES:
-		return false;
 	case DBDataType::DOUBLE: {
-		m_dResult += result.m_dResult;
+		m_result = getDouble() + result.getDouble();
 		return true;
 	}
 	case DBDataType::INT16:
 	case DBDataType::INT32:
-	case DBDataType::INT64:
-	case DBDataType::DATE:
-	case DBDataType::DATETIME: {
-		m_lResult += result.m_lResult;
+	case DBDataType::INT64: {
+		m_result = getInt() + result.getInt();
 		return true;
 	}
 	default:
-		throw new ParseException("Unsupported data type!");
-		return 0;
+		return false;
 	}
 }
 
@@ -105,10 +96,10 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 	switch (type) {
 	case DBDataType::STRING:
 	case DBDataType::BYTES:
-		return (m_sResult == result.m_sResult);
+		return (getString() == result.getString());
 	case DBDataType::DOUBLE: {
-		double aa = m_dResult;
-		double bb = result.m_dResult;
+		double aa = getDouble();
+		double bb = result.getDouble();
 		if (aa == bb)
 			return 0;
 		else if (aa < bb)
@@ -122,8 +113,8 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 	case DBDataType::INT64:
 	case DBDataType::DATE:
 	case DBDataType::DATETIME: {
-		int64_t aa = m_lResult;
-		int64_t bb = result.m_lResult;
+		int64_t aa = getInt();
+		int64_t bb = result.getInt();
 		if (aa == bb)
 			return 0;
 		else if (aa < bb)
@@ -151,7 +142,7 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 			os << "Wrong data type for " << pValue->m_sExpr << ", expect int";
 			throw new ParseException(os.str());
 		}
-		int64_t a = m_lResult;
+		int64_t a = getInt();
 		int64_t b = pValue->m_iValue;
 		if (a == b)
 			return 0;
@@ -166,7 +157,7 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 			os << "Wrong data type for " << pValue->m_sExpr << ", expect string";
 			throw new ParseException(os.str());
 		}
-		return m_sResult == pValue->m_sValue;
+		return getString() == pValue->m_sValue;
 	}
 		//case DBDataType::DATE:
 		//case DBDataType::DATETIME:

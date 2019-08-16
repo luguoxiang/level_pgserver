@@ -22,10 +22,10 @@ void ShowTables::getResult(size_t index, ResultInfo* pInfo) {
 	TableInfo* pTable = m_tables[m_iIndex - 1];
 	pInfo->m_bNull = false;
 	if (index == 0) {
-		pInfo->m_sResult = pTable->getName();
+		pInfo->m_result = pTable->getName();
 	} else if (index == 1) {
 		if (pTable->hasAttribute("info")) {
-			pInfo->m_sResult = pTable->getAttribute("info");
+			pInfo->m_result = pTable->getAttribute("info");
 		} else {
 			pInfo->m_bNull = true;
 		}

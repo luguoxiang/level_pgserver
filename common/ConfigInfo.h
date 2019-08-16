@@ -47,7 +47,7 @@ public:
 		m_name = name;
 	}
 
-	std::string getName() const {
+	const std::string& getName() const {
 		return m_name;
 	}
 

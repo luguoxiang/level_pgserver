@@ -69,6 +69,7 @@ private:
 	std::vector<ResultInfo> m_result;
 	int64_t m_iRowCount = 0;
 	std::string m_sPath;
+	std::string m_line;
 
 	std::unique_ptr<std::ifstream> m_pFile;
 	bool m_bCancel = false;

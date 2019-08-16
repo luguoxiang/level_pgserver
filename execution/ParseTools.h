@@ -18,6 +18,16 @@ inline bool case_equals(const std::string_view a, const std::string_view b)
                       });
 }
 
+inline int64_t toInt(const std::string_view s)
+{
+	int64_t result = 0;
+    for(auto c: s) {
+    	result = result * 10 + (c - '0');
+    }
+    return result;
+}
+
+
 inline bool isRowKeyNode(ParseNode* pNode) {
 	return pNode->m_type == NodeType::NAME
 			&& case_equals(pNode->m_sValue, "_rowkey");

@@ -62,26 +62,26 @@ void WorkloadResult::getResult(size_t index, ResultInfo* pInfo) {
 		std::stringstream ss;
 		ss << pWorker->m_tid;
 		m_tid = ss.str();
-		pInfo->m_sResult = m_tid.c_str();
+		pInfo->m_result = m_tid;
 		break;
 	}
 	case 1:
-		pInfo->m_lResult = pWorker->m_bRunning;
+		pInfo->m_result = int64_t(pWorker->m_bRunning);
 		break;
 	case 2:
-		pInfo->m_lResult = pWorker->m_iSessions;
+		pInfo->m_result = int64_t(pWorker->m_iSessions);
 		break;
 	case 3:
-		pInfo->m_lResult = pWorker->m_iExecScanTime / 1000;
+		pInfo->m_result = int64_t(pWorker->m_iExecScanTime / 1000);
 		break;
 	case 4:
-		pInfo->m_lResult = pWorker->m_iBiggestExec / 1000;
+		pInfo->m_result = int64_t(pWorker->m_iBiggestExec / 1000);
 		break;
 	case 5:
-		pInfo->m_lResult = pWorker->m_iClientTime / 1000;
+		pInfo->m_result = int64_t(pWorker->m_iClientTime / 1000);
 		break;
 	case 6:
-		pInfo->m_lResult = pWorker->m_iSqlCount;
+		pInfo->m_result = int64_t(pWorker->m_iSqlCount);
 		break;
 	default:
 		assert(0);

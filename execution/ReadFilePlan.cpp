@@ -34,10 +34,11 @@ bool ReadFilePlan::next() {
 	if (m_bCancel)
 		return false;
 
-	std::string line;
-	if (!std::getline(*m_pFile, line)) {
+	if (!std::getline(*m_pFile, m_line)) {
 		return false;
 	}
+	std::string_view line = m_line;
+
 	auto start = 0U;
 	auto end = line.find(m_seperator);
 	for (int i = 0; i < m_columns.size(); ++i) {
@@ -45,7 +46,7 @@ bool ReadFilePlan::next() {
 			m_result[i].m_bNull = true;
 			continue;
 		}
-		std::string token;
+		std::string_view token;
 		if (end == std::string::npos) {
 			token = line.substr(start);
 			start = line.length();
@@ -61,14 +62,16 @@ bool ReadFilePlan::next() {
 		case DBDataType::INT16:
 		case DBDataType::INT32:
 		case DBDataType::INT64:
-			m_result[i].m_lResult = atoll(token.c_str());
+
+			m_result[i].m_result = Tools::toInt(token);
 			break;
 		case DBDataType::STRING:
-			m_result[i].m_sResult = token;
+			m_result[i].m_result = token;
 			break;
 		case DBDataType::DATETIME:
 		case DBDataType::DATE: {
-			int64_t iValue = parseTime(token.c_str());
+			std::string s(token.data(), token.length());
+			int64_t iValue = parseTime(s.c_str());
 			if (iValue == 0) {
 				std::ostringstream os;
 				os << "Wrong Time Format:" << token;
@@ -77,12 +80,13 @@ bool ReadFilePlan::next() {
 			struct timeval time;
 			time.tv_sec = (iValue / 1000000);
 			time.tv_usec = (iValue % 1000000);
-			m_result[i].m_time = time;
+			m_result[i].m_result = time;
 			break;
 		}
-		case DBDataType::DOUBLE:
-			m_result[i].m_dResult = atof(token.c_str());
-			break;
+		case DBDataType::DOUBLE:{
+			std:: string s(token.data(), token.length());
+			m_result[i].m_result = std::stof(s);
+			break;}
 		default:
 			break;
 		}

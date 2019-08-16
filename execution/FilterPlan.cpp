@@ -45,7 +45,7 @@ bool FilterPlan::next() {
 					os << "Wrong data type for "<< info.m_pValue->m_sExpr <<", expect string";
 					throw new ParseException(os.str());
 				}
-				auto pos = result.m_sResult.find(info.m_pValue->m_sValue);
+				auto pos = result.getString().find(info.m_pValue->m_sValue);
 				if (pos == std::string::npos) {
 					bMatch = false;
 					break;

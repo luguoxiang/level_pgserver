@@ -61,7 +61,7 @@ public:
 			break;
 		case FuncType::COUNT:
 			pInfo->m_bNull = false;
-			pInfo->m_lResult = func.m_iCount;
+			pInfo->m_result = int64_t(func.m_iCount);
 			break;
 		case FuncType::AVG:
 			*pInfo = func.m_value;
