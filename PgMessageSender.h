@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/DataSender.h"
+#include "DataSender.h"
 
 enum class PgDataType {
 	Bytea = 17,

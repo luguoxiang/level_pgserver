@@ -3,7 +3,7 @@
 #include <glog/logging.h>
 
 #include "PgServer.h"
-#include "common/IOException.h"
+#include "IOException.h"
 #include "common/MetaConfig.h"
 #include "config.h"
 

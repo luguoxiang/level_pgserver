@@ -1,7 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <stdint.h>
-#include "common/DataReceiver.h"
+#include "DataReceiver.h"
 
 class PgMessageReceiver: public DataReceiver {
 public:

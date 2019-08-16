@@ -93,10 +93,9 @@ USING {return USING;}
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = new ParseNode(pResult, NodeType::INT,0);
 	yylval->pNode = pNode;
-	pNode->m_sValue = yytext;
-	pNode->m_sExpr = pNode->m_sValue;
+	pNode->m_sExpr = yytext;
 	errno = 0;
-	pNode->m_iValue = strtol(yytext, 0, 10);
+	pNode->m_iValue = std::stoi(pNode->m_sExpr);
 	if (errno != 0)
 	{
 		yyerror(yylloc, pResult, NULL, "Integer Out of Range: %s", yytext);
@@ -161,7 +160,6 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseNode* pNode = new ParseNode(pResult, NodeType::BINARY,0);
 
 	pNode->m_sValue = parseBinary(yytext + 1);
-	pNode->m_iValue = 0;
 	pNode->m_sExpr = yytext + 1;
 
 	yylval->pNode = pNode;
@@ -172,8 +170,7 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE,0);
 
-	pNode->m_sValue = yytext + 1;
-	pNode->m_sExpr = pNode->m_sValue;
+	pNode->m_sExpr = yytext + 1;
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
@@ -188,8 +185,7 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE,0);
-	pNode->m_sValue = yytext + 1;
-	pNode->m_sExpr = pNode->m_sValue;
+	pNode->m_sExpr = yytext + 1;
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
@@ -221,7 +217,6 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	yylval->pNode = pNode;
 	pNode->m_sValue = yytext;
 	pNode->m_sExpr = pNode->m_sValue;
-	pNode->m_iValue = 0;
 	return NAME;
 }
 
@@ -229,7 +224,6 @@ $[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = new ParseNode(pResult, NodeType::PARAM,0);
 	yylval->pNode = pNode;
-	pNode->m_sValue = "unbound";
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)
 	{
@@ -237,6 +231,7 @@ $[0-9]+ {
 		return ERROR;
 	}
 	pNode->m_iValue = index;
+	pNode->m_sExpr = "unbound";
 	return PARAM;
 }
 

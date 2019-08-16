@@ -82,7 +82,8 @@ void PgClient::handleSync() {
 
 void PgClient::handleQuery() {
 
-	m_sSql = m_receiver.getNextString();
+	auto sql = m_receiver.getNextString();
+	m_sSql.assign(sql.data(), sql.length());
 
 	DLOG(INFO) << "Q:"<< m_sSql;
 	createPlan(m_sSql);
@@ -93,8 +94,9 @@ void PgClient::handleQuery() {
 
 void PgClient::handleParse() {
 	auto sStmt = m_receiver.getNextString(); //statement name
-	m_sSql= m_receiver.getNextString();
+	auto sql = m_receiver.getNextString();
 
+	m_sSql.assign(sql.data(), sql.length());
 	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< m_sSql;
 
 	createPlan(m_sSql);

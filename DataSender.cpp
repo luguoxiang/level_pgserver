@@ -5,7 +5,7 @@
 #include <string.h>
 #include <cassert>
 
-#include "common/DataSender.h"
+#include "DataSender.h"
 
 DataSender::DataSender(int fd, bool bNetNumber, uint32_t iSendBuffer) :
 		m_nFd(fd), m_iWritten(0), m_iLastPrepare(0), m_bNetNumber(bNetNumber), m_iSendBuffer(

@@ -1,5 +1,5 @@
 #include "PgMessageReceiver.h"
-#include "common/IOException.h"
+#include "IOException.h"
 #include <stdio.h>
 #include <cassert>
 #include <stdio.h>

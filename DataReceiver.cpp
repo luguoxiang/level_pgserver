@@ -1,5 +1,5 @@
 #include "DataReceiver.h"
-#include "common/IOException.h"
+#include "IOException.h"
 #include <cassert>
 #include <stdio.h>
 #include <unistd.h>
