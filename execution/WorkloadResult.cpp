@@ -56,7 +56,6 @@ void WorkloadResult::getResult(size_t index, ResultInfo* pInfo) {
 	WorkThreadInfo* pWorker = WorkerManager::getInstance().getWorker(
 			m_iIndex - 1);
 
-	pInfo->m_bNull = false;
 	switch (index) {
 	case 0: {
 		std::stringstream ss;

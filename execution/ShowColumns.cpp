@@ -64,7 +64,6 @@ void ShowColumns::getResult(size_t index, ResultInfo* pInfo) {
 	DBColumnInfo* pColumn = m_pEntry->getColumn(m_iIndex - 1);
 	assert(pColumn);
 
-	pInfo->m_bNull = false;
 	switch (index) {
 	case 0:
 		pInfo->m_result = pColumn->m_sName;
@@ -105,17 +104,15 @@ void ShowColumns::getResult(size_t index, ResultInfo* pInfo) {
 		break;
 	case 2:
 		if (pColumn->m_iKeyIndex < 0) {
-			pInfo->m_bNull = true;
+			pInfo->m_result = nullptr;
 		} else {
-			pInfo->m_bNull = false;
 			pInfo->m_result = int64_t(pColumn->m_iKeyIndex);
 		}
 		break;
 	case 3:
 		if (pColumn->m_iLen < 0) {
-			pInfo->m_bNull = true;
+			pInfo->m_result = nullptr;
 		} else {
-			pInfo->m_bNull = false;
 			pInfo->m_result = int64_t(pColumn->m_iLen);
 		}
 		break;

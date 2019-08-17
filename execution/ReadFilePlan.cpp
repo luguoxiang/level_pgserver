@@ -43,7 +43,7 @@ bool ReadFilePlan::next() {
 	auto end = line.find(m_seperator);
 	for (int i = 0; i < m_columns.size(); ++i) {
 		if(start >= line.length()) {
-			m_result[i].m_bNull = true;
+			m_result[i].m_result= nullptr;
 			continue;
 		}
 		std::string_view token;
@@ -55,7 +55,6 @@ bool ReadFilePlan::next() {
 			start = end + m_seperator.length();
 			end = line.find(m_seperator, start);
 		}
-		m_result[i].m_bNull = false;
 
 		switch (m_columns[i]->m_type) {
 		case DBDataType::INT8:

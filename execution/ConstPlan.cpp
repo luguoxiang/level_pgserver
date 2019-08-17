@@ -32,7 +32,6 @@ void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
 	assert(m_iCurrent > 0 && m_iCurrent <= m_rows.size());
 	ParseNode* pRow = m_rows[m_iCurrent - 1];
 	assert(pRow->children() == m_columns.size());
-	pInfo->m_bNull = false;
 	ParseNode* pValue = pRow->m_children[index];
 	switch (pValue->m_type) {
 	case NodeType::INT:

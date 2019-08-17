@@ -35,7 +35,7 @@ bool FilterPlan::next() {
 			ResultInfo result;
 			m_pPlan->getResult(iSubIndex, &result);
 
-			if (result.m_bNull) {
+			if (result.isNull()) {
 				bMatch = false;
 				break;
 			}

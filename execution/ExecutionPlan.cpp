@@ -38,7 +38,7 @@ bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
 	if (value == 0) {
 		throw new ExecutionException("Divide zero");
 	}
-	if (m_bNull) {
+	if (isNull()) {
 		return true;
 	}
 	switch (type) {
@@ -86,11 +86,11 @@ bool ExecutionPlan::ResultInfo::add(const ResultInfo& result, DBDataType type) {
 
 int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 		DBDataType type) const {
-	if (m_bNull && result.m_bNull)
+	if (isNull() && result.isNull())
 		return 0;
-	if (m_bNull)
+	if (isNull())
 		return -1;
-	if (result.m_bNull)
+	if (result.isNull())
 		return 1;
 
 	switch (type) {
@@ -130,7 +130,7 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 
 int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 		DBDataType type) const {
-	if (m_bNull) {
+	if (isNull()) {
 		return pValue->m_type == NodeType::NONE ? 0 : -1;
 	}
 	switch (type) {

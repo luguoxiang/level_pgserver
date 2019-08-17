@@ -359,7 +359,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			throw;
 		}
 
-		if (info.m_bNull) {
+		if (info.isNull()) {
 			m_sender.addInt(-1);
 			continue;
 		}
