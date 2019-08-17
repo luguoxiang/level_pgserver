@@ -87,16 +87,12 @@ void buildPlanForProjection(ParseNode* pNode) {
 		bool bOK = pProjPlan->project(pColumn, sAlias);
 		if (!bOK) {
 			if (pColumn->m_type != NodeType::FUNC) {
-				std::ostringstream os;
-					os << "Unrecognized column " << pColumn->m_sExpr;
-					throw new ParseException(os.str());
+					throw new ParseException(ConcateToString("Unrecognized column ", pColumn->m_sExpr));
 			}
 			pProjPlan->addGroupBy();
 			bOK = pProjPlan->project(pColumn, sAlias);
 			if (!bOK) {
-				std::ostringstream os;
-				os << "Unrecognized column " << pNode->m_sExpr;
-				throw new ParseException(os.str());
+				throw new ParseException(ConcateToString("Unrecognized column ", pNode->m_sExpr));
 			}
 		}
 	}
@@ -163,13 +159,10 @@ void buildPlanForLimit(ParseNode* pNode) {
 
 static void parseQueryCondition(ParseNode* pPredicate, FilterPlan* pFilter) {
 	if (pPredicate->m_type != NodeType::OP) {
-		std::ostringstream os;
-		os << "Unsupported predicate " << pPredicate->m_sExpr;
-		throw new ParseException(os.str());
+		throw new ParseException(ConcateToString("Unsupported predicate " , pPredicate->m_sExpr));
 	}
 
-	int iOpCode = OP_CODE(pPredicate);
-	if (iOpCode == ANDOP) {
+	if (OP_CODE(pPredicate) == ANDOP) {
 		for (int i = 0; i < pPredicate->children(); ++i) {
 			ParseNode* pChild = pPredicate->m_children[i];
 			parseQueryCondition(pChild, pFilter);

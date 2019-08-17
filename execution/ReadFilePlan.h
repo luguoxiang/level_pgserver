@@ -42,9 +42,7 @@ public:
 	}
 
 	virtual std::string getInfoString() override{
-		std::ostringstream os;
-		os << "SELECT " << m_iRowCount;
-		return os.str();
+		return ConcateToString("SELECT ", m_iRowCount);
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo)override {

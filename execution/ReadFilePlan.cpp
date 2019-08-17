@@ -2,9 +2,7 @@
 #include "execution/ExecutionException.h"
 
 void ReadFilePlan::explain(std::vector<std::string>& rows) {
-	std::ostringstream os;
-	os << "ReadFile " << m_sPath << ", seperator " << m_seperator[0];
-	rows.push_back(os.str());
+	rows.push_back(ConcateToString("ReadFile ", m_sPath, ", seperator ", m_seperator[0]));
 }
 
 
@@ -24,9 +22,7 @@ void ReadFilePlan::begin() {
 	m_bCancel = false;
 	m_pFile.reset(new std::ifstream(m_sPath));
 	if (m_pFile->fail()) {
-		std::ostringstream os;
-		os << "File " << m_sPath << " does not exists!";
-		throw new ExecutionException(os.str());
+		throw new ExecutionException(ConcateToString("File ", m_sPath, " does not exists!"));
 	}
 }
 
@@ -68,20 +64,16 @@ bool ReadFilePlan::next() {
 			m_result[i].m_result = token;
 			break;
 		case DBDataType::DATETIME:
-		case DBDataType::DATE: {
-			std::string s(token.data(), token.length());
-			int64_t iValue = parseTime(s.c_str());
-			if (iValue == 0) {
-				std::ostringstream os;
-				os << "Wrong Time Format:" << token;
-				throw new ExecutionException(os.str());
+		case DBDataType::DATE:
+			if (int64_t iValue = parseTime(std::string(token.data(), token.length()).c_str()); iValue > 0) {
+				struct timeval time;
+				time.tv_sec = (iValue / 1000000);
+				time.tv_usec = (iValue % 1000000);
+				m_result[i].m_result = time;
+				break;
+			} else {
+				throw new ExecutionException(ConcateToString("Wrong Time Format:", token));
 			}
-			struct timeval time;
-			time.tv_sec = (iValue / 1000000);
-			time.tv_usec = (iValue % 1000000);
-			m_result[i].m_result = time;
-			break;
-		}
 		case DBDataType::DOUBLE:{
 			std:: string s(token.data(), token.length());
 			m_result[i].m_result = std::stof(s);

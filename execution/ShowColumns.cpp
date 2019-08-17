@@ -46,9 +46,7 @@ int ShowColumns::getResultColumns() {
 }
 
 std::string ShowColumns::getInfoString() {
-	std::ostringstream os;
-	os << "SELECT " << m_pEntry->getColumnCount();
-	return os.str();
+	return ConcateToString("SELECT ", m_pEntry->getColumnCount());
 }
 
 void ShowColumns::begin() {

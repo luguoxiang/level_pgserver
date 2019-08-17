@@ -68,8 +68,7 @@ public:
 	}
 
 	DBColumnInfo* getColumnByName(const std::string& name) {
-		std::map<std::string, DBColumnInfo*>::iterator iter;
-		iter = m_columnMap.find(name);
+		auto iter = m_columnMap.find(name);
 		if (iter == m_columnMap.end())
 			return nullptr;
 		return iter->second;

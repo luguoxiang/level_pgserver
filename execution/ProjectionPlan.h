@@ -54,11 +54,13 @@ public:
 
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
 			bool* pOrder) override {
-		auto iter = m_map.find(sColumn);
-		if (iter == m_map.end())
+		if (auto iter = m_map.find(sColumn); iter != m_map.end() ) {
+			size_t iIndex = iter->second;
+			return m_pPlan->ensureSortOrder(iSortIndex, m_proj[iIndex].m_sRaw, pOrder);
+		} else {
 			return false;
-		size_t iIndex = iter->second;
-		return m_pPlan->ensureSortOrder(iSortIndex, m_proj[iIndex].m_sRaw, pOrder);
+		}
+
 	}
 	/*
 	 * number of projection column

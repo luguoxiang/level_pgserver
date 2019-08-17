@@ -115,9 +115,7 @@ bool SortPlan::ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
 void SortPlan::addSortSpecification(ParseNode* pNode, SortOrder order) {
 	int i = addProjection(pNode);
 	if (i < 0) {
-		std::ostringstream os;
-		os << "unrecognized column " << pNode->m_sExpr;
-		throw new ParseException(os.str());
+		throw new ParseException(ConcateToString("unrecognized column ", pNode->m_sExpr));
 	}
 	SortSpec spec;
 	spec.m_iIndex = i;

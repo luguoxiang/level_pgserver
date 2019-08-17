@@ -116,38 +116,34 @@ void GroupByPlan::end() {
 
 int GroupByPlan::addProjection(ParseNode* pNode) {
 	if (pNode->m_type == NodeType::NAME) {
-		int i = m_pPlan->addProjection(pNode);
-		if (i < 0) {
-			std::ostringstream os;
-			os << "Unrecognized projection column " << pNode->m_sExpr;
-			throw new ParseException(os.str());
+		if(int i = m_pPlan->addProjection(pNode); i >= 0 ) {
+			AggrFunc func;
+			func.m_func = FuncType::FIRST;
+			func.m_sName = pNode->m_sValue;
+			func.m_iIndex = i;
+			m_proj.push_back(func);
+			return m_proj.size() - 1;
+		} else {
+			throw new ParseException(ConcateToString("Unrecognized projection column ", pNode->m_sExpr));
 		}
-		AggrFunc func;
-		func.m_func = FuncType::FIRST;
-		func.m_sName = pNode->m_sValue;
-		func.m_iIndex = i;
-		m_proj.push_back(func);
-		return m_proj.size() - 1;
+
 	} else if (pNode->m_type == NodeType::FUNC) {
-		auto iter = m_typeMap.find(pNode->m_sValue);
-		if (iter == m_typeMap.end()) {
-			std::ostringstream os;
-			os << "Unknown function " << pNode->m_sExpr;
-			throw new ParseException(os.str());
+		if(auto iter = m_typeMap.find(pNode->m_sValue); iter != m_typeMap.end()) {
+			AggrFunc func;
+			func.m_func = iter->second;
+			assert(pNode->children() == 1);
+			if (int i = m_pPlan->addProjection(pNode->m_children[0]); i>=0) {
+				func.m_sName = pNode->m_sExpr;
+				func.m_iIndex = i;
+				m_proj.push_back(func);
+				return m_proj.size() - 1;
+			} else{
+				throw new ParseException(ConcateToString("Unrecognized projection column ", pNode->m_children[0]->m_sExpr));
+			}
+		} else {
+			throw new ParseException(ConcateToString("Unknown function ", pNode->m_sExpr));
 		}
-		AggrFunc func;
-		func.m_func = iter->second;
-		assert(pNode->children() == 1);
-		int i = m_pPlan->addProjection(pNode->m_children[0]);
-		if (i < 0) {
-			std::ostringstream os;
-			os << "Unrecognized projection column " << pNode->m_children[0]->m_sExpr;
-			throw new ParseException(os.str());
-		}
-		func.m_sName = pNode->m_sExpr;
-		func.m_iIndex = i;
-		m_proj.push_back(func);
-		return m_proj.size() - 1;
+
 	} else {
 		return -1;
 	}

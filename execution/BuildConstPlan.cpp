@@ -10,9 +10,8 @@ void buildPlanForConst(ParseNode* pNode) {
 	ParseNode* pLastRow = nullptr;
 	for (auto pRow:pNode->m_children) {
 		if (pLastRow != nullptr && pLastRow->children() != pRow->children()) {
-			std::ostringstream os;
-			os <<"Values column number does not match: expect " << pLastRow->children() << " but got " << pRow->children();
-			throw new ParseException(os.str());
+			throw new ParseException(ConcateToString(
+					"Values column number does not match: expect ", pLastRow->children(), " but got ", pRow->children()));
 		}
 		pPlan->addRow(pRow);
 		pLastRow = pRow;

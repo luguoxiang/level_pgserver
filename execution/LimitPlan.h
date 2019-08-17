@@ -14,9 +14,7 @@ public:
 
 	virtual void explain(std::vector<std::string>& rows) override {
 		m_pPlan->explain(rows);
-		std::ostringstream os;
-		os << "Limit " << m_iLimit << "," << m_iOffset;
-		rows.push_back(os.str());
+		rows.push_back(ConcateToString("Limit ", m_iLimit, ",", m_iOffset));
 	}
 
 	virtual void begin() override{
@@ -45,9 +43,7 @@ public:
 	}
 
 	virtual std::string getInfoString() override{
-		std::ostringstream os;
-		os << "SELECT " << m_iCurrent - m_iOffset;
-		return os.str();
+		return ConcateToString("SELECT ", m_iCurrent - m_iOffset);
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo)override {

@@ -3,9 +3,7 @@
 #include <sstream>
 
 std::string ShowTables::getInfoString() {
-	std::ostringstream os;
-	os << "SELECT " << MetaConfig::getInstance().getTableCount();
-	return os.str();
+	return ConcateToString("SELECT ", MetaConfig::getInstance().getTableCount());
 }
 
 void ShowTables::begin() {

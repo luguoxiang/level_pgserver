@@ -24,9 +24,7 @@ public:
 	virtual void explain(std::vector<std::string>& rows) override;
 
 	virtual std::string getInfoString()override {
-		std::ostringstream os;
-		os << "SELECT " << m_iRows;
-		return os.str();
+		return ConcateToString("SELECT ", m_iRows);
 	}
 
 	virtual int getResultColumns() override{
@@ -97,9 +95,7 @@ public:
 	void addGroupByColumn(ParseNode* pNode) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
-			std::ostringstream os;
-			os << "Unrecognized sort column " << pNode->m_sExpr;
-			throw new ParseException(os.str());
+			throw new ParseException(ConcateToString("Unrecognized sort column ", pNode->m_sExpr));
 		}
 		m_groupby.push_back(i);
 	}

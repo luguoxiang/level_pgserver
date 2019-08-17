@@ -57,9 +57,7 @@ public:
 	}
 
 	virtual std::string getInfoString()override {
-		std::ostringstream os;
-		os << "SELECT " << m_iCurrentRow;
-		return os.str();
+		return ConcateToString("SELECT ", m_iCurrentRow);
 	}
 
 	virtual void getResult(size_t columnIndex, ResultInfo* pInfo) override;

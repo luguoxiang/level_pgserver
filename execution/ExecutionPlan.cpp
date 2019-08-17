@@ -138,9 +138,7 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 	case DBDataType::INT32:
 	case DBDataType::INT64: {
 		if (pValue->m_type != NodeType::INT) {
-			std::ostringstream os;
-			os << "Wrong data type for " << pValue->m_sExpr << ", expect int";
-			throw new ParseException(os.str());
+			throw new ParseException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect int"));
 		}
 		int64_t a = getInt();
 		int64_t b = pValue->m_iValue;
@@ -153,9 +151,7 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 	}
 	case DBDataType::STRING: {
 		if (pValue->m_type != NodeType::STR) {
-			std::ostringstream os;
-			os << "Wrong data type for " << pValue->m_sExpr << ", expect string";
-			throw new ParseException(os.str());
+			throw new ParseException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect string"));
 		}
 		return getString() == pValue->m_sValue;
 	}
@@ -164,9 +160,7 @@ int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
 		//case DBDataType::DOUBLE:
 		//case DBDataType::BYTES:
 	default:
-		std::ostringstream os;
-		os << "Unsupported compare for " << pValue->m_sExpr;
-		throw new ParseException(os.str());
+		throw new ParseException(ConcateToString("Unsupported compare for ", pValue->m_sExpr));
 	};
 	return 0;
 }

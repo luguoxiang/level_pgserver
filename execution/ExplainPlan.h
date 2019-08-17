@@ -42,9 +42,7 @@ public:
 	}
 
 	virtual std::string getInfoString()override {
-		std::ostringstream os;
-		os << "EXPLAIN " << m_rows.size();
-		return os.str();
+		return ConcateToString("EXPLAIN ", m_rows.size());
 	}
 
 	virtual void getResult(size_t columnIndex, ResultInfo* pInfo)override;

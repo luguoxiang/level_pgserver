@@ -14,9 +14,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 
 	if (std::regex_search(sValue, matches, rgx)) {
 		if (matches.size() < 3) {
-			 std::ostringstream os;
-			 os<<"Illegal attribute value " << sValue;
-			 throw new ConfigException(os.str());
+			 throw new ConfigException(ConcateToString("Illegal attribute value ", sValue));
 		}
 		DBColumnInfo* pColumn = new DBColumnInfo();
 		pColumn->m_sName = matches[1];
@@ -28,9 +26,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 		if (sLen.length() > 0) {
 			pColumn->m_iLen = atoi(sLen.c_str() + 1);
 			if (pColumn->m_iLen <= 0) {
-				 std::ostringstream os;
-				 os<<"Illegal type length "<< sLen;
-				 throw new ConfigException(os.str());
+				 throw new ConfigException(ConcateToString("Illegal type length ", sLen));
 			}
 		} else {
 			switch (pColumn->m_type) {
@@ -59,9 +55,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 			}
 		}
 	} else {
-		 std::ostringstream os;
-		 os<<"Illegal attribute value "<< sValue;
-		 throw new ConfigException(os.str());
+		 throw new ConfigException(ConcateToString("Illegal attribute value ", sValue));
 	}
 
 }
@@ -69,9 +63,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 void TableInfo::addKeyColumn(const std::string& name) {
 	DBColumnInfo* pColumn = getColumnByName(name);
 	if (pColumn == nullptr) {
-		 std::ostringstream os;
-		 os<<"Undefined rowkey column " << name;
-		 throw new ConfigException(os.str());
+		 throw new ConfigException(ConcateToString("Undefined rowkey column ", name));
 	}
 	if (pColumn->m_iLen <= 0) {
 		throw new ConfigException("Missing length for rowkey column config!");
@@ -96,15 +88,11 @@ void TableInfo::getDBColumns(ParseNode* pColumn,
 		assert(pColumn->children() > 0);
 		for(auto p: pColumn->m_children) {
 			if (p == nullptr || p->m_type != NodeType::NAME) {
-				std::ostringstream os;
-				os<<"Unsupported select expression:" << p->m_sExpr;
-				throw new ParseException(os.str());
+				throw new ParseException(ConcateToString("Unsupported select expression:" , p->m_sExpr));
 			}
 			DBColumnInfo* pColumnInfo = getColumnByName(p->m_sValue);
 			if (pColumnInfo == 0) {
-				std::ostringstream os;
-				os << "Table "<<m_name<< " does not have column named "<< p->m_sValue;
-				throw new ParseException(os.str());
+				throw new ParseException(ConcateToString("Table ", m_name, " does not have column named ", p->m_sValue));
 			}
 			columns.push_back(pColumnInfo);
 		}

@@ -50,9 +50,7 @@ public:
 	}
 
 	virtual std::string getInfoString() override {
-		std::ostringstream os;
-		os << "SELECT " << m_iCurrent;
-		return os.str();
+		return ConcateToString("SELECT ", m_iCurrent);
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo) override {

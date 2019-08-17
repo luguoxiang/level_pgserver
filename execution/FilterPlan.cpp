@@ -18,9 +18,7 @@ bool checkFilter(int iOpCode, int n) {
 	case COMP_GE:
 		return n >= 0;
 	default:
-		std::ostringstream os;
-		os << "Unsupported operation " << iOpCode;
-		throw new ParseException(os.str());
+		throw new ParseException(ConcateToString("Unsupported operation ", iOpCode));
 		return 0;
 	}
 }
@@ -41,12 +39,9 @@ bool FilterPlan::next() {
 			}
 			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
 				if (info.m_pValue->m_type != NodeType::STR) {
-					std::ostringstream os;
-					os << "Wrong data type for "<< info.m_pValue->m_sExpr <<", expect string";
-					throw new ParseException(os.str());
+					throw new ParseException(ConcateToString("Wrong data type for ", info.m_pValue->m_sExpr, ", expect string"));
 				}
-				auto pos = result.getString().find(info.m_pValue->m_sValue);
-				if (pos == std::string::npos) {
+				if(auto pos = result.getString().find(info.m_pValue->m_sValue); pos == std::string::npos) {
 					bMatch = false;
 					break;
 				}
@@ -68,9 +63,7 @@ bool FilterPlan::next() {
 
 void FilterPlan::addPredicate(ParseNode* pPredicate) {
 	if (pPredicate->m_type != NodeType::OP || pPredicate->children() != 2) {
-		std::ostringstream os;
-		os << "Unsupported predicate " << pPredicate->m_sExpr;
-		throw new ParseException(os.str());
+		throw new ParseException(ConcateToString("Unsupported predicate ", pPredicate->m_sExpr));
 	}
 	assert(pPredicate);
 	assert(pPredicate->children() == 2);
@@ -78,14 +71,13 @@ void FilterPlan::addPredicate(ParseNode* pPredicate) {
 	PredicateInfo info;
 	info.m_sColumn = pPredicate->m_children[0]->m_sExpr;
 	info.m_sExpr = pPredicate->m_sExpr;
-	int i = m_pPlan->addProjection(pPredicate->m_children[0]);
-	if (i < 0) {
-		std::ostringstream os;
-		os << "Unrecognized column " << info.m_sColumn;
-		throw new ParseException(os.str());
+	if(int i = m_pPlan->addProjection(pPredicate->m_children[0]); i>=0 ) {
+		info.m_iSubIndex = i;
+		info.m_iOpCode = OP_CODE(pPredicate);
+		info.m_pValue = pPredicate->m_children[1];
+		m_predicate.push_back(info);
+	}else {
+		throw new ParseException(ConcateToString("Unrecognized column ", info.m_sColumn));
 	}
-	info.m_iSubIndex = i;
-	info.m_iOpCode = OP_CODE(pPredicate);
-	info.m_pValue = pPredicate->m_children[1];
-	m_predicate.push_back(info);
+
 }

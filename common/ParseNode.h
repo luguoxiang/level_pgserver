@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <sstream>
 #include <cassert>
 #include <stdlib.h>
 #include <string>
@@ -38,6 +39,13 @@ constexpr int SQL_SELECT_GROUPBY = 3;
 constexpr int SQL_SELECT_HAVING = 4;
 constexpr int SQL_SELECT_ORDERBY = 5;
 constexpr int SQL_SELECT_LIMIT = 6;
+
+template<typename ...Args>
+inline std::string ConcateToString(Args&&...args) {
+        std::ostringstream os;
+        (os << ... << std::forward<Args>(args));
+        return os.str();
+}
 
 class ParseNode;
 struct ParseResult;

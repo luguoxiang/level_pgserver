@@ -116,9 +116,8 @@ void PgClient::handleBind() {
 
 	int num = m_receiver.getNextShort();
 	if (num != m_iParamNum) {
-		std::ostringstream os;
-		os << "Parameter format number unmatch!, expect "<< m_iParamNum << ", actual " << num;
-		throw new ParseException(os.str());
+		throw new ParseException(ConcateToString(
+				"Parameter format number unmatch!, expect ", m_iParamNum, ", actual ", num));
 	}
 	for (int i = 0; i < m_iParamNum; ++i) {
 		if (m_receiver.getNextShort() != PARAM_TEXT_MODE) {
@@ -129,9 +128,8 @@ void PgClient::handleBind() {
 
 	num = m_receiver.getNextShort();
 	if (num != m_iParamNum) {
-		std::ostringstream os;
-		os << "Parameter number unmatch!, expect "<< m_iParamNum << ", actual " << num;
-		throw new ParseException(os.str());
+		throw new ParseException(ConcateToString(
+				"Parameter number unmatch!, expect ", m_iParamNum , ", actual " , num));
 	}
 	if (m_iParamNum > 0) {
 		throw new ParseException("Bind Param is not supported!");
@@ -250,9 +248,7 @@ void PgClient::run() {
 #endif
 		MessageHandler handler = m_handler[qtype];
 		if (handler == nullptr) {
-			std::ostringstream os;
-			os <<"Unable to handler message "<< qtype;
-			throw new IOException(os.str());
+			throw new IOException(ConcateToString("Unable to handler message ", qtype));
 		}
 
 		try {
@@ -363,7 +359,6 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.addInt(-1);
 			continue;
 		}
-		std::ostringstream os;
 
 		switch (type) {
 		case DBDataType::INT8:
@@ -373,8 +368,8 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.addStringAndLength(std::to_string(info.getInt()));
 			break;
 		case DBDataType::BYTES: {
+			std::ostringstream os;
 			os << "\\x";
-			std::string s = "\\x";
 			for (auto& c: info.getString()) {
 				os<< std::hex << c;
 			}

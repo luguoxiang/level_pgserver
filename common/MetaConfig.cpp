@@ -26,9 +26,7 @@ void MetaConfig::clean() {
 
 void MetaConfig::addTable(const std::string& name, TableInfo* pTable) {
 	if (getTableInfo(name) != nullptr) {
-		std::ostringstream os;
-		os <<"table "<<name<<" already defined!";
-		throw new ConfigException(os.str());
+		throw new ConfigException(ConcateToString("table ",name," already defined!"));
 	}
 	pTable->setName(name);
 	m_tableMap[name] = pTable;
@@ -41,15 +39,12 @@ void MetaConfig::load(const std::string& sPath) {
 
 		std::ifstream infile(sPath);
 		if(infile.fail()){
-			std::ostringstream os;
-			os <<"reading config file "<<sPath<<" failed";
-			throw new ConfigException(os.str());
+			throw new ConfigException(ConcateToString("reading config file ",sPath," failed"));
 		}
 		clean();
 		TableInfo* pCurrentTable = nullptr;
 		while (std::getline(infile, line)) {
-			size_t pos = line.find("#");
-			if (pos != std::string::npos) {
+			if (size_t pos = line.find("#"); pos != std::string::npos) {
 				line = line.substr(0, pos);
 			}
 			if (line.find("[table]") != std::string::npos) {
@@ -75,9 +70,7 @@ void MetaConfig::load(const std::string& sPath) {
 		}
 
 	} catch (const std::ifstream::failure& e) {
-		std::ostringstream os;
-		os <<"reading config file failure: "<<e.what();
-		throw new ConfigException(os.str());
+		throw new ConfigException(ConcateToString("reading config file failure: ", e.what()));
 	}
 }
 

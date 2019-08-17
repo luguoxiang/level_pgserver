@@ -39,9 +39,7 @@ public:
 	virtual DBDataType getResultType(size_t index) override;
 
 	virtual std::string getInfoString()  override{
-		std::ostringstream os;
-		os << "SELECT " << m_rows.size();
-		return os.str();
+		return ConcateToString("SELECT ", m_rows.size());
 	}
 
 	virtual void getResult(size_t index, ResultInfo* pInfo) override;

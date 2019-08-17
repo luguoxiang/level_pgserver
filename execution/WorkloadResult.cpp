@@ -27,9 +27,7 @@ int WorkloadResult::addProjection(ParseNode* pNode) {
 }
 
 std::string WorkloadResult::getInfoString() {
-	std::ostringstream os;
-	os << "SELECT " << WorkerManager::getInstance().getWorkerCount();
-	return os.str();
+	return ConcateToString("SELECT ", WorkerManager::getInstance().getWorkerCount());
 }
 
 void WorkloadResult::begin() {
