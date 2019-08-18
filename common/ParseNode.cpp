@@ -1,5 +1,5 @@
 #include "ParseNode.h"
-#include <stdio.h>
+#include <iostream>
 #include <time.h>
 
 extern const char* getTypeName(int type);
@@ -16,9 +16,9 @@ void printTree(ParseNode* pRoot, int level) {
 	int i;
 	const char* pszTypeName;
 	for (i = 0; i < level; ++i)
-		printf("\t");
+		std::cout<<"\t";
 	if (pRoot == 0) {
-		printf("NULL\n");
+		std::cout<<"NULL"<<std::endl;
 		return;
 	}
 	switch (pRoot->m_type) {
@@ -27,20 +27,25 @@ void printTree(ParseNode* pRoot, int level) {
 	case NodeType::INFO:
 	case NodeType::DATATYPE:
 		pszTypeName = getTypeName(pRoot->m_iValue);
-		if (pszTypeName == 0)
-			printf("%c\n", (char) pRoot->m_iValue);
-		else
-			printf("%s\n", pszTypeName);
+		if (pszTypeName == 0){
+			std::cout<<(char) pRoot->m_iValue <<std::endl;
+		}else {
+			std::cout<< pszTypeName <<std::endl;
+		}
 		break;
 	case NodeType::BINARY:
-		printf("\\x");
+		std::cout <<"\\x";
 		for (i = 0; i < pRoot->m_iValue; ++i) {
-			printf("%02x", (unsigned char) pRoot->m_sValue[i]);
+			std::cout << std::hex << pRoot->m_sValue[i];
 		}
-		printf("\n");
+		std::cout <<std::endl;
+		break;
+	case NodeType::PARENT:
+	case NodeType::NAME:
+		std::cout<<pRoot->m_sValue<<std::endl;
 		break;
 	default:
-		printf("%s\n", pRoot->m_sValue.c_str());
+		std::cout<<pRoot->m_sExpr<<std::endl;
 		break;
 	}
 	for (auto pChild : pRoot->m_children) {
@@ -48,11 +53,34 @@ void printTree(ParseNode* pRoot, int level) {
 	}
 }
 
-ParseNode::ParseNode(ParseResult* p, NodeType type, int num) :
-		m_type(type), m_fnBuildPlan(buildPlanDefault) {
-	m_children.reserve(num);
+ParseNode::ParseNode(ParseResult* p,
+		NodeType type,
+		int firstColumn,
+		int lastColumn,
+		std::initializer_list<ParseNode*> children) : m_type(type),
+			m_fnBuildPlan(buildPlanDefault),
+			m_sExpr(p->m_sSql.c_str() + firstColumn - 1,lastColumn - firstColumn + 1 ){
+	m_children.reserve(children.size());
 	if (p != nullptr) {
 		p->m_nodes.emplace_back(this);
+	}
+	for(auto pChild : children) {
+		m_children.emplace_back(pChild);
+	}
+}
+
+ParseNode::ParseNode(ParseResult* p,
+   		NodeType type,
+		const std::string_view sExpr,
+		std::initializer_list<ParseNode*> children) : m_type(type),
+			m_fnBuildPlan(buildPlanDefault),
+			m_sExpr(sExpr) {
+	m_children.reserve(children.size());
+	if (p != nullptr) {
+		p->m_nodes.emplace_back(this);
+	}
+	for(auto pChild : children) {
+		m_children.emplace_back(pChild);
 	}
 }
 
@@ -78,7 +106,9 @@ ParseNode* ParseNode::merge(ParseResult* p, const std::string sNewName, const st
 		m_sValue = sNewName;
 		return this;
 	}
-	return newParentNode(p,sNewName, 1, this);
+	ParseNode* pNode = new ParseNode(p, NodeType::PARENT, m_sExpr, {this});
+	pNode->m_sValue = sNewName;
+	return pNode;
 }
 
 static std::string trim_dup(ParseResult *p, int firstColumn, int lastColumn) {
@@ -101,59 +131,8 @@ static std::string trim_dup(ParseResult *p, int firstColumn, int lastColumn) {
 	return result;
 }
 
-ParseNode* newFuncNode(ParseResult *p, const std::string& sName, int firstColumn,
-		int lastColumn, int num, ...) {
-	va_list va;
-	ParseNode* pNode = new ParseNode(p, NodeType::FUNC, num);
-	pNode->m_sExpr = trim_dup(p, firstColumn, lastColumn);
-	pNode->m_sValue = sName;
-	pNode->m_iValue = 0;
-	va_start(va, num);
-	for (size_t i = 0; i < num; ++i) {
-		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
-	}
-	va_end(va);
-	return pNode;
-}
 
-ParseNode* newExprNode(ParseResult *p, int value, int firstColumn,
-	int lastColumn, int num, ...) {
-	va_list va;
-	ParseNode* pNode = new ParseNode(p, NodeType::OP, num);
-	pNode->m_sExpr = trim_dup(p, firstColumn, lastColumn);
-	pNode->m_iValue = value;
-	va_start(va, num);
-	for (size_t i = 0; i < num; ++i) {
-		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
-	}
-	va_end(va);
-	return pNode;
-}
 
-ParseNode* newIntNode(ParseResult *p, NodeType type, int value, int num, ...) {
-	va_list va;
-	ParseNode* pNode = new ParseNode(p, type, num);
-	pNode->m_iValue = value;
-	va_start(va, num);
-	for (size_t i = 0; i < num; ++i) {
-		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
-	}
-	va_end(va);
-	return pNode;
-}
-
-ParseNode* newParentNode(ParseResult *p, const std::string& sName, int num, ...) {
-	assert(num > 0);
-	va_list va;
-	ParseNode* pNode = new ParseNode(p, NodeType::PARENT, num);
-	pNode->m_sValue = sName;
-	va_start(va, num);
-	for (size_t i = 0; i < num; ++i) {
-		pNode->m_children.emplace_back(va_arg(va, ParseNode*));
-	}
-	va_end(va);
-	return pNode;
-}
 
 int64_t parseTime(const char* pszTime) {
 	int iYear = 0;

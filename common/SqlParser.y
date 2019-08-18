@@ -15,14 +15,13 @@ typedef void* yyscan_t;
 %{
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 
 #include "SqlParser.lex.h"
 
 #define YYLEX_PARAM pResult->m_scanInfo
 
-extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const char* s,...);
+extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const std::string& msg);
 
 struct DbPlanBuilder
 {
@@ -193,7 +192,7 @@ sql_stmt: stmt ';'
 	}
 	| EXPLAIN stmt ';'
 	{
-		$$ = newParentNode(pResult, "ExplainStmt", 1, $2);
+		$$ = newParentNode(pResult, "ExplainStmt", @$.first_column, @$.last_column, { $2 });
 		$$->m_fnBuildPlan = buildPlanForExplain;
 		pResult->m_pResult = $$;
 		YYACCEPT;
@@ -202,7 +201,7 @@ sql_stmt: stmt ';'
 
 merge_stmt: '(' get_stmt ')' UNION ALL '(' get_stmt ')'
 	{
-		$$ = newParentNode(pResult, "UnionAll", 2, $2, $7);
+		$$ = newParentNode(pResult, "UnionAll", @$.first_column, @$.last_column, { $2, $7 });
 		$$->m_fnBuildPlan = buildPlanForUnionAll;
 	}
   ;
@@ -228,79 +227,78 @@ expr: NAME { $$ = $1;}
 	| INTNUM {$$ = $1;}
 	| APPROXNUM {$$ = $1;}
 	| BOOL {$$ = $1;}
-	| NAME '.' NAME {$$ = newExprNode(pResult, '.', @$.first_column, @$.last_column, 2, $1, $3);}
+	| NAME '.' NAME {$$ = newExprNode(pResult, '.', @$.first_column, @$.last_column,{ $1, $3});}
 	| ERROR {$$ = 0;YYERROR;}
 	;
 
-expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_column,  2, $1, $3);}
-	| expr '-' expr {$$ = newExprNode(pResult, '-', @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr '*' expr {$$ = newExprNode(pResult, '*', @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr '/' expr {$$ = newExprNode(pResult, '/', @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr '%' expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr MOD expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, 2, $1, $3);}
+expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_column, {$1, $3});}
+	| expr '-' expr {$$ = newExprNode(pResult, '-', @$.first_column, @$.last_column, { $1, $3});}
+	| expr '*' expr {$$ = newExprNode(pResult, '*', @$.first_column, @$.last_column, { $1, $3});}
+	| expr '/' expr {$$ = newExprNode(pResult, '/', @$.first_column, @$.last_column, { $1, $3});}
+	| expr '%' expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, { $1, $3});}
+	| expr MOD expr {$$ = newExprNode(pResult, '%', @$.first_column, @$.last_column, { $1, $3});}
 	| '-' expr %prec UMINUS {
 		if($2->m_type == NodeType::INT)
 		{
+			$2 = new ParseNode(pResult, NodeType::INT,@$.first_column, @$.last_column);
 			$2->m_iValue = - $2->m_iValue;
-			$2->m_sValue = std::to_string($2->m_iValue);
-			$2->m_sExpr = $2->m_sValue;
 			$$ = $2;
 		}
 		else
 		{
-			$$ = newExprNode(pResult, '-',@$.first_column, @$.last_column, 1, $2);
+			$$ = newExprNode(pResult, '-',@$.first_column, @$.last_column, { $2 });
 		}
 	}
 	| '+' expr %prec UMINUS {
 		$$ = $2;
 	}
-	| expr COMP_LE expr {$$ = newExprNode(pResult, COMP_LE, @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr COMP_LT expr {$$ = newExprNode(pResult, COMP_LT, @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr COMP_EQ expr {$$ = newExprNode(pResult, COMP_EQ, @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr COMP_GE expr {$$ = newExprNode(pResult, COMP_GE, @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr COMP_GT expr {$$ = newExprNode(pResult, COMP_GT, @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr COMP_NE expr {$$ = newExprNode(pResult, COMP_NE, @$.first_column, @$.last_column, 2, $1, $3);}
+	| expr COMP_LE expr {$$ = newExprNode(pResult, COMP_LE, @$.first_column, @$.last_column, {$1, $3});}
+	| expr COMP_LT expr {$$ = newExprNode(pResult, COMP_LT, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_EQ expr {$$ = newExprNode(pResult, COMP_EQ, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_GE expr {$$ = newExprNode(pResult, COMP_GE, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_GT expr {$$ = newExprNode(pResult, COMP_GT, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_NE expr {$$ = newExprNode(pResult, COMP_NE, @$.first_column, @$.last_column, { $1, $3});}
 	| expr LIKE STRING {
 		auto len =  $3->m_sValue.length();
 		if($3->m_sValue[0] != '%' || $3->m_sValue[len - 1] != '%')
 		{
-			yyerror(&@3,pResult, NULL,"missing %% for like '%s'", $3->m_sValue.c_str());
+			yyerror(&@3,pResult, NULL, ConcateToString("missing %% for like ", $3->m_sValue));
 			YYERROR;
 		}
 		$3->m_sValue =  $3->m_sValue.substr(1, len -2);
-		$$ = newExprNode(pResult, LIKE, @$.first_column, @$.last_column, 2, $1, $3);
+		$$ = newExprNode(pResult, LIKE, @$.first_column, @$.last_column, { $1, $3});
 	}
-	| expr ANDOP expr {$$ = newExprNode(pResult, ANDOP, @$.first_column, @$.last_column, 2, $1, $3);}
-	| expr OR expr {$$ = newExprNode(pResult, OR, @$.first_column, @$.last_column, 2, $1, $3);}
+	| expr ANDOP expr {$$ = newExprNode(pResult, ANDOP, @$.first_column, @$.last_column, { $1, $3});}
+	| expr OR expr {$$ = newExprNode(pResult, OR, @$.first_column, @$.last_column, { $1, $3});}
 	| '(' expr ')' { $$ = $2;}
 	;
 
 
 expr: expr IS NULLX {
-		$$ = newExprNode(pResult,COMP_EQ, @$.first_column, @$.last_column, 2, $1, $3); 
+		$$ = newExprNode(pResult,COMP_EQ, @$.first_column, @$.last_column, { $1, $3}); 
 	}
 	| expr IS NOT NULLX {
-		$$ = newExprNode(pResult, COMP_NE, @$.first_column, @$.last_column, 2, $1, $4); 
+		$$ = newExprNode(pResult, COMP_NE, @$.first_column, @$.last_column, { $1, $4}); 
 	}
 	;
 
 expr: expr IN '(' val_list ')' {
 		$4 = $4->merge(pResult,"ValueList", "ValueList");
-		$$ = newExprNode(pResult, IN, @$.first_column, @$.last_column, 2, $1, $4);
+		$$ = newExprNode(pResult, IN, @$.first_column, @$.last_column, { $1, $4});
 		}
 	| expr NOT IN '(' val_list ')' { 
 		$5 = $5->merge(pResult,"ValueList", "ValueList");
-		$$ = newExprNode(pResult, NOT_IN, @$.first_column, @$.last_column, 2, $1, $5);
+		$$ = newExprNode(pResult, NOT_IN, @$.first_column, @$.last_column, { $1, $5});
 	}
 	;
 	
 expr: NAME '(' expr ')' {
-        $$ = newFuncNode(pResult, $1->m_sValue, @$.first_column, @$.last_column, 1, $3);
+        $$ = newFuncNode(pResult, $1->m_sValue, @$.first_column, @$.last_column, { $3 });
 }       
 ;
 
 val_list: expr {$$ = $1;}
-	| expr ',' val_list { $$ = newParentNode(pResult, "ValueList", 2, $1, $3);}
+	| expr ',' val_list { $$ = newParentNode(pResult, "ValueList",@$.first_column, @$.last_column,  {$1, $3});}
 	;
 
 delete_stmt: DELETE FROM table_factor opt_where
@@ -312,7 +310,7 @@ delete_stmt: DELETE FROM table_factor opt_where
 		  yyerror(&@3,pResult,NULL, "Delete is not supported for current database");
 		  YYERROR;
 		}
-		$$ = newParentNode(pResult, "DeleteStmt", 2, pTable, $4);
+		$$ = newParentNode(pResult, "DeleteStmt", @$.first_column, @$.last_column, {pTable, $4 });
 		$$->m_fnBuildPlan = builder.m_pfnDelete;
 	}
 
@@ -326,12 +324,12 @@ update_stmt: UPDATE table_factor SET update_asgn_list opt_where
 
 update_asgn_list:NAME COMP_EQ expr 
 	{
-		$$ = newParentNode(pResult, "AssignValue", 2, $1, $3); 
+		$$ = newParentNode(pResult, "AssignValue",@$.first_column, @$.last_column, {$1, $3}); 
 	}
 	| update_asgn_list ',' NAME COMP_EQ expr
 	{
-		ParseNode* pNode = newParentNode(pResult, "AssignValue", 2, $3, $5); 
-		$$ = newParentNode(pResult, "AssignValueList", 2, $1, pNode);
+		ParseNode* pNode = newParentNode(pResult, "AssignValue",@$.first_column, @$.last_column,  {$3, $5 }); 
+		$$ = newParentNode(pResult, "AssignValueList",@$.first_column, @$.last_column,  {$1, pNode });
 
 	}
 	;
@@ -352,7 +350,7 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
 		}
-		$$ = newParentNode(pResult, "InsertStmt", 3, pTable,$4,$5);
+		$$ = newParentNode(pResult, "InsertStmt",@$.first_column, @$.last_column,  { pTable,$4,$5 });
 		$$->m_fnBuildPlan = builder.m_pfnInsert;
 	}
 	| INSERT INTO table_factor opt_col_names values_stmt
@@ -364,28 +362,28 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
 			YYERROR;
 		}
-		$$ = newParentNode(pResult, "InsertStmt", 3, pTable,$4,$5);
+		$$ = newParentNode(pResult, "InsertStmt",  @$.first_column, @$.last_column, { pTable,$4,$5 });
 		$$->m_fnBuildPlan = builder.m_pfnInsert;
 	}
 	;
 
 show_tables_stmt:SHOW TABLES
 	{
-		$$ = newIntNode(pResult, NodeType::INFO, SHOW, 0);
+		$$ = newInfoNode(pResult,  SHOW,  @$.first_column, @$.last_column);
 		$$->m_fnBuildPlan = buildPlanForShowTables;
 	}
 	;
 	
 desc_table_stmt:DESC table_factor
 	{
-		$$ = newParentNode(pResult, "DescStmt", 1, $2);
+		$$ = newParentNode(pResult, "DescStmt", @$.first_column, @$.last_column, {$2 });
 		$$->m_fnBuildPlan = buildPlanForDesc;
 	}
 	; 
 
 workload_stmt:WORKLOAD
 	{
-		$$ = newIntNode(pResult, NodeType::INFO, WORKLOAD, 0);
+		$$ = newInfoNode(pResult,  WORKLOAD,  @$.first_column, @$.last_column);
 		$$->m_fnBuildPlan = buildPlanForWorkload;	
 	}
  	;
@@ -400,10 +398,10 @@ load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS 
 			YYERROR;
 		}
 
-		ParseNode* pFileNode = newParentNode(pResult, "FileNode", 4, $4, pTable, $8, $12);
+		ParseNode* pFileNode = newParentNode(pResult, "FileNode", @$.first_column, @$.last_column, { $4, pTable, $8, $12 });
 		pFileNode->m_fnBuildPlan = buildPlanForReadFile;	
 
-		$$ = newParentNode(pResult, "Loadtmt", 3, pTable, $8, pFileNode);
+		$$ = newParentNode(pResult, "Loadtmt", @$.first_column, @$.last_column, { pTable, $8, pFileNode });
 		$$->m_fnBuildPlan = builder.m_pfnInsert;
 	}
 	;
@@ -421,17 +419,17 @@ value_list: '(' row_value ')' {
 	}
 	| value_list ',' '(' row_value ')' {
 		$4 = $4->merge(pResult,"ExprList", "ExprList");
-		$$ = newParentNode(pResult, "ValueList", 2, $1, $4);
+		$$ = newParentNode(pResult, "ValueList",@$.first_column, @$.last_column,  { $1, $4 });
 	}
 
 row_value: expr {$$ = $1;}
 	| row_value ',' expr { 
-	$$ = newParentNode(pResult, "ExprList", 2, $1, $3);}
+	$$ = newParentNode(pResult, "ExprList", @$.first_column, @$.last_column,{ $1, $3 });}
 	;
 
 column_list: NAME { $$ = $1;}
 	| column_list ',' NAME {
-		$$ = newParentNode(pResult, "ColumnList", 2, $1, $3);
+		$$ = newParentNode(pResult, "ColumnList", @$.first_column, @$.last_column,{ $1, $3 });
 	}
 	;
 
@@ -472,7 +470,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 				YYERROR;
 			}
 
-			$$ = newParentNode(pResult, "LeftJoinStmt", 4, pProject, pTable, pAlias, pJoin);
+			$$ = newParentNode(pResult, "LeftJoinStmt",@$.first_column, @$.last_column, { pProject, pTable, pAlias, pJoin });
 			$$->m_fnBuildPlan = buildPlanForLeftJoin;
 		}	
 		else
@@ -487,7 +485,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			{
 				//this is a select statement with subquery
 				// children order is important, it is the BuildPlan order
-				$$ = newParentNode(pResult, "SubQueryStmt", 7, pTable, pPredicate, $7, $8, $9, $10, pProject);
+				$$ = newParentNode(pResult, "SubQueryStmt", @$.first_column, @$.last_column, { pTable, pPredicate, $7, $8, $9, $10, pProject});
 				$$->m_fnBuildPlan = buildPlanDefault;
 			}
 			else
@@ -499,7 +497,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			      YYERROR;
 			    }
 	
-					$$ = newParentNode(pResult, "SelectStmt", 7, pProject, pTable, pPredicate, $7, $8, $9, $10);
+					$$ = newParentNode(pResult, "SelectStmt", @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10 });
 					$$->m_fnBuildPlan = builder.m_pfnSelect;
 				}
 		}
@@ -509,17 +507,17 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 join_clause : LEFT JOIN table_factor USING '(' column_list ')'
 	{
 		$6 = $6->merge(pResult,"Using", "ColumnList");
-    	$$ = newParentNode(pResult, "LeftJoin", 2, $3, $6);
+    	$$ = newParentNode(pResult, "LeftJoin", @$.first_column, @$.last_column, { $3, $6});
 	}
 	;
 
 join_list : join_clause
 	{
-		$$ = newParentNode(pResult, "JoinList", 1, $1);
+		$$ = newParentNode(pResult, "JoinList", @$.first_column, @$.last_column, {$1 });
 	}
 	| join_list  join_clause
 	{
-		$$ = newParentNode(pResult, "JoinList", 2, $1, $2);
+		$$ = newParentNode(pResult, "JoinList", @$.first_column, @$.last_column, { $1, $2 });
 	}
 	;
 opt_where:{$$ = 0;}
@@ -532,12 +530,12 @@ opt_where:{$$ = 0;}
 opt_limit:{$$ = 0;}
 	| LIMIT INTNUM OFFSET INTNUM 
 	{
-	       $$ = newParentNode(pResult, "Limit", 2, $2, $4); 
+	       $$ = newParentNode(pResult, "Limit",@$.first_column, @$.last_column, { $2, $4}); 
 		$$->m_fnBuildPlan = buildPlanForLimit;
 	}
 	| LIMIT INTNUM ',' INTNUM 
 	{
-	       $$ = newParentNode(pResult, "Limit", 2, $4, $2); 
+	       $$ = newParentNode(pResult, "Limit",@$.first_column, @$.last_column,{ $4, $2 }); 
 		$$->m_fnBuildPlan = buildPlanForLimit;
 	}
 
@@ -550,17 +548,17 @@ opt_groupby:{$$ = 0;}
 	;
 
 sort_list: expr opt_asc_desc {
-			$$ = newParentNode(pResult, "SortItem", 2, $1, $2); 
+			$$ = newParentNode(pResult, "SortItem", @$.first_column, @$.last_column,{ $1, $2 }); 
 		}
 	| sort_list ',' expr opt_asc_desc { 
-			$$ = newParentNode(pResult, "SortList", 2, $1,
-				newParentNode(pResult, "SortItem", 2, $3, $4));
+			auto pChild =  newParentNode(pResult, "SortItem",@$.first_column, @$.last_column, { $3, $4 });
+			$$ = newParentNode(pResult, "SortList",@$.first_column, @$.last_column, { $1,pChild });
 		}
 	;
 
-opt_asc_desc:{$$ = newIntNode(pResult, NodeType::INFO, ASC, 0);}
-	| ASC {$$ = newIntNode(pResult, NodeType::INFO, ASC, 0);}
-	| DESC {$$ = newIntNode(pResult, NodeType::INFO, DESC, 0);}
+opt_asc_desc:{$$ = newInfoNode(pResult, ASC,  @$.first_column, @$.last_column);}
+	| ASC {$$ = newInfoNode(pResult, ASC,  @$.first_column, @$.last_column);}
+	| DESC {$$ = newInfoNode(pResult, DESC,  @$.first_column, @$.last_column);}
 	;
 
 opt_having:{$$ = 0;}
@@ -582,34 +580,32 @@ opt_orderby:{$$ = 0;}
 projection: expr {
 		$$ = $1; 
 	} | expr AS NAME { 
-		$$ = newIntNode(pResult, NodeType::OP, AS, 2, $1, $3); 
+		$$ = newExprNode(pResult, AS, @$.first_column, @$.last_column, { $1, $3 }); 
 	}
 
 select_expr_list: projection { 
 		$$ = $1;
 	}
 	| select_expr_list ',' projection {
-		$$ = newParentNode(pResult, "ExprList", 2, $1, $3);
+		$$ = newParentNode(pResult, "ExprList", @$.first_column, @$.last_column, { $1, $3 });
 	}
 	| '*' {
-		$$ = newIntNode(pResult, NodeType::INFO, ALL_COLUMN, 0);
+		$$ = newInfoNode(pResult, ALL_COLUMN,  @$.first_column, @$.last_column);
 	}
 	;
 
 table_factor: NAME { 
 		$$ = $1;
 	}
-	| NAME '.' NAME {$$ = newExprNode(pResult, '.', @$.first_column, @$.last_column, 2, $1, $3);}
+	| NAME '.' NAME {$$ = newExprNode(pResult, '.', @$.first_column, @$.last_column, { $1, $3});}
 	;
 
 %%
 
-void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,const char* s, ...)
+void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,const std::string& msg)
 {
 	p->m_pResult = 0;
-	va_list ap;
-	va_start(ap, s);
-	vsnprintf(p->m_szErrorMsg, MAX_ERROR_MSG, s, ap);
+	p->m_sError = msg;
 	p->m_iStartCol = yylloc->first_column;
 	p->m_iEndCol = yylloc->last_column;
 	p->m_iLine = yylloc->first_line;
@@ -633,7 +629,7 @@ void parseSql(ParseResult* p, const std::string_view sql)
 {
 	p->m_pResult = nullptr;
 	p->m_sSql.assign(sql.data(), sql.length());
-	p->m_szErrorMsg[0]=0;
+	p->m_sError = "";
 	
 	p->m_yycolumn = 1;
 	p->m_yylineno = 1;
@@ -644,5 +640,5 @@ void parseSql(ParseResult* p, const std::string_view sql)
 	yy_switch_to_buffer(bp, p->m_scanInfo);
 	yyparse(p, p->m_scanInfo);
 	yy_delete_buffer(bp, p->m_scanInfo);
-	//printTree(p->m_pResult, 0);
+	printTree(p->m_pResult, 0);
 }

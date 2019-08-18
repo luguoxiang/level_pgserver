@@ -35,7 +35,7 @@ public:
 	}
 
 	virtual int addProjection(ParseNode* pNode)override{
-		auto iter = m_map.find(pNode->m_sExpr);
+		auto iter = m_map.find(pNode->m_sValue);
 		if (iter == m_map.end())
 			return -1;
 		return iter->second;

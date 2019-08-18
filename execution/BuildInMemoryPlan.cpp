@@ -64,9 +64,8 @@ void buildPlanForProjection(ParseNode* pNode) {
 					"select * is not supported in current projection context");
 		}
 		for (auto& column: columns) {
-			ParseNode node(nullptr, NodeType::NAME, 0);
+			ParseNode node(nullptr, NodeType::NAME, column.c_str());
 			node.m_sValue = column;
-			node.m_sExpr = column;
 			pProjPlan->project(&node, column);
 		}
 		return;

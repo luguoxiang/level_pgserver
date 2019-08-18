@@ -4,13 +4,12 @@
 %{
 #include "ParseNode.h"
 #include "SqlParser.tab.h"
-#include <stdarg.h>
 #include <string.h>
 #include <assert.h>
 #include <time.h>
 
 
-extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner, const char* s,...);
+extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner, const std::string& msg);
 
 #define YY_USER_ACTION yylloc->first_line = yylloc->last_line = ((ParseResult*)yyextra)->m_yylineno;\
 	yylloc->first_column = ((ParseResult*)yyextra)->m_yycolumn;\
@@ -61,7 +60,7 @@ TERMINATED {return TERMINATED;}
 IS {return IS;}
 NOT 	{return NOT;}
 NULL 	{ 
-	yylval->pNode = new ParseNode((ParseResult*)yyextra, NodeType::NONE,0);
+	yylval->pNode = new ParseNode((ParseResult*)yyextra, NodeType::NONE, "NULL");
 	return NULLX;
 }
 ON 	{ return ON;}
@@ -91,14 +90,13 @@ USING {return USING;}
 
 [0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::INT,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::INT,yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
-	pNode->m_sExpr = yytext;
 	errno = 0;
-	pNode->m_iValue = std::stoi(pNode->m_sExpr);
+	pNode->m_iValue = strtol(yytext, 0, 10);
 	if (errno != 0)
 	{
-		yyerror(yylloc, pResult, NULL, "Integer Out of Range: %s", yytext);
+		yyerror(yylloc, pResult, NULL, ConcateToString("Integer Out of Range:", yytext));
 		return ERROR;
 	}
 	else return INTNUM;
@@ -109,58 +107,51 @@ USING {return USING;}
 [0-9]+"."[0-9]*E[-+]?[0-9]+ |
 "."[0-9]+E[-+]?[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::FLOAT,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	pNode->m_sValue = yytext;
-	pNode->m_sExpr = pNode->m_sValue;
 	return APPROXNUM;
 }
 
 TRUE {
-	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,0);
+	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL, "true");
 	pNode->m_iValue = 1;
 	yylval->pNode = pNode;
-	pNode->m_sExpr = "true";
 	return BOOL;
 }
 UNKNOWN {
-	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,0);
+	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,"unknown");
 	pNode->m_iValue = -1;
 	yylval->pNode = pNode;
-	pNode->m_sExpr = "unknown";
 	return BOOL;
 }
 FALSE {
-	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,0);
+	ParseNode* pNode = new ParseNode((ParseResult*)yyextra, NodeType::BOOL,"false");
 	pNode->m_iValue = 0;
 	yylval->pNode = pNode;
-	pNode->m_sExpr = "false";
 	return BOOL;
 }
 
 '(\\.|''|[^'\n])*'|\"(\\.|\"\"|[^"\n])*\" {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::STR,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::STR, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 
 	//remove first and last quote charactors
 	pNode->m_sValue.assign(yytext + 1, strlen(yytext) - 2);
-	pNode->m_sExpr = pNode->m_sValue;
-	pNode->m_iValue = 0;
 
 	return STRING;
 }
 
-'(\\.|[^'\n])*$ {yyerror(yylloc, (ParseResult*)yyextra,NULL, "Unterminated string %s", yytext);}
+'(\\.|[^'\n])*$ {yyerror(yylloc, (ParseResult*)yyextra,NULL, ConcateToString("Unterminated string ", yytext));}
 
-\"(\\.|[^"\n])*$ {yyerror(yylloc, (ParseResult*)yyextra, NULL,"Unterminated string %s", yytext);}
+\"(\\.|[^"\n])*$ {yyerror(yylloc, (ParseResult*)yyextra, NULL,ConcateToString("Unterminated string ", yytext));}
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::BINARY,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::BINARY, yylloc->first_column, yylloc->last_column);
 
 	pNode->m_sValue = parseBinary(yytext + 1);
-	pNode->m_sExpr = yytext + 1;
 
 	yylval->pNode = pNode;
 	return BINARY;
@@ -168,14 +159,12 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 
 D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE,0);
-
-	pNode->m_sExpr = yytext + 1;
+	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE,yylloc->first_column, yylloc->last_column);
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, pResult ,NULL, "Wrong date: %s", yytext);
+		yyerror(yylloc, pResult ,NULL, ConcateToString("Wrong date: ", yytext));
 		return ERROR;
 	}
 	
@@ -184,13 +173,12 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 }
 D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE,0);
-	pNode->m_sExpr = yytext + 1;
+	ParseNode* pNode = new ParseNode(pResult, NodeType::DATE, yylloc->first_column, yylloc->last_column);
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, pResult, NULL, "Wrong date: %s", yytext);
+		yyerror(yylloc, pResult, NULL, ConcateToString("Wrong date: ", yytext));
 		return ERROR;
 	}
 
@@ -213,25 +201,23 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 [A-Za-z_][A_Za-z0-9_]* {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::NAME,0);
-	yylval->pNode = pNode;
+	ParseNode* pNode = new ParseNode(pResult, NodeType::NAME, yylloc->first_column, yylloc->last_column);
 	pNode->m_sValue = yytext;
-	pNode->m_sExpr = pNode->m_sValue;
+	yylval->pNode = pNode;
 	return NAME;
 }
 
 $[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = new ParseNode(pResult, NodeType::PARAM,0);
+	ParseNode* pNode = new ParseNode(pResult, NodeType::PARAM, "unbound");
 	yylval->pNode = pNode;
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)
 	{
-		yyerror(yylloc, pResult,NULL, "Illegal prepared statement param: %s", yytext);
+		yyerror(yylloc, pResult,NULL,ConcateToString( "Illegal prepared statement param: ", yytext));
 		return ERROR;
 	}
 	pNode->m_iValue = index;
-	pNode->m_sExpr = "unbound";
 	return PARAM;
 }
 
@@ -240,7 +226,7 @@ $[0-9]+ {
 
 <<EOF>>		{return ';';}
 .		{
-	yyerror(yylloc, (ParseResult*)yyextra,NULL, "mystery charactor '%c'", *yytext);
+	yyerror(yylloc, (ParseResult*)yyextra,NULL, ConcateToString("mystery charactor ", *yytext));
 	return ERROR;
 }
 %%

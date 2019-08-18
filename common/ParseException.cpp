@@ -6,7 +6,7 @@ ParseException::ParseException(const std::string& msg) : m_sErrorMsg(msg) {
 }
 
 ParseException::ParseException(ParseResult* pResult) :
-		m_sErrorMsg(pResult->m_szErrorMsg), m_iStartCol(pResult->m_iStartCol), m_iEndCol(
+		m_sErrorMsg(pResult->m_sError), m_iStartCol(pResult->m_iStartCol), m_iEndCol(
 				pResult->m_iEndCol), m_iLine(pResult->m_iLine) {
 }
 

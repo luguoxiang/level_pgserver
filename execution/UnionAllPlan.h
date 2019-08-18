@@ -8,7 +8,6 @@
 #include <map>
 #include <memory>
 #include <sstream>
-#include <stdarg.h>
 
 class UnionAllPlan: public ExecutionPlan {
 public:
