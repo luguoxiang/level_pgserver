@@ -14,7 +14,7 @@ void SortPlan::begin() {
 	while (m_pPlan->next()) {
 		RowInfo* pRow = new RowInfo();
 		pRow->reserve(m_proj.size());
-
+		//TODO: COPY row to execution buffer!
 		m_rows.push_back(pRow);
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			ResultInfo result;

@@ -285,11 +285,11 @@ expr: expr IS NULLX {
 	;
 
 expr: expr IN '(' val_list ')' {
-		$4->remove("ValueList", "ValueList");
+		$4 = $4->merge(pResult,"ValueList", "ValueList");
 		$$ = newExprNode(pResult, IN, @$.first_column, @$.last_column, 2, $1, $4);
 		}
 	| expr NOT IN '(' val_list ')' { 
-		$5->remove("ValueList", "ValueList");
+		$5 = $5->merge(pResult,"ValueList", "ValueList");
 		$$ = newExprNode(pResult, NOT_IN, @$.first_column, @$.last_column, 2, $1, $5);
 	}
 	;
@@ -318,7 +318,7 @@ delete_stmt: DELETE FROM table_factor opt_where
 
 update_stmt: UPDATE table_factor SET update_asgn_list opt_where
 	{
-		$4->remove("AssignValueList", "AssignValueList");
+		$4 = $4->merge(pResult,"AssignValueList", "AssignValueList");
 		yyerror(&@1,pResult,NULL, "Update is not supported for current database");
 		YYERROR;
 	}
@@ -337,7 +337,7 @@ update_asgn_list:NAME COMP_EQ expr
 	;
 values_stmt:VALUES value_list
 	{
-		$2->remove("ValueList","ValueList");
+		$2 = $2->merge(pResult,"ValueList","ValueList");
 		$$ = $2;
 		$$->m_fnBuildPlan = buildPlanForConst;
 	}
@@ -410,17 +410,17 @@ load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS 
 	
 opt_col_names: /* empty */{$$ = 0;}
 	| '(' column_list ')' {
-		$2->remove("ColumnList", "ColumnList");
+		$2 = $2->merge(pResult,"ColumnList", "ColumnList");
 		$$ = $2;
 	}
 	;
 
 value_list: '(' row_value ')' { 
-		$2->remove("ExprList", "ExprList");
+		$2 = $2->merge(pResult,"ExprList", "ExprList");
 		$$ = $2;
 	}
 	| value_list ',' '(' row_value ')' {
-		$4->remove("ExprList", "ExprList");
+		$4 = $4->merge(pResult,"ExprList", "ExprList");
 		$$ = newParentNode(pResult, "ValueList", 2, $1, $4);
 	}
 
@@ -449,7 +449,7 @@ opt_join: {$$ = 0;}
 select_stmt: SELECT select_expr_list FROM table_or_query opt_alias 
 			opt_where opt_groupby opt_having opt_orderby opt_limit opt_join
 	{
-		$2->remove("SelectExprList","ExprList");
+		$2 = $2->merge(pResult, "SelectExprList","ExprList");
 		ParseNode* pProject = $2;
 		ParseNode* pTable = $4;
 		ParseNode* pAlias = $5;
@@ -460,7 +460,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 		if(pJoin != 0)
 		{
 			//This is a left join statement
-			pJoin->remove("JoinList", "JoinList");
+			pJoin = pJoin->merge(pResult,"JoinList", "JoinList");
 			if(pAlias == NULL)
 			{
 				yyerror(&@5,pResult,NULL, "table in left join statement  must have a alias name");
@@ -508,7 +508,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 
 join_clause : LEFT JOIN table_factor USING '(' column_list ')'
 	{
-		$6->remove("Using", "ColumnList");
+		$6 = $6->merge(pResult,"Using", "ColumnList");
     	$$ = newParentNode(pResult, "LeftJoin", 2, $3, $6);
 	}
 	;
@@ -543,7 +543,7 @@ opt_limit:{$$ = 0;}
 
 opt_groupby:{$$ = 0;}
 	| GROUP BY column_list {
-		$3->remove("GroupBy",  "ColumnList");
+		$3 = $3->merge(pResult,"GroupBy",  "ColumnList");
 		$$ = $3;
 		$$->m_fnBuildPlan = buildPlanForGroupBy;
 	}
@@ -573,7 +573,7 @@ opt_having:{$$ = 0;}
 	
 opt_orderby:{$$ = 0;}
 	| ORDER BY sort_list {
-		$3->remove("OrderBy", "SortList");
+		$3 = $3->merge(pResult,"OrderBy", "SortList");
 		$$ = $3;
 		$$->m_fnBuildPlan = buildPlanForOrderBy;
 	}
@@ -644,4 +644,5 @@ void parseSql(ParseResult* p, const std::string_view sql)
 	yy_switch_to_buffer(bp, p->m_scanInfo);
 	yyparse(p, p->m_scanInfo);
 	yy_delete_buffer(bp, p->m_scanInfo);
+	//printTree(p->m_pResult, 0);
 }

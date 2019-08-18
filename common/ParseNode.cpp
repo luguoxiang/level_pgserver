@@ -71,13 +71,14 @@ bool ParseNode::_collect(std::vector<ParseNode*>& result,
 
 }
 
-void ParseNode::remove(const std::string sNewName, const std::string sRemove) {
+ParseNode* ParseNode::merge(ParseResult* p, const std::string sNewName, const std::string sRemove) {
 	std::vector<ParseNode*> new_children;
 	if (this->_collect(new_children, sRemove)) {
 		m_children.swap(new_children);
 		m_sValue = sNewName;
+		return this;
 	}
-
+	return newParentNode(p,sNewName, 1, this);
 }
 
 static std::string trim_dup(ParseResult *p, int firstColumn, int lastColumn) {

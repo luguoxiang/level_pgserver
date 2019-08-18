@@ -62,7 +62,7 @@ public:
 	std::string m_sExpr;
 
 	BuildPlanFunc m_fnBuildPlan;
-    void remove(const std::string sNewName, const std::string sRemove);
+	ParseNode* merge(ParseResult* p, const std::string sNewName, const std::string sRemove);
 
     const size_t children() const {return m_children.size();}
 
