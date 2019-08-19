@@ -46,7 +46,7 @@ void GroupByPlan::begin() {
 	m_bHasMore = m_pPlan->next();
 	if (m_bHasMore) {
 		for (size_t i = 0; i < m_groupby.size(); ++i) {
-			ResultInfo result;
+			ExecutionResult result;
 			m_pPlan->getResult(m_groupby[i], &result);
 			DBDataType type = m_pPlan->getResultType(m_groupby[i]);
 			m_last.push_back(result);
@@ -72,7 +72,7 @@ bool GroupByPlan::next() {
 		if (!m_bHasMore)
 			break;
 		for (size_t i = 0; i < m_last.size(); ++i) {
-			ResultInfo result;
+			ExecutionResult result;
 			m_pPlan->getResult(m_groupby[i], &result);
 			if (result.compare(m_last[i], m_type[i]) != 0) {
 				m_last[i] = result;
@@ -88,7 +88,7 @@ bool GroupByPlan::next() {
 					continue;
 				}
 				DBDataType type = m_pPlan->getResultType(proj.m_iIndex);
-				ResultInfo info;
+				ExecutionResult info;
 				m_pPlan->getResult(proj.m_iIndex, &info);
 				if (proj.m_func == FuncType::MIN || proj.m_func == FuncType::MAX) {
 					int n = info.compare(proj.m_value, type);

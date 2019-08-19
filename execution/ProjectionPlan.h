@@ -85,7 +85,7 @@ public:
 		return m_pPlan->getInfoString();
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo)override {
+	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
 		assert(index < m_proj.size());
 		size_t iSubIndex = m_proj[index].m_iSubIndex;
 		return m_pPlan->getResult(iSubIndex, pInfo);

@@ -59,7 +59,7 @@ public:
 		return ConcateToString("SELECT ", m_iCurrentRow);
 	}
 
-	virtual void getResult(size_t columnIndex, ResultInfo* pInfo) override;
+	virtual void getResult(size_t columnIndex, ExecutionResult* pInfo) override;
 
 private:
 	std::unique_ptr<ExecutionPlan> m_pLeft;

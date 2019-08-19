@@ -58,7 +58,7 @@ bool ShowColumns::next() {
 	return m_iIndex <= m_pEntry->getColumnCount();
 }
 
-void ShowColumns::getResult(size_t index, ResultInfo* pInfo) {
+void ShowColumns::getResult(size_t index, ExecutionResult* pInfo) {
 	DBColumnInfo* pColumn = m_pEntry->getColumn(m_iIndex - 1);
 	assert(pColumn);
 

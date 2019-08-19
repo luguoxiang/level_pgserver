@@ -16,7 +16,7 @@ bool ShowTables::next() {
 	return m_iIndex <= m_tables.size();
 }
 
-void ShowTables::getResult(size_t index, ResultInfo* pInfo) {
+void ShowTables::getResult(size_t index, ExecutionResult* pInfo) {
 	TableInfo* pTable = m_tables[m_iIndex - 1];
 	if (index == 0) {
 		pInfo->setString(pTable->getName());

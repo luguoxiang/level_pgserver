@@ -50,7 +50,7 @@ DBDataType WorkloadResult::getResultType(size_t index) {
 	return DBDataType::INT32;
 }
 
-void WorkloadResult::getResult(size_t index, ResultInfo* pInfo) {
+void WorkloadResult::getResult(size_t index, ExecutionResult* pInfo) {
 	WorkThreadInfo* pWorker = WorkerManager::getInstance().getWorker(
 			m_iIndex - 1);
 

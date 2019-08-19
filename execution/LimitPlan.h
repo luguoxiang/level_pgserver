@@ -46,7 +46,7 @@ public:
 		return ConcateToString("SELECT ", m_iCurrent - m_iOffset);
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo)override {
+	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
 		m_pPlan->getResult(index, pInfo);
 	}
 

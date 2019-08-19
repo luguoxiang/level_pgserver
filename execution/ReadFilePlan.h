@@ -45,7 +45,7 @@ public:
 		return ConcateToString("SELECT ", m_iRowCount);
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo)override {
+	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
 		*pInfo = m_result[index];
 	}
 
@@ -59,12 +59,12 @@ public:
 
 	void addColumn(DBColumnInfo* pColumn) {
 		m_columns.push_back(pColumn);
-		m_result.push_back(ResultInfo());
+		m_result.push_back(ExecutionResult());
 	}
 
 private:
 	std::vector<DBColumnInfo*> m_columns;
-	std::vector<ResultInfo> m_result;
+	std::vector<ExecutionResult> m_result;
 	int64_t m_iRowCount = 0;
 	std::string m_sPath;
 	std::string m_line;

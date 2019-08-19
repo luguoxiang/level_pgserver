@@ -82,7 +82,7 @@ public:
 		return m_pPlan->getInfoString();
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo) override;
+	virtual void getResult(size_t index, ExecutionResult* pInfo) override;
 
 	virtual void getAllColumns(std::vector<std::string>& columns)  override{
 		return m_pPlan->getAllColumns(columns);
@@ -105,7 +105,7 @@ private:
 
 	std::unique_ptr<ExecutionPlan> m_pPlan;
 
-	using RowInfo = std::vector<ResultInfo>;
+	using RowInfo = std::vector<ExecutionResult>;
 	std::vector<RowInfo*> m_rows;
 	std::vector<SortProjection> m_proj;
 	std::vector<SortSpec> m_sort;

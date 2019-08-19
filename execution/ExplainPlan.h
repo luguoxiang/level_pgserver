@@ -44,7 +44,7 @@ public:
 		return ConcateToString("EXPLAIN ", m_rows.size());
 	}
 
-	virtual void getResult(size_t columnIndex, ResultInfo* pInfo)override;
+	virtual void getResult(size_t columnIndex, ExecutionResult* pInfo)override;
 
 private:
 	std::vector<std::string> m_rows;

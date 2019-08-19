@@ -17,7 +17,7 @@ void SortPlan::begin() {
 		//TODO: COPY row to execution buffer!
 		m_rows.push_back(pRow);
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			ResultInfo result;
+			ExecutionResult result;
 			int iSubIndex = m_proj[i].m_iSubIndex;
 			m_pPlan->getResult(iSubIndex, &result);
 			pRow->push_back(result);
@@ -30,8 +30,8 @@ void SortPlan::begin() {
 				for (size_t i = 0; i < specList.size(); ++i) {
 					const SortSpec& spec = specList[i];
 					assert(spec.m_iIndex < iColumnNum);
-					const ResultInfo& a = pRow1->at(spec.m_iIndex);
-					const ResultInfo& b = pRow2->at(spec.m_iIndex);
+					const ExecutionResult& a = pRow1->at(spec.m_iIndex);
+					const ExecutionResult& b = pRow2->at(spec.m_iIndex);
 					int n = a.compare(b, spec.m_type);
 					if (n == 0)
 					continue;
@@ -68,7 +68,7 @@ bool SortPlan::next() {
 	return true;
 }
 
-void SortPlan::getResult(size_t index, ResultInfo* pInfo) {
+void SortPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	assert(m_iCurrent > 0);
 	*pInfo = m_rows[m_iCurrent - 1]->at(index);
 }

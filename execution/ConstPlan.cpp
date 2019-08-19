@@ -28,7 +28,7 @@ DBDataType ConstPlan::getResultType(size_t index) {
 	}
 }
 
-void ConstPlan::getResult(size_t index, ResultInfo* pInfo) {
+void ConstPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	assert(m_iCurrent > 0 && m_iCurrent <= m_rows.size());
 	ParseNode* pRow = m_rows[m_iCurrent - 1];
 	assert(pRow->children() == m_columns.size());

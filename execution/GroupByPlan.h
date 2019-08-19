@@ -18,7 +18,7 @@ public:
 		std::string m_sName;
 		size_t m_iIndex;
 		size_t m_iCount;
-		ResultInfo m_value;
+		ExecutionResult m_value;
 	};
 
 	virtual void explain(std::vector<std::string>& rows) override;
@@ -48,7 +48,7 @@ public:
 		}
 	}
 
-	virtual void getResult(size_t index, ResultInfo* pInfo)override {
+	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
 		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
 		case FuncType::FIRST:
@@ -107,7 +107,7 @@ private:
 	size_t m_iRows = 0;
 	bool m_bHasMore = false;
 
-	std::vector<ResultInfo> m_last;
+	std::vector<ExecutionResult> m_last;
 	std::vector<DBDataType> m_type;
 	std::map<std::string, FuncType> m_typeMap;
 };

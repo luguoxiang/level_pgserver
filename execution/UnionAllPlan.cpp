@@ -7,7 +7,7 @@
 
 
 
-void UnionAllPlan::getResult(size_t index, ResultInfo* pInfo) {
+void UnionAllPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	if (!m_bLeftDone)
 		return m_pLeft->getResult(index, pInfo);
 	else

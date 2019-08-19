@@ -26,12 +26,6 @@ enum class NodeType {
 	PARAM,
 };
 
-#define OP_CODE(pNode) (pNode->m_iValue)
-#define FUNC_CODE(pNode) (pNode->m_iValue)
-
-#define BUILD_PLAN(pNode) \
-	if(pNode) pNode->m_fnBuildPlan(pNode)
-
 constexpr int SQL_SELECT_PROJECT = 0;
 constexpr int SQL_SELECT_TABLE = 1;
 constexpr int SQL_SELECT_PREDICATE = 2;
@@ -83,6 +77,13 @@ private:
     bool _collect(std::vector<ParseNode*>& children, const std::string sRemove);
 
 };
+
+inline int OP_CODE(ParseNode* pNode) {return pNode->m_iValue;}
+inline int FUNC_CODE(ParseNode* pNode) { return pNode->m_iValue;}
+
+inline void BUILD_PLAN(ParseNode* pNode) {
+	if(pNode) pNode->m_fnBuildPlan(pNode);
+}
 
 
 struct ParseResult {

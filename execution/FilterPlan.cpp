@@ -30,7 +30,7 @@ bool FilterPlan::next() {
 			PredicateInfo& info = m_predicate[i];
 			int iSubIndex = info.m_iSubIndex;
 			DBDataType type = m_pPlan->getResultType(iSubIndex);
-			ResultInfo result;
+			ExecutionResult result;
 			m_pPlan->getResult(iSubIndex, &result);
 
 			if (result.isNull()) {
