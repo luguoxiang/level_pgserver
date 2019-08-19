@@ -11,7 +11,6 @@ int main(int argc, char** argv) {
 	google::InitGoogleLogging(argv[0]);
 
 	LOG(INFO)<< "csv2pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
-	LOG(INFO)<< "timeout "<<MetaConfig::getInstance().getTimeout();
 
 	try {
 		MetaConfig::getInstance().load("meta.conf");

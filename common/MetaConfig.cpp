@@ -54,15 +54,38 @@ void MetaConfig::load(const std::string& sPath) {
 			std::regex rgx(R"(([^=\s]+)\s*=\s*([^=\s]+))");
 			std::smatch matches;
 			if (std::regex_search(line, matches, rgx)) {
-				if (pCurrentTable != nullptr && matches.size() == 3) {
+				if (matches.size() == 3) {
 					std::string sKey = matches[1];
 					std::string sValue = matches[2];
+
+					if (pCurrentTable == nullptr) {
+						if (sKey == "worker_num") {
+							m_iWorkerNum = std::stol(sValue);
+							LOG(INFO) << "worker_num = "<< m_iWorkerNum;
+
+						} else if(sKey == "timeout"){
+							m_iTimeout = std::stol(sValue);
+							LOG(INFO) << "timeout = "<< m_iTimeout;
+
+						}else if(sKey == "network_buffer_size"){
+							m_iNetBuffer = std::stol(sValue);
+							LOG(INFO) << "network_buffer_size = "<< m_iNetBuffer;
+
+						}else if(sKey == "execution_buffer") {
+							m_iExecBuffer = std::stol(sValue);
+							LOG(INFO) << "execution_buffer = "<< m_iExecBuffer;
+
+						} else {
+							LOG(WARNING) << "Unknown config attribute "<< sKey;
+						}
+						continue;
+					}
 					if (sKey == "name") {
 						addTable(sValue, pCurrentTable);
 					} else if (sKey == "column") {
 						pCurrentTable->addColumn(this, sValue);
 					} else {
-						LOG(INFO) <<"add attribute %s=%s to table "<< sKey << " = " << sValue << " to table " << pCurrentTable->getName();
+						LOG(INFO) <<"add attribute "<< sKey << " = " << sValue << " to table " << pCurrentTable->getName();
 						pCurrentTable->addAttribute(sKey, sValue);
 					}
 				}
