@@ -344,7 +344,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 	for (size_t i = 0; i < columnNum; ++i) {
 		DBDataType type = pPlan->getResultType(i);
 
-		ExecutionPlan::ResultInfo info;
+		ResultInfo info;
 		try {
 			pPlan->getResult(i, &info);
 		} catch (...) {

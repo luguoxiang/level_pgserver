@@ -64,54 +64,54 @@ void ShowColumns::getResult(size_t index, ResultInfo* pInfo) {
 
 	switch (index) {
 	case 0:
-		pInfo->m_result = pColumn->m_sName;
+		pInfo->setString(pColumn->m_sName);
 		break;
 	case 1:
 		switch (pColumn->m_type) {
 		case DBDataType::INT8:
-			pInfo->m_result = "int8";
+			pInfo->setString("int8");
 			break;
 		case DBDataType::INT16:
-			pInfo->m_result = "int16";
+			pInfo->setString("int16");
 			break;
 		case DBDataType::INT32:
-			pInfo->m_result = "int32";
+			pInfo->setString("int32");
 			break;
 		case DBDataType::INT64:
-			pInfo->m_result = "int64";
+			pInfo->setString("int64");
 			break;
 		case DBDataType::STRING:
-			pInfo->m_result = "varchar";
+			pInfo->setString("varchar");
 			break;
 		case DBDataType::DATETIME:
-			pInfo->m_result = "datetime";
+			pInfo->setString("datetime");
 			break;
 		case DBDataType::DATE:
-			pInfo->m_result = "date";
+			pInfo->setString("date");
 			break;
 		case DBDataType::DOUBLE:
-			pInfo->m_result = "double";
+			pInfo->setString("double");
 			break;
 		case DBDataType::BYTES:
-			pInfo->m_result = "bytes";
+			pInfo->setString("bytes");
 			break;
 		default:
-			pInfo->m_result = "unknown";
+			pInfo->setString("unknown");
 			break;
 		}
 		break;
 	case 2:
 		if (pColumn->m_iKeyIndex < 0) {
-			pInfo->m_result = nullptr;
+			pInfo->setNull();
 		} else {
-			pInfo->m_result = int64_t(pColumn->m_iKeyIndex);
+			pInfo->setInt(pColumn->m_iKeyIndex);
 		}
 		break;
 	case 3:
 		if (pColumn->m_iLen < 0) {
-			pInfo->m_result = nullptr;
+			pInfo->setNull();
 		} else {
-			pInfo->m_result = int64_t(pColumn->m_iLen);
+			pInfo->setInt(pColumn->m_iLen);
 		}
 		break;
 	default:

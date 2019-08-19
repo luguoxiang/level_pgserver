@@ -10,7 +10,7 @@
 void ExplainPlan::getResult(size_t index, ResultInfo* pInfo) {
 	assert(m_iCurrentRow <= m_rows.size());
 	assert(m_iCurrentRow > 0);
-	pInfo->m_result = m_rows[m_iCurrentRow - 1];
+	pInfo->setString(m_rows[m_iCurrentRow - 1]);
 }
 
 void ExplainPlan::begin() {

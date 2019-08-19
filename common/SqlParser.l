@@ -4,8 +4,7 @@
 %{
 #include "ParseNode.h"
 #include "SqlParser.tab.h"
-#include <string.h>
-#include <assert.h>
+#include <cassert>
 #include <time.h>
 
 
@@ -92,14 +91,14 @@ USING {return USING;}
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = new ParseNode(pResult, NodeType::INT,yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
-	errno = 0;
-	pNode->m_iValue = strtol(yytext, 0, 10);
-	if (errno != 0)
-	{
-		yyerror(yylloc, pResult, NULL, ConcateToString("Integer Out of Range:", yytext));
+	try {
+		pNode->m_iValue = std::stol(yytext);
+		return INTNUM;
+	} catch (const std::exception& e) {
+		yyerror(yylloc, pResult, NULL, e.what());
 		return ERROR;
 	}
-	else return INTNUM;
+	
 }
 [0-9]+"."[0-9]* | 
 "."[0-9]+ |

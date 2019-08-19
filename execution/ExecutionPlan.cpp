@@ -34,7 +34,7 @@ int ExecutionPlan::getResultColumns() {
 void ExecutionPlan::getResult(size_t index, ResultInfo* pInfo) {
 }
 
-bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
+bool ResultInfo::div(size_t value, DBDataType type) {
 	if (value == 0) {
 		throw new ExecutionException("Divide zero");
 	}
@@ -67,7 +67,7 @@ bool ExecutionPlan::ResultInfo::div(size_t value, DBDataType type) {
 	}
 }
 
-bool ExecutionPlan::ResultInfo::add(const ResultInfo& result, DBDataType type) {
+bool ResultInfo::add(const ResultInfo& result, DBDataType type) {
 	switch (type) {
 	case DBDataType::DOUBLE: {
 		m_result = getDouble() + result.getDouble();
@@ -84,7 +84,7 @@ bool ExecutionPlan::ResultInfo::add(const ResultInfo& result, DBDataType type) {
 	}
 }
 
-int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
+int ResultInfo::compare(const ResultInfo& result,
 		DBDataType type) const {
 	if (isNull() && result.isNull())
 		return 0;
@@ -128,7 +128,7 @@ int ExecutionPlan::ResultInfo::compare(const ResultInfo& result,
 	}
 }
 
-int ExecutionPlan::ResultInfo::compare(const ParseNode* pValue,
+int ResultInfo::compare(const ParseNode* pValue,
 		DBDataType type) const {
 	if (isNull()) {
 		return pValue->m_type == NodeType::NONE ? 0 : -1;

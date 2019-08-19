@@ -13,9 +13,7 @@ typedef void* yyscan_t;
 }
 
 %{
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <array>
 
 #include "SqlParser.lex.h"
 
