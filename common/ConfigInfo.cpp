@@ -50,8 +50,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 				pColumn->m_iLen = -1;
 				break;
 			default:
-				pColumn->m_iLen = 0;
-				break;
+				throw new ConfigException(ConcateToString("Unknown column type ", matches[2]));
 			}
 		}
 	} else {
