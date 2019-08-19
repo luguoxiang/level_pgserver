@@ -40,6 +40,8 @@ bool ExecutionResult::add(const ExecutionResult& result, DBDataType type) {
 		m_result = getDouble() + result.getDouble();
 		return true;
 	}
+	case DBDataType::DATE:
+	case DBDataType::DATETIME:
 	case DBDataType::INT16:
 	case DBDataType::INT32:
 	case DBDataType::INT64: {
@@ -74,6 +76,8 @@ int ExecutionResult::compare(const ExecutionResult& result,
 		else
 			return 1;
 	}
+	case DBDataType::DATE:
+	case DBDataType::DATETIME:
 	case DBDataType::INT8:
 	case DBDataType::INT16:
 	case DBDataType::INT32:
@@ -99,6 +103,8 @@ int ExecutionResult::compare(const ParseNode* pValue,
 		return pValue->m_type == NodeType::NONE ? 0 : -1;
 	}
 	switch (type) {
+	case DBDataType::DATE:
+	case DBDataType::DATETIME:
 	case DBDataType::INT8:
 	case DBDataType::INT16:
 	case DBDataType::INT32:
@@ -121,8 +127,6 @@ int ExecutionResult::compare(const ParseNode* pValue,
 		}
 		return getString() == pValue->m_sValue;
 	}
-		//case DBDataType::DATE:
-		//case DBDataType::DATETIME:
 		//case DBDataType::DOUBLE:
 		//case DBDataType::BYTES:
 	default:

@@ -34,16 +34,10 @@ void ConstPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	assert(pRow->children() == m_columns.size());
 	ParseNode* pValue = pRow->m_children[index];
 	switch (pValue->m_type) {
+	case NodeType::DATE:
 	case NodeType::INT:
 		pInfo->setInt(pValue->m_iValue);
 		break;
-	case NodeType::DATE: {
-		struct timeval time;
-		time.tv_sec = (pValue->m_iValue / 1000000);
-		time.tv_usec = (pValue->m_iValue % 1000000);
-		pInfo->setTime(time);
-		break;
-	}
 	case NodeType::FLOAT: {
 		float fValue = strtof(pValue->m_sValue.c_str(), nullptr);
 		pInfo->setDouble(fValue);

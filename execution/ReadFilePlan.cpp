@@ -67,13 +67,8 @@ bool ReadFilePlan::next() {
 			break;
 		case DBDataType::DATETIME:
 		case DBDataType::DATE:
-			if (int64_t iValue = parseTime(
-					std::string(token.data(), token.length()).c_str()); iValue
-					> 0) {
-				struct timeval time;
-				time.tv_sec = (iValue / 1000000);
-				time.tv_usec = (iValue % 1000000);
-				m_result[i].setTime(time);
+			if (int64_t iValue = parseTime(token); iValue > 0) {
+				m_result[i].setInt(iValue);
 				break;
 			} else {
 				throw new ExecutionException(

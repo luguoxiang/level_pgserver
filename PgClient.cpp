@@ -384,7 +384,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.addStringAndLength(info.getString());
 			break;
 		case DBDataType::DATE: {
-			time_t time = info.getTime().tv_sec;
+			time_t time = info.getInt();
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
 				LOG(ERROR) << "Failed to get localtime "<< (int ) time;
@@ -397,7 +397,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			break;
 		}
 		case DBDataType::DATETIME: {
-			time_t time = info.getTime().tv_sec;
+			time_t time = info.getInt();
 			struct tm* pToday = localtime(&time);
 			if (pToday == nullptr) {
 				LOG(ERROR) << "Failed to get localtime "<< (int ) time;

@@ -61,6 +61,7 @@ public:
 	NodeType m_type;
 	std::string m_sValue;
 	int64_t m_iValue = 0;
+	std::tm m_time = {};
 
 	//string view on ParseResult.m_sSql
 	const std::string_view m_sExpr;
@@ -100,7 +101,7 @@ struct ParseResult {
 	std::vector<std::unique_ptr<ParseNode>> m_nodes;
 };
 
-int64_t parseTime(const char* pszTime);
+int64_t parseTime(std::string_view sTime);
 
 int parseInit(ParseResult* p);
 

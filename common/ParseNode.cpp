@@ -1,6 +1,8 @@
 #include "ParseNode.h"
+#include <sstream>
 #include <iostream>
 #include <time.h>
+#include <iomanip>
 
 extern const char* getTypeName(int type);
 
@@ -134,38 +136,18 @@ static std::string trim_dup(ParseResult *p, int firstColumn, int lastColumn) {
 
 
 
-int64_t parseTime(const char* pszTime) {
-	int iYear = 0;
-	int iMonth = 0;
-	int iDay = 0;
-	int iHour = 0;
-	int iMinute = 0;
-	int iSecond = 0;
-
-	struct tm time = {};
-	int ret = sscanf(pszTime, "%4d-%2d-%2d %2d:%2d:%2d", &iYear, &iMonth, &iDay,
-	&iHour, &iMinute, &iSecond);
-	if (ret != 3 && ret != 6) {
-		return 0;
-	}
-
-	time.tm_year = iYear - 1900;
-	time.tm_mon = iMonth - 1;
-	time.tm_mday = iDay;
-	time.tm_hour = iHour;
-	time.tm_min = iMinute;
-	time.tm_sec = iSecond;
+int64_t parseTime(std::string_view sTime) {
+	std::tm time;
+	std::stringstream ss;
+	ss << sTime;
+	ss >> std::get_time(&time, "%Y-%m-%d %H:%M:%S");
 
 	time_t iRetTime = mktime(&time);
-	if (iYear - 1900 != time.tm_year || iMonth - 1 != time.tm_mon
-	|| iDay != time.tm_mday) {
+	if (iRetTime == -1) {
 		return 0;
 	}
-	return iRetTime * 1000000; // unit is microseconds
+	return iRetTime; // unit is seconds
 }
-
-
-
 
 constexpr bool IS_DIGIT(char c) {
 	return c >='0' && c<='9';
