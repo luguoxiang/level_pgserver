@@ -112,6 +112,7 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 	pInfo->m_tid = std::this_thread::get_id();
 	WorkThreadInfo::m_pWorkThreadInfo = pInfo;
 	LOG(INFO) << "Working thread is listening on " << pInfo->m_port;
+
 	while (true) {
 		try {
 			pInfo->m_iAcceptFd = acceptSocket(pInfo->m_iListenFd,
@@ -154,10 +155,11 @@ void PgServer::run() {
 	}
 
 	int iWorkerNum = MetaConfig::getInstance().getWorkerNum();
+	int iExecutionBufferSize = MetaConfig::getInstance().getExecutionBuffer();
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {
-		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_port, i);
+		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_port, i, iExecutionBufferSize);
 		threads[i] = std::thread(worker_thread, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}

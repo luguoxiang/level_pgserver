@@ -77,9 +77,7 @@ int ExecutionResult::compare(const ExecutionResult& result,
 	case DBDataType::INT8:
 	case DBDataType::INT16:
 	case DBDataType::INT32:
-	case DBDataType::INT64:
-	case DBDataType::DATE:
-	case DBDataType::DATETIME: {
+	case DBDataType::INT64: {
 		int64_t aa = getInt();
 		int64_t bb = result.getInt();
 		if (aa == bb)
@@ -101,6 +99,7 @@ int ExecutionResult::compare(const ParseNode* pValue,
 		return pValue->m_type == NodeType::NONE ? 0 : -1;
 	}
 	switch (type) {
+	case DBDataType::INT8:
 	case DBDataType::INT16:
 	case DBDataType::INT32:
 	case DBDataType::INT64: {

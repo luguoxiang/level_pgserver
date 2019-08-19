@@ -6,7 +6,7 @@
 #include "common/ParseNode.h"
 
 enum class DBDataType {
-	UNKNOWN,
+	UNKNOWN = 0,
 	INT8,
 	INT16,
 	INT32,

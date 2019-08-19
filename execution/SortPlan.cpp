@@ -10,41 +10,50 @@ SortPlan::SortPlan(ExecutionPlan* pPlan) :
 }
 
 void SortPlan::begin() {
+	if(m_proj.size() > 32) {
+		throw new ExecutionException(ConcateToString("sort column number bigger than 32"));
+	}
+	ExecutionBuffer& buffer = WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer();
+
 	m_pPlan->begin();
+	for (size_t i = 0; i < m_proj.size(); ++i) {
+		m_types.push_back(getResultType(i));
+	}
+
 	while (m_pPlan->next()) {
-		RowInfo* pRow = new RowInfo();
-		pRow->reserve(m_proj.size());
-		//TODO: COPY row to execution buffer!
-		m_rows.push_back(pRow);
+		auto row = buffer.beginRow();
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			ExecutionResult result;
 			int iSubIndex = m_proj[i].m_iSubIndex;
 			m_pPlan->getResult(iSubIndex, &result);
-			pRow->push_back(result);
-		}
 
+			buffer.allocForColumn(m_types[i], result);
+		}
+		buffer.endRow();
+
+		m_rows.push_back(row);
 	}
 	m_pPlan->end();
 	auto comp =
-			[specList = m_sort, iColumnNum = m_proj.size()](RowInfo* pRow1, RowInfo* pRow2) {
-				for (size_t i = 0; i < specList.size(); ++i) {
-					const SortSpec& spec = specList[i];
-					assert(spec.m_iIndex < iColumnNum);
-					const ExecutionResult& a = pRow1->at(spec.m_iIndex);
-					const ExecutionResult& b = pRow2->at(spec.m_iIndex);
-					int n = a.compare(b, spec.m_type);
-					if (n == 0)
-					continue;
+			[this, &buffer](ExecutionBuffer::Row pRow1, ExecutionBuffer::Row pRow2) {
+				for (size_t i = 0; i < m_sort.size(); ++i) {
+					const SortSpec& spec = m_sort[i];
+					assert(spec.m_iIndex < m_proj.size());
+
+					int n = buffer.compare(pRow1, pRow2, spec.m_iIndex, m_types);
+					if (n == 0) {
+						continue;
+					}
 
 					switch (spec.m_order) {
 						case SortOrder::Ascend:
 						case SortOrder::Any:
-						return n < 0;
+							return n < 0;
 						case SortOrder::Descend:
-						return n > 0;
+							return n > 0;
 						default:
-						assert(0);
-						return false;
+							assert(0);
+							return false;
 					};
 				}
 				return false; //equals is not less
@@ -55,9 +64,6 @@ void SortPlan::begin() {
 }
 
 void SortPlan::end() {
-	for (auto p : m_rows) {
-		delete p;
-	}
 	m_rows.clear();
 }
 
@@ -70,7 +76,8 @@ bool SortPlan::next() {
 
 void SortPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	assert(m_iCurrent > 0);
-	*pInfo = m_rows[m_iCurrent - 1]->at(index);
+	ExecutionBuffer& buffer = WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer();
+	buffer.getResult(m_rows[m_iCurrent - 1], index, *pInfo, m_types);
 }
 
 int SortPlan::addProjection(ParseNode* pNode)  {

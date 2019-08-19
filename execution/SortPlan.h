@@ -105,10 +105,11 @@ private:
 
 	std::unique_ptr<ExecutionPlan> m_pPlan;
 
-	using RowInfo = std::vector<ExecutionResult>;
-	std::vector<RowInfo*> m_rows;
+	std::vector<ExecutionBuffer::Row> m_rows;
 	std::vector<SortProjection> m_proj;
 	std::vector<SortSpec> m_sort;
+
+	std::vector<DBDataType> m_types;
 	int m_iCurrent;
 };
 

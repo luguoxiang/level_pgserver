@@ -157,6 +157,8 @@ void PgClient::handleExecute() {
 	size_t columnNum = m_pPlan->getResultColumns();
 
 	m_pWorker->m_pPlan = m_pPlan.get();
+	WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer().purge();
+
 	m_pPlan->begin();
 
 	while (m_pPlan->next()) {
@@ -175,6 +177,8 @@ void PgClient::handleExecute() {
 	m_sender.addString(sInfo); //data len
 	m_sender.commit();
 	m_pWorker->m_pPlan = nullptr;
+
+	WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer().purge();
 }
 
 void PgClient::handleException(Exception* pe) {
