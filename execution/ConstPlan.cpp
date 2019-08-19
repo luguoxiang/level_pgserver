@@ -50,7 +50,7 @@ void ConstPlan::getResult(size_t index, ExecutionResult* pInfo) {
 		break;
 	}
 	case NodeType::STR:
-		pInfo->setString(pValue->m_sValue);
+		pInfo->setStringView(pValue->m_sValue);
 		break;
 	default:
 		throw new ParseException("wrong const value type %d");

@@ -59,7 +59,7 @@ void WorkloadResult::getResult(size_t index, ExecutionResult* pInfo) {
 		std::stringstream ss;
 		ss << pWorker->m_tid;
 		m_tid = ss.str();
-		pInfo->setString(m_tid);
+		pInfo->setStringView(m_tid);
 		break;
 	}
 	case 1:

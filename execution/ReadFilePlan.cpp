@@ -63,7 +63,7 @@ bool ReadFilePlan::next() {
 			m_result[i].setInt(Tools::toInt(token));
 			break;
 		case DBDataType::STRING:
-			m_result[i].setString(token);
+			m_result[i].setStringView(token);
 			break;
 		case DBDataType::DATETIME:
 		case DBDataType::DATE:

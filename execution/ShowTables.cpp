@@ -19,10 +19,10 @@ bool ShowTables::next() {
 void ShowTables::getResult(size_t index, ExecutionResult* pInfo) {
 	TableInfo* pTable = m_tables[m_iIndex - 1];
 	if (index == 0) {
-		pInfo->setString(pTable->getName());
+		pInfo->setStringView(pTable->getName());
 	} else if (index == 1) {
 		if (pTable->hasAttribute("info")) {
-			pInfo->setString(pTable->getAttribute("info"));
+			pInfo->setStringView(pTable->getAttribute("info"));
 		} else {
 			pInfo->setNull();
 		}

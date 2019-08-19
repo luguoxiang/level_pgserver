@@ -29,7 +29,7 @@ void ExecutionBuffer::getResult(Row row, size_t index, ExecutionResult& result, 
 		case DBDataType::STRING:{
 			size_t len = *(reinterpret_cast<uint16_t*>(pData));
 			pData += sizeof(uint16_t);
-			result.setString(std::string_view(reinterpret_cast<const char*>(pData), len));
+			result.setStringView(std::string_view(reinterpret_cast<const char*>(pData), len));
 			break;
 		}
 		case DBDataType::DATE:

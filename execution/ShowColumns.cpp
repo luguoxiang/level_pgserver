@@ -64,39 +64,39 @@ void ShowColumns::getResult(size_t index, ExecutionResult* pInfo) {
 
 	switch (index) {
 	case 0:
-		pInfo->setString(pColumn->m_sName);
+		pInfo->setStringView(pColumn->m_sName);
 		break;
 	case 1:
 		switch (pColumn->m_type) {
 		case DBDataType::INT8:
-			pInfo->setString("int8");
+			pInfo->setStringView("int8");
 			break;
 		case DBDataType::INT16:
-			pInfo->setString("int16");
+			pInfo->setStringView("int16");
 			break;
 		case DBDataType::INT32:
-			pInfo->setString("int32");
+			pInfo->setStringView("int32");
 			break;
 		case DBDataType::INT64:
-			pInfo->setString("int64");
+			pInfo->setStringView("int64");
 			break;
 		case DBDataType::STRING:
-			pInfo->setString("varchar");
+			pInfo->setStringView("varchar");
 			break;
 		case DBDataType::DATETIME:
-			pInfo->setString("datetime");
+			pInfo->setStringView("datetime");
 			break;
 		case DBDataType::DATE:
-			pInfo->setString("date");
+			pInfo->setStringView("date");
 			break;
 		case DBDataType::DOUBLE:
-			pInfo->setString("double");
+			pInfo->setStringView("double");
 			break;
 		case DBDataType::BYTES:
-			pInfo->setString("bytes");
+			pInfo->setStringView("bytes");
 			break;
 		default:
-			pInfo->setString("unknown");
+			pInfo->setStringView("unknown");
 			break;
 		}
 		break;
