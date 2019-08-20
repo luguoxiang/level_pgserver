@@ -29,33 +29,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 				 throw new ConfigException(ConcateToString("Illegal type length ", sLen));
 			}
 		} else {
-			switch (pColumn->m_type) {
-			case DBDataType::INT8:
-				pColumn->m_iLen = sizeof(int8_t);
-				break;
-			case DBDataType::INT16:
-				pColumn->m_iLen = sizeof(int16_t);
-				break;
-			case DBDataType::INT32:
-				pColumn->m_iLen = sizeof(int32_t);
-				break;
-			case DBDataType::INT64:
-			case DBDataType::DATETIME:
-			case DBDataType::DATE:
-				pColumn->m_iLen = sizeof(int64_t);
-				break;
-			case DBDataType::FLOAT:
-				pColumn->m_iLen = sizeof(float);
-				break;
-			case DBDataType::DOUBLE:
-				pColumn->m_iLen = sizeof(double);
-				break;
-			case DBDataType::STRING:
-				pColumn->m_iLen = -1;
-				break;
-			default:
-				throw new ConfigException(ConcateToString("Unknown column type ", matches[2]));
-			}
+			pColumn->m_iLen = GetTypeSize(pColumn->m_type);
 		}
 	} else {
 		 throw new ConfigException(ConcateToString("Illegal attribute value ", sValue));

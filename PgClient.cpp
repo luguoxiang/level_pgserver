@@ -317,7 +317,6 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 		case DBDataType::INT64:
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8);
 			break;
-
 		case DBDataType::STRING:
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1);
 			break;
@@ -334,7 +333,7 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Double, -1);
 			break;
 		default:
-			LOG(ERROR) << "Unknown type " << (int)pPlan->getResultType(i);
+			LOG(ERROR) << "Unknown type for " << sName;
 			assert(0);
 			break;
 		}
