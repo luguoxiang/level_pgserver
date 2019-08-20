@@ -11,6 +11,7 @@ MetaConfig::MetaConfig()  {
 	m_dataTypeMap["int16"] = DBDataType::INT16;
 	m_dataTypeMap["int32"] = DBDataType::INT32;
 	m_dataTypeMap["int64"] = DBDataType::INT64;
+	m_dataTypeMap["float"] = DBDataType::FLOAT;
 	m_dataTypeMap["double"] = DBDataType::DOUBLE;
 	m_dataTypeMap["varchar"] = DBDataType::STRING;
 	m_dataTypeMap["datetime"] = DBDataType::DATETIME;

@@ -327,6 +327,9 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 		case DBDataType::DATE:
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1);
 			break;
+		case DBDataType::FLOAT:
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Float, -1);
+			break;
 		case DBDataType::DOUBLE:
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Double, -1);
 			break;
@@ -409,6 +412,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			}
 			break;
 		}
+		case DBDataType::FLOAT:
 		case DBDataType::DOUBLE: {
 			m_sender.addStringAndLength(std::to_string(info.getDouble()));
 			break;

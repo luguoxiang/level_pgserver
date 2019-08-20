@@ -1,68 +1,57 @@
 #include "ExecutionBuffer.h"
 #include <cassert>
+
 std::map<DBDataType, ExecutionBuffer::TypeOperationTuple> ExecutionBuffer::m_typeOperations;
 
-using ReadFn = void (*) (std::byte* pData, ExecutionResult& result) ;
-using WriteFn = std::byte* (*) (std::byte* pData, const ExecutionResult& result) ;
-using CompareFn = int (*) (const std::byte* pData1, const std::byte* pData2);
-using Size1Fn = size_t (*)(const std::byte* pData);
-using Size2Fn = size_t (*)(const ExecutionResult& result);
-
-template <class IntType>
-ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeIntTuple(){
+template <class Type>
+ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeTuple(){
 	return std::make_tuple(
 			ReadFn{[] (const std::byte* pData, ExecutionResult& result)  {
-					result.setInt(*reinterpret_cast<const IntType*>(pData));
+				if constexpr (std::is_same<Type, double>::value || std::is_same<Type, float>::value)  {
+					result.setDouble(*reinterpret_cast<const Type*>(pData));
+				} else {
+					result.setInt(*reinterpret_cast<const Type*>(pData));
+				}
 			}},
 			WriteFn{[] (std::byte* pData, const ExecutionResult& result) {
-				*reinterpret_cast<IntType*>(pData) = result.getInt();
+				if constexpr (std::is_same<Type, double>::value || std::is_same<Type, float>::value) {
+					*reinterpret_cast<Type*>(pData) = result.getDouble();
+				} else {
+					*reinterpret_cast<Type*>(pData) = result.getInt();
+				}
+
 			}},
 			CompareFn {[]  (const std::byte* pData1, const std::byte* pData2) ->int {
-				return *reinterpret_cast<const IntType*>(pData1) - *reinterpret_cast<const IntType*>(pData2);
-			}},
-			Size1Fn{[](const std::byte* pData) {
-				return sizeof(IntType);
-			}},
-			Size2Fn{[] (const ExecutionResult& result) {
-				return sizeof(IntType);
-			}}
-	);
-}
-
-void ExecutionBuffer::init() {
-	m_typeOperations[DBDataType::INT8] = makeIntTuple<int8_t>();
-	m_typeOperations[DBDataType::INT16] = makeIntTuple<int16_t>();
-	m_typeOperations[DBDataType::INT32] = makeIntTuple<int32_t>();
-	m_typeOperations[DBDataType::INT64] = makeIntTuple<int64_t>();
-
-	m_typeOperations[DBDataType::DATE] = m_typeOperations[DBDataType::INT64];
-	m_typeOperations[DBDataType::DATETIME] = m_typeOperations[DBDataType::INT64];
-
-	m_typeOperations[DBDataType::DOUBLE] = std::make_tuple(
-			ReadFn{[] (const std::byte* pData, ExecutionResult& result)  {
-					result.setDouble(*reinterpret_cast<const double*>(pData));
-			}},
-			WriteFn{[] (std::byte* pData, const ExecutionResult& result) {
-				*reinterpret_cast<double*>(pData) = result.getDouble();
-			}},
-			CompareFn {[]  (const std::byte* pData1, const std::byte* pData2) ->int {
-				double a =  *reinterpret_cast<const double*>(pData1);
-				double b = *reinterpret_cast<const double*>(pData2);
+				const Type a = *reinterpret_cast<const Type*>(pData1);
+				const Type b = *reinterpret_cast<const Type*>(pData2);
 				if (a > b) {
 					return 1;
-				} else if (a <b ){
+				} else if( a < b) {
 					return -1;
 				} else {
 					return 0;
 				}
 			}},
 			Size1Fn{[](const std::byte* pData) {
-				return sizeof(double);
+				return sizeof(Type);
 			}},
 			Size2Fn{[] (const ExecutionResult& result) {
-				return sizeof(double);
+				return sizeof(Type);
 			}}
 	);
+}
+
+void ExecutionBuffer::init() {
+	m_typeOperations[DBDataType::INT8] = makeTuple<int8_t>();
+	m_typeOperations[DBDataType::INT16] = makeTuple<int16_t>();
+	m_typeOperations[DBDataType::INT32] = makeTuple<int32_t>();
+	m_typeOperations[DBDataType::INT64] = makeTuple<int64_t>();
+
+	m_typeOperations[DBDataType::DATE] = m_typeOperations[DBDataType::INT64];
+	m_typeOperations[DBDataType::DATETIME] = m_typeOperations[DBDataType::INT64];
+
+	m_typeOperations[DBDataType::FLOAT] = makeTuple<float>();
+	m_typeOperations[DBDataType::DOUBLE] = makeTuple<double>();
 
 	m_typeOperations[DBDataType::STRING] = std::make_tuple(
 			ReadFn{[] (const std::byte* pData, ExecutionResult& result) {

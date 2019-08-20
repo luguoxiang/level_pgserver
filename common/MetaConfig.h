@@ -33,6 +33,15 @@ public:
 		return iter->second;
 	}
 
+	std::string_view typeToString(DBDataType targetType) {
+		for(auto& [name, type] : m_dataTypeMap) {
+			if (targetType == type) {
+				return name;
+			}
+		}
+		return "unknown";
+	}
+
 	uint32_t getWorkerNum() const {
 		return m_iWorkerNum;
 	}

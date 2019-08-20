@@ -9,6 +9,7 @@ enum class PgDataType {
 	Int64 = 20,
 	Varchar = 1043,
 	DateTime = 1114,
+	Float = 700,
 	Double = 701,
 };
 class PgMessageSender: public DataSender {

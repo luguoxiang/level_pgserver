@@ -77,6 +77,7 @@ void ExecutionResult::init() {
 		Compare1Fn{nullptr},
 		Compare2Fn{nullptr}
 	);
+	m_typeOperations[DBDataType::FLOAT] = m_typeOperations[DBDataType::DOUBLE];
 }
 
 void ExecutionResult::div(size_t value, DBDataType type) {

@@ -48,8 +48,8 @@ private:
 	using Size2Fn = size_t (*)(const ExecutionResult& result);
 	using TypeOperationTuple = std::tuple<ReadFn, WriteFn, CompareFn,Size1Fn, Size2Fn>;
 
-	template <class IntType>
-	static TypeOperationTuple makeIntTuple();
+	template <class Type>
+	static TypeOperationTuple makeTuple();
 
 	static std::map<DBDataType, TypeOperationTuple> m_typeOperations;
 

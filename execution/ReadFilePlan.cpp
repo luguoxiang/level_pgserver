@@ -41,7 +41,9 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	if(index > m_columns.size()) {
 		return;
 	}
-	switch (m_columns[index]->m_type) {
+	auto pColumn = m_columns[index];
+
+	switch (pColumn->m_type) {
 	case DBDataType::INT8:
 	case DBDataType::INT16:
 	case DBDataType::INT32:
@@ -53,6 +55,10 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 		}
 		break;
 	case DBDataType::STRING:
+		if(pColumn->m_iLen > 0 && token.length() > pColumn->m_iLen)  {
+			throw new ExecutionException(
+					ConcateToString("Column ", pColumn->m_sName, " value exceed defined length ", pColumn->m_iLen));
+		}
 		m_result[index].setStringView(token);
 		break;
 	case DBDataType::DATETIME:
@@ -64,6 +70,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 			throw new ExecutionException(
 					ConcateToString("Wrong Time Format:", token));
 		}
+	case DBDataType::FLOAT:
 	case DBDataType::DOUBLE:
 		if(token.length() == 0) {
 			m_result[index].setNull();
@@ -71,7 +78,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 		}
 		try {
 			std::string s(token.data(), token.length());
-			m_result[index].setDouble(std::stof(s));
+			m_result[index].setDouble(std::stod(s));
 		} catch (const std::exception& e) {
 			throw new ExecutionException(e.what());
 		}

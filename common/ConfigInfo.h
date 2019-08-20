@@ -14,6 +14,7 @@ enum class DBDataType {
 	STRING,
 	DATETIME,
 	DATE,
+	FLOAT,
 	DOUBLE,
 	BYTES,
 };

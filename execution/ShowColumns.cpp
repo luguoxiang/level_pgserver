@@ -67,38 +67,7 @@ void ShowColumns::getResult(size_t index, ExecutionResult* pInfo) {
 		pInfo->setStringView(pColumn->m_sName);
 		break;
 	case 1:
-		switch (pColumn->m_type) {
-		case DBDataType::INT8:
-			pInfo->setStringView("int8");
-			break;
-		case DBDataType::INT16:
-			pInfo->setStringView("int16");
-			break;
-		case DBDataType::INT32:
-			pInfo->setStringView("int32");
-			break;
-		case DBDataType::INT64:
-			pInfo->setStringView("int64");
-			break;
-		case DBDataType::STRING:
-			pInfo->setStringView("varchar");
-			break;
-		case DBDataType::DATETIME:
-			pInfo->setStringView("datetime");
-			break;
-		case DBDataType::DATE:
-			pInfo->setStringView("date");
-			break;
-		case DBDataType::DOUBLE:
-			pInfo->setStringView("double");
-			break;
-		case DBDataType::BYTES:
-			pInfo->setStringView("bytes");
-			break;
-		default:
-			pInfo->setStringView("unknown");
-			break;
-		}
+		pInfo->setStringView(MetaConfig::getInstance().typeToString(pColumn->m_type));
 		break;
 	case 2:
 		if (pColumn->m_iKeyIndex < 0) {
