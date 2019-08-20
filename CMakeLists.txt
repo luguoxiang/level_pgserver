@@ -16,7 +16,10 @@ set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
 set(APP_EXEC csv2pgserver)
 option (WITH_GFLAGS "Use gflags" OFF)
-option(BUILD_TESTING "Enable unit tests" OFF) 
+option(BUILD_TESTING "glog unit tests" OFF) 
+option(LEVELDB_BUILD_TESTS "Build LevelDB's unit tests" OFF)
+option(LEVELDB_BUILD_BENCHMARKS "Build LevelDB's benchmarks" OFF)
+option(LEVELDB_INSTALL "Install LevelDB's header and library" OFF)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(FLEX_EXECUTABLE /usr/local/opt/flex/bin/flex)
@@ -24,6 +27,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
  
 add_subdirectory(glog)
+add_subdirectory(leveldb)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -61,9 +65,9 @@ file(GLOB SOURCES "*.cpp" )
 file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
 
-include_directories(PUBLIC . glog glog/src)
+include_directories(PUBLIC . glog glog/src leveldb/include)
  
 add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} ExecutionLib glog::glog)
+target_link_libraries( ${APP_EXEC} ExecutionLib glog::glog leveldb)
