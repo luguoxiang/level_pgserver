@@ -1,21 +1,30 @@
 #include "ExecutionBuffer.h"
-
+#include <cassert>
 std::map<DBDataType, ExecutionBuffer::TypeOperationTuple> ExecutionBuffer::m_typeOperations;
+
+using ReadFn = void (*) (std::byte* pData, ExecutionResult& result) ;
+using WriteFn = std::byte* (*) (std::byte* pData, const ExecutionResult& result) ;
+using CompareFn = int (*) (const std::byte* pData1, const std::byte* pData2);
+using Size1Fn = size_t (*)(const std::byte* pData);
+using Size2Fn = size_t (*)(const ExecutionResult& result);
 
 template <class IntType>
 ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeIntTuple(){
 	return std::make_tuple(
-			SetResultFn{[] (std::byte* pData, ExecutionResult& result) {
-					result.setInt(*reinterpret_cast<IntType*>(pData));
+			ReadFn{[] (const std::byte* pData, ExecutionResult& result)  {
+					result.setInt(*reinterpret_cast<const IntType*>(pData));
 			}},
-			CompareFn {[]  (std::byte* pData1, std::byte* pData2) ->int {
-				return *reinterpret_cast<IntType*>(pData1) - *reinterpret_cast<IntType*>(pData2);
+			WriteFn{[] (std::byte* pData, const ExecutionResult& result) {
+				*reinterpret_cast<IntType*>(pData) = result.getInt();
 			}},
-			SizeFn{[](std::byte* pData) {
+			CompareFn {[]  (const std::byte* pData1, const std::byte* pData2) ->int {
+				return *reinterpret_cast<const IntType*>(pData1) - *reinterpret_cast<const IntType*>(pData2);
+			}},
+			Size1Fn{[](const std::byte* pData) {
 				return sizeof(IntType);
 			}},
-			AllocFn{[] (ExecutionBuffer& buffer, const ExecutionResult& result) {
-				buffer.alloc<IntType>(result.getInt());
+			Size2Fn{[] (const ExecutionResult& result) {
+				return sizeof(IntType);
 			}}
 	);
 }
@@ -30,12 +39,15 @@ void ExecutionBuffer::init() {
 	m_typeOperations[DBDataType::DATETIME] = m_typeOperations[DBDataType::INT64];
 
 	m_typeOperations[DBDataType::DOUBLE] = std::make_tuple(
-			SetResultFn{[] (std::byte* pData, ExecutionResult& result) {
-				result.setDouble(*reinterpret_cast<double*>(pData));
+			ReadFn{[] (const std::byte* pData, ExecutionResult& result)  {
+					result.setDouble(*reinterpret_cast<const double*>(pData));
 			}},
-			CompareFn {[]  (std::byte* pData1, std::byte* pData2) ->int {
-				double a =  *reinterpret_cast<double*>(pData1);
-				double b = *reinterpret_cast<double*>(pData2);
+			WriteFn{[] (std::byte* pData, const ExecutionResult& result) {
+				*reinterpret_cast<double*>(pData) = result.getDouble();
+			}},
+			CompareFn {[]  (const std::byte* pData1, const std::byte* pData2) ->int {
+				double a =  *reinterpret_cast<const double*>(pData1);
+				double b = *reinterpret_cast<const double*>(pData2);
 				if (a > b) {
 					return 1;
 				} else if (a <b ){
@@ -44,34 +56,45 @@ void ExecutionBuffer::init() {
 					return 0;
 				}
 			}},
-			SizeFn{[](std::byte* pData) {
+			Size1Fn{[](const std::byte* pData) {
 				return sizeof(double);
 			}},
-			AllocFn{[] (ExecutionBuffer& buffer, const ExecutionResult& result) {
-				buffer.alloc<double>(result.getDouble());
+			Size2Fn{[] (const ExecutionResult& result) {
+				return sizeof(double);
 			}}
 	);
 
 	m_typeOperations[DBDataType::STRING] = std::make_tuple(
-			SetResultFn{[] (std::byte* pData, ExecutionResult& result) {
-				size_t len = *(reinterpret_cast<uint16_t*>(pData));
+			ReadFn{[] (const std::byte* pData, ExecutionResult& result) {
+				size_t len = *(reinterpret_cast<const uint16_t*>(pData));
 				pData += sizeof(uint16_t);
 				result.setStringView(std::string_view(reinterpret_cast<const char*>(pData), len));
 			}},
-			CompareFn {[]  (std::byte* pData1, std::byte* pData2) ->int {
-				size_t len1 = *(reinterpret_cast<uint16_t*>(pData1));
-				size_t len2 = *(reinterpret_cast<uint16_t*>(pData2));
+			WriteFn{[] (std::byte* pData, const ExecutionResult& result) {
+				auto s = result.getString();
+				auto size = s.length();
+				if(size > std::numeric_limits<uint16_t>::max() ) {
+					throw new ExecutionException("too large string value");
+				}
+
+				*reinterpret_cast<uint16_t*>(pData) = size;
+				pData  += sizeof(uint16_t);
+				memcpy(pData, s.data(), size);
+			}},
+			CompareFn {[]  (const std::byte* pData1,const std::byte* pData2) ->int {
+				size_t len1 = *(reinterpret_cast<const uint16_t*>(pData1));
+				size_t len2 = *(reinterpret_cast<const uint16_t*>(pData2));
 				pData1 += sizeof(uint16_t);
 				pData2 += sizeof(uint16_t);
 				std::string_view s1(reinterpret_cast<const char*>(pData1), len1);
 				std::string_view s2(reinterpret_cast<const char*>(pData2), len2);
 				return s1.compare(s2);
 			}},
-			SizeFn{[](std::byte* pData) {
-				return *(reinterpret_cast<uint16_t*>(pData)) + sizeof(uint16_t);;
+			Size1Fn{[](const std::byte* pData) {
+				return *(reinterpret_cast<const uint16_t*>(pData)) + sizeof(uint16_t);
 			}},
-			AllocFn{[] (ExecutionBuffer& buffer, const ExecutionResult& result) {
-				buffer.allocString(result.getString());
+			Size2Fn{[](const ExecutionResult& result) {
+				return result.getString().length() + sizeof(uint16_t);
 			}}
 	);
 	m_typeOperations[DBDataType::BYTES] = m_typeOperations[DBDataType::STRING];
@@ -80,25 +103,11 @@ void ExecutionBuffer::init() {
 void ExecutionBuffer::getResult(Row row, size_t index, ExecutionResult& result, const std::vector<DBDataType>& types) {
 	std::byte* pData = get(row, index, types);
 	if (auto iter = m_typeOperations.find(types[index]); iter != m_typeOperations.end()) {
-		auto fn = std::get<SetResultFn>(iter->second);
+		auto fn = std::get<ReadFn>(iter->second);
 		fn(pData, result);
 	} else{
 		assert(0);
 	}
-}
-
-std::string_view ExecutionBuffer::allocString(std::string_view t) {
-	if(t.length() > std::numeric_limits<uint16_t>::max() ) {
-		throw new ExecutionException("too large string value");
-	}
-	uint16_t* pSize = alloc<uint16_t>(t.length());
-	char* pData = reinterpret_cast<char*>(m_executionBuffer.data() + m_iUsed);
-	m_iUsed += t.length();
-	if (m_iUsed > m_executionBuffer.size()) {
-		throw new ExecutionException("not enough execution buffer");
-	}
-	memcpy(pData, t.data(), t.length());
-	return std::string_view(pData, t.length());
 }
 
 int ExecutionBuffer::compare(Row row1, Row row2, size_t index, const std::vector<DBDataType>& types) {
@@ -122,7 +131,7 @@ std::byte* ExecutionBuffer::get(Row row, size_t index, const std::vector<DBDataT
 			continue;
 		}
 		if (auto iter = m_typeOperations.find(types[i]); iter != m_typeOperations.end()) {
-			auto fn = std::get<SizeFn>(iter->second);
+			auto fn = std::get<Size1Fn>(iter->second);
 			size_t size = fn(pStart);
 			pStart += size;
 		} else{
@@ -132,17 +141,65 @@ std::byte* ExecutionBuffer::get(Row row, size_t index, const std::vector<DBDataT
 	return pStart;
 }
 
-void ExecutionBuffer::allocForColumn(DBDataType type, const ExecutionResult& result) {
-	if(result.isNull()) {
-		m_nullBits.set(m_iIndex++);
-		return;
-	}
-	++m_iIndex;
+ExecutionBuffer::Row ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types) {
+	std::bitset<32> m_nullBits;
+	size_t rowSize = sizeof(unsigned long);
 
-	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end()) {
-		auto fn = std::get<AllocFn>(iter->second);
-		fn(*this, result);
-	} else{
-		assert(0);
+	assert(results.size() == types.size());
+	for(size_t i=0;i<results.size();++i) {
+		if(results[i].isNull()) {
+			m_nullBits.set(i);
+			continue;
+		}
+		if (auto iter = m_typeOperations.find(types[i]); iter != m_typeOperations.end()) {
+			auto fn = std::get<Size2Fn>(iter->second);
+			rowSize += fn(results[i]);
+		} else{
+			assert(0);
+		}
 	}
+	auto row = doAlloc(rowSize);
+
+	auto pNullBitsLong = reinterpret_cast<unsigned long*>(row);
+	*pNullBitsLong = m_nullBits.to_ulong();
+
+	std::byte* pData = row + sizeof(unsigned long);
+
+	for(size_t i=0;i<results.size();++i) {
+		if(results[i].isNull()) {
+			continue;
+		}
+		if (auto iter = m_typeOperations.find(types[i]); iter != m_typeOperations.end()) {
+			auto writeFn = std::get<WriteFn>(iter->second);
+			writeFn(pData, results[i]);
+			auto sizeFn = std::get<Size1Fn>(iter->second);
+			pData +=sizeFn(pData);
+		} else{
+			assert(0);
+		}
+	}
+	return row;
+}
+
+std::byte* ExecutionBuffer::doAlloc(size_t size) {
+	if(size > BLOCK_SIZE) {
+		throw new ExecutionException("request buffer too large");
+	}
+	m_iUsed += size;
+	if (m_iUsed > m_iTotal) {
+		throw new ExecutionException("not enough execution buffer");
+	}
+
+	assert(m_iCurrentBlock <= m_bufferBlocks.size());
+
+	m_iBlockUsed += size;
+	if (m_iBlockUsed > BLOCK_SIZE) {
+		++m_iCurrentBlock;
+		m_iBlockUsed = size;
+	}
+
+	if(m_iCurrentBlock == m_bufferBlocks.size()) {
+		m_bufferBlocks.push_back(std::make_unique<BufferBlock>(BLOCK_SIZE));
+	}
+	return m_bufferBlocks[m_iCurrentBlock]->data() + (m_iBlockUsed - size);
 }

@@ -1,6 +1,8 @@
 #pragma once
 #include <bitset>
+#include <memory>
 #include <tuple>
+#include <vector>
 
 #include "ExecutionResult.h"
 #include "ExecutionException.h"
@@ -9,23 +11,16 @@
 class ExecutionBuffer
 {
 public:
-	ExecutionBuffer(size_t size) : m_executionBuffer(size) {};
+	ExecutionBuffer(size_t size) :  m_iTotal(size) {};
 
 	using Row = std::byte*;
 
-	Row beginRow() {
-		m_nullBits.reset();
-		m_iIndex = 0;
-		m_pNullBitsLong = alloc<unsigned long>(0);
-		return reinterpret_cast<Row>(m_pNullBitsLong);
-	}
-	void allocForColumn(DBDataType type, const ExecutionResult& result);
+	Row copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types);
 
-	void endRow() {
-		*m_pNullBitsLong = m_nullBits.to_ulong();
-	}
 	void purge() {
 		m_iUsed = 0;
+		m_iBlockUsed = 0;
+		m_iCurrentBlock = 0;
 	}
 
 	void getResult(Row row, size_t index, ExecutionResult& result, const std::vector<DBDataType>& types);
@@ -33,32 +28,25 @@ public:
 
 	static void init();
 private:
-	template <class T>
-	T* alloc(T t) {
-		T* data = reinterpret_cast<T*>(m_executionBuffer.data() + m_iUsed);
-		m_iUsed += sizeof(T);
-		if (m_iUsed > m_executionBuffer.size()) {
-			throw new ExecutionException("not enough execution buffer");
-		}
-		*data = t;
-		return data;
-	}
+	using BufferBlock = std::vector<std::byte>;
+	std::vector<std::unique_ptr<BufferBlock>> m_bufferBlocks;
+
+	static constexpr size_t BLOCK_SIZE = 512 * 1024;
+
 	std::byte* get(Row row, size_t index, const std::vector<DBDataType>& types);
-
-	std::string_view allocString(std::string_view t);
-
-	std::vector<std::byte> m_executionBuffer;
+	std::byte* doAlloc(size_t size);
 
 	size_t m_iUsed = 0;
-	std::bitset<32> m_nullBits;
-	unsigned long* m_pNullBitsLong;
-	size_t m_iIndex;
+	size_t m_iBlockUsed = 0;
+	size_t m_iCurrentBlock = 0;
+	const size_t m_iTotal;
 
-	using SetResultFn = void (*) (std::byte* pData, ExecutionResult& result) ;
-	using CompareFn = int (*) (std::byte* pData1, std::byte* pData2);
-	using SizeFn = size_t (*)(std::byte* pData);
-	using AllocFn =  void (*) (ExecutionBuffer& buffer, const ExecutionResult& result);
-	using TypeOperationTuple = std::tuple<SetResultFn, CompareFn,SizeFn, AllocFn>;
+	using ReadFn = void (*) (const std::byte* pData, ExecutionResult& result) ;
+	using WriteFn = void (*) (std::byte* pData, const ExecutionResult& result) ;
+	using CompareFn = int (*) (const std::byte* pData1, const std::byte* pData2);
+	using Size1Fn = size_t (*)(const std::byte* pData);
+	using Size2Fn = size_t (*)(const ExecutionResult& result);
+	using TypeOperationTuple = std::tuple<ReadFn, WriteFn, CompareFn,Size1Fn, Size2Fn>;
 
 	template <class IntType>
 	static TypeOperationTuple makeIntTuple();

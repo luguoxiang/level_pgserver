@@ -21,15 +21,12 @@ void SortPlan::begin() {
 	}
 
 	while (m_pPlan->next()) {
-		auto row = buffer.beginRow();
+		std::vector<ExecutionResult> results(m_proj.size());
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			ExecutionResult result;
 			int iSubIndex = m_proj[i].m_iSubIndex;
-			m_pPlan->getResult(iSubIndex, &result);
-
-			buffer.allocForColumn(m_types[i], result);
+			m_pPlan->getResult(iSubIndex, &results[i]);
 		}
-		buffer.endRow();
+		auto row = buffer.copyRow(results, m_types);
 
 		m_rows.push_back(row);
 	}
