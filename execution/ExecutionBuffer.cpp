@@ -1,5 +1,6 @@
 #include "ExecutionBuffer.h"
 #include <cassert>
+#include <cstring>
 
 std::map<DBDataType, ExecutionBuffer::TypeOperationTuple> ExecutionBuffer::m_typeOperations;
 
@@ -95,10 +96,6 @@ void ExecutionBuffer::init() {
 
 void ExecutionBuffer::getResult(Row row, size_t index, ExecutionResult& result, const std::vector<DBDataType>& types) {
 	std::byte* pData = get(row, index, types);
-	if (pData == nullptr) {
-		result.setNull();
-		return;
-	}
 	if (auto iter = m_typeOperations.find(types[index]); iter != m_typeOperations.end()) {
 		auto fn = std::get<ReadFn>(iter->second);
 		fn(pData, result);
@@ -110,15 +107,6 @@ void ExecutionBuffer::getResult(Row row, size_t index, ExecutionResult& result, 
 int ExecutionBuffer::compare(Row row1, Row row2, size_t index, const std::vector<DBDataType>& types) {
 	std::byte* pData1 = get(row1, index, types);
 	std::byte* pData2 = get(row2, index, types);
-	if(pData1 == nullptr) {
-		if (pData2 == nullptr) {
-			return 0;
-		} else {
-			return -1;
-		}
-	} else if (pData2 == nullptr) {
-		return 1;
-	}
 	if (auto iter = m_typeOperations.find(types[index]); iter != m_typeOperations.end()) {
 		auto fn = std::get<CompareFn>(iter->second);
 		return fn(pData1, pData2);
@@ -129,18 +117,8 @@ int ExecutionBuffer::compare(Row row1, Row row2, size_t index, const std::vector
 
 std::byte* ExecutionBuffer::get(Row row, size_t index, const std::vector<DBDataType>& types) {
 	std::byte* pStart = row;
-	std::bitset<32> nullBits(*reinterpret_cast<unsigned long*>(pStart));
-
-	if(nullBits[index]) {
-		return nullptr;
-	}
-
-	pStart+=sizeof(unsigned long);
 
 	for(size_t i = 0;i< index ;++i) {
-		if(nullBits[i]) {
-			continue;
-		}
 		if (auto iter = m_typeOperations.find(types[i]); iter != m_typeOperations.end()) {
 			auto fn = std::get<Size1Fn>(iter->second);
 			size_t size = fn(pStart);
@@ -153,15 +131,10 @@ std::byte* ExecutionBuffer::get(Row row, size_t index, const std::vector<DBDataT
 }
 
 ExecutionBuffer::Row ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types) {
-	std::bitset<32> m_nullBits;
-	size_t rowSize = sizeof(unsigned long);
+	size_t rowSize = 0;
 
 	assert(results.size() == types.size());
 	for(size_t i=0;i<results.size();++i) {
-		if(results[i].isNull()) {
-			m_nullBits.set(i);
-			continue;
-		}
 		if (auto iter = m_typeOperations.find(types[i]); iter != m_typeOperations.end()) {
 			auto fn = std::get<Size2Fn>(iter->second);
 			rowSize += fn(results[i]);
@@ -171,15 +144,9 @@ ExecutionBuffer::Row ExecutionBuffer::copyRow(const std::vector<ExecutionResult>
 	}
 	auto row = doAlloc(rowSize);
 
-	auto pNullBitsLong = reinterpret_cast<unsigned long*>(row);
-	*pNullBitsLong = m_nullBits.to_ulong();
-
-	std::byte* pData = row + sizeof(unsigned long);
+	std::byte* pData = row;
 
 	for(size_t i=0;i<results.size();++i) {
-		if(results[i].isNull()) {
-			continue;
-		}
 		if (auto iter = m_typeOperations.find(types[i]); iter != m_typeOperations.end()) {
 			auto writeFn = std::get<WriteFn>(iter->second);
 			writeFn(pData, results[i]);

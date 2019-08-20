@@ -61,7 +61,6 @@ public:
 	NodeType m_type;
 	std::string m_sValue;
 	int64_t m_iValue = 0;
-	std::tm m_time = {};
 
 	//string view on ParseResult.m_sSql
 	const std::string_view m_sExpr;

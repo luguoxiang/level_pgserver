@@ -38,7 +38,7 @@ namespace {
 }
 
 void ReadFilePlan::setToken(size_t index, std::string_view token) {
-	if(index > m_columns.size()) {
+	if(index >= m_columns.size()) {
 		return;
 	}
 	auto pColumn = m_columns[index];
@@ -49,7 +49,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	case DBDataType::INT32:
 	case DBDataType::INT64:
 		if(token.length() == 0) {
-			m_result[index].setNull();
+			m_result[index].setInt(0);
 		}else {
 			m_result[index].setInt(Tools::toInt(token));
 		}
@@ -73,7 +73,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	case DBDataType::FLOAT:
 	case DBDataType::DOUBLE:
 		if(token.length() == 0) {
-			m_result[index].setNull();
+			m_result[index].setDouble(0);
 			break;
 		}
 		try {
@@ -101,7 +101,7 @@ bool ReadFilePlan::next() {
 	size_t targetIndex = 0;
 	size_t beginToken = 0;
 	size_t tokenIndex = 0;
-	for(size_t i=0;i<line.length();++i) {
+	for(size_t i=0;i<line.length() && tokenIndex < m_columns.size();++i) {
 		char c = line[i];
 		switch(state){
 		case ParseState::OutOfQuote:
@@ -137,7 +137,7 @@ bool ReadFilePlan::next() {
 	setToken(tokenIndex++, std::string_view{line.data() + beginToken, targetIndex - beginToken});
 
 	for (; tokenIndex < m_columns.size(); ++tokenIndex ) {
-		m_result[tokenIndex].setNull();
+		setToken(tokenIndex, std::string_view());
 	}
 	++m_iRowCount;
 	return true;

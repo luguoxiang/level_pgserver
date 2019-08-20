@@ -11,7 +11,6 @@ public:
 	void setStringView(std::string_view value) { m_result = value;}
 	void setInt(int64_t value) { m_result = value;}
 	void setDouble(double value) { m_result = value;}
-	void setNull() { m_result = nullptr;}
 
 	bool isNull() const {return m_result.index() == 0; }
 
@@ -45,7 +44,7 @@ public:
 	static void init();
 private:
 	std::variant<
-		std::nullptr_t,
+		std::nullptr_t, //should not be used
 		std::string_view,
 		std::string,
 		int64_t,

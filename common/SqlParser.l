@@ -59,8 +59,8 @@ TERMINATED {return TERMINATED;}
 IS {return IS;}
 NOT 	{return NOT;}
 NULL 	{ 
-	yylval->pNode = new ParseNode((ParseResult*)yyextra, NodeType::NONE, "NULL");
-	return NULLX;
+		yyerror(yylloc, (ParseResult*)yyextra, nullptr, "NULL is not supported");
+		return ERROR;
 }
 ON 	{ return ON;}
 OFFSET	{ return OFFSET;}
@@ -95,7 +95,7 @@ USING {return USING;}
 		pNode->m_iValue = std::stol(yytext);
 		return INTNUM;
 	} catch (const std::exception& e) {
-		yyerror(yylloc, pResult, NULL, e.what());
+		yyerror(yylloc, pResult, nullptr, e.what());
 		return ERROR;
 	}
 	
@@ -142,9 +142,9 @@ FALSE {
 	return STRING;
 }
 
-'(\\.|[^'\n])*$ {yyerror(yylloc, (ParseResult*)yyextra,NULL, ConcateToString("Unterminated string ", yytext));}
+'(\\.|[^'\n])*$ {yyerror(yylloc, (ParseResult*)yyextra,nullptr, ConcateToString("Unterminated string ", yytext));}
 
-\"(\\.|[^"\n])*$ {yyerror(yylloc, (ParseResult*)yyextra, NULL,ConcateToString("Unterminated string ", yytext));}
+\"(\\.|[^"\n])*$ {yyerror(yylloc, (ParseResult*)yyextra, nullptr,ConcateToString("Unterminated string ", yytext));}
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
@@ -163,7 +163,7 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, pResult ,NULL, ConcateToString("Wrong date: ", yytext));
+		yyerror(yylloc, pResult ,nullptr, ConcateToString("Wrong date: ", yytext));
 		return ERROR;
 	}
 	
@@ -177,7 +177,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
 	{
-		yyerror(yylloc, pResult, NULL, ConcateToString("Wrong date: ", yytext));
+		yyerror(yylloc, pResult, nullptr, ConcateToString("Wrong date: ", yytext));
 		return ERROR;
 	}
 
@@ -213,7 +213,7 @@ $[0-9]+ {
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)
 	{
-		yyerror(yylloc, pResult,NULL,ConcateToString( "Illegal prepared statement param: ", yytext));
+		yyerror(yylloc, pResult,nullptr,ConcateToString( "Illegal prepared statement param: ", yytext));
 		return ERROR;
 	}
 	pNode->m_iValue = index;
@@ -225,7 +225,7 @@ $[0-9]+ {
 
 <<EOF>>		{return ';';}
 .		{
-	yyerror(yylloc, (ParseResult*)yyextra,NULL, ConcateToString("mystery charactor ", *yytext));
+	yyerror(yylloc, (ParseResult*)yyextra,nullptr, ConcateToString("mystery charactor ", *yytext));
 	return ERROR;
 }
 %%

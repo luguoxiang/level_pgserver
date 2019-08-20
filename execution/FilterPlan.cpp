@@ -33,10 +33,6 @@ bool FilterPlan::next() {
 			ExecutionResult result;
 			m_pPlan->getResult(iSubIndex, &result);
 
-			if (result.isNull()) {
-				bMatch = false;
-				break;
-			}
 			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
 				if (info.m_pValue->m_type != NodeType::STR) {
 					throw new ParseException(ConcateToString("Wrong data type for ", info.m_pValue->m_sExpr, ", expect string"));
