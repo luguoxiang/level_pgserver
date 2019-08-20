@@ -26,7 +26,7 @@ void ReadFilePlan::begin() {
 		throw new ExecutionException(
 				ConcateToString("File ", m_sPath, " does not exists!"));
 	}
-	m_result.reserve(m_columns.size());
+	m_result.resize(m_columns.size(), ExecutionResult{});
 }
 
 namespace {
@@ -46,7 +46,11 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	case DBDataType::INT16:
 	case DBDataType::INT32:
 	case DBDataType::INT64:
-		m_result[index].setInt(Tools::toInt(token));
+		if(token.length() == 0) {
+			m_result[index].setNull();
+		}else {
+			m_result[index].setInt(Tools::toInt(token));
+		}
 		break;
 	case DBDataType::STRING:
 		m_result[index].setStringView(token);
@@ -61,6 +65,10 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 					ConcateToString("Wrong Time Format:", token));
 		}
 	case DBDataType::DOUBLE:
+		if(token.length() == 0) {
+			m_result[index].setNull();
+			break;
+		}
 		try {
 			std::string s(token.data(), token.length());
 			m_result[index].setDouble(std::stof(s));
@@ -121,6 +129,9 @@ bool ReadFilePlan::next() {
 	}
 	setToken(tokenIndex++, std::string_view{line.data() + beginToken, targetIndex - beginToken});
 
+	for (; tokenIndex < m_columns.size(); ++tokenIndex ) {
+		m_result[tokenIndex].setNull();
+	}
 	++m_iRowCount;
 	return true;
 

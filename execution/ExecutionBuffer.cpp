@@ -102,6 +102,10 @@ void ExecutionBuffer::init() {
 
 void ExecutionBuffer::getResult(Row row, size_t index, ExecutionResult& result, const std::vector<DBDataType>& types) {
 	std::byte* pData = get(row, index, types);
+	if (pData == nullptr) {
+		result.setNull();
+		return;
+	}
 	if (auto iter = m_typeOperations.find(types[index]); iter != m_typeOperations.end()) {
 		auto fn = std::get<ReadFn>(iter->second);
 		fn(pData, result);
@@ -113,6 +117,15 @@ void ExecutionBuffer::getResult(Row row, size_t index, ExecutionResult& result, 
 int ExecutionBuffer::compare(Row row1, Row row2, size_t index, const std::vector<DBDataType>& types) {
 	std::byte* pData1 = get(row1, index, types);
 	std::byte* pData2 = get(row2, index, types);
+	if(pData1 == nullptr) {
+		if (pData2 == nullptr) {
+			return 0;
+		} else {
+			return -1;
+		}
+	} else if (pData2 == nullptr) {
+		return 1;
+	}
 	if (auto iter = m_typeOperations.find(types[index]); iter != m_typeOperations.end()) {
 		auto fn = std::get<CompareFn>(iter->second);
 		return fn(pData1, pData2);
@@ -124,6 +137,11 @@ int ExecutionBuffer::compare(Row row1, Row row2, size_t index, const std::vector
 std::byte* ExecutionBuffer::get(Row row, size_t index, const std::vector<DBDataType>& types) {
 	std::byte* pStart = row;
 	std::bitset<32> nullBits(*reinterpret_cast<unsigned long*>(pStart));
+
+	if(nullBits[index]) {
+		return nullptr;
+	}
+
 	pStart+=sizeof(unsigned long);
 
 	for(size_t i = 0;i< index ;++i) {
