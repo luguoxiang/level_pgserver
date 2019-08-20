@@ -40,20 +40,9 @@ ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeTuple(){
 			}}
 	);
 }
-
-void ExecutionBuffer::init() {
-	m_typeOperations[DBDataType::INT8] = makeTuple<int8_t>();
-	m_typeOperations[DBDataType::INT16] = makeTuple<int16_t>();
-	m_typeOperations[DBDataType::INT32] = makeTuple<int32_t>();
-	m_typeOperations[DBDataType::INT64] = makeTuple<int64_t>();
-
-	m_typeOperations[DBDataType::DATE] = m_typeOperations[DBDataType::INT64];
-	m_typeOperations[DBDataType::DATETIME] = m_typeOperations[DBDataType::INT64];
-
-	m_typeOperations[DBDataType::FLOAT] = makeTuple<float>();
-	m_typeOperations[DBDataType::DOUBLE] = makeTuple<double>();
-
-	m_typeOperations[DBDataType::STRING] = std::make_tuple(
+template <>
+ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeTuple<std::string_view>(){
+	return std::make_tuple(
 			ReadFn{[] (const std::byte* pData, ExecutionResult& result) {
 				size_t len = *(reinterpret_cast<const uint16_t*>(pData));
 				pData += sizeof(uint16_t);
@@ -86,6 +75,21 @@ void ExecutionBuffer::init() {
 				return result.getString().length() + sizeof(uint16_t);
 			}}
 	);
+}
+
+void ExecutionBuffer::init() {
+	m_typeOperations[DBDataType::INT8] = makeTuple<int8_t>();
+	m_typeOperations[DBDataType::INT16] = makeTuple<int16_t>();
+	m_typeOperations[DBDataType::INT32] = makeTuple<int32_t>();
+	m_typeOperations[DBDataType::INT64] = makeTuple<int64_t>();
+
+	m_typeOperations[DBDataType::DATE] = m_typeOperations[DBDataType::INT64];
+	m_typeOperations[DBDataType::DATETIME] = m_typeOperations[DBDataType::INT64];
+
+	m_typeOperations[DBDataType::FLOAT] = makeTuple<float>();
+	m_typeOperations[DBDataType::DOUBLE] = makeTuple<double>();
+
+	m_typeOperations[DBDataType::STRING] =  makeTuple<std::string_view>();
 	m_typeOperations[DBDataType::BYTES] = m_typeOperations[DBDataType::STRING];
 }
 
