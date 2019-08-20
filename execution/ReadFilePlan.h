@@ -9,8 +9,21 @@
 
 class ReadFilePlan: public ExecutionPlan {
 public:
-	ReadFilePlan(const std::string& sPath, const std::string& seperator) :
-			ExecutionPlan(PlanType::ReadFile), m_sPath(sPath), m_seperator(seperator) {
+	ReadFilePlan(const std::string& sPath, const std::string& separator) :
+			ExecutionPlan(PlanType::ReadFile), m_sPath(sPath), m_separator(separator[0]) {
+		switch(separator.size()) {
+		case 0:
+			m_separator = ',';
+			break;
+		case 1:
+			m_separator = separator[0];
+			if (m_separator == '"') {
+				throw new ParseException("Should not use \" as file separator");
+			}
+			break;
+		case 2:
+			throw new ParseException("File separator should be single character");
+		}
 	}
 
 
@@ -63,6 +76,7 @@ public:
 	}
 
 private:
+	void setToken(size_t index, std::string_view token);
 	std::vector<DBColumnInfo*> m_columns;
 	std::vector<ExecutionResult> m_result;
 	int64_t m_iRowCount = 0;
@@ -71,5 +85,5 @@ private:
 
 	std::unique_ptr<std::ifstream> m_pFile;
 	bool m_bCancel = false;
-	std::string m_seperator;
+	char m_separator;
 };
