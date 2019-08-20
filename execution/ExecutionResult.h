@@ -30,9 +30,9 @@ public:
 
 	int compare(const ParseNode* pValue, DBDataType type) const;
 
-	bool add(const ExecutionResult& result, DBDataType type);
+	void add(const ExecutionResult& result, DBDataType type);
 
-	bool div(size_t value, DBDataType type);
+	void div(size_t value, DBDataType type);
 
 	//extend string view life time
 	void cache() {
@@ -41,6 +41,8 @@ public:
 			m_result = std::string(v.data(), v.length());
 		}
 	}
+
+	static void init();
 private:
 	std::variant<
 		std::nullptr_t,
@@ -48,4 +50,13 @@ private:
 		std::string,
 		int64_t,
 		double> m_result = nullptr;
+
+	using DivFn = void (*) (ExecutionResult& result, size_t value);
+	using AddFn = void (*) (ExecutionResult& result, const ExecutionResult& add);
+	using Compare1Fn = int (*)(const ExecutionResult& a, const ExecutionResult& b);
+	using Compare2Fn =  int (*) (const ExecutionResult& a, const ParseNode* pValue);
+	using TypeOperationTuple = std::tuple<DivFn, AddFn,Compare1Fn, Compare2Fn>;
+
+
+	static std::map<DBDataType, TypeOperationTuple> m_typeOperations;
 };

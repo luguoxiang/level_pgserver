@@ -68,6 +68,7 @@ bool GroupByPlan::next() {
 		GroupByPlan::AggrFunc& proj = m_proj[i];
 
 		m_pPlan->getResult(proj.m_iIndex, &proj.m_value);
+		proj.m_value.cache();
 		proj.m_iCount = 1;
 	}
 	while (sameGroup) {
@@ -96,7 +97,7 @@ bool GroupByPlan::next() {
 				DBDataType type = m_pPlan->getResultType(proj.m_iIndex);
 				ExecutionResult info;
 				m_pPlan->getResult(proj.m_iIndex, &info);
-				//type should not be string or bytes, no need to cache result
+				info.cache();
 
 				if (proj.m_func == FuncType::MIN || proj.m_func == FuncType::MAX) {
 					int n = info.compare(proj.m_value, type);
@@ -106,10 +107,7 @@ bool GroupByPlan::next() {
 						proj.m_value = info;
 					}
 				} else {
-					if (!proj.m_value.add(info, type)) {
-						throw new ParseException(
-								"sum and avg is not supported on current parameter data type");
-					}
+					proj.m_value.add(info, type);
 				}
 			}
 		}

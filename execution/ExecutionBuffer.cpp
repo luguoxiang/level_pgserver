@@ -1,41 +1,90 @@
 #include "ExecutionBuffer.h"
 
+std::map<DBDataType, ExecutionBuffer::TypeOperationTuple> ExecutionBuffer::m_typeOperations;
 
-ExecutionBuffer:: ExecutionBuffer(size_t size): m_executionBuffer(size) {
+template <class IntType>
+ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeIntTuple(){
+	return std::make_tuple(
+			SetResultFn{[] (std::byte* pData, ExecutionResult& result) {
+					result.setInt(*reinterpret_cast<IntType*>(pData));
+			}},
+			CompareFn {[]  (std::byte* pData1, std::byte* pData2) ->int {
+				return *reinterpret_cast<IntType*>(pData1) - *reinterpret_cast<IntType*>(pData2);
+			}},
+			SizeFn{[](std::byte* pData) {
+				return sizeof(IntType);
+			}},
+			AllocFn{[] (ExecutionBuffer& buffer, const ExecutionResult& result) {
+				buffer.alloc<IntType>(result.getInt());
+			}}
+	);
+}
 
+void ExecutionBuffer::init() {
+	m_typeOperations[DBDataType::INT8] = makeIntTuple<int8_t>();
+	m_typeOperations[DBDataType::INT16] = makeIntTuple<int16_t>();
+	m_typeOperations[DBDataType::INT32] = makeIntTuple<int32_t>();
+	m_typeOperations[DBDataType::INT64] = makeIntTuple<int64_t>();
+
+	m_typeOperations[DBDataType::DATE] = m_typeOperations[DBDataType::INT64];
+	m_typeOperations[DBDataType::DATETIME] = m_typeOperations[DBDataType::INT64];
+
+	m_typeOperations[DBDataType::DOUBLE] = std::make_tuple(
+			SetResultFn{[] (std::byte* pData, ExecutionResult& result) {
+				result.setDouble(*reinterpret_cast<double*>(pData));
+			}},
+			CompareFn {[]  (std::byte* pData1, std::byte* pData2) ->int {
+				double a =  *reinterpret_cast<double*>(pData1);
+				double b = *reinterpret_cast<double*>(pData2);
+				if (a > b) {
+					return 1;
+				} else if (a <b ){
+					return -1;
+				} else {
+					return 0;
+				}
+			}},
+			SizeFn{[](std::byte* pData) {
+				return sizeof(double);
+			}},
+			AllocFn{[] (ExecutionBuffer& buffer, const ExecutionResult& result) {
+				buffer.alloc<double>(result.getDouble());
+			}}
+	);
+
+	m_typeOperations[DBDataType::STRING] = std::make_tuple(
+			SetResultFn{[] (std::byte* pData, ExecutionResult& result) {
+				size_t len = *(reinterpret_cast<uint16_t*>(pData));
+				pData += sizeof(uint16_t);
+				result.setStringView(std::string_view(reinterpret_cast<const char*>(pData), len));
+			}},
+			CompareFn {[]  (std::byte* pData1, std::byte* pData2) ->int {
+				size_t len1 = *(reinterpret_cast<uint16_t*>(pData1));
+				size_t len2 = *(reinterpret_cast<uint16_t*>(pData2));
+				pData1 += sizeof(uint16_t);
+				pData2 += sizeof(uint16_t);
+				std::string_view s1(reinterpret_cast<const char*>(pData1), len1);
+				std::string_view s2(reinterpret_cast<const char*>(pData2), len2);
+				return s1.compare(s2);
+			}},
+			SizeFn{[](std::byte* pData) {
+				return *(reinterpret_cast<uint16_t*>(pData)) + sizeof(uint16_t);;
+			}},
+			AllocFn{[] (ExecutionBuffer& buffer, const ExecutionResult& result) {
+				buffer.allocString(result.getString());
+			}}
+	);
+	m_typeOperations[DBDataType::BYTES] = m_typeOperations[DBDataType::STRING];
 }
 
 void ExecutionBuffer::getResult(Row row, size_t index, ExecutionResult& result, const std::vector<DBDataType>& types) {
 	std::byte* pData = get(row, index, types);
-	switch(types[index]) {
-		case DBDataType::INT8:
-			result.setInt(*reinterpret_cast<int8_t*>(pData));
-			break;
-		case DBDataType::INT16:
-			result.setInt(*reinterpret_cast<int16_t*>(pData));
-			break;
-		case DBDataType::INT32:
-			result.setInt(*reinterpret_cast<int32_t*>(pData));
-			break;
-		case DBDataType::DATE:
-		case DBDataType::DATETIME:
-		case DBDataType::INT64:
-			result.setInt(*reinterpret_cast<int64_t*>(pData));
-			break;
-		case DBDataType::BYTES:
-		case DBDataType::STRING:{
-			size_t len = *(reinterpret_cast<uint16_t*>(pData));
-			pData += sizeof(uint16_t);
-			result.setStringView(std::string_view(reinterpret_cast<const char*>(pData), len));
-			break;
-		}
-		case DBDataType::DOUBLE: {
-			result.setDouble(*reinterpret_cast<double*>(pData));
-			break;
-		}
-		default:
-			assert(0);
-		}
+	if (auto iter = m_typeOperations.find(types[index]); iter != m_typeOperations.end()) {
+		auto fn = std::get<SetResultFn>(iter->second);
+		fn(pData, result);
+	} else{
+		assert(0);
+	}
 }
 
 std::string_view ExecutionBuffer::allocString(std::string_view t) {
@@ -55,39 +104,10 @@ std::string_view ExecutionBuffer::allocString(std::string_view t) {
 int ExecutionBuffer::compare(Row row1, Row row2, size_t index, const std::vector<DBDataType>& types) {
 	std::byte* pData1 = get(row1, index, types);
 	std::byte* pData2 = get(row2, index, types);
-	switch(types[index]) {
-	case DBDataType::INT8:
-		return *reinterpret_cast<int8_t*>(pData1) - *reinterpret_cast<int8_t*>(pData2);
-	case DBDataType::INT16:
-		return *reinterpret_cast<int16_t*>(pData1) - *reinterpret_cast<int16_t*>(pData2);
-	case DBDataType::INT32:
-		return *reinterpret_cast<int32_t*>(pData1) - *reinterpret_cast<int32_t*>(pData2);
-	case DBDataType::INT64:
-	case DBDataType::DATE:
-	case DBDataType::DATETIME:
-		return *reinterpret_cast<int64_t*>(pData1) - *reinterpret_cast<int64_t*>(pData2);
-	case DBDataType::BYTES:
-	case DBDataType::STRING:{
-		size_t len1 = *(reinterpret_cast<uint16_t*>(pData1));
-		size_t len2 = *(reinterpret_cast<uint16_t*>(pData2));
-		pData1 += sizeof(uint16_t);
-		pData2 += sizeof(uint16_t);
-		std::string_view s1(reinterpret_cast<const char*>(pData1), len1);
-		std::string_view s2(reinterpret_cast<const char*>(pData2), len2);
-		return s1.compare(s2);
-	}
-	case DBDataType::DOUBLE: {
-		double a =  *reinterpret_cast<double*>(pData1);
-		double b = *reinterpret_cast<double*>(pData2);
-		if (a > b) {
-			return 1;
-		} else if (a <b ){
-			return -1;
-		} else {
-			return 0;
-		}
-	}
-	default:
+	if (auto iter = m_typeOperations.find(types[index]); iter != m_typeOperations.end()) {
+		auto fn = std::get<CompareFn>(iter->second);
+		return fn(pData1, pData2);
+	} else{
 		assert(0);
 	}
 }
@@ -101,28 +121,11 @@ std::byte* ExecutionBuffer::get(Row row, size_t index, const std::vector<DBDataT
 		if(nullBits[i]) {
 			continue;
 		}
-		switch(types[i]) {
-		case DBDataType::INT8:
-			pStart += sizeof(int8_t);
-			break;
-		case DBDataType::INT16:
-			pStart += sizeof(int16_t);
-			break;
-		case DBDataType::INT32:
-			pStart += sizeof(int32_t);
-			break;
-		case DBDataType::DATETIME:
-		case DBDataType::DATE:
-		case DBDataType::INT64:
-			pStart += sizeof(int64_t);
-			break;
-		case DBDataType::BYTES:
-		case DBDataType::STRING:
-			pStart += *(reinterpret_cast<uint16_t*>(pStart)) + sizeof(uint16_t);
-			break;
-		case DBDataType::DOUBLE:
-			pStart += sizeof(double);
-		default:
+		if (auto iter = m_typeOperations.find(types[i]); iter != m_typeOperations.end()) {
+			auto fn = std::get<SizeFn>(iter->second);
+			size_t size = fn(pStart);
+			pStart += size;
+		} else{
 			assert(0);
 		}
 	}
@@ -136,29 +139,10 @@ void ExecutionBuffer::allocForColumn(DBDataType type, const ExecutionResult& res
 	}
 	++m_iIndex;
 
-	switch(type) {
-	case DBDataType::INT8:
-		alloc<int8_t>(result.getInt());
-		break;
-	case DBDataType::INT16:
-		alloc<int16_t>(result.getInt());
-		break;
-	case DBDataType::INT32:
-		alloc<int32_t>(result.getInt());
-		break;
-	case DBDataType::DATETIME:
-	case DBDataType::DATE:
-	case DBDataType::INT64:
-		alloc<int64_t>(result.getInt());
-		break;
-	case DBDataType::BYTES:
-	case DBDataType::STRING:
-		allocString(result.getString());
-		break;
-	case DBDataType::DOUBLE:
-		alloc(result.getDouble());
-		break;
-	default:
+	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end()) {
+		auto fn = std::get<AllocFn>(iter->second);
+		fn(*this, result);
+	} else{
 		assert(0);
 	}
 }

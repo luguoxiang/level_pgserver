@@ -1,56 +1,116 @@
 #include "ExecutionResult.h"
 #include "ExecutionException.h"
 
-bool ExecutionResult::div(size_t value, DBDataType type) {
+std::map<DBDataType, ExecutionResult::TypeOperationTuple> ExecutionResult::m_typeOperations;
+
+void ExecutionResult::init() {
+	auto intOperations =  std::make_tuple(
+		DivFn{[](ExecutionResult& result, size_t value) {
+			auto v = result.getInt();
+			v = v/value;
+			result.setInt(v);
+		}},
+		AddFn{[](ExecutionResult& result, const ExecutionResult& add) {
+			result.setInt(result.getInt() + add.getInt());
+		}},
+		Compare1Fn{[] (const ExecutionResult& a, const ExecutionResult& b) {
+			auto aa = a.getInt();
+			auto bb = b.getInt();
+			if (aa == bb)
+				return 0;
+			else if (aa < bb)
+				return -1;
+			else
+				return 1;
+		}},
+		Compare2Fn{[] (const ExecutionResult& result, const ParseNode* pValue) {
+			if (pValue->m_type != NodeType::INT) {
+				throw new ExecutionException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect int"));
+			}
+			int64_t a = result.getInt();
+			int64_t b = pValue->m_iValue;
+			if (a == b)
+				return 0;
+			else if (a < b)
+				return -1;
+			else
+				return 1;
+		}}
+	);
+
+	m_typeOperations[DBDataType::INT8] = intOperations;
+	m_typeOperations[DBDataType::INT16] = intOperations;
+	m_typeOperations[DBDataType::INT32] = intOperations;
+	m_typeOperations[DBDataType::INT64] = intOperations;
+
+	m_typeOperations[DBDataType::DATE] = std::make_tuple(
+			DivFn{nullptr},
+			std::get<AddFn>(intOperations),
+			std::get<Compare1Fn>(intOperations),
+			std::get<Compare2Fn>(intOperations));
+	m_typeOperations[DBDataType::DATETIME] = m_typeOperations[DBDataType::DATE];
+
+	m_typeOperations[DBDataType::STRING] = std::make_tuple(
+			DivFn{nullptr},
+			AddFn{nullptr},
+			Compare1Fn{[] (const ExecutionResult& a, const ExecutionResult& b) {
+				return a.getString().compare(b.getString());
+			}},
+			Compare2Fn{[] (const ExecutionResult& result, const ParseNode* pValue) {
+				if (pValue->m_type != NodeType::STR) {
+					throw new ExecutionException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect string"));
+				}
+				return result.getString().compare(pValue->m_sValue);
+			}}
+	);
+	m_typeOperations[DBDataType::BYTES] = m_typeOperations[DBDataType::STRING];
+
+	m_typeOperations[DBDataType::DOUBLE] =  std::make_tuple(
+		DivFn{[](ExecutionResult& result, size_t value) {
+			auto v = result.getDouble();
+			v = v/value;
+			result.setInt(v);
+		}},
+		AddFn{[](ExecutionResult& result, const ExecutionResult& add) {
+			result.setDouble(result.getDouble() + add.getDouble());
+		}},
+		Compare1Fn{nullptr},
+		Compare2Fn{nullptr}
+	);
+}
+
+void ExecutionResult::div(size_t value, DBDataType type) {
 	if (value == 0) {
 		throw new ExecutionException("Divide zero");
 	}
 	if (isNull()) {
-		return true;
+		return;
 	}
-	switch (type) {
-	case DBDataType::STRING:
-	case DBDataType::BYTES:
-	case DBDataType::DATE:
-	case DBDataType::DATETIME:
-		return false;
-	case DBDataType::DOUBLE: {
-		auto v = getDouble();
-		v = v / value;
-		m_result = v;
-		return true;
+	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
+		if (auto fn = std::get<DivFn>(iter->second); fn != nullptr) {
+			fn(*this, value);
+			return;
+		}
 	}
-	case DBDataType::INT16:
-	case DBDataType::INT32:
-	case DBDataType::INT64: {
-		auto v = getInt();
-		v = v/ value;
-		m_result = v;
-		return true;
-	}
-	default:
-		throw new ExecutionException("Divide is not supported on current data type!");
-		return 0;
-	}
+	throw new ExecutionException("Divide is not supported on target data type!");
+
 }
 
-bool ExecutionResult::add(const ExecutionResult& result, DBDataType type) {
-	switch (type) {
-	case DBDataType::DOUBLE: {
-		m_result = getDouble() + result.getDouble();
-		return true;
+void ExecutionResult::add(const ExecutionResult& result, DBDataType type) {
+	if (result.isNull()) {
+		setNull();
+		return;
 	}
-	case DBDataType::DATE:
-	case DBDataType::DATETIME:
-	case DBDataType::INT16:
-	case DBDataType::INT32:
-	case DBDataType::INT64: {
-		m_result = getInt() + result.getInt();
-		return true;
+
+	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
+		if (auto fn = std::get<AddFn>(iter->second); fn != nullptr) {
+			fn(*this, result);
+			return;
+		}
 	}
-	default:
-		return false;
-	}
+	throw new ExecutionException("Add is not supported on target data type!");
+
+
 }
 
 int ExecutionResult::compare(const ExecutionResult& result,
@@ -62,39 +122,12 @@ int ExecutionResult::compare(const ExecutionResult& result,
 	if (result.isNull())
 		return 1;
 
-	switch (type) {
-	case DBDataType::STRING:
-	case DBDataType::BYTES:
-		return (getString() == result.getString());
-	case DBDataType::DOUBLE: {
-		double aa = getDouble();
-		double bb = result.getDouble();
-		if (aa == bb)
-			return 0;
-		else if (aa < bb)
-			return -1;
-		else
-			return 1;
+	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
+		if (auto fn = std::get<Compare1Fn>(iter->second); fn != nullptr) {
+			return fn( *this, result);
+		}
 	}
-	case DBDataType::DATE:
-	case DBDataType::DATETIME:
-	case DBDataType::INT8:
-	case DBDataType::INT16:
-	case DBDataType::INT32:
-	case DBDataType::INT64: {
-		int64_t aa = getInt();
-		int64_t bb = result.getInt();
-		if (aa == bb)
-			return 0;
-		else if (aa < bb)
-			return -1;
-		else
-			return 1;
-	}
-	default:
-		throw new ExecutionException("Unsupported compare data type!");
-		return 0;
-	}
+	throw new ExecutionException("Compare is not supported on target data type!");
 }
 
 int ExecutionResult::compare(const ParseNode* pValue,
@@ -102,36 +135,11 @@ int ExecutionResult::compare(const ParseNode* pValue,
 	if (isNull()) {
 		return pValue->m_type == NodeType::NONE ? 0 : -1;
 	}
-	switch (type) {
-	case DBDataType::DATE:
-	case DBDataType::DATETIME:
-	case DBDataType::INT8:
-	case DBDataType::INT16:
-	case DBDataType::INT32:
-	case DBDataType::INT64: {
-		if (pValue->m_type != NodeType::INT) {
-			throw new ExecutionException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect int"));
+	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
+		if (auto fn = std::get<Compare2Fn>(iter->second); fn != nullptr) {
+			return fn(*this, pValue);
 		}
-		int64_t a = getInt();
-		int64_t b = pValue->m_iValue;
-		if (a == b)
-			return 0;
-		else if (a < b)
-			return -1;
-		else
-			return 1;
 	}
-	case DBDataType::STRING: {
-		if (pValue->m_type != NodeType::STR) {
-			throw new ExecutionException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect string"));
-		}
-		return getString() == pValue->m_sValue;
-	}
-		//case DBDataType::DOUBLE:
-		//case DBDataType::BYTES:
-	default:
-		throw new ExecutionException(ConcateToString("Unsupported compare for ", pValue->m_sExpr));
-	};
-	return 0;
+	throw new ExecutionException("Compare is not supported on target data type!");
 }
 
