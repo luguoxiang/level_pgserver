@@ -43,7 +43,7 @@ public:
 		return m_iNetBuffer;
 	}
 	uint32_t getExecutionBuffer() const {
-		return m_iExecBuffer;
+		return m_iExecBuffer / m_iWorkerNum;
 	}
 
 	int getPort() const { return m_iPort;}
@@ -75,7 +75,7 @@ private:
 	uint32_t m_iWorkerNum = 20;
 	uint32_t m_iTimeout = 60;
 	uint32_t m_iNetBuffer = 1024 * 1024;
-	uint32_t m_iExecBuffer = 64 * 1024 * 1024;
+	uint32_t m_iExecBuffer = 640 * 1024 * 1024;
 	int m_iPort = 5433;
 
 };

@@ -638,5 +638,5 @@ void parseSql(ParseResult* p, const std::string_view sql)
 	yy_switch_to_buffer(bp, p->m_scanInfo);
 	yyparse(p, p->m_scanInfo);
 	yy_delete_buffer(bp, p->m_scanInfo);
-	printTree(p->m_pResult, 0);
+	//printTree(p->m_pResult, 0);
 }
