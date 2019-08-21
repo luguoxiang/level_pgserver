@@ -24,7 +24,7 @@ void ShowTables::getResult(size_t index, ExecutionResult* pInfo) {
 		if (pTable->hasAttribute("info")) {
 			pInfo->setStringView(pTable->getAttribute("info"));
 		} else {
-			pInfo->setNull();
+			pInfo->setStringView("");
 		}
 	} else {
 		assert(0);

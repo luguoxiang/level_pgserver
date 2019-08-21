@@ -71,14 +71,14 @@ void ShowColumns::getResult(size_t index, ExecutionResult* pInfo) {
 		break;
 	case 2:
 		if (pColumn->m_iKeyIndex < 0) {
-			pInfo->setNull();
+			pInfo->setInt(-1);
 		} else {
 			pInfo->setInt(pColumn->m_iKeyIndex);
 		}
 		break;
 	case 3:
 		if (pColumn->m_iLen < 0) {
-			pInfo->setNull();
+			pInfo->setInt(-1);
 		} else {
 			pInfo->setInt(pColumn->m_iLen);
 		}

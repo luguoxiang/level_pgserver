@@ -28,11 +28,11 @@ struct DbPlanBuilder
 	BuildPlanFunc m_pfnInsert;
 	BuildPlanFunc m_pfnDelete;
 	
-	bool valid() const {return m_db != NULL;}
+	bool valid() const {return m_db != nullptr;}
 };
 
 static std::array<DbPlanBuilder,1> planBuilders = {
-	{"file", buildPlanForFileSelect, NULL, NULL},
+	{"file", buildPlanForFileSelect, nullptr, nullptr},
 };
 
 static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode** ppTable)
@@ -260,7 +260,7 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 		auto len =  $3->m_sValue.length();
 		if($3->m_sValue[0] != '%' || $3->m_sValue[len - 1] != '%')
 		{
-			yyerror(&@3,pResult, NULL, ConcateToString("missing %% for like ", $3->m_sValue));
+			yyerror(&@3,pResult, nullptr, ConcateToString("missing %% for like ", $3->m_sValue));
 			YYERROR;
 		}
 		$3->m_sValue =  $3->m_sValue.substr(1, len -2);
@@ -303,9 +303,9 @@ delete_stmt: DELETE FROM table_factor opt_where
 	{
 		ParseNode* pTable = $3;
 		auto builder = getPlanBuilder(pResult, &pTable);
-		if(builder.m_pfnDelete == NULL)
+		if(builder.m_pfnDelete == nullptr)
 		{
-		  yyerror(&@3,pResult,NULL, "Delete is not supported for current database");
+		  yyerror(&@3,pResult,nullptr, "Delete is not supported for current database");
 		  YYERROR;
 		}
 		$$ = newParentNode(pResult, "DeleteStmt", @$.first_column, @$.last_column, {pTable, $4 });
@@ -315,7 +315,7 @@ delete_stmt: DELETE FROM table_factor opt_where
 update_stmt: UPDATE table_factor SET update_asgn_list opt_where
 	{
 		$4 = $4->merge(pResult,"AssignValueList", "AssignValueList");
-		yyerror(&@1,pResult,NULL, "Update is not supported for current database");
+		yyerror(&@1,pResult,nullptr, "Update is not supported for current database");
 		YYERROR;
 	}
 	;
@@ -343,9 +343,9 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 	{
 	  ParseNode* pTable = $3;
 		auto builder = getPlanBuilder(pResult, &pTable);
-		if(builder.m_pfnInsert == NULL)
+		if(builder.m_pfnInsert == nullptr)
 		{
-			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
+			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
 			YYERROR;
 		}
 		$$ = newParentNode(pResult, "InsertStmt",@$.first_column, @$.last_column,  { pTable,$4,$5 });
@@ -355,9 +355,9 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 	{
 	  ParseNode* pTable = $3;
 		auto builder = getPlanBuilder(pResult, &pTable);
-		if(builder.m_pfnInsert == NULL)
+		if(builder.m_pfnInsert == nullptr)
 		{
-			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
+			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
 			YYERROR;
 		}
 		$$ = newParentNode(pResult, "InsertStmt",  @$.first_column, @$.last_column, { pTable,$4,$5 });
@@ -390,9 +390,9 @@ load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS 
 	{
 		ParseNode* pTable = $7;
 		auto builder = getPlanBuilder(pResult, &pTable);
-		if(builder.m_pfnInsert == NULL)
+		if(builder.m_pfnInsert == nullptr)
 		{
-			yyerror(&@3,pResult,NULL, "Insert is not supported for current database");
+			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
 			YYERROR;
 		}
 
@@ -457,14 +457,14 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 		{
 			//This is a left join statement
 			pJoin = pJoin->merge(pResult,"JoinList", "JoinList");
-			if(pAlias == NULL)
+			if(pAlias == nullptr)
 			{
-				yyerror(&@5,pResult,NULL, "table in left join statement  must have a alias name");
+				yyerror(&@5,pResult,nullptr, "table in left join statement  must have a alias name");
 				YYERROR;
 			}
 			if(!hasSubquery)
 			{
-				yyerror(&@4,pResult,NULL, "left join target must be subquery");
+				yyerror(&@4,pResult,nullptr, "left join target must be subquery");
 				YYERROR;
 			}
 
@@ -474,9 +474,9 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 		else
 		{
 			pProject->m_fnBuildPlan = buildPlanForProjection;
-			if(pAlias != NULL)
+			if(pAlias != nullptr)
 			{
-				yyerror(&@5,pResult,NULL, "table alias name in non-join statement  is not supported");
+				yyerror(&@5,pResult,nullptr, "table alias name in non-join statement  is not supported");
 				YYERROR;
 			}
 			if(hasSubquery)
@@ -489,9 +489,9 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			else
 			{
 				auto builder = getPlanBuilder(pResult, &pTable);
-			    if(builder.m_pfnSelect == NULL)
+			    if(builder.m_pfnSelect == nullptr)
 			    {
-			      yyerror(&@3,pResult,NULL, "Select is not supported for current database");
+			      yyerror(&@3,pResult,nullptr, "Select is not supported for current database");
 			      YYERROR;
 			    }
 	

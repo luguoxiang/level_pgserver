@@ -84,9 +84,6 @@ void ExecutionResult::div(size_t value, DBDataType type) {
 	if (value == 0) {
 		throw new ExecutionException("Divide zero");
 	}
-	if (isNull()) {
-		return;
-	}
 	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
 		if (auto fn = std::get<DivFn>(iter->second); fn != nullptr) {
 			fn(*this, value);
@@ -98,11 +95,6 @@ void ExecutionResult::div(size_t value, DBDataType type) {
 }
 
 void ExecutionResult::add(const ExecutionResult& result, DBDataType type) {
-	if (result.isNull()) {
-		setNull();
-		return;
-	}
-
 	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
 		if (auto fn = std::get<AddFn>(iter->second); fn != nullptr) {
 			fn(*this, result);
@@ -110,19 +102,10 @@ void ExecutionResult::add(const ExecutionResult& result, DBDataType type) {
 		}
 	}
 	throw new ExecutionException("Add is not supported on target data type!");
-
-
 }
 
 int ExecutionResult::compare(const ExecutionResult& result,
 		DBDataType type) const {
-	if (isNull() && result.isNull())
-		return 0;
-	if (isNull())
-		return -1;
-	if (result.isNull())
-		return 1;
-
 	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
 		if (auto fn = std::get<Compare1Fn>(iter->second); fn != nullptr) {
 			return fn( *this, result);
@@ -133,9 +116,6 @@ int ExecutionResult::compare(const ExecutionResult& result,
 
 int ExecutionResult::compare(const ParseNode* pValue,
 		DBDataType type) const {
-	if (isNull()) {
-		return pValue->m_type == NodeType::NONE ? 0 : -1;
-	}
 	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
 		if (auto fn = std::get<Compare2Fn>(iter->second); fn != nullptr) {
 			return fn(*this, pValue);
