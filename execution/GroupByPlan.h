@@ -15,7 +15,7 @@ public:
 
 	struct AggrFunc {
 		FuncType m_func;
-		std::string m_sName;
+		std::string_view m_sName;
 		size_t m_iIndex;
 		size_t m_iCount;
 		ExecutionResult m_value;
@@ -71,19 +71,19 @@ public:
 		}
 	}
 
-	virtual int addProjection(ParseNode* pNode) override;
+	virtual int addProjection(const ParseNode* pNode) override;
 
-	virtual void getAllColumns(std::vector<std::string>& columns) override{
+	virtual void getAllColumns(std::vector<std::string_view>& columns) override{
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			columns.push_back(m_proj[i].m_sName);
 		}
 	}
 
-	virtual std::string getProjectionName(size_t index)override {
+	virtual std::string_view getProjectionName(size_t index)override {
 		return m_proj[index].m_sName;
 	}
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			bool* pOrder) override{
 		return m_pPlan->ensureSortOrder(iSortIndex, sColumn, pOrder);
 	}
@@ -92,7 +92,7 @@ public:
 	virtual bool next() override;
 	virtual void end() override;
 
-	void addGroupByColumn(ParseNode* pNode) {
+	void addGroupByColumn(const ParseNode* pNode) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
 			throw new ParseException(ConcateToString("Unrecognized sort column ", pNode->m_sExpr));
@@ -109,6 +109,6 @@ private:
 
 	std::vector<ExecutionResult> m_last;
 	std::vector<DBDataType> m_type;
-	std::map<std::string, FuncType> m_typeMap;
+	std::map<std::string_view, FuncType> m_typeMap;
 };
 

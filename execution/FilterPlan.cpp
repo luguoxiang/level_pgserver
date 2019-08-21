@@ -57,7 +57,7 @@ bool FilterPlan::next() {
 	return false;
 }
 
-void FilterPlan::addPredicate(ParseNode* pPredicate) {
+void FilterPlan::addPredicate(const ParseNode* pPredicate) {
 	if (pPredicate->m_type != NodeType::OP || pPredicate->children() != 2) {
 		throw new ParseException(ConcateToString("Unsupported predicate ", pPredicate->m_sExpr));
 	}
@@ -65,12 +65,12 @@ void FilterPlan::addPredicate(ParseNode* pPredicate) {
 	assert(pPredicate->children() == 2);
 	assert(pPredicate->m_type == NodeType::OP);
 	PredicateInfo info;
-	info.m_sColumn = pPredicate->m_children[0]->m_sExpr;
+	info.m_sColumn = pPredicate->getChild(0)->m_sExpr;
 	info.m_sExpr = pPredicate->m_sExpr;
-	if(int i = m_pPlan->addProjection(pPredicate->m_children[0]); i>=0 ) {
+	if(int i = m_pPlan->addProjection(pPredicate->getChild(0)); i>=0 ) {
 		info.m_iSubIndex = i;
 		info.m_iOpCode = OP_CODE(pPredicate);
-		info.m_pValue = pPredicate->m_children[1];
+		info.m_pValue = pPredicate->getChild(1);
 		m_predicate.push_back(info);
 	}else {
 		throw new ParseException(ConcateToString("Unrecognized column ", info.m_sColumn));

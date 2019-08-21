@@ -26,7 +26,7 @@ public:
 		}
 	}
 
-	DBDataType getDataType(const std::string& sType) {
+	DBDataType getDataType(const std::string_view& sType) {
 		auto iter = m_dataTypeMap.find(sType);
 		if (iter == m_dataTypeMap.end())
 			return DBDataType::UNKNOWN;
@@ -57,7 +57,7 @@ public:
 
 	int getPort() const { return m_iPort;}
 
-	TableInfo* getTableInfo(const std::string& name) {
+	TableInfo* getTableInfo(std::string_view name) {
 		auto iter = m_tableMap.find(name);
 		if (iter != m_tableMap.end()) {
 			return iter->second;
@@ -70,7 +70,7 @@ public:
 		return m_tableMap.size();
 	}
 
-	void addTable(const std::string& name, TableInfo* pTable);
+	void addTable(TableInfo* pTable);
 
 	MetaConfig(const MetaConfig&) = delete;
 	MetaConfig& operator =(const MetaConfig&) = delete;
@@ -78,8 +78,9 @@ private:
 
 	MetaConfig();
 
-	std::map<std::string, TableInfo*> m_tableMap;
-	std::map<std::string, DBDataType> m_dataTypeMap;
+	//string view on TableInfo.m_name
+	std::map<std::string_view, TableInfo*> m_tableMap;
+	std::map<std::string_view, DBDataType> m_dataTypeMap;
 
 	uint32_t m_iWorkerNum = 20;
 	uint32_t m_iTimeout = 60;

@@ -7,8 +7,8 @@
 class ProjectionPlan: public ExecutionPlan {
 	struct ProjectionInfo {
 		size_t m_iSubIndex;
-		std::string m_sName;
-		std::string m_sRaw;
+		std::string_view m_sName;
+		std::string_view m_sRaw;
 	};
 public:
 	ProjectionPlan(ExecutionPlan* pPlan) :
@@ -26,15 +26,15 @@ public:
 		rows.push_back(s);
 	}
 
-	bool project(ParseNode* pNode, const std::string& sName);
+	bool project(const ParseNode* pNode, const std::string_view& sName);
 
-	virtual void getAllColumns(std::vector<std::string>& columns) override{
+	virtual void getAllColumns(std::vector<std::string_view>& columns) override{
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			columns.push_back(m_proj[i].m_sName);
 		}
 	}
 
-	virtual int addProjection(ParseNode* pNode)override{
+	virtual int addProjection(const ParseNode* pNode)override{
 		auto iter = m_map.find(pNode->m_sValue);
 		if (iter == m_map.end())
 			return -1;
@@ -52,7 +52,7 @@ public:
 		return m_pPlan->end();
 	}
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			bool* pOrder) override {
 		if (auto iter = m_map.find(sColumn); iter != m_map.end() ) {
 			size_t iIndex = iter->second;
@@ -69,7 +69,7 @@ public:
 		return m_proj.size();
 	}
 
-	virtual std::string getProjectionName(size_t index) override{
+	virtual std::string_view getProjectionName(size_t index) override{
 		assert(index < m_proj.size());
 		size_t iSubIndex = m_proj[index].m_iSubIndex;
 		return m_proj[index].m_sName;
@@ -97,6 +97,6 @@ public:
 	}
 private:
 	std::vector<ProjectionInfo> m_proj;
-	std::map<std::string, size_t> m_map;
+	std::map<std::string_view, size_t> m_map;
 	std::unique_ptr<ExecutionPlan> m_pPlan;
 };

@@ -120,7 +120,7 @@ void GroupByPlan::end() {
 	m_pPlan->end();
 }
 
-int GroupByPlan::addProjection(ParseNode* pNode) {
+int GroupByPlan::addProjection(const ParseNode* pNode) {
 	if (pNode->m_type == NodeType::NAME) {
 		if(int i = m_pPlan->addProjection(pNode); i >= 0 ) {
 			AggrFunc func;
@@ -138,13 +138,13 @@ int GroupByPlan::addProjection(ParseNode* pNode) {
 			AggrFunc func;
 			func.m_func = iter->second;
 			assert(pNode->children() == 1);
-			if (int i = m_pPlan->addProjection(pNode->m_children[0]); i>=0) {
+			if (int i = m_pPlan->addProjection(pNode->getChild(0)); i>=0) {
 				func.m_sName = pNode->m_sExpr;
 				func.m_iIndex = i;
 				m_proj.push_back(func);
 				return m_proj.size() - 1;
 			} else{
-				throw new ParseException(ConcateToString("Unrecognized projection column ", pNode->m_children[0]->m_sExpr));
+				throw new ParseException(ConcateToString("Unrecognized projection column ", pNode->getChild(0)->m_sExpr));
 			}
 		} else {
 			throw new ParseException(ConcateToString("Unknown function ", pNode->m_sExpr));

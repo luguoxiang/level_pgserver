@@ -1,4 +1,4 @@
-#include <string>
+#include <limits>
 
 #include <glog/logging.h>
 
@@ -15,6 +15,10 @@ int main(int argc, char** argv) {
 	LOG(INFO)<< "csv2pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
 	ExecutionBuffer::init();
 	ExecutionResult::init();
+
+	static_assert(std::numeric_limits<float>::is_iec559);
+	static_assert(std::numeric_limits<double>::is_iec559);
+
 	try {
 		MetaConfig::getInstance().load("meta.conf");
 		PgServer server(MetaConfig::getInstance().getPort());

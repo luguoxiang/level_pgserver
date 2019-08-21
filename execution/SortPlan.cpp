@@ -26,7 +26,7 @@ void SortPlan::begin() {
 			int iSubIndex = m_proj[i].m_iSubIndex;
 			m_pPlan->getResult(iSubIndex, &results[i]);
 		}
-		auto row = buffer.copyRow(results, m_types);
+		auto [row, size] = buffer.copyRow(results, m_types);
 
 		m_rows.push_back(row);
 	}
@@ -77,7 +77,7 @@ void SortPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	buffer.getResult(m_rows[m_iCurrent - 1], index, *pInfo, m_types);
 }
 
-int SortPlan::addProjection(ParseNode* pNode)  {
+int SortPlan::addProjection(const ParseNode* pNode)  {
 	int index = m_pPlan->addProjection(pNode);
 	if (index < 0)
 	return index;
@@ -93,7 +93,7 @@ int SortPlan::addProjection(ParseNode* pNode)  {
 	return m_proj.size() - 1;
 }
 
-bool SortPlan::ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+bool SortPlan::ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 		bool* pOrder) {
 	if (m_sort.size() <= iSortIndex)
 	return false;
@@ -116,7 +116,7 @@ bool SortPlan::ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
 	};
 }
 
-void SortPlan::addSortSpecification(ParseNode* pNode, SortOrder order) {
+void SortPlan::addSortSpecification(const ParseNode* pNode, SortOrder order) {
 	int i = addProjection(pNode);
 	if (i < 0) {
 		throw new ParseException(ConcateToString("unrecognized column ", pNode->m_sExpr));

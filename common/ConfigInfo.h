@@ -41,14 +41,11 @@ inline size_t GetTypeSize(DBDataType type) {
 }
 
 struct DBColumnInfo {
-	DBColumnInfo() : DBColumnInfo {DBDataType::UNKNOWN}{
+	DBColumnInfo(const std::string name, DBDataType type)
+		: m_name(name), m_type(type){
 	}
 
-	DBColumnInfo(DBDataType type) :
-			m_type(type) {
-	}
-
-	std::string m_sName;
+	std::string m_name;
 	DBDataType m_type;
 	int m_iLen = 0;
 	int m_iIndex = 0;
@@ -89,7 +86,7 @@ public:
 		return m_keys[i];
 	}
 
-	DBColumnInfo* getColumnByName(const std::string& name) {
+	DBColumnInfo* getColumnByName(std::string_view name) {
 		auto iter = m_columnMap.find(name);
 		if (iter == m_columnMap.end())
 			return nullptr;
@@ -113,11 +110,13 @@ public:
 		return iter != m_attr.end();
 	}
 
-	void getDBColumns(ParseNode* pColumn, std::vector<DBColumnInfo*>& columns);
+	void getDBColumns(const ParseNode* pColumn, std::vector<DBColumnInfo*>& columns);
 private:
 	std::vector<DBColumnInfo*> m_columns;
 	std::vector<DBColumnInfo*> m_keys;
-	std::map<std::string, DBColumnInfo*> m_columnMap;
+
+	//string view on column.m_name
+	std::map<std::string_view, DBColumnInfo*> m_columnMap;
 
 	std::map<std::string, std::string> m_attr;
 

@@ -7,12 +7,12 @@ void ReadFilePlan::explain(std::vector<std::string>& rows) {
 					m_separator));
 }
 
-int ReadFilePlan::addProjection(ParseNode* pNode) {
+int ReadFilePlan::addProjection(const ParseNode* pNode) {
 	assert(pNode);
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < m_columns.size(); ++i) {
-		if (m_columns[i]->m_sName == pNode->m_sValue) {
+		if (m_columns[i]->m_name == pNode->m_sValue) {
 			return i;
 		}
 	}
@@ -27,6 +27,9 @@ void ReadFilePlan::begin() {
 				ConcateToString("File ", m_sPath, " does not exists!"));
 	}
 	m_result.resize(m_columns.size(), ExecutionResult{});
+	if (m_ignoreFirstLine) {
+		std::getline(*m_pFile, m_line);
+	}
 }
 
 namespace {
@@ -57,7 +60,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	case DBDataType::STRING:
 		if(pColumn->m_iLen > 0 && token.length() > pColumn->m_iLen)  {
 			throw new ExecutionException(
-					ConcateToString("Column ", pColumn->m_sName, " value exceed defined length ", pColumn->m_iLen));
+					ConcateToString("Column ", pColumn->m_name, " value exceed defined length ", pColumn->m_iLen));
 		}
 		m_result[index].setStringView(token);
 		break;
@@ -76,12 +79,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 			m_result[index].setDouble(0);
 			break;
 		}
-		try {
-			std::string s(token.data(), token.length());
-			m_result[index].setDouble(std::stod(s));
-		} catch (const std::exception& e) {
-			throw new ExecutionException(e.what());
-		}
+		m_result[index].setDouble(Tools::toDouble(token));
 		break;
 	default:
 		break;

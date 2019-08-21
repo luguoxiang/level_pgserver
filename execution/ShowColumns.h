@@ -26,7 +26,7 @@ public:
 
 	virtual void getResult(size_t index, ExecutionResult* pInfo)override;
 
-	virtual std::string getProjectionName(size_t index)override;
+	virtual std::string_view getProjectionName(size_t index)override;
 
 	virtual DBDataType getResultType(size_t index)override;
 
@@ -34,9 +34,9 @@ public:
 
 	virtual std::string getInfoString()override;
 
-	virtual void getAllColumns(std::vector<std::string>& columns)override;
+	virtual void getAllColumns(std::vector<std::string_view>& columns)override;
 
-	virtual int addProjection(ParseNode* pNode)override;
+	virtual int addProjection(const ParseNode* pNode)override;
 private:
 	size_t m_iIndex;
 	TableInfo* m_pEntry;

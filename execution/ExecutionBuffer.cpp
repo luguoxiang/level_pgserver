@@ -58,7 +58,8 @@ ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeTuple<std::string_view>
 
 				*reinterpret_cast<uint16_t*>(pData) = size;
 				pData  += sizeof(uint16_t);
-				memcpy(pData, s.data(), size);
+				auto pSrc = reinterpret_cast<const std::byte*>(s.data());
+				std::copy(pSrc, pSrc + size, pData);
 			}},
 			CompareFn {[]  (const std::byte* pData1,const std::byte* pData2) ->int {
 				size_t len1 = *(reinterpret_cast<const uint16_t*>(pData1));
@@ -130,7 +131,8 @@ std::byte* ExecutionBuffer::get(Row row, size_t index, const std::vector<DBDataT
 	return pStart;
 }
 
-ExecutionBuffer::Row ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types) {
+std::pair<ExecutionBuffer::Row, size_t>
+ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types) {
 	size_t rowSize = 0;
 
 	assert(results.size() == types.size());
@@ -156,7 +158,7 @@ ExecutionBuffer::Row ExecutionBuffer::copyRow(const std::vector<ExecutionResult>
 			assert(0);
 		}
 	}
-	return row;
+	return std::pair<ExecutionBuffer::Row, size_t>(row, rowSize);
 }
 
 std::byte* ExecutionBuffer::doAlloc(size_t size) {
@@ -165,7 +167,7 @@ std::byte* ExecutionBuffer::doAlloc(size_t size) {
 	}
 	m_iUsed += size;
 	if (m_iUsed > m_iTotal) {
-		throw new ExecutionException("not enough execution buffer");
+		throw new ExecutionException("not enough buffer");
 	}
 
 	assert(m_iCurrentBlock <= m_bufferBlocks.size());

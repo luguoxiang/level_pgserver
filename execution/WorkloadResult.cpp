@@ -6,19 +6,17 @@ std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session", "ObExe
 		"BiggestExec", "SessionTime", "SqlCount" };
 }
 
-void WorkloadResult::getAllColumns(std::vector<std::string>& columns) {
-	size_t count = sizeof(WorkloadColumns) / sizeof(const char*);
+void WorkloadResult::getAllColumns(std::vector<std::string_view>& columns) {
 	for (auto& column : WorkloadColumns) {
 		columns.push_back(column);
 	}
 }
 
-int WorkloadResult::addProjection(ParseNode* pNode) {
+int WorkloadResult::addProjection(const ParseNode* pNode) {
 	assert(pNode);
-	size_t count = sizeof(WorkloadColumns) / sizeof(const char*);
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
-	for (size_t i = 0; i < count; ++i) {
+	for (size_t i = 0; i < WorkloadColumns.size(); ++i) {
 		if (Tools::case_equals(WorkloadColumns[i], pNode->m_sValue)) {
 			return i;
 		}
@@ -39,7 +37,7 @@ bool WorkloadResult::next() {
 	return m_iIndex <= WorkerManager::getInstance().getWorkerCount();
 }
 
-std::string WorkloadResult::getProjectionName(size_t index) {
+std::string_view WorkloadResult::getProjectionName(size_t index) {
 	return WorkloadColumns[index];
 }
 

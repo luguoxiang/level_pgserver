@@ -10,9 +10,9 @@ void ConstPlan::explain(std::vector<std::string>& rows) {
 
 DBDataType ConstPlan::getResultType(size_t index) {
 	assert(!m_rows.empty());
-	ParseNode* pRow = m_rows[0];
+	auto pRow = m_rows[0];
 	assert(pRow->children() == m_columns.size());
-	switch (pRow->m_children[index]->m_type) {
+	switch (pRow->getChild(index)->m_type) {
 	case NodeType::INT:
 		return DBDataType::INT64;
 	case NodeType::STR:
@@ -20,7 +20,7 @@ DBDataType ConstPlan::getResultType(size_t index) {
 	case NodeType::FLOAT:
 		return DBDataType::DOUBLE;
 	case NodeType::DATE:
-		return pRow->m_children[index]->m_sValue.length() < 12 ?
+		return pRow->getChild(index)->m_sValue.length() < 12 ?
 				DBDataType::DATE : DBDataType::DATETIME;
 	default:
 		assert(0);
@@ -30,17 +30,16 @@ DBDataType ConstPlan::getResultType(size_t index) {
 
 void ConstPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	assert(m_iCurrent > 0 && m_iCurrent <= m_rows.size());
-	ParseNode* pRow = m_rows[m_iCurrent - 1];
+	auto pRow = m_rows[m_iCurrent - 1];
 	assert(pRow->children() == m_columns.size());
-	ParseNode* pValue = pRow->m_children[index];
+	auto pValue = pRow->getChild(index);
 	switch (pValue->m_type) {
 	case NodeType::DATE:
 	case NodeType::INT:
 		pInfo->setInt(pValue->m_iValue);
 		break;
 	case NodeType::FLOAT: {
-		float fValue = strtof(pValue->m_sValue.c_str(), nullptr);
-		pInfo->setDouble(fValue);
+		pInfo->setDouble(Tools::toDouble(pValue->m_sValue));
 		break;
 	}
 	case NodeType::STR:
@@ -51,7 +50,7 @@ void ConstPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	}
 }
 
-int ConstPlan::addProjection(ParseNode* pNode) {
+int ConstPlan::addProjection(const ParseNode* pNode) {
 	assert(pNode);
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
@@ -63,12 +62,10 @@ int ConstPlan::addProjection(ParseNode* pNode) {
 	return -1;
 }
 
-void ConstPlan::addRow(ParseNode* pRow) {
+void ConstPlan::addRow(const ParseNode* pRow) {
 	if (m_rows.empty()) {
 		for (size_t i = 0; i < pRow->children(); ++i) {
-			std::stringstream ss;
-			ss << i + 1;
-			m_columns.push_back(ss.str());
+			m_columns.push_back(std::to_string(i+1));
 		}
 	}
 	assert(pRow->children() == m_columns.size());

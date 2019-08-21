@@ -27,15 +27,15 @@ public:
 	virtual bool next()override;
 	virtual void end()override;
 
-	virtual int addProjection(ParseNode* pColumn)override {
+	virtual int addProjection(const ParseNode* pColumn)override {
 		return m_pLeft->addProjection(pColumn);
 	}
 
-	virtual std::string getProjectionName(size_t index)override {
+	virtual std::string_view getProjectionName(size_t index)override {
 		return m_pLeft->getProjectionName(index);
 	}
 
-	virtual void getAllColumns(std::vector<std::string>& columns)override {
+	virtual void getAllColumns(std::vector<std::string_view>& columns)override {
 		return m_pLeft->getAllColumns(columns);
 	}
 

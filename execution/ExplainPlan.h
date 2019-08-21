@@ -24,11 +24,11 @@ public:
 	virtual bool next()override;
 	virtual void end()override;
 
-	virtual std::string getProjectionName(size_t index) override{
+	virtual std::string_view getProjectionName(size_t index) override{
 		return "explain";
 	}
 
-	virtual void getAllColumns(std::vector<std::string>& columns)override {
+	virtual void getAllColumns(std::vector<std::string_view>& columns)override {
 		columns.push_back("explain");
 	}
 

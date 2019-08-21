@@ -41,7 +41,7 @@ public:
 		return m_pPlan->getResultColumns();
 	}
 
-	virtual std::string getProjectionName(size_t index)override {
+	virtual std::string_view getProjectionName(size_t index)override {
 		return m_pPlan->getProjectionName(index);
 	}
 
@@ -57,11 +57,11 @@ public:
 		m_pPlan->getResult(index, pInfo);
 	}
 
-	virtual void getAllColumns(std::vector<std::string>& columns) override {
+	virtual void getAllColumns(std::vector<std::string_view>& columns) override {
 		m_pPlan->getAllColumns(columns);
 	}
 
-	virtual int addProjection(ParseNode* pNode) override {
+	virtual int addProjection(const ParseNode* pNode) override {
 		return m_pPlan->addProjection(pNode);
 	}
 
@@ -70,12 +70,12 @@ public:
 		std::string m_sExpr;
 		int m_iOpCode;
 		size_t m_iSubIndex;
-		ParseNode* m_pValue;
+		const ParseNode* m_pValue;
 	};
 
-	void addPredicate(ParseNode* pPredicate);
+	void addPredicate(const ParseNode* pPredicate);
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			bool* pOrder) override {
 		return m_pPlan->ensureSortOrder(iSortIndex, sColumn, pOrder);
 	}

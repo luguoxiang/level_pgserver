@@ -38,18 +38,18 @@ static std::array<DbPlanBuilder,1> planBuilders = {
 static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode** ppTable)
 {
 		assert(ppTable);
-		ParseNode* pTable = *ppTable;
+		const ParseNode* pTable = *ppTable;
 		if(pTable->m_type == NodeType::OP)
 		{
 				int i = 0;
 				assert(pTable->children() == 2);
-				assert(pTable->m_children[0]->m_type == NodeType::NAME);
-				assert(pTable->m_children[1]->m_type == NodeType::NAME);
-				ParseNode* pDB = pTable->m_children[0];
-				*ppTable = pTable = pTable->m_children[1];
+				assert(pTable->getChild(0)->m_type == NodeType::NAME);
+				assert(pTable->getChild(1)->m_type == NodeType::NAME);
+				const ParseNode* pDB = pTable->getChild(0);
+				pTable = pTable->getChild(1);
 				for(auto& builder : planBuilders)
 				{
-					if(strcasecmp(pDB->m_sValue.c_str(), builder.m_db) == 0)
+					if(pDB->m_sValue == builder.m_db)
 					{
 						return builder;
 					}
@@ -238,7 +238,7 @@ expr: expr '+' expr {$$ = newExprNode(pResult, '+', @$.first_column, @$.last_col
 	| '-' expr %prec UMINUS {
 		if($2->m_type == NodeType::INT)
 		{
-			$2 = new ParseNode(pResult, NodeType::INT,@$.first_column, @$.last_column);
+			$2 = newParseNode(pResult, NodeType::INT,@$.first_column, @$.last_column);
 			$2->m_iValue = - $2->m_iValue;
 			$$ = $2;
 		}
@@ -611,7 +611,6 @@ void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,const std::string
 
 int parseInit(ParseResult* p)
 {
-    p->m_nodes.clear();
 	p->m_yycolumn = 1;
 	p->m_yylineno = 1;
 	return yylex_init_extra(p, &(p->m_scanInfo));
@@ -619,7 +618,6 @@ int parseInit(ParseResult* p)
 
 int parseTerminate(ParseResult* p)
 {
-	p->m_nodes.clear();
 	return yylex_destroy(p->m_scanInfo);
 }
 

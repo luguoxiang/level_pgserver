@@ -23,7 +23,7 @@ enum class SortOrder {
 class SortPlan: public ExecutionPlan {
 	struct SortProjection {
 		size_t m_iSubIndex;
-		std::string m_sName;
+		std::string_view m_sName;
 	};
 public:
 	SortPlan(ExecutionPlan* pPlan);
@@ -70,7 +70,7 @@ public:
 		return m_proj.size();
 	}
 
-	virtual std::string getProjectionName(size_t index) override{
+	virtual std::string_view getProjectionName(size_t index) override{
 		return m_proj[index].m_sName;
 	}
 
@@ -84,16 +84,16 @@ public:
 
 	virtual void getResult(size_t index, ExecutionResult* pInfo) override;
 
-	virtual void getAllColumns(std::vector<std::string>& columns)  override{
+	virtual void getAllColumns(std::vector<std::string_view>& columns)  override{
 		return m_pPlan->getAllColumns(columns);
 	}
 
-	virtual int addProjection(ParseNode* pNode) override;
+	virtual int addProjection(const ParseNode* pNode) override;
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			bool* pOrder)override;
 
-	void addSortSpecification(ParseNode* pNode, SortOrder order);
+	void addSortSpecification(const ParseNode* pNode, SortOrder order);
 private:
 	struct SortSpec {
 		size_t m_iIndex;

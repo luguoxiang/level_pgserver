@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include <stdio.h>
 #include "common/SqlParser.tab.h"
 #include "common/ParseNode.h"
 #include "execution/WorkThreadInfo.h"
@@ -25,6 +24,16 @@ inline int64_t toInt(const std::string_view s)
     	result = result * 10 + (c - '0');
     }
     return result;
+}
+
+inline double toDouble(const std::string_view s)
+{
+	try{
+		std::string ss(s.data(), s.length());
+		return std::stod(ss);
+	} catch (const std::exception& e) {
+		throw new ExecutionException(e.what());
+	}
 }
 
 

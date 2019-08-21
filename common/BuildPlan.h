@@ -2,21 +2,21 @@
 
 #include "ParseNode.h"
 
-extern void buildPlanDefault(ParseNode* pNode);
+extern void buildPlanDefault(const ParseNode* pNode);
 
-extern void buildPlanForFileSelect(ParseNode* pNode);
+extern void buildPlanForFileSelect(const ParseNode* pNode);
 
-extern void buildPlanForLeftJoin(ParseNode* pNode);
-extern void buildPlanForExplain(ParseNode* pNode);
-extern void buildPlanForGroupBy(ParseNode* pNode);
-extern void buildPlanForOrderBy(ParseNode* pNode);
-extern void buildPlanForLimit(ParseNode* pNode);
-extern void buildPlanForFilter(ParseNode* pNode);
-extern void buildPlanForProjection(ParseNode* pNode);
-extern void buildPlanForConst(ParseNode* pNode);
-extern void buildPlanForUnionAll(ParseNode* pNode);
-extern void buildPlanForDesc(ParseNode* pNode);
-extern void buildPlanForWorkload(ParseNode* pNode);
-extern void buildPlanForShowTables(ParseNode* pNode);
-extern void buildPlanForReadFile(ParseNode* pNode);
+extern void buildPlanForLeftJoin(const ParseNode* pNode);
+extern void buildPlanForExplain(const ParseNode* pNode);
+extern void buildPlanForGroupBy(const ParseNode* pNode);
+extern void buildPlanForOrderBy(const ParseNode* pNode);
+extern void buildPlanForLimit(const ParseNode* pNode);
+extern void buildPlanForFilter(const ParseNode* pNode);
+extern void buildPlanForProjection(const ParseNode* pNode);
+extern void buildPlanForConst(const ParseNode* pNode);
+extern void buildPlanForUnionAll(const ParseNode* pNode);
+extern void buildPlanForDesc(const ParseNode* pNode);
+extern void buildPlanForWorkload(const ParseNode* pNode);
+extern void buildPlanForShowTables(const ParseNode* pNode);
+extern void buildPlanForReadFile(const ParseNode* pNode);
 

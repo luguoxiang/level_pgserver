@@ -4,11 +4,12 @@
 #include "execution/ParseTools.h"
 #include "execution/ConstPlan.h"
 
-void buildPlanForConst(ParseNode* pNode) {
+void buildPlanForConst(const ParseNode* pNode) {
 	ConstPlan* pPlan = new ConstPlan();
 	Tools::pushPlan(pPlan);
-	ParseNode* pLastRow = nullptr;
-	for (auto pRow:pNode->m_children) {
+	const ParseNode* pLastRow = nullptr;
+	for (size_t i=0;i<pNode->children(); ++i) {
+		auto pRow = pNode->getChild(i);
 		if (pLastRow != nullptr && pLastRow->children() != pRow->children()) {
 			throw new ParseException(ConcateToString(
 					"Values column number does not match: expect ", pLastRow->children(), " but got ", pRow->children()));

@@ -7,18 +7,18 @@ namespace {
 std::vector<const char*> Columns = { "Field", "Type", "KeyPosition", "Precision" };
 }
 
-std::string ShowColumns::getProjectionName(size_t index) {
+std::string_view ShowColumns::getProjectionName(size_t index) {
 	assert(index < 4);
 	return Columns[index];
 }
 
-void ShowColumns::getAllColumns(std::vector<std::string>& columns) {
+void ShowColumns::getAllColumns(std::vector<std::string_view>& columns) {
 	for (auto column: Columns) {
 		columns.push_back(column);
 	}
 }
 
-int ShowColumns::addProjection(ParseNode* pNode) {
+int ShowColumns::addProjection(const ParseNode* pNode) {
 	assert(pNode);
 
 	if (pNode->m_type != NodeType::NAME)
@@ -64,7 +64,7 @@ void ShowColumns::getResult(size_t index, ExecutionResult* pInfo) {
 
 	switch (index) {
 	case 0:
-		pInfo->setStringView(pColumn->m_sName);
+		pInfo->setStringView(pColumn->m_name);
 		break;
 	case 1:
 		pInfo->setStringView(MetaConfig::getInstance().typeToString(pColumn->m_type));

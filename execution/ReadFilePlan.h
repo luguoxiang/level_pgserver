@@ -9,8 +9,10 @@
 
 class ReadFilePlan: public ExecutionPlan {
 public:
-	ReadFilePlan(const std::string& sPath, const std::string& separator) :
-			ExecutionPlan(PlanType::ReadFile), m_sPath(sPath), m_separator(separator[0]) {
+	ReadFilePlan(const std::string_view& sPath,	const std::string_view& separator,	bool ignoreFirstLine=false) :
+			ExecutionPlan(PlanType::ReadFile),
+			m_sPath(std::string(sPath.data(), sPath.length())),
+			m_ignoreFirstLine(ignoreFirstLine){
 		switch(separator.size()) {
 		case 0:
 			m_separator = ',';
@@ -46,8 +48,8 @@ public:
 		return m_columns.size();
 	}
 
-	virtual std::string getProjectionName(size_t index) override{
-		return m_columns[index]->m_sName;
+	virtual std::string_view getProjectionName(size_t index) override{
+		return m_columns[index]->m_name;
 	}
 
 	virtual DBDataType getResultType(size_t index)override {
@@ -62,13 +64,13 @@ public:
 		*pInfo = m_result[index];
 	}
 
-	virtual void getAllColumns(std::vector<std::string>& columns)override {
+	virtual void getAllColumns(std::vector<std::string_view>& columns)override {
 		for (auto pColumn: m_columns) {
-			columns.push_back(pColumn->m_sName);
+			columns.push_back(pColumn->m_name);
 		}
 	}
 
-	virtual int addProjection(ParseNode* pNode) override;
+	virtual int addProjection(const ParseNode* pNode) override;
 
 	void addColumn(DBColumnInfo* pColumn) {
 		m_columns.push_back(pColumn);
@@ -86,4 +88,5 @@ private:
 	std::unique_ptr<std::ifstream> m_pFile;
 	bool m_bCancel = false;
 	char m_separator;
+	bool m_ignoreFirstLine;
 };

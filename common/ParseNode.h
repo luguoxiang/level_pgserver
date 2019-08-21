@@ -44,47 +44,48 @@ inline std::string ConcateToString(Args&&...args) {
 class ParseNode;
 struct ParseResult;
 
-using BuildPlanFunc = void (*)(ParseNode* pNode);
+using BuildPlanFunc = void (*)(const ParseNode* pNode);
 
 class ParseNode {
 public:
-    ParseNode(ParseResult* p,
-    		NodeType type,
-			int firstColumn,
-    		int lastColumn,
-			std::initializer_list<ParseNode*> children = {});
-
-    ParseNode(ParseResult* p,
-    		NodeType type,
+	ParseNode(NodeType type,
 			const std::string_view sExpr,
-			std::initializer_list<ParseNode*> children = {});
+			size_t childNum,
+			const ParseNode** children);
+
 	NodeType m_type;
-	std::string m_sValue;
-	int64_t m_iValue = 0;
+	std::string_view m_sValue;
+	int64_t m_iValue;
 
 	//string view on ParseResult.m_sSql
-	const std::string_view m_sExpr;
+	std::string_view m_sExpr;
 
 	BuildPlanFunc m_fnBuildPlan;
-	ParseNode* merge(ParseResult* p, const std::string sNewName, const std::string sRemove);
+	ParseNode* merge(ParseResult* p, const std::string sNewName, const std::string sRemove) const;
 
-    const size_t children() const {return m_children.size();}
+    const size_t children() const {return m_iChildNum;}
 
-	std::vector<ParseNode*> m_children;
-
+    const ParseNode* getChild(size_t i) const {
+    	assert(i < m_iChildNum);
+    	return m_children[i];
+    }
 
 private:
-    bool _collect(std::vector<ParseNode*>& children, const std::string sRemove);
-
+    bool _collect(std::vector<const ParseNode*>& children, const std::string sRemove) const;
+    const ParseNode** m_children;
+    size_t m_iChildNum;
 };
 
-inline int OP_CODE(ParseNode* pNode) {return pNode->m_iValue;}
-inline int FUNC_CODE(ParseNode* pNode) { return pNode->m_iValue;}
+inline int OP_CODE(const ParseNode* pNode) {return pNode->m_iValue;}
+inline int FUNC_CODE(const ParseNode* pNode) { return pNode->m_iValue;}
 
-inline void BUILD_PLAN(ParseNode* pNode) {
+inline void BUILD_PLAN(const ParseNode* pNode) {
 	if(pNode) pNode->m_fnBuildPlan(pNode);
 }
 
+inline bool IS_DIGIT(char c) {
+	return c >='0' && c<='9';
+}
 
 struct ParseResult {
 	std::string m_sSql;
@@ -97,7 +98,13 @@ struct ParseResult {
 	int m_yycolumn;
 	int m_yylineno;
 
-	std::vector<std::unique_ptr<ParseNode>> m_nodes;
+	using AllocString = std::function<char*(const char* , size_t)>;
+	using AllocParseNode = std::function<ParseNode* (NodeType type,
+			const std::string_view sExpr,
+			std::vector<const ParseNode*> children)>;
+
+	AllocString allocStringFn;
+	AllocParseNode allocParseNodeFn;
 };
 
 int64_t parseTime(std::string_view sTime);
@@ -108,38 +115,48 @@ int parseTerminate(ParseResult* p);
 
 void parseSql(ParseResult *p, const std::string_view sql);
 
-void printTree(ParseNode* pRoot, int level);
+void printTree(const ParseNode* pRoot, int level);
 
-std::string cleanString(const char* pszSrc);
-std::string parseBinary(const char* pszSrc);
+ParseNode* newParseNode(ParseResult* p,
+		NodeType type,
+		const std::string_view sExpr,
+		std::initializer_list<const ParseNode*> children = {});
 
-
-inline ParseNode* newFuncNode(ParseResult *p, const std::string& sName, int firstColumn,
+inline ParseNode* newParseNode(ParseResult* p,
+		NodeType type,
+		int firstColumn,
 		int lastColumn,
-		std::initializer_list<ParseNode*> children) {
-	ParseNode* pNode = new ParseNode(p, NodeType::FUNC,firstColumn, lastColumn, children);
+		std::initializer_list<const ParseNode*> children = {}) {
+	std::string_view sExpr(p->m_sSql.c_str() + firstColumn - 1,lastColumn - firstColumn + 1);
+	return newParseNode(p, type, sExpr, children);
+}
+
+inline ParseNode* newFuncNode(ParseResult *p, const std::string_view& sName, int firstColumn,
+		int lastColumn,
+		std::initializer_list<const ParseNode*> children) {
+	ParseNode* pNode = newParseNode(p, NodeType::FUNC,firstColumn, lastColumn, children);
 	pNode->m_sValue = sName;
 	return pNode;
 }
 
 inline ParseNode* newExprNode(ParseResult *p, int value, int firstColumn,
-	int lastColumn, std::initializer_list<ParseNode*> children) {
-	ParseNode* pNode = new ParseNode(p, NodeType::OP,firstColumn, lastColumn, children);
+	int lastColumn, std::initializer_list<const ParseNode*> children) {
+	ParseNode* pNode = newParseNode(p, NodeType::OP,firstColumn, lastColumn, children);
 	pNode->m_iValue = value;
 	return pNode;
 }
 
 inline ParseNode* newInfoNode(ParseResult *p, int value,
 		int firstColumn, int lastColumn) {
-	ParseNode* pNode = new ParseNode(p, NodeType::INFO,  firstColumn, lastColumn, {});
+	ParseNode* pNode = newParseNode(p, NodeType::INFO,  firstColumn, lastColumn, {});
 	pNode->m_iValue = value;
 	return pNode;
 }
 
-inline ParseNode* newParentNode(ParseResult *p, const std::string& sName,
+inline ParseNode* newParentNode(ParseResult *p, const std::string_view& sName,
 		int firstColumn, int lastColumn,
-		std::initializer_list<ParseNode*> children) {
-	ParseNode* pNode = new ParseNode(p, NodeType::PARENT,  firstColumn, lastColumn, children);
+		std::initializer_list<const ParseNode*> children) {
+	ParseNode* pNode = newParseNode(p, NodeType::PARENT,  firstColumn, lastColumn, children);
 	pNode->m_sValue = sName;
 	return pNode;
 }

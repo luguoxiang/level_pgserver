@@ -56,7 +56,7 @@ public:
 	 */
 	virtual int getResultColumns();
 
-	virtual std::string getProjectionName(size_t index) {
+	virtual std::string_view getProjectionName(size_t index) {
 		return nullptr;
 	}
 
@@ -71,7 +71,7 @@ public:
 	 * If the column could not be projected, -1 is returned.
 	 * Note that same column must return same index.
 	 */
-	virtual int addProjection(ParseNode* pColumn) {
+	virtual int addProjection(const ParseNode* pColumn) {
 		return -1;
 	}
 
@@ -79,7 +79,7 @@ public:
 	 * This is used by 'select *' statement.
 	 * return all the columns needed to be project for 'select *'.
 	 */
-	virtual void getAllColumns(std::vector<std::string>& columns) {
+	virtual void getAllColumns(std::vector<std::string_view>& columns) {
 	}
 
 	/*
@@ -87,7 +87,7 @@ public:
 	 * This method is used to avoid useless sort like
 	 * select * from (select * ..order by a) order by a;
 	 */
-	virtual bool ensureSortOrder(size_t iSortIndex, const std::string& sColumn,
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			bool* pOrder) {
 		return false;
 	}

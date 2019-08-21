@@ -16,12 +16,9 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 		if (matches.size() < 3) {
 			 throw new ConfigException(ConcateToString("Illegal attribute value ", sValue));
 		}
-		DBColumnInfo* pColumn = new DBColumnInfo();
-		pColumn->m_sName = matches[1];
-		pColumn->m_type = pConfig->getDataType(matches[2]);
-
+		DBColumnInfo* pColumn = new DBColumnInfo(matches.str(1), pConfig->getDataType(matches.str(2)));
 		m_columns.push_back(pColumn);
-		m_columnMap[pColumn->m_sName] = pColumn;
+		m_columnMap[pColumn->m_name] = pColumn;
 		std::string sLen = matches[3];
 		if (sLen.length() > 0) {
 			pColumn->m_iLen = atoi(sLen.c_str() + 1);
@@ -53,7 +50,7 @@ void TableInfo::addKeyColumn(const std::string& name) {
 	m_keys.push_back(pColumn);
 }
 
-void TableInfo::getDBColumns(ParseNode* pColumn,
+void TableInfo::getDBColumns(const ParseNode* pColumn,
 		std::vector<DBColumnInfo*>& columns) {
 	if (pColumn == 0) {
 		//insert into t values(....)
@@ -63,7 +60,8 @@ void TableInfo::getDBColumns(ParseNode* pColumn,
 		}
 	} else {
 		assert(pColumn->children() > 0);
-		for(auto p: pColumn->m_children) {
+		for(size_t i=0;i<pColumn->children();++i) {
+			auto p = pColumn->getChild(i);
 			if (p == nullptr || p->m_type != NodeType::NAME) {
 				throw new ParseException(ConcateToString("Unsupported select expression:" , p->m_sExpr));
 			}

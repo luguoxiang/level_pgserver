@@ -57,7 +57,9 @@ struct WorkThreadInfo {
 private:
 	ParseResult m_result;
 	std::vector<std::unique_ptr<ExecutionPlan>> m_plans;
+
 	ExecutionBuffer m_executionBuffer;
+	ExecutionBuffer m_parseBuffer;
 };
 
 

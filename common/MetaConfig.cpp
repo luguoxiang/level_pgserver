@@ -25,11 +25,11 @@ void MetaConfig::clean() {
 	m_tableMap.clear();
 }
 
-void MetaConfig::addTable(const std::string& name, TableInfo* pTable) {
+void MetaConfig::addTable(TableInfo* pTable) {
+	const std::string& name = pTable->getName();
 	if (getTableInfo(name) != nullptr) {
 		throw new ConfigException(ConcateToString("table ",name," already defined!"));
 	}
-	pTable->setName(name);
 	m_tableMap[name] = pTable;
 	LOG(INFO)<< "add table " << name;
 }
@@ -82,7 +82,8 @@ void MetaConfig::load(const std::string& sPath) {
 						continue;
 					}
 					if (sKey == "name") {
-						addTable(sValue, pCurrentTable);
+						pCurrentTable->setName(sValue);
+						addTable(pCurrentTable);
 					} else if (sKey == "column") {
 						pCurrentTable->addColumn(this, sValue);
 					} else {
