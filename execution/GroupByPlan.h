@@ -32,6 +32,7 @@ public:
 	}
 
 	virtual DBDataType getResultType(size_t index)override {
+		assert(index < m_proj.size());
 		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
 		case FuncType::FIRST:
@@ -49,6 +50,7 @@ public:
 	}
 
 	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
+		assert(index < m_proj.size());
 		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
 		case FuncType::FIRST:

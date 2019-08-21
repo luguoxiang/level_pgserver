@@ -9,6 +9,7 @@ class ProjectionPlan: public ExecutionPlan {
 		size_t m_iSubIndex;
 		std::string_view m_sName;
 		std::string_view m_sRaw;
+		const ParseNode* pNode;
 	};
 public:
 	ProjectionPlan(ExecutionPlan* pPlan) :
@@ -91,9 +92,16 @@ public:
 		return m_pPlan->getResult(iSubIndex, pInfo);
 	}
 
-	void addGroupBy() {
+	bool addGroupBy() {
 		auto pGroupBy = new GroupByPlan(m_pPlan.release());
+		for(auto& proj : m_proj) {
+			proj.m_iSubIndex = pGroupBy->addProjection(proj.pNode);
+			if (proj.m_iSubIndex < 0) {
+				return false;
+			}
+		}
 		m_pPlan.reset(pGroupBy);
+		return true;
 	}
 private:
 	std::vector<ProjectionInfo> m_proj;

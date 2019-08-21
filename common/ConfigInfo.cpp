@@ -17,7 +17,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 			 throw new ConfigException(ConcateToString("Illegal attribute value ", sValue));
 		}
 		DBColumnInfo* pColumn = new DBColumnInfo(matches.str(1), pConfig->getDataType(matches.str(2)));
-		m_columns.push_back(pColumn);
+		m_columns.emplace_back(pColumn);
 		m_columnMap[pColumn->m_name] = pColumn;
 		std::string sLen = matches[3];
 		if (sLen.length() > 0) {
@@ -55,8 +55,8 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 	if (pColumn == 0) {
 		//insert into t values(....)
 		//add all columns in table
-		for (auto p : m_columns) {
-			columns.push_back(p);
+		for (auto& p : m_columns) {
+			columns.push_back(p.get());
 		}
 	} else {
 		assert(pColumn->children() > 0);

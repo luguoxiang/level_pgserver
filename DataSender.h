@@ -2,6 +2,7 @@
 
 #include <string>
 #include "IOException.h"
+#include "common/ParseNode.h"
 
 class DataSender {
 public:
@@ -30,23 +31,18 @@ protected:
 
 private:
 	void check(uint32_t iSize) {
-		if (m_iWritten + iSize > m_iSendBuffer) {
+		if (m_iWritten + iSize > m_buffer.size()) {
 			flush();
 		}
-		if (m_iWritten + iSize > m_iSendBuffer) {
-			char szBuf[1024];
-			snprintf(szBuf, 1024,
-					"Send data is too large:written=%d, total=%d, require=%d!",
-					m_iWritten, m_iSendBuffer, iSize);
-			throw new IOException(szBuf);
+		if (m_iWritten + iSize > m_buffer.size()) {
+			throw new IOException(
+					ConcateToString("Send data is too large:written=",m_iWritten, ", total=", m_buffer.size(), ", require=", iSize));
 		}
 	}
 
 	int m_nFd;
-	char* m_szBuffer;
+	std::string m_buffer;
 	uint32_t m_iWritten;
 	uint32_t m_iLastPrepare;
 	bool m_bNetNumber;
-
-	uint32_t m_iSendBuffer;
 };

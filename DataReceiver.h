@@ -4,7 +4,7 @@
 
 class DataReceiver {
 public:
-	DataReceiver(int fd, bool bNetNumber);
+	DataReceiver(int fd);
 	virtual ~DataReceiver();
 
 	int8_t getNextByte();
@@ -15,10 +15,9 @@ public:
 	std::string_view getNextStringWithLen();
 	std::string_view getNextStringWithShortLen();
 	int32_t getNextInt();
-	int64_t getNextLongInt();
 
 	size_t getDataLen() {
-		return m_nBufLen;
+		return m_iBufLen;
 	}
 
 	int getFd() {
@@ -26,25 +25,24 @@ public:
 	}
 
 	bool hasData() {
-		return m_pszCurrent < m_pszBuffer + m_nBufLen;
+		return m_iCurrent < m_iBufLen;
 	}
 
 	void mark() {
-		m_pszMark = m_pszCurrent;
+		m_iMark = m_iCurrent;
 	}
 	void restore() {
-		assert(m_pszMark);
-		m_pszCurrent = m_pszMark;
+		m_iCurrent = m_iMark;
 	}
 
 	size_t readData();
 	char readByte();
 
 private:
-	char* m_pszBuffer;
-	char* m_pszCurrent;
-	char* m_pszMark;
+	std::string m_buffer;
+	size_t m_iCurrent = -1;
+	size_t m_iMark = 0;
 	int m_nFd;
-	size_t m_nBufLen;
+	size_t m_iBufLen = 0;
 	bool m_bNetNumber;
 };

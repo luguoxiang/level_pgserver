@@ -33,6 +33,7 @@ WorkThreadInfo::WorkThreadInfo(int fd, int port, int iIndex, size_t executionBuf
 				ppChild[i] = children[i];
 			}
 		}
+		static_assert(std::is_trivially_copyable<ParseNode>::value);
 		ParseNode* pNode = new(m_parseBuffer.doAlloc(sizeof(ParseNode))) ParseNode(type, sExpr, children.size(), ppChild);
 
 		return pNode;

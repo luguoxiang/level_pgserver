@@ -22,7 +22,7 @@ public:
 	void getTables(std::vector<TableInfo*>& tables) {
 		tables.clear();
 		for (auto& pv: m_tableMap) {
-			tables.push_back(pv.second);
+			tables.push_back(pv.second.get());
 		}
 	}
 
@@ -60,7 +60,7 @@ public:
 	TableInfo* getTableInfo(std::string_view name) {
 		auto iter = m_tableMap.find(name);
 		if (iter != m_tableMap.end()) {
-			return iter->second;
+			return iter->second.get();
 		} else {
 			return nullptr;
 		}
@@ -79,7 +79,7 @@ private:
 	MetaConfig();
 
 	//string view on TableInfo.m_name
-	std::map<std::string_view, TableInfo*> m_tableMap;
+	std::map<std::string_view, std::unique_ptr<TableInfo>> m_tableMap;
 	std::map<std::string_view, DBDataType> m_dataTypeMap;
 
 	uint32_t m_iWorkerNum = 20;

@@ -26,11 +26,10 @@ void printTree(const ParseNode* pRoot, int level) {
 	}
 	switch (pRoot->m_type) {
 	case NodeType::OP:
-	case NodeType::FUNC:
 	case NodeType::INFO:
 	case NodeType::DATATYPE:
 		pszTypeName = getTypeName(pRoot->m_iValue);
-		if (pszTypeName == 0){
+		if (pszTypeName == nullptr){
 			std::cout<<(char) pRoot->m_iValue <<std::endl;
 		}else {
 			std::cout<< pszTypeName <<std::endl;

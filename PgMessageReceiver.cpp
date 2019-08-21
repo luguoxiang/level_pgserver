@@ -31,7 +31,7 @@ constexpr ProtocolVersion NEGOTIATE_SSL_CODE = PG_PROTOCOL(1234, 5679);
 
 }
 PgMessageReceiver::PgMessageReceiver(int fd) :
-		DataReceiver(fd, true) {
+		DataReceiver(fd) {
 }
 
 PgMessageReceiver::~PgMessageReceiver() {

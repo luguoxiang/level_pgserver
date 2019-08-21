@@ -56,12 +56,6 @@ class MetaConfig;
 
 class TableInfo {
 public:
-	~TableInfo() {
-		for (auto p : m_columns) {
-			delete p;
-		}
-	}
-
 	void setName(const std::string& name) {
 		m_name = name;
 	}
@@ -79,7 +73,7 @@ public:
 	}
 
 	DBColumnInfo* getColumn(size_t i) const {
-		return m_columns[i];
+		return m_columns[i].get();
 	}
 
 	DBColumnInfo* getKeyColumn(size_t i) const {
@@ -112,7 +106,7 @@ public:
 
 	void getDBColumns(const ParseNode* pColumn, std::vector<DBColumnInfo*>& columns);
 private:
-	std::vector<DBColumnInfo*> m_columns;
+	std::vector<std::unique_ptr<DBColumnInfo>> m_columns;
 	std::vector<DBColumnInfo*> m_keys;
 
 	//string view on column.m_name

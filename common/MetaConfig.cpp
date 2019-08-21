@@ -19,9 +19,6 @@ MetaConfig::MetaConfig()  {
 }
 
 void MetaConfig::clean() {
-	for (auto& kv : m_tableMap) {
-		delete kv.second;
-	}
 	m_tableMap.clear();
 }
 
@@ -30,7 +27,7 @@ void MetaConfig::addTable(TableInfo* pTable) {
 	if (getTableInfo(name) != nullptr) {
 		throw new ConfigException(ConcateToString("table ",name," already defined!"));
 	}
-	m_tableMap[name] = pTable;
+	m_tableMap[name] = std::unique_ptr<TableInfo>(pTable);
 	LOG(INFO)<< "add table " << name;
 }
 

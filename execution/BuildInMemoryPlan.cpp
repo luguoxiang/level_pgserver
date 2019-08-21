@@ -70,7 +70,7 @@ void buildPlanForProjection(const ParseNode* pNode) {
 		}
 		return;
 	}
-	for(size_t i =0 ;i< pNode->children(); ++i) {
+	for(int i =0 ;i< pNode->children(); ++i) {
 		auto pColumn = pNode->getChild(i);
 		std::string_view sAlias;
 		if (pColumn->m_type == NodeType::OP && OP_CODE(pColumn) == AS) {
@@ -88,11 +88,11 @@ void buildPlanForProjection(const ParseNode* pNode) {
 			if (pColumn->m_type != NodeType::FUNC) {
 					throw new ParseException(ConcateToString("Unrecognized column ", pColumn->m_sExpr));
 			}
-			pProjPlan->addGroupBy();
-			bOK = pProjPlan->project(pColumn, sAlias);
-			if (!bOK) {
+
+			if (!pProjPlan->addGroupBy() || !pProjPlan->project(pColumn, sAlias)) {
 				throw new ParseException(ConcateToString("Unrecognized column ", pNode->m_sExpr));
 			}
+
 		}
 	}
 }
