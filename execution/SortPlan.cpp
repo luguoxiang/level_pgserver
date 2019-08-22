@@ -55,7 +55,7 @@ void SortPlan::begin() {
 				return false; //equals is not less
 			};
 
-	std::stable_sort(m_rows.begin(), m_rows.end(), comp);
+	std::sort(m_rows.begin(), m_rows.end(), comp);
 	m_iCurrent = 0;
 }
 
