@@ -7,14 +7,12 @@
 constexpr size_t SORT_BUFFER_SIZE = 64 * 1024 * 1024;
 
 SortPlan::SortPlan(ExecutionPlan* pPlan) :
-		ExecutionPlan(PlanType::Sort), m_pPlan(pPlan), m_iCurrent(0), m_buffer(SORT_BUFFER_SIZE) {
+		ExecutionPlan(PlanType::Sort), m_pPlan(pPlan), m_iCurrent(0) {
 	assert(m_pPlan);
 }
 
 void SortPlan::begin() {
-	if(m_proj.size() > 32) {
-		EXECUTION_ERROR("sort column number bigger than 32");
-	}
+	m_pBuffer = std::make_unique<ExecutionBuffer>(SORT_BUFFER_SIZE);
 
 	m_pPlan->begin();
 	for (size_t i = 0; i < m_proj.size(); ++i) {
@@ -27,7 +25,7 @@ void SortPlan::begin() {
 			int iSubIndex = m_proj[i].m_iSubIndex;
 			m_pPlan->getResult(iSubIndex, &results[i]);
 		}
-		auto [row, size] = m_buffer.copyRow(results, m_types);
+		auto [row, size] = m_pBuffer->copyRow(results, m_types);
 
 		m_rows.push_back(row);
 	}
@@ -38,7 +36,7 @@ void SortPlan::begin() {
 					const SortSpec& spec = m_sort[i];
 					assert(spec.m_iIndex < m_proj.size());
 
-					int n = m_buffer.compare(pRow1, pRow2, spec.m_iIndex, m_types);
+					int n = m_pBuffer->compare(pRow1, pRow2, spec.m_iIndex, m_types);
 					if (n == 0) {
 						continue;
 					}
@@ -63,6 +61,7 @@ void SortPlan::begin() {
 
 void SortPlan::end() {
 	m_rows.clear();
+	m_pBuffer.reset(nullptr);
 }
 
 bool SortPlan::next() {
@@ -74,7 +73,7 @@ bool SortPlan::next() {
 
 void SortPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	assert(m_iCurrent > 0);
-	m_buffer.getResult(m_rows[m_iCurrent - 1], index, *pInfo, m_types);
+	m_pBuffer->getResult(m_rows[m_iCurrent - 1], index, *pInfo, m_types);
 }
 
 int SortPlan::addProjection(const ParseNode* pNode)  {

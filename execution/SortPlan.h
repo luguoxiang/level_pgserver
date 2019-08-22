@@ -113,6 +113,6 @@ private:
 	std::vector<DBDataType> m_types;
 	int m_iCurrent;
 
-	ExecutionBuffer m_buffer;
+	std::unique_ptr<ExecutionBuffer> m_pBuffer;
 };
 
