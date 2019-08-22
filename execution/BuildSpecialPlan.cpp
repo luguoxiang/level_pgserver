@@ -29,7 +29,7 @@ void buildPlanForDesc(const ParseNode* pNode) {
 		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
 	}
 	if (pEntry == nullptr) {
-		throw new ParseException(ConcateToString("Undefined table ", pTable->m_sValue));
+		PARSE_ERROR("Undefined table ", pTable->m_sValue);
 	}
 	Tools::pushPlan(new ShowColumns(pEntry));
 }
@@ -54,7 +54,7 @@ void buildPlanForReadFile(const ParseNode* pNode) {
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
 			pTable->m_sValue);
 	if (pTableInfo == nullptr) {
-		throw new ParseException(ConcateToString("Table ", pTable->m_sValue, " does not exist!"));
+		PARSE_ERROR("Table ", pTable->m_sValue, " does not exist!");
 	}
 
 	auto pColumn = pNode->getChild(2);
@@ -73,7 +73,7 @@ void buildPlanForFileSelect(const ParseNode* pNode) {
 	TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
 			pTable->m_sValue);
 	if (pTableInfo == nullptr) {
-		throw new ParseException(ConcateToString("Table ", pTable->m_sValue," does not exist!"));
+		PARSE_ERROR("Table ", pTable->m_sValue," does not exist!");
 	}
 
 	ReadFilePlan* pValuePlan = new ReadFilePlan(

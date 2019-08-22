@@ -1,10 +1,9 @@
 #pragma once
 
-#include "ParseNode.h"
 #include "Exception.h"
-#include <string>
-#include <stdio.h>
 
+
+class ParseResult;
 class ParseException: public Exception {
 public:
 	ParseException(const std::string& msg);
@@ -33,4 +32,9 @@ private:
 	int m_iEndCol = 0;
 	int m_iLine = -1;
 };
+
+#define PARSE_ERROR(args...) {auto sError = ConcateToString(args);LOG(ERROR)<<sError;throw new ParseException(sError);}
+
+
+
 

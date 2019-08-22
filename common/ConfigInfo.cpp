@@ -1,7 +1,7 @@
 #include "common/ConfigInfo.h"
-#include "common/MetaConfig.h"
 #include "common/ConfigException.h"
 #include "common/ParseException.h"
+#include "common/MetaConfig.h"
 #include <memory>
 #include <regex>
 #include <glog/logging.h>
@@ -14,7 +14,7 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 
 	if (std::regex_search(sValue, matches, rgx)) {
 		if (matches.size() < 3) {
-			 throw new ConfigException(ConcateToString("Illegal attribute value ", sValue));
+			 CONFIG_ERROR("Illegal attribute value ", sValue);
 		}
 		DBColumnInfo* pColumn = new DBColumnInfo(matches.str(1), pConfig->getDataType(matches.str(2)));
 		m_columns.emplace_back(pColumn);
@@ -23,13 +23,13 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 		if (sLen.length() > 0) {
 			pColumn->m_iLen = atoi(sLen.c_str() + 1);
 			if (pColumn->m_iLen <= 0) {
-				 throw new ConfigException(ConcateToString("Illegal type length ", sLen));
+				CONFIG_ERROR("Illegal type length ", sLen);
 			}
 		} else {
 			pColumn->m_iLen = GetTypeSize(pColumn->m_type);
 		}
 	} else {
-		 throw new ConfigException(ConcateToString("Illegal attribute value ", sValue));
+		 CONFIG_ERROR("Illegal attribute value ", sValue);
 	}
 
 }
@@ -37,13 +37,13 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 void TableInfo::addKeyColumn(const std::string& name) {
 	DBColumnInfo* pColumn = getColumnByName(name);
 	if (pColumn == nullptr) {
-		 throw new ConfigException(ConcateToString("Undefined rowkey column ", name));
+		 CONFIG_ERROR("Undefined rowkey column ", name);
 	}
 	if (pColumn->m_iLen <= 0) {
-		throw new ConfigException("Missing length for rowkey column config!");
+		CONFIG_ERROR("Missing length for rowkey column config!");
 	}
 	if (pColumn->m_type == DBDataType::DOUBLE) {
-		throw new ConfigException(
+		CONFIG_ERROR(
 				"rowkey column with double type is not supported");
 	}
 	pColumn->m_iKeyIndex = m_keys.size();
@@ -63,11 +63,11 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 		for(size_t i=0;i<pColumn->children();++i) {
 			auto p = pColumn->getChild(i);
 			if (p == nullptr || p->m_type != NodeType::NAME) {
-				throw new ParseException(ConcateToString("Unsupported select expression:" , p->m_sExpr));
+				PARSE_ERROR("Unsupported select expression:" , p->m_sExpr);
 			}
 			DBColumnInfo* pColumnInfo = getColumnByName(p->m_sValue);
 			if (pColumnInfo == 0) {
-				throw new ParseException(ConcateToString("Table ", m_name, " does not have column named ", p->m_sValue));
+				PARSE_ERROR("Table ", m_name, " does not have column named ", p->m_sValue);
 			}
 			columns.push_back(pColumnInfo);
 		}

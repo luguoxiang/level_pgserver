@@ -2,6 +2,6 @@
 #include <glog/logging.h>
 
 ConfigException::ConfigException(const std::string& sMsg) :m_sErrMsg(sMsg) {
-	LOG(ERROR) << sMsg;
+
 }
 

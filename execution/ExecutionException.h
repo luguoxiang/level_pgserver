@@ -1,6 +1,8 @@
 #pragma once
-#include <string>
+
+
 #include "common/Exception.h"
+
 
 class ExecutionException: public Exception {
 public:
@@ -12,4 +14,7 @@ public:
 private:
 	std::string m_sErrMsg;
 };
+
+#define EXECUTION_ERROR(args...) {auto sError = ConcateToString(args);LOG(ERROR)<<sError;throw new ExecutionException(sError);}
+
 

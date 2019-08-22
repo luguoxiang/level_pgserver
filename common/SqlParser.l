@@ -2,7 +2,7 @@
 %option reentrant bison-bridge bison-locations
 %option header-file="common/SqlParser.lex.h"
 %{
-#include "ParseNode.h"
+#include "ParseResult.h"
 #include "SqlParser.tab.h"
 #include <cassert>
 #include <time.h>
@@ -89,7 +89,7 @@ USING {return USING;}
 
 [0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::INT,yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newParseNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	try {
 		pNode->m_iValue = std::stol(yytext);
@@ -106,26 +106,29 @@ USING {return USING;}
 [0-9]+"."[0-9]*E[-+]?[0-9]+ |
 "."[0-9]+E[-+]?[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newParseNode( NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	pNode->m_sValue = pNode->m_sExpr;
 	return APPROXNUM;
 }
 
 TRUE {
-	ParseNode* pNode = newParseNode((ParseResult*)yyextra, NodeType::BOOL, "true");
+	ParseResult* pResult = (ParseResult*)yyextra;
+	ParseNode* pNode = pResult->newParseNode(NodeType::BOOL, "true");
 	pNode->m_iValue = 1;
 	yylval->pNode = pNode;
 	return BOOL;
 }
 UNKNOWN {
-	ParseNode* pNode = newParseNode((ParseResult*)yyextra, NodeType::BOOL,"unknown");
+	ParseResult* pResult = (ParseResult*)yyextra;
+	ParseNode* pNode = pResult->newParseNode( NodeType::BOOL,"unknown");
 	pNode->m_iValue = -1;
 	yylval->pNode = pNode;
 	return BOOL;
 }
 FALSE {
-	ParseNode* pNode = newParseNode((ParseResult*)yyextra, NodeType::BOOL,"false");
+	ParseResult* pResult = (ParseResult*)yyextra;
+	ParseNode* pNode = pResult->newParseNode( NodeType::BOOL,"false");
 	pNode->m_iValue = 0;
 	yylval->pNode = pNode;
 	return BOOL;
@@ -133,12 +136,12 @@ FALSE {
 
 '(\\.|''|[^'\n])*'|\"(\\.|\"\"|[^"\n])*\" {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::STR, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newParseNode( NodeType::STR, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 
 	//remove first and last quote charactors
 	size_t len =  pNode->m_sExpr.length() - 2;
-	char* pValue = pResult->allocStringFn(pNode->m_sExpr.data() + 1, len);
+	char* pValue = pResult->alloc(len);
 
 	size_t resultSize = 0;
 	for (size_t i = 0; i< len ; ++i) {
@@ -177,14 +180,14 @@ FALSE {
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::BINARY, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newParseNode( NodeType::BINARY, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	
 	size_t len =  pNode->m_sExpr.length() - 2;
 	if (pNode->m_sExpr[pNode->m_sExpr.length() - 1] == '\'') {
 		--len; //remove last quote
 	}
-	char* pValue = pResult->allocStringFn(pNode->m_sExpr.data() + 2, len);
+	char* pValue = pResult->alloc(len);
 
 	size_t resultSize = 0;
 	char szBuf[3];
@@ -202,7 +205,7 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 
 D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::DATE,yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newParseNode( NodeType::DATE,yylloc->first_column, yylloc->last_column);
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
@@ -216,7 +219,7 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 }
 D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::DATE, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newParseNode( NodeType::DATE, yylloc->first_column, yylloc->last_column);
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
@@ -244,7 +247,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 [A-Za-z_][A_Za-z0-9_]* {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::NAME, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newParseNode( NodeType::NAME, yylloc->first_column, yylloc->last_column);
 	pNode->m_sValue = pNode->m_sExpr;
 	yylval->pNode = pNode;
 	return NAME;
@@ -252,7 +255,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 $[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = newParseNode(pResult, NodeType::PARAM, "unbound");
+	ParseNode* pNode = pResult->newParseNode( NodeType::PARAM, "unbound");
 	yylval->pNode = pNode;
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)
@@ -261,6 +264,7 @@ $[0-9]+ {
 		return ERROR;
 	}
 	pNode->m_iValue = index;
+	pResult->m_bindParamNodes.push_back(pNode);
 	return PARAM;
 }
 

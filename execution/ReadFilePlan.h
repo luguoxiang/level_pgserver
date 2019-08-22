@@ -20,11 +20,11 @@ public:
 		case 1:
 			m_separator = separator[0];
 			if (m_separator == '"') {
-				throw new ParseException("Should not use \" as file separator");
+				PARSE_ERROR("Should not use \" as file separator");
 			}
 			break;
 		case 2:
-			throw new ParseException("File separator should be single character");
+			PARSE_ERROR("File separator should be single character");
 		}
 	}
 

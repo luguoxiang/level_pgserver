@@ -1,5 +1,6 @@
 #include "ExecutionResult.h"
 #include "ExecutionException.h"
+#include "execution/ParseTools.h"
 
 std::map<DBDataType, ExecutionResult::TypeOperationTuple> ExecutionResult::m_typeOperations;
 
@@ -24,11 +25,17 @@ void ExecutionResult::init() {
 				return 1;
 		}},
 		Compare2Fn{[] (const ExecutionResult& result, const ParseNode* pValue) {
-			if (pValue->m_type != NodeType::INT) {
-				throw new ExecutionException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect int"));
+			auto b = pValue->m_iValue;
+			switch(pValue->m_type) {
+			case NodeType::INT:
+				break;
+			case NodeType::PARAM:
+				b = Tools::bindParamToInt(pValue->m_iValue, pValue->m_sValue);
+				break;
+			default:
+				EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr, ", expect int");
 			}
 			int64_t a = result.getInt();
-			int64_t b = pValue->m_iValue;
 			if (a == b)
 				return 0;
 			else if (a < b)
@@ -57,8 +64,16 @@ void ExecutionResult::init() {
 				return a.getString().compare(b.getString());
 			}},
 			Compare2Fn{[] (const ExecutionResult& result, const ParseNode* pValue) {
-				if (pValue->m_type != NodeType::STR) {
-					throw new ExecutionException(ConcateToString("Wrong data type for ", pValue->m_sExpr, ", expect string"));
+				switch(pValue->m_type) {
+				case NodeType::STR:
+					break;
+				case NodeType::PARAM:
+					if(pValue->m_iValue == PARAM_TEXT_MODE) {
+						break;
+					}
+					//fall through
+				default:
+					EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr, ", expect string");
 				}
 				return result.getString().compare(pValue->m_sValue);
 			}}
@@ -74,15 +89,43 @@ void ExecutionResult::init() {
 		AddFn{[](ExecutionResult& result, const ExecutionResult& add) {
 			result.setDouble(result.getDouble() + add.getDouble());
 		}},
-		Compare1Fn{nullptr},
-		Compare2Fn{nullptr}
+		Compare1Fn{[] (const ExecutionResult& a, const ExecutionResult& b) {
+				auto aa = a.getDouble();
+				auto bb = b.getDouble();
+				if (aa == bb)
+					return 0;
+				else if (aa < bb)
+					return -1;
+				else
+					return 1;
+			}},
+			Compare2Fn{[] (const ExecutionResult& result, const ParseNode* pValue) {
+				double b = 0;
+				switch(pValue->m_type) {
+				case NodeType::FLOAT:
+					b = Tools::toDouble(pValue->m_sValue);
+					break;
+				case NodeType::PARAM:
+					b = Tools::bindParamToDouble(pValue->m_iValue, pValue->m_sValue);
+					break;
+				default:
+					EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr, ", expect int");
+				}
+				double a = result.getDouble();
+				if (a == b)
+					return 0;
+				else if (a < b)
+					return -1;
+				else
+					return 1;
+			}}
 	);
 	m_typeOperations[DBDataType::FLOAT] = m_typeOperations[DBDataType::DOUBLE];
 }
 
 void ExecutionResult::div(size_t value, DBDataType type) {
 	if (value == 0) {
-		throw new ExecutionException("Divide zero");
+		EXECUTION_ERROR("Divide zero");
 	}
 	if (auto iter = m_typeOperations.find(type); iter != m_typeOperations.end() ){
 		if (auto fn = std::get<DivFn>(iter->second); fn != nullptr) {
@@ -90,7 +133,7 @@ void ExecutionResult::div(size_t value, DBDataType type) {
 			return;
 		}
 	}
-	throw new ExecutionException("Divide is not supported on target data type!");
+	EXECUTION_ERROR("Divide is not supported on target data type!");
 
 }
 
@@ -101,7 +144,7 @@ void ExecutionResult::add(const ExecutionResult& result, DBDataType type) {
 			return;
 		}
 	}
-	throw new ExecutionException("Add is not supported on target data type!");
+	EXECUTION_ERROR("Add is not supported on target data type!");
 }
 
 int ExecutionResult::compare(const ExecutionResult& result,
@@ -111,7 +154,8 @@ int ExecutionResult::compare(const ExecutionResult& result,
 			return fn( *this, result);
 		}
 	}
-	throw new ExecutionException("Compare is not supported on target data type!");
+	EXECUTION_ERROR("Compare is not supported on target data type!");
+	return 0;
 }
 
 int ExecutionResult::compare(const ParseNode* pValue,
@@ -121,6 +165,7 @@ int ExecutionResult::compare(const ParseNode* pValue,
 			return fn(*this, pValue);
 		}
 	}
-	throw new ExecutionException("Compare is not supported on target data type!");
+	EXECUTION_ERROR("Compare is not supported on target data type!");
+	return 0;
 }
 

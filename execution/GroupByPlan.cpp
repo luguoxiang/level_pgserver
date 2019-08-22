@@ -130,7 +130,7 @@ int GroupByPlan::addProjection(const ParseNode* pNode) {
 			m_proj.push_back(func);
 			return m_proj.size() - 1;
 		} else {
-			throw new ParseException(ConcateToString("Unrecognized projection column ", pNode->m_sExpr));
+			PARSE_ERROR("Unrecognized projection column ", pNode->m_sExpr);
 		}
 
 	} else if (pNode->m_type == NodeType::FUNC) {
@@ -144,14 +144,15 @@ int GroupByPlan::addProjection(const ParseNode* pNode) {
 				m_proj.push_back(func);
 				return m_proj.size() - 1;
 			} else{
-				throw new ParseException(ConcateToString("Unrecognized projection column ", pNode->getChild(0)->m_sExpr));
+				PARSE_ERROR("Unrecognized projection column ", pNode->getChild(0)->m_sExpr);
 			}
 		} else {
-			throw new ParseException(ConcateToString("Unknown function ", pNode->m_sExpr));
+			PARSE_ERROR("Unknown function ", pNode->m_sExpr);
 		}
 
 	} else {
 		return -1;
 	}
+	return -1;
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "common/Exception.h"
 #include "execution/ExecutionPlan.h"
 #include <vector>
 #include <sstream>

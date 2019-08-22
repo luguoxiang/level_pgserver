@@ -18,7 +18,7 @@ bool checkFilter(int iOpCode, int n) {
 	case COMP_GE:
 		return n >= 0;
 	default:
-		throw new ParseException(ConcateToString("Unsupported operation ", iOpCode));
+		PARSE_ERROR("Unsupported operation ", iOpCode);
 		return 0;
 	}
 }
@@ -35,7 +35,7 @@ bool FilterPlan::next() {
 
 			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
 				if (info.m_pValue->m_type != NodeType::STR) {
-					throw new ParseException(ConcateToString("Wrong data type for ", info.m_pValue->m_sExpr, ", expect string"));
+					PARSE_ERROR("Wrong data type for ", info.m_pValue->m_sExpr, ", expect string");
 				}
 				if(auto pos = result.getString().find(info.m_pValue->m_sValue); pos == std::string::npos) {
 					bMatch = false;
@@ -59,7 +59,7 @@ bool FilterPlan::next() {
 
 void FilterPlan::addPredicate(const ParseNode* pPredicate) {
 	if (pPredicate->m_type != NodeType::OP || pPredicate->children() != 2) {
-		throw new ParseException(ConcateToString("Unsupported predicate ", pPredicate->m_sExpr));
+		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
 	assert(pPredicate);
 	assert(pPredicate->children() == 2);
@@ -73,7 +73,7 @@ void FilterPlan::addPredicate(const ParseNode* pPredicate) {
 		info.m_pValue = pPredicate->getChild(1);
 		m_predicate.push_back(info);
 	}else {
-		throw new ParseException(ConcateToString("Unrecognized column ", info.m_sColumn));
+		PARSE_ERROR("Unrecognized column ", info.m_sColumn);
 	}
 
 }

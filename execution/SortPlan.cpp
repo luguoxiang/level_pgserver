@@ -11,7 +11,7 @@ SortPlan::SortPlan(ExecutionPlan* pPlan) :
 
 void SortPlan::begin() {
 	if(m_proj.size() > 32) {
-		throw new ExecutionException(ConcateToString("sort column number bigger than 32"));
+		EXECUTION_ERROR("sort column number bigger than 32");
 	}
 	ExecutionBuffer& buffer = WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer();
 
@@ -119,7 +119,7 @@ bool SortPlan::ensureSortOrder(size_t iSortIndex, const std::string_view& sColum
 void SortPlan::addSortSpecification(const ParseNode* pNode, SortOrder order) {
 	int i = addProjection(pNode);
 	if (i < 0) {
-		throw new ParseException(ConcateToString("unrecognized column ", pNode->m_sExpr));
+		PARSE_ERROR("unrecognized column ", pNode->m_sExpr);
 	}
 	SortSpec spec;
 	spec.m_iIndex = i;

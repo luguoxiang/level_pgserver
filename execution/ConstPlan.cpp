@@ -46,7 +46,7 @@ void ConstPlan::getResult(size_t index, ExecutionResult* pInfo) {
 		pInfo->setStringView(pValue->m_sValue);
 		break;
 	default:
-		throw new ParseException("wrong const value type %d");
+		PARSE_ERROR("wrong const value type %d");
 	}
 }
 

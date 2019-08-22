@@ -44,7 +44,7 @@ public:
 	static void init();
 private:
 	std::variant<
-		std::nullptr_t, //should not be used
+		std::nullptr_t, //should set to other value later
 		std::string_view,
 		std::string,
 		int64_t,

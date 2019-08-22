@@ -1,5 +1,7 @@
 #pragma once
 #include <string>
+#include <sstream>
+#include <glog/logging.h>
 
 class Exception {
 public:
@@ -16,3 +18,10 @@ public:
 	}
 	;
 };
+
+template<typename ...Args>
+inline std::string ConcateToString(Args&&...args) {
+        std::ostringstream os;
+        (os << ... << std::forward<Args>(args));
+        return os.str();
+}

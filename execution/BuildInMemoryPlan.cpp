@@ -60,8 +60,7 @@ void buildPlanForProjection(const ParseNode* pNode) {
 		std::vector<std::string_view> columns;
 		pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
-			throw new ParseException(
-					"select * is not supported in current projection context");
+			PARSE_ERROR("select * is not supported in current projection context");
 		}
 		for (auto& column: columns) {
 			ParseNode node(NodeType::NAME, column, 0, nullptr);
@@ -86,11 +85,11 @@ void buildPlanForProjection(const ParseNode* pNode) {
 		bool bOK = pProjPlan->project(pColumn, sAlias);
 		if (!bOK) {
 			if (pColumn->m_type != NodeType::FUNC) {
-					throw new ParseException(ConcateToString("Unrecognized column ", pColumn->m_sExpr));
+					PARSE_ERROR("Unrecognized column ", pColumn->m_sExpr);
 			}
 
 			if (!pProjPlan->addGroupBy() || !pProjPlan->project(pColumn, sAlias)) {
-				throw new ParseException(ConcateToString("Unrecognized column ", pNode->m_sExpr));
+				PARSE_ERROR("Unrecognized column ", pNode->m_sExpr);
 			}
 
 		}
@@ -110,7 +109,7 @@ void buildPlanForGroupBy(const ParseNode* pNode) {
 		assert(pChild);
 
 		if (pChild->m_type != NodeType::NAME) {
-			throw new ParseException("Wrong group by clause!");
+			PARSE_ERROR("Wrong group by clause!");
 		}
 
 		if (!pChildPlan->ensureSortOrder(i, pChild->m_sValue, nullptr)) {
@@ -160,7 +159,7 @@ void buildPlanForLimit(const ParseNode* pNode) {
 
 static void parseQueryCondition(const ParseNode* pPredicate, FilterPlan* pFilter) {
 	if (pPredicate->m_type != NodeType::OP) {
-		throw new ParseException(ConcateToString("Unsupported predicate " , pPredicate->m_sExpr));
+		PARSE_ERROR("Unsupported predicate " , pPredicate->m_sExpr);
 	}
 
 	if (OP_CODE(pPredicate) == ANDOP) {
@@ -171,7 +170,7 @@ static void parseQueryCondition(const ParseNode* pPredicate, FilterPlan* pFilter
 	} else if (pPredicate->children() == 2) {
 		pFilter->addPredicate(pPredicate);
 	} else {
-		throw new ParseException("Unsupported query condition!");
+		PARSE_ERROR("Unsupported query condition!");
 	}
 }
 
@@ -208,7 +207,7 @@ void buildPlanForUnionAll(const ParseNode* pNode) {
 	Tools::pushPlan(pPlan);
 	int count = pLeft->getResultColumns();
 	if (count != pRight->getResultColumns()) {
-		throw new ParseException(
+		PARSE_ERROR(
 				"left sub query's column number is not same with right one's!");
 	}
 	for (int i = 0; i < count; ++i) {
@@ -236,7 +235,7 @@ void buildPlanForUnionAll(const ParseNode* pNode) {
 		}
 
 		if (type1 != type2) {
-			throw new ParseException("sub query column %d's type are not match");
+			PARSE_ERROR("sub query column %d's type are not match");
 		}
 	}
 }

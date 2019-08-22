@@ -53,7 +53,7 @@ ExecutionBuffer::TypeOperationTuple ExecutionBuffer::makeTuple<std::string_view>
 				auto s = result.getString();
 				auto size = s.length();
 				if(size > std::numeric_limits<uint16_t>::max() ) {
-					throw new ExecutionException("too large string value");
+					EXECUTION_ERROR("too large string value");
 				}
 
 				*reinterpret_cast<uint16_t*>(pData) = size;
@@ -163,11 +163,11 @@ ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std:
 
 std::byte* ExecutionBuffer::doAlloc(size_t size) {
 	if(size > BLOCK_SIZE) {
-		throw new ExecutionException("request buffer too large");
+		EXECUTION_ERROR("request buffer too large");
 	}
 	m_iUsed += size;
 	if (m_iUsed > m_iTotal) {
-		throw new ExecutionException("not enough buffer");
+		EXECUTION_ERROR("not enough buffer");
 	}
 
 	assert(m_iCurrentBlock <= m_bufferBlocks.size());

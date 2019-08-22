@@ -67,43 +67,6 @@ ParseNode::ParseNode(NodeType type,
 
 }
 
-ParseNode* newParseNode(ParseResult* p,
-		NodeType type,
-		const std::string_view sExpr,
-		std::initializer_list<const ParseNode*> initList)
-{
-	std::vector<const ParseNode*> childrens = initList;
-	return p->allocParseNodeFn(type, sExpr, childrens);
-}
-
-bool ParseNode::_collect(std::vector<const ParseNode*>& result,
-		const std::string sRemove)const {
-	if (m_type == NodeType::PARENT && m_sValue == sRemove) {
-		for(size_t i=0;i<children();++i) {
-			auto pChild = m_children[i];
-			if (!pChild->_collect(result, sRemove)) {
-				result.push_back(pChild);
-			}
-		}
-		return true;
-	} else {
-		return false;
-	}
-
-}
-
-ParseNode* ParseNode::merge(ParseResult* p, const std::string sNewName, const std::string sRemove) const{
-	std::vector<const ParseNode*> new_children;
-
-	if (this->_collect(new_children, sRemove)) {
-		auto pResult = p->allocParseNodeFn(m_type, m_sExpr, new_children);
-		pResult->m_sValue = sNewName;
-		return pResult;
-	}
-	auto pResult = newParseNode(p, NodeType::PARENT, m_sExpr, {this});
-	pResult->m_sValue = sNewName;
-	return pResult;
-}
 
 
 int64_t parseTime(std::string_view sTime) {

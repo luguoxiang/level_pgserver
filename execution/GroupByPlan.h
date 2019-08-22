@@ -97,7 +97,7 @@ public:
 	void addGroupByColumn(const ParseNode* pNode) {
 		int i = m_pPlan->addProjection(pNode);
 		if (i < 0) {
-			throw new ParseException(ConcateToString("Unrecognized sort column ", pNode->m_sExpr));
+			PARSE_ERROR("Unrecognized sort column ", pNode->m_sExpr);
 		}
 		m_groupby.push_back(i);
 	}

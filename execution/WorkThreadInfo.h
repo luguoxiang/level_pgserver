@@ -1,10 +1,10 @@
 #pragma once
 #include <vector>
 #include <thread>
-
+#include <algorithm>
 #include "ExecutionPlan.h"
 #include "ExecutionBuffer.h"
-
+#include "common/ParseResult.h"
 
 struct WorkThreadInfo {
 	WorkThreadInfo(int fd, int port, int iIndex,size_t executionBufferSize);
@@ -54,12 +54,25 @@ struct WorkThreadInfo {
 		return pPlan;
 	}
 	ExecutionBuffer& getExecutionBuffer() {return m_executionBuffer;}
+	size_t getBindParamNumber() {return m_result.m_bindParamNodes.size(); }
+	ParseNode* getBindParam(size_t i) {
+		assert(i < getBindParamNumber());
+		return m_result.m_bindParamNodes[i];
+	}
+	std::string_view allocString(std::string_view s) {
+		size_t len = s.length();
+		char* alloc = m_result.alloc(len);
+
+		std::copy(s.data(), s.data() + len, alloc);
+		return std::string_view(alloc, len);
+	}
+	void markParseBuffer() {m_result.mark(); }
+	void restoreParseBuffer() {m_result.restore(); }
 private:
 	ParseResult m_result;
 	std::vector<std::unique_ptr<ExecutionPlan>> m_plans;
 
 	ExecutionBuffer m_executionBuffer;
-	ExecutionBuffer m_parseBuffer;
 };
 
 

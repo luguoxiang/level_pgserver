@@ -23,8 +23,7 @@ void ReadFilePlan::begin() {
 	m_bCancel = false;
 	m_pFile.reset(new std::ifstream(m_sPath));
 	if (m_pFile->fail()) {
-		throw new ExecutionException(
-				ConcateToString("File ", m_sPath, " does not exists!"));
+		EXECUTION_ERROR("File ", m_sPath, " does not exists!");
 	}
 	m_result.resize(m_columns.size(), ExecutionResult{});
 	if (m_ignoreFirstLine) {
@@ -59,8 +58,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 		break;
 	case DBDataType::STRING:
 		if(pColumn->m_iLen > 0 && token.length() > pColumn->m_iLen)  {
-			throw new ExecutionException(
-					ConcateToString("Column ", pColumn->m_name, " value exceed defined length ", pColumn->m_iLen));
+			EXECUTION_ERROR("Column ", pColumn->m_name, " value exceed defined length ", pColumn->m_iLen);
 		}
 		m_result[index].setStringView(token);
 		break;
@@ -68,11 +66,10 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	case DBDataType::DATE:
 		if (int64_t iValue = parseTime(token); iValue > 0) {
 			m_result[index].setInt(iValue);
-			break;
 		} else {
-			throw new ExecutionException(
-					ConcateToString("Wrong Time Format:", token));
+			EXECUTION_ERROR("Wrong Time Format:", token);
 		}
+		break;
 	case DBDataType::FLOAT:
 	case DBDataType::DOUBLE:
 		if(token.length() == 0) {
