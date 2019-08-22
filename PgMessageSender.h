@@ -2,6 +2,7 @@
 
 #include "DataSender.h"
 
+//https://jdbc.postgresql.org/development/privateapi/constant-values.html
 enum class PgDataType {
 	Bytea = 17,
 	Int16 = 21,

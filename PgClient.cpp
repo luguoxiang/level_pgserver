@@ -32,8 +32,7 @@ constexpr char PG_DIAG_SOURCE_FILE = 'F';
 constexpr char PG_DIAG_SOURCE_LINE = 'L';
 constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
 
-constexpr int16_t PARAM_TEXT_MODE = 0;
-constexpr int16_t PARAM_BINARY_MODE = 1;
+
 
 class EmptyResult: public ExecutionPlan {
 public:
@@ -53,7 +52,7 @@ public:
 
 PgClient::PgClient(WorkThreadInfo* pInfo) :
 		m_receiver(pInfo->m_iAcceptFd), m_sender(pInfo->m_iAcceptFd), m_pWorker(
-				pInfo), m_iSendTime(0), m_iParamNum(0){
+				pInfo), m_iSendTime(0){
 	assert(pInfo->m_iAcceptFd >= 0);
 
 	memset(m_handler, 0, sizeof(m_handler));
@@ -99,7 +98,13 @@ void PgClient::handleParse() {
 
 	createPlan(sql);
 
-	m_iParamNum = m_receiver.getNextShort();
+	size_t iParamNum = m_receiver.getNextShort();
+	size_t iActualNum =m_pWorker->getBindParamNumber();
+
+	if (iParamNum != iActualNum) {
+		throw new ParseException(ConcateToString(
+				"Parameter number unmatch!, expect ", iParamNum, ", actual ", iActualNum));
+	}
 
 	m_sender.prepare('1');
 	m_sender.commit();
@@ -114,26 +119,37 @@ void PgClient::handleBind() {
 
 	DLOG(INFO)<< "B:portal "<<portal <<" ,stmt "<<stmt;
 
-	int num = m_receiver.getNextShort();
-	if (num != m_iParamNum) {
+	size_t iActualNum =m_pWorker->getBindParamNumber();
+
+	size_t iExpectNum = m_receiver.getNextShort();
+	if (iExpectNum != iActualNum) {
 		throw new ParseException(ConcateToString(
-				"Parameter format number unmatch!, expect ", m_iParamNum, ", actual ", num));
+				"Parameter format number unmatch!, expect ", iExpectNum, ", actual ", iActualNum));
 	}
-	for (int i = 0; i < m_iParamNum; ++i) {
-		if (m_receiver.getNextShort() != PARAM_TEXT_MODE) {
-			throw new ParseException(
-					"Only text mode bind parameter is supported!");
-		}
+	std::vector<uint16_t> types(iActualNum);
+	for (size_t i = 0; i < iActualNum; ++i) {
+		types[i] = m_receiver.getNextShort();
+		DLOG(INFO)<< "Bind type:"<<types[i];
 	}
 
-	num = m_receiver.getNextShort();
-	if (num != m_iParamNum) {
-		throw new ParseException(ConcateToString(
-				"Parameter number unmatch!, expect ", m_iParamNum , ", actual " , num));
+
+	iExpectNum = m_receiver.getNextShort();
+	if (iExpectNum != iActualNum) {
+		PARSE_ERROR("Parameter number unmatch!, expect ", iExpectNum , ", actual " , iActualNum);
 	}
-	if (m_iParamNum > 0) {
-		throw new ParseException("Bind Param is not supported!");
+
+	//discard allocated string for bind param
+	m_pWorker->restoreParseBuffer();
+	m_pWorker->markParseBuffer();
+
+	for (int i = 0; i < iActualNum; ++i) {
+		auto pParam = m_pWorker->getBindParam(i);
+		pParam->m_iValue = types[i];
+		auto s = m_receiver.getNextStringWithLen();
+		pParam->m_sValue =m_pWorker->allocString(s);
 	}
+
+
 	m_sender.prepare('2');
 	m_sender.commit();
 }
@@ -157,7 +173,6 @@ void PgClient::handleExecute() {
 	size_t columnNum = m_pPlan->getResultColumns();
 
 	m_pWorker->m_pPlan = m_pPlan.get();
-	WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer().purge();
 
 	m_pPlan->begin();
 
@@ -177,8 +192,6 @@ void PgClient::handleExecute() {
 	m_sender.addString(sInfo); //data len
 	m_sender.commit();
 	m_pWorker->m_pPlan = nullptr;
-
-	WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer().purge();
 }
 
 void PgClient::handleException(Exception* pe) {
@@ -189,7 +202,6 @@ void PgClient::handleException(Exception* pe) {
 	m_sender.addString("00000");
 	m_sender.addByte(PG_DIAG_MESSAGE_PRIMARY);
 	m_sender.addString(pe->what());
-	LOG(ERROR) << "Error: " << pe->what();
 
 	if (pe->getLine() >= 0) {
 		m_sender.addByte(PG_DIAG_STATEMENT_POSITION);

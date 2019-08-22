@@ -4,8 +4,10 @@
 #include <sstream>
 #include "execution/WorkThreadInfo.h"
 
+constexpr size_t SORT_BUFFER_SIZE = 64 * 1024 * 1024;
+
 SortPlan::SortPlan(ExecutionPlan* pPlan) :
-		ExecutionPlan(PlanType::Sort), m_pPlan(pPlan), m_iCurrent(0) {
+		ExecutionPlan(PlanType::Sort), m_pPlan(pPlan), m_iCurrent(0), m_buffer(SORT_BUFFER_SIZE) {
 	assert(m_pPlan);
 }
 
@@ -13,7 +15,6 @@ void SortPlan::begin() {
 	if(m_proj.size() > 32) {
 		EXECUTION_ERROR("sort column number bigger than 32");
 	}
-	ExecutionBuffer& buffer = WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer();
 
 	m_pPlan->begin();
 	for (size_t i = 0; i < m_proj.size(); ++i) {
@@ -26,18 +27,18 @@ void SortPlan::begin() {
 			int iSubIndex = m_proj[i].m_iSubIndex;
 			m_pPlan->getResult(iSubIndex, &results[i]);
 		}
-		auto [row, size] = buffer.copyRow(results, m_types);
+		auto [row, size] = m_buffer.copyRow(results, m_types);
 
 		m_rows.push_back(row);
 	}
 	m_pPlan->end();
 	auto comp =
-			[this, &buffer](ExecutionBuffer::Row pRow1, ExecutionBuffer::Row pRow2) {
+			[this](ExecutionBuffer::Row pRow1, ExecutionBuffer::Row pRow2) {
 				for (size_t i = 0; i < m_sort.size(); ++i) {
 					const SortSpec& spec = m_sort[i];
 					assert(spec.m_iIndex < m_proj.size());
 
-					int n = buffer.compare(pRow1, pRow2, spec.m_iIndex, m_types);
+					int n = m_buffer.compare(pRow1, pRow2, spec.m_iIndex, m_types);
 					if (n == 0) {
 						continue;
 					}
@@ -73,8 +74,7 @@ bool SortPlan::next() {
 
 void SortPlan::getResult(size_t index, ExecutionResult* pInfo) {
 	assert(m_iCurrent > 0);
-	ExecutionBuffer& buffer = WorkThreadInfo::m_pWorkThreadInfo->getExecutionBuffer();
-	buffer.getResult(m_rows[m_iCurrent - 1], index, *pInfo, m_types);
+	m_buffer.getResult(m_rows[m_iCurrent - 1], index, *pInfo, m_types);
 }
 
 int SortPlan::addProjection(const ParseNode* pNode)  {

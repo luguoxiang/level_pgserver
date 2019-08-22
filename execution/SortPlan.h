@@ -1,5 +1,6 @@
 #pragma once
 
+#include "execution/ExecutionBuffer.h"
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
@@ -111,5 +112,7 @@ private:
 
 	std::vector<DBDataType> m_types;
 	int m_iCurrent;
+
+	ExecutionBuffer m_buffer;
 };
 

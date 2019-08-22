@@ -3,11 +3,10 @@
 #include <thread>
 #include <algorithm>
 #include "ExecutionPlan.h"
-#include "ExecutionBuffer.h"
 #include "common/ParseResult.h"
 
 struct WorkThreadInfo {
-	WorkThreadInfo(int fd, int port, int iIndex,size_t executionBufferSize);
+	WorkThreadInfo(int fd, int port, int iIndex);
 
 	~WorkThreadInfo();
 
@@ -53,7 +52,7 @@ struct WorkThreadInfo {
 		m_plans.pop_back();
 		return pPlan;
 	}
-	ExecutionBuffer& getExecutionBuffer() {return m_executionBuffer;}
+
 	size_t getBindParamNumber() {return m_result.m_bindParamNodes.size(); }
 	ParseNode* getBindParam(size_t i) {
 		assert(i < getBindParamNumber());
@@ -72,7 +71,6 @@ private:
 	ParseResult m_result;
 	std::vector<std::unique_ptr<ExecutionPlan>> m_plans;
 
-	ExecutionBuffer m_executionBuffer;
 };
 
 

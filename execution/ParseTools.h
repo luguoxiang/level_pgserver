@@ -5,7 +5,7 @@
 #include "common/ParseNode.h"
 #include "execution/WorkThreadInfo.h"
 #include "execution/ExecutionPlan.h"
-
+#include "execution/ExecutionException.h"
 
 namespace Tools {
 inline bool case_equals(const std::string_view a, const std::string_view b)

@@ -154,12 +154,11 @@ void PgServer::run() {
 		throw new IOException("could not listen!");
 	}
 
-	int iWorkerNum = MetaConfig::getInstance().getWorkerNum();
-	int iExecutionBufferSize = MetaConfig::getInstance().getExecutionBuffer();
+	int iWorkerNum = MetaConfig::getInstance().getWorkerNum();;
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {
-		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_port, i, iExecutionBufferSize);
+		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_port, i);
 		threads[i] = std::thread(worker_thread, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}

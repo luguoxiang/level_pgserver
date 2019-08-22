@@ -9,11 +9,14 @@
 #include "ExecutionResult.h"
 #include "ExecutionException.h"
 #include "common/ConfigInfo.h"
-
+#include "GlobalMemBlockPool.h"
 class ExecutionBuffer
 {
 public:
-	ExecutionBuffer(size_t size, size_t blockSize) :  m_iTotal(size), BLOCK_SIZE(blockSize) {};
+	ExecutionBuffer(size_t size) :  m_iTotal(size) {};
+	~ExecutionBuffer() {
+		GlobalMemBlockPool::getInstance().free(m_bufferBlocks.begin(), m_bufferBlocks.end());
+	}
 
 	using Row = std::byte*;
 
@@ -38,10 +41,7 @@ public:
 		return target;
 	}
 private:
-	using BufferBlock = std::vector<std::byte>;
-	std::vector<std::unique_ptr<BufferBlock>> m_bufferBlocks;
-
-	const size_t BLOCK_SIZE;
+	std::vector<GlobalMemBlockPool::MemBlockPtr> m_bufferBlocks;
 
 	std::byte* get(Row row, size_t index, const std::vector<DBDataType>& types);
 

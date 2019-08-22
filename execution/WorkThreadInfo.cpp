@@ -9,11 +9,9 @@
 
 thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 
-constexpr size_t EXECUTION_BUFFER_BLOCK_SIZE = 512 * 1024;
 
-WorkThreadInfo::WorkThreadInfo(int fd, int port, int iIndex, size_t executionBufferSize) :
-		m_iListenFd(fd), m_port(port), m_iIndex(iIndex),
-		m_executionBuffer(executionBufferSize, EXECUTION_BUFFER_BLOCK_SIZE){
+WorkThreadInfo::WorkThreadInfo(int fd, int port, int iIndex) :
+		m_iListenFd(fd), m_port(port), m_iIndex(iIndex){
 
 	m_result = {};
 	if (parseInit(&m_result)) {

@@ -37,7 +37,7 @@ void DataSender::addInt(int32_t value) {
 	int32_t netval = m_bNetNumber ? htonl(value) : value;
 
 	check(4);
-	memcpy(m_buffer.data() + m_iWritten, &netval, 4);
+	m_buffer.replace(m_iWritten, 4, reinterpret_cast<const char*>(&netval), 4);
 	m_iWritten += 4;
 }
 
@@ -46,7 +46,7 @@ void DataSender::addLongInt(int64_t value) {
 		throw new IOException("hton is not supported for long int!");
 	}
 	check(8);
-	memcpy(m_buffer.data() + m_iWritten, &value, 8);
+	m_buffer.replace(m_iWritten, 8, reinterpret_cast<const char*>(&value), 8);
 	m_iWritten += 8;
 }
 
@@ -54,14 +54,14 @@ void DataSender::addShort(int16_t value) {
 	int16_t netval = m_bNetNumber ? htons(value) : value;
 
 	check(2);
-	memcpy(m_buffer.data() + m_iWritten, &netval, 2);
+	m_buffer.replace(m_iWritten, 2, reinterpret_cast<const char*>(&netval), 2);
 	m_iWritten += 2;
 }
 
 void DataSender::addString(const std::string_view s) {
 	auto len = s.length();
 	check( len + 1);
-	memcpy(m_buffer.data() + m_iWritten, s.data(), len);
+	m_buffer.replace(m_iWritten, len, s.data(), len);
 	m_iWritten += len;
 	m_buffer[m_iWritten] = '\0';
 	++m_iWritten;
@@ -70,7 +70,7 @@ void DataSender::addStringAndLength(const std::string_view s) {
 	auto len = s.length();
 	addInt(len);
 	check(len);
-	memcpy(m_buffer.data() + m_iWritten, s.data(), len);
+	m_buffer.replace(m_iWritten, len, s.data(), len);
 	m_iWritten += len;
 }
 
@@ -97,6 +97,7 @@ void DataSender::flush() {
 	}
 
 	m_iWritten -= m_iLastPrepare;
+
 	memcpy(m_buffer.data(), m_buffer.data() + m_iLastPrepare, m_iWritten);
 	m_iLastPrepare = 0;
 }

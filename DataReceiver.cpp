@@ -27,10 +27,10 @@ std::string_view DataReceiver::getNextStringWithLen() {
 	assert(m_iCurrent >= 0 && m_iCurrent < m_iBufLen);
 
 	const char* pszCurrent = m_buffer.data() + m_iCurrent;
-	size_t len = htonl(*(uint32_t*) pszCurrent);
+	int32_t len = ntohl(*(int32_t*) pszCurrent);
 	m_iCurrent += 4;
 	if (len <= 0)
-		return nullptr;
+		throw new IOException("null string is not supported");
 
 	m_iCurrent += len;
 	return std::string_view(pszCurrent + 4, len);
@@ -40,10 +40,10 @@ std::string_view DataReceiver::getNextStringWithShortLen() {
 	assert(m_iCurrent >= 0 && m_iCurrent < m_iBufLen);
 
 	const char* pszCurrent = m_buffer.data() + m_iCurrent;
-	size_t len = htons(*(uint16_t*) pszCurrent);
+	int16_t len = ntohs(*(int16_t*) pszCurrent);
 	m_iCurrent += 2;
 	if (len <= 0)
-		return nullptr;
+		throw new IOException("null string is not supported");
 
 	m_iCurrent += len;
 	return std::string_view(pszCurrent + 2, len);
@@ -53,7 +53,7 @@ int16_t DataReceiver::getNextShort() {
 	assert(m_iCurrent >= 0 && m_iCurrent < m_iBufLen);
 
 	const char* pszCurrent = m_buffer.data() + m_iCurrent;
-	int16_t sRet =htons(*(int16_t*) pszCurrent) ;
+	int16_t sRet =ntohs(*(int16_t*) pszCurrent) ;
 	m_iCurrent += 2;
 	return sRet;
 }
@@ -71,7 +71,7 @@ int32_t DataReceiver::getNextInt() {
 	assert(m_iCurrent >= 0 && m_iCurrent < m_iBufLen);
 
 	const char* pszCurrent = m_buffer.data() + m_iCurrent;
-	int32_t iRet =htonl(*(int32_t*) pszCurrent);
+	int32_t iRet =ntohl(*(int32_t*) pszCurrent);
 	m_iCurrent += 4;
 	return iRet;
 }

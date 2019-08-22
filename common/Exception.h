@@ -16,7 +16,8 @@ public:
 	virtual int getStartPos() const {
 		return 0;
 	}
-	;
+	Exception(const Exception&) = delete;
+	Exception& operator =(const Exception&) = delete;
 };
 
 template<typename ...Args>

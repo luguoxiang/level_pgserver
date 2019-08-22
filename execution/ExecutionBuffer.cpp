@@ -162,7 +162,7 @@ ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std:
 }
 
 std::byte* ExecutionBuffer::doAlloc(size_t size) {
-	if(size > BLOCK_SIZE) {
+	if(size > GlobalMemBlockPool::BLOCK_SIZE) {
 		EXECUTION_ERROR("request buffer too large");
 	}
 	m_iUsed += size;
@@ -173,13 +173,13 @@ std::byte* ExecutionBuffer::doAlloc(size_t size) {
 	assert(m_iCurrentBlock <= m_bufferBlocks.size());
 
 	m_iBlockUsed += size;
-	if (m_iBlockUsed > BLOCK_SIZE) {
+	if (m_iBlockUsed > GlobalMemBlockPool::BLOCK_SIZE) {
 		++m_iCurrentBlock;
 		m_iBlockUsed = size;
 	}
 
 	if(m_iCurrentBlock == m_bufferBlocks.size()) {
-		m_bufferBlocks.push_back(std::make_unique<BufferBlock>(BLOCK_SIZE));
+		m_bufferBlocks.push_back(GlobalMemBlockPool::getInstance().alloc());
 	}
 	return m_bufferBlocks[m_iCurrentBlock]->data() + (m_iBlockUsed - size);
 }

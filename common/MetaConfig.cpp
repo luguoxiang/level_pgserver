@@ -66,7 +66,7 @@ void MetaConfig::load(const std::string& sPath) {
 							LOG(INFO) << "timeout = "<< m_iTimeout;
 
 						}else if(sKey == "network_buffer_size"){
-							m_iNetBuffer = std::stol(sValue);
+							m_iNetBuffer = std::stol(sValue) * 1024 * 1024;
 							LOG(INFO) << "network_buffer_size = "<< m_iNetBuffer;
 
 						}else if(sKey == "execution_buffer") {

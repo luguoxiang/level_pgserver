@@ -85,7 +85,7 @@ private:
 	uint32_t m_iWorkerNum = 20;
 	uint32_t m_iTimeout = 60;
 	uint32_t m_iNetBuffer = 1024 * 1024;
-	uint32_t m_iExecBuffer = 64 * 1024 * 1024;
+	uint32_t m_iExecBuffer = 1024 * 1024 * 1024;
 	int m_iPort = 5433;
 
 };

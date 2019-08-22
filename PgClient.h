@@ -36,6 +36,5 @@ private:
 	std::unique_ptr<ExecutionPlan> m_pPlan;
 
 	uint64_t m_iSendTime;
-	int m_iParamNum;
 	MessageHandler m_handler[100];
 };
