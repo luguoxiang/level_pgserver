@@ -1,7 +1,7 @@
 #pragma once
 
 #include "execution/ExecutionBuffer.h"
-#include "execution/ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
 /**
@@ -20,14 +20,14 @@ enum class SortOrder {
 	Ascend, Descend, Any
 };
 
-class SortPlan: public ExecutionPlan {
+class SortPlan: public SingleChildPlan {
 	struct SortProjection {
 		size_t m_iSubIndex;
 		std::string_view m_sName;
 	};
 public:
 	SortPlan(ExecutionPlan* pPlan);
-	virtual ~SortPlan() {end();}
+	virtual ~SortPlan() {}
 
 	virtual void explain(std::vector<std::string>& rows)override {
 		m_pPlan->explain(rows);
@@ -78,15 +78,8 @@ public:
 		return m_pPlan->getResultType(m_proj[index].m_iSubIndex);
 	}
 
-	virtual std::string getInfoString() override{
-		return m_pPlan->getInfoString();
-	}
 
 	virtual void getResult(size_t index, ExecutionResult* pInfo) override;
-
-	virtual void getAllColumns(std::vector<std::string_view>& columns)  override{
-		return m_pPlan->getAllColumns(columns);
-	}
 
 	virtual int addProjection(const ParseNode* pNode) override;
 
@@ -95,9 +88,6 @@ public:
 
 	void addSortSpecification(const ParseNode* pNode, SortOrder order);
 
-	virtual void cancel() override {
-		m_pPlan->cancel();
-	}
 private:
 	struct SortSpec {
 		size_t m_iIndex;
@@ -107,14 +97,13 @@ private:
 		DBDataType m_type;
 	};
 
-	std::unique_ptr<ExecutionPlan> m_pPlan;
 
 	std::vector<ExecutionBuffer::Row> m_rows;
 	std::vector<SortProjection> m_proj;
 	std::vector<SortSpec> m_sort;
 
 	std::vector<DBDataType> m_types;
-	int m_iCurrent;
+	int m_iCurrent = 0;
 
 	std::unique_ptr<ExecutionBuffer> m_pBuffer;
 };
