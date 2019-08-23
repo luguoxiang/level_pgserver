@@ -37,14 +37,14 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 void TableInfo::addKeyColumn(const std::string& name) {
 	DBColumnInfo* pColumn = getColumnByName(name);
 	if (pColumn == nullptr) {
-		 CONFIG_ERROR("Undefined rowkey column ", name);
+		 CONFIG_ERROR("Undefined key column ", name);
 	}
 	if (pColumn->m_iLen <= 0) {
-		CONFIG_ERROR("Missing length for rowkey column config!");
+		CONFIG_ERROR("Missing length for key column config!");
 	}
 	if (pColumn->m_type == DBDataType::DOUBLE) {
 		CONFIG_ERROR(
-				"rowkey column with double type is not supported");
+				"key column with double type is not supported");
 	}
 	pColumn->m_iKeyIndex = m_keys.size();
 	m_keys.push_back(pColumn);

@@ -80,7 +80,7 @@ public:
 		return m_keys[i];
 	}
 
-	DBColumnInfo* getColumnByName(std::string_view name) {
+	DBColumnInfo* getColumnByName(const std::string_view name) {
 		auto iter = m_columnMap.find(name);
 		if (iter == m_columnMap.end())
 			return nullptr;

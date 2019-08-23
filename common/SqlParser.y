@@ -6,6 +6,7 @@
 typedef void* yyscan_t;
 #include "ParseResult.h"
 #include "BuildPlan.h"
+#include "MetaConfig.h"
 #include <stdint.h>
 }
 
@@ -24,42 +25,20 @@ extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const st
 
 struct DbPlanBuilder
 {
-	const char* m_db;
 	BuildPlanFunc m_pfnSelect;
 	BuildPlanFunc m_pfnInsert;
 	BuildPlanFunc m_pfnDelete;
-	
-	bool valid() const {return m_db != nullptr;}
 };
 
-static std::array<DbPlanBuilder,1> planBuilders = {
-	{"file", buildPlanForFileSelect, nullptr, nullptr},
-};
 
-static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode** ppTable)
+static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode* pTable)
 {
-		assert(ppTable);
-		const ParseNode* pTable = *ppTable;
-		if(pTable->m_type == NodeType::OP)
-		{
-				int i = 0;
-				assert(pTable->children() == 2);
-				assert(pTable->getChild(0)->m_type == NodeType::NAME);
-				assert(pTable->getChild(1)->m_type == NodeType::NAME);
-				const ParseNode* pDB = pTable->getChild(0);
-				pTable = pTable->getChild(1);
-				for(auto& builder : planBuilders)
-				{
-					if(pDB->m_sValue == builder.m_db)
-					{
-						return builder;
-					}
-				}
-				return DbPlanBuilder{};
-		}
-		else
-		{
-				return planBuilders[0];
+		assert(pTable);
+		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+		if (pTableInfo->getKeyCount() == 0){
+			return DbPlanBuilder{buildPlanForFileSelect, nullptr, nullptr};
+		} else {
+			PARSE_ERROR("Unsupported table type ", pTable->m_sValue);
 		}
 }
 
@@ -304,7 +283,7 @@ val_list: expr {$$ = $1;}
 delete_stmt: DELETE FROM table_factor opt_where
 	{
 		ParseNode* pTable = $3;
-		auto builder = getPlanBuilder(pResult, &pTable);
+		auto builder = getPlanBuilder(pResult, pTable);
 		if(builder.m_pfnDelete == nullptr)
 		{
 		  yyerror(&@3,pResult,nullptr, "Delete is not supported for current database");
@@ -344,7 +323,7 @@ values_stmt:VALUES value_list
 insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 	{
 	  ParseNode* pTable = $3;
-		auto builder = getPlanBuilder(pResult, &pTable);
+		auto builder = getPlanBuilder(pResult, pTable);
 		if(builder.m_pfnInsert == nullptr)
 		{
 			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
@@ -356,7 +335,7 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 	| INSERT INTO table_factor opt_col_names values_stmt
 	{
 	  ParseNode* pTable = $3;
-		auto builder = getPlanBuilder(pResult, &pTable);
+		auto builder = getPlanBuilder(pResult, pTable);
 		if(builder.m_pfnInsert == nullptr)
 		{
 			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
@@ -391,7 +370,7 @@ workload_stmt:WORKLOAD
 load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS TERMINATED BY STRING
 	{
 		ParseNode* pTable = $7;
-		auto builder = getPlanBuilder(pResult, &pTable);
+		auto builder = getPlanBuilder(pResult, pTable);
 		if(builder.m_pfnInsert == nullptr)
 		{
 			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
@@ -490,7 +469,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			}
 			else
 			{
-				auto builder = getPlanBuilder(pResult, &pTable);
+				auto builder = getPlanBuilder(pResult, pTable);
 			    if(builder.m_pfnSelect == nullptr)
 			    {
 			      yyerror(&@3,pResult,nullptr, "Select is not supported for current database");
@@ -597,7 +576,6 @@ select_expr_list: projection {
 table_factor: NAME { 
 		$$ = $1;
 	}
-	| NAME '.' NAME {$$ = pResult->newExprNode( '.', @$.first_column, @$.last_column, { $1, $3});}
 	;
 
 %%

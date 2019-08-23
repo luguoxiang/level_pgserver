@@ -55,7 +55,8 @@ void SortPlan::begin() {
 				return false; //equals is not less
 			};
 
-	std::sort(m_rows.begin(), m_rows.end(), comp);
+	//use stable sort so that first last aggregation function can work
+	std::stable_sort(m_rows.begin(), m_rows.end(), comp);
 	m_iCurrent = 0;
 }
 
