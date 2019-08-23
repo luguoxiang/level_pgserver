@@ -4,8 +4,6 @@
 #include <time.h>
 #include <iomanip>
 
-extern const char* getTypeName(int type);
-
 void buildPlanDefault(const ParseNode* pNode) {
 	for(size_t i=0;i<pNode->children();++i) {
 		auto pChild = pNode->getChild(i);
@@ -17,7 +15,6 @@ void buildPlanDefault(const ParseNode* pNode) {
 
 void printTree(const ParseNode* pRoot, int level) {
 	int i;
-	const char* pszTypeName;
 	for (i = 0; i < level; ++i)
 		std::cout<<"\t";
 	if (pRoot == 0) {
@@ -27,13 +24,7 @@ void printTree(const ParseNode* pRoot, int level) {
 	switch (pRoot->m_type) {
 	case NodeType::OP:
 	case NodeType::INFO:
-	case NodeType::DATATYPE:
-		pszTypeName = getTypeName(pRoot->m_iValue);
-		if (pszTypeName == nullptr){
-			std::cout<<(char) pRoot->m_iValue <<std::endl;
-		}else {
-			std::cout<< pszTypeName <<std::endl;
-		}
+		std::cout<< pRoot->m_sExpr <<std::endl;
 		break;
 	case NodeType::BINARY:
 		std::cout <<"\\x";

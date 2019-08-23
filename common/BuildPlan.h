@@ -6,7 +6,6 @@ extern void buildPlanDefault(const ParseNode* pNode);
 
 extern void buildPlanForFileSelect(const ParseNode* pNode);
 
-extern void buildPlanForLeftJoin(const ParseNode* pNode);
 extern void buildPlanForExplain(const ParseNode* pNode);
 extern void buildPlanForGroupBy(const ParseNode* pNode);
 extern void buildPlanForOrderBy(const ParseNode* pNode);

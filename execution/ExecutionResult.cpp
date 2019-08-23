@@ -102,6 +102,9 @@ void ExecutionResult::init() {
 			Compare2Fn{[] (const ExecutionResult& result, const ParseNode* pValue) {
 				double b = 0;
 				switch(pValue->m_type) {
+				case NodeType::INT:
+						b = pValue->m_iValue;
+						break;
 				case NodeType::FLOAT:
 					b = Tools::toDouble(pValue->m_sValue);
 					break;
@@ -109,7 +112,7 @@ void ExecutionResult::init() {
 					b = Tools::bindParamToDouble(pValue->m_iValue, pValue->m_sValue);
 					break;
 				default:
-					EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr, ", expect int");
+					EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr, ", expect double");
 				}
 				double a = result.getDouble();
 				if (a == b)

@@ -7,8 +7,6 @@
 #include "execution/ShowColumns.h"
 #include "execution/ReadFilePlan.h"
 
-void buildPlanForLeftJoin(const ParseNode* pNode) {
-}
 
 void buildPlanForDesc(const ParseNode* pNode) {
 	assert(pNode->children() == 1);

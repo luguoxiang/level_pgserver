@@ -149,7 +149,6 @@ static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode* pTable)
 %type <pNode> expr
 %type <pNode> val_list
 %type <pNode> select_stmt select_expr_list projection 
-%type <pNode> join_list join_clause
 %type <pNode> opt_where opt_groupby opt_having opt_orderby opt_limit
 %type <pNode> table_factor
 %type <pNode> sort_list opt_asc_desc
@@ -161,7 +160,7 @@ static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode* pTable)
 %type <pNode> delete_stmt
 %type <pNode> get_stmt merge_stmt values_stmt
 %type <pNode> show_tables_stmt desc_table_stmt workload_stmt
-%type <pNode> table_or_query opt_alias opt_join
+%type <pNode> table_or_query opt_alias
 
 %start sql_stmt
 %%
@@ -423,85 +422,45 @@ opt_alias: {$$ = 0;}
 	|  AS NAME {$$ = $2;}
 	;
 
-opt_join: {$$ = 0;}
-	| join_list {$$ = $1;}
-	;
+
 select_stmt: SELECT select_expr_list FROM table_or_query opt_alias 
-			opt_where opt_groupby opt_having opt_orderby opt_limit opt_join
+			opt_where opt_groupby opt_having opt_orderby opt_limit
 	{
 		$2 = pResult->merge($2, "SelectExprList","ExprList");
 		ParseNode* pProject = $2;
 		ParseNode* pTable = $4;
 		ParseNode* pAlias = $5;
 		ParseNode* pPredicate = $6;
-		ParseNode* pJoin = $11;
 
-		int hasSubquery = (pTable->m_type != NodeType::NAME && pTable->m_type != NodeType::OP);
-		if(pJoin != 0)
+		pProject->m_fnBuildPlan = buildPlanForProjection;
+		if(pAlias != nullptr)
 		{
-			//This is a left join statement
-			pJoin = pResult->merge(pJoin,"JoinList", "JoinList");
-			if(pAlias == nullptr)
-			{
-				yyerror(&@5,pResult,nullptr, "table in left join statement  must have a alias name");
-				YYERROR;
-			}
-			if(!hasSubquery)
-			{
-				yyerror(&@4,pResult,nullptr, "left join target must be subquery");
-				YYERROR;
-			}
-
-			$$ = pResult->newParentNode( "LeftJoinStmt",@$.first_column, @$.last_column, { pProject, pTable, pAlias, pJoin });
-			$$->m_fnBuildPlan = buildPlanForLeftJoin;
-		}	
+			yyerror(&@5,pResult,nullptr, "table alias name is not supported");
+			YYERROR;
+		}
+		if(pTable->m_type != NodeType::NAME && pTable->m_type != NodeType::OP)
+		{
+			//this is a select statement with subquery
+			// children order is important, it is the BuildPlan order
+			$$ = pResult->newParentNode( "SubQueryStmt", @$.first_column, @$.last_column, { pTable, pPredicate, $7, $8, $9, $10, pProject});
+			$$->m_fnBuildPlan = buildPlanDefault;
+		}
 		else
 		{
-			pProject->m_fnBuildPlan = buildPlanForProjection;
-			if(pAlias != nullptr)
-			{
-				yyerror(&@5,pResult,nullptr, "table alias name in non-join statement  is not supported");
-				YYERROR;
-			}
-			if(hasSubquery)
-			{
-				//this is a select statement with subquery
-				// children order is important, it is the BuildPlan order
-				$$ = pResult->newParentNode( "SubQueryStmt", @$.first_column, @$.last_column, { pTable, pPredicate, $7, $8, $9, $10, pProject});
-				$$->m_fnBuildPlan = buildPlanDefault;
-			}
-			else
-			{
-				auto builder = getPlanBuilder(pResult, pTable);
-			    if(builder.m_pfnSelect == nullptr)
-			    {
-			      yyerror(&@3,pResult,nullptr, "Select is not supported for current database");
-			      YYERROR;
-			    }
-	
-					$$ = pResult->newParentNode( "SelectStmt", @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10 });
-					$$->m_fnBuildPlan = builder.m_pfnSelect;
-				}
+			auto builder = getPlanBuilder(pResult, pTable);
+		    if(builder.m_pfnSelect == nullptr)
+		    {
+		      yyerror(&@3,pResult,nullptr, "Select is not supported for current database");
+		      YYERROR;
+		    }
+
+			$$ = pResult->newParentNode( "SelectStmt", @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10 });
+			$$->m_fnBuildPlan = builder.m_pfnSelect;
 		}
-	}
+}
 	;
 
-join_clause : LEFT JOIN table_factor USING '(' column_list ')'
-	{
-		$6 = pResult->merge($6,"Using", "ColumnList");
-    	$$ = pResult->newParentNode( "LeftJoin", @$.first_column, @$.last_column, { $3, $6});
-	}
-	;
 
-join_list : join_clause
-	{
-		$$ = pResult->newParentNode( "JoinList", @$.first_column, @$.last_column, {$1 });
-	}
-	| join_list  join_clause
-	{
-		$$ = pResult->newParentNode( "JoinList", @$.first_column, @$.last_column, { $1, $2 });
-	}
-	;
 opt_where:{$$ = 0;}
 	| WHERE expr {
 		$$ = $2;

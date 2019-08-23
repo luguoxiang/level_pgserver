@@ -64,10 +64,11 @@ endif()
 file(GLOB SOURCES "*.cpp" )
 file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
+file(GLOB DATABASE_SOURCES "database/*.cpp")
 
 include_directories(PUBLIC . glog glog/src leveldb/include)
  
-add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} ${COMMON_SOURCES} ${BisonOutput} ${FlexOutput})
+add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} ${COMMON_SOURCES} ${DATABASE_SOURCES}  ${BisonOutput} ${FlexOutput})
 
 add_executable(${APP_EXEC} ${SOURCES} )
 target_link_libraries( ${APP_EXEC} ExecutionLib glog::glog leveldb)

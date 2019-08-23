@@ -1,10 +1,6 @@
 #pragma once
 
 
-#include <string.h>
-#include <netdb.h>
-#include <errno.h>
-
 #include "common/Exception.h"
 
 

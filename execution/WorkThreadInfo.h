@@ -14,7 +14,13 @@ struct WorkThreadInfo {
 		m_plans.clear();
 	}
 
-	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
+	static WorkThreadInfo* getThreadInfo() {
+		return m_pWorkThreadInfo;
+	}
+
+	static void setThreadInfo(WorkThreadInfo* pInfo) {
+		m_pWorkThreadInfo = pInfo;
+	}
 
 	int m_iListenFd;
 	int m_iAcceptFd = 0;
@@ -68,7 +74,7 @@ struct WorkThreadInfo {
 private:
 	ParseResult m_result;
 	std::vector<std::unique_ptr<ExecutionPlan>> m_plans;
-
+	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
 };
 
 

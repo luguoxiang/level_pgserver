@@ -16,13 +16,10 @@ enum class NodeType {
 	DATE,
 	FLOAT,
 	BOOL,
-	NONE,
-	HINT,
 	PARENT,
 	NAME,
 	OP,
 	FUNC,
-	DATATYPE,
 	INFO,
 	PARAM,
 };
