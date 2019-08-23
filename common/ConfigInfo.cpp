@@ -6,7 +6,7 @@
 #include <regex>
 #include <glog/logging.h>
 
-void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
+void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) {
 	std::regex rgx(R"(([^:\s]+):([^:\(\)\s]+)(\([\d]+\))?)");
 	std::smatch matches;
 
@@ -35,23 +35,26 @@ void TableInfo::addColumn(MetaConfig* pConfig, const std::string& sValue) {
 }
 
 void TableInfo::addKeyColumn(const std::string& name) {
-	DBColumnInfo* pColumn = getColumnByName(name);
-	if (pColumn == nullptr) {
+	if(auto iter = m_columnMap.find(name);  iter != m_columnMap.end()) {
+		DBColumnInfo* pColumn = iter->second;
+		if (pColumn->m_iLen <= 0) {
+			CONFIG_ERROR("Missing length for key column config!");
+		}
+		if (pColumn->m_type == DBDataType::DOUBLE) {
+			CONFIG_ERROR(
+					"key column with double type is not supported");
+		}
+		pColumn->m_iKeyIndex = m_keys.size();
+		m_keys.push_back(pColumn);
+	} else{
 		 CONFIG_ERROR("Undefined key column ", name);
 	}
-	if (pColumn->m_iLen <= 0) {
-		CONFIG_ERROR("Missing length for key column config!");
-	}
-	if (pColumn->m_type == DBDataType::DOUBLE) {
-		CONFIG_ERROR(
-				"key column with double type is not supported");
-	}
-	pColumn->m_iKeyIndex = m_keys.size();
-	m_keys.push_back(pColumn);
+
+
 }
 
 void TableInfo::getDBColumns(const ParseNode* pColumn,
-		std::vector<DBColumnInfo*>& columns) {
+		std::vector<const DBColumnInfo*>& columns) const {
 	if (pColumn == nullptr) {
 		//insert into t values(....)
 		//add all columns in table
@@ -65,7 +68,7 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 			if (p == nullptr || p->m_type != NodeType::NAME) {
 				PARSE_ERROR("Unsupported select expression:" , p->m_sExpr);
 			}
-			DBColumnInfo* pColumnInfo = getColumnByName(p->m_sValue);
+			const DBColumnInfo* pColumnInfo = getColumnByName(p->m_sValue);
 			if (pColumnInfo == 0) {
 				PARSE_ERROR("Table ", m_name, " does not have column named ", p->m_sValue);
 			}

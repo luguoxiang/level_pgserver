@@ -9,7 +9,7 @@
 
 class ShowColumns: public LeafPlan {
 public:
-	ShowColumns(TableInfo* pEntry) :
+	ShowColumns(const TableInfo* pEntry) :
 		LeafPlan(PlanType::Other), m_pEntry(pEntry) {
 	}
 
@@ -39,5 +39,5 @@ public:
 	virtual int addProjection(const ParseNode* pNode)override;
 private:
 	size_t m_iIndex;
-	TableInfo* m_pEntry;
+	const TableInfo* m_pEntry;
 };

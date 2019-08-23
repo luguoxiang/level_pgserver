@@ -10,9 +10,9 @@
 
 class ReadFilePlan: public LeafPlan {
 public:
-	ReadFilePlan(const std::string_view& sPath,	const std::string_view& separator,	bool ignoreFirstLine=false) :
+	ReadFilePlan(std::string_view sPath, std::string_view separator,	bool ignoreFirstLine=false) :
 		LeafPlan(PlanType::ReadFile),
-			m_sPath(std::string(sPath.data(), sPath.length())),
+			m_sPath(sPath.data(), sPath.length()),
 			m_ignoreFirstLine(ignoreFirstLine){
 		switch(separator.size()) {
 		case 0:
@@ -69,14 +69,14 @@ public:
 
 	virtual int addProjection(const ParseNode* pNode) override;
 
-	void addColumn(DBColumnInfo* pColumn) {
+	void addColumn(const DBColumnInfo* pColumn) {
 		m_columns.push_back(pColumn);
 		m_result.push_back(ExecutionResult());
 	}
 
 private:
 	void setToken(size_t index, std::string_view token);
-	std::vector<DBColumnInfo*> m_columns;
+	std::vector<const DBColumnInfo*> m_columns;
 	std::vector<ExecutionResult> m_result;
 	int64_t m_iRowCount = 0;
 	std::string m_sPath;

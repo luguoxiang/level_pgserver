@@ -26,7 +26,7 @@ public:
 		}
 	}
 
-	DBDataType getDataType(const std::string_view& sType) {
+	DBDataType getDataType(const std::string_view& sType) const {
 		auto iter = m_dataTypeMap.find(sType);
 		if (iter == m_dataTypeMap.end())
 			return DBDataType::UNKNOWN;
@@ -57,7 +57,7 @@ public:
 
 	int getPort() const { return m_iPort;}
 
-	TableInfo* getTableInfo(std::string_view name) {
+	const TableInfo* getTableInfo(std::string_view name) {
 		auto iter = m_tableMap.find(name);
 		if (iter != m_tableMap.end()) {
 			return iter->second.get();

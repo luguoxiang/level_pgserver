@@ -23,7 +23,7 @@ void MetaConfig::clean() {
 }
 
 void MetaConfig::addTable(TableInfo* pTable) {
-	const std::string& name = pTable->getName();
+	auto name = pTable->getName();
 	if (getTableInfo(name) != nullptr) {
 		CONFIG_ERROR("table ", name, " already defined!");
 	}

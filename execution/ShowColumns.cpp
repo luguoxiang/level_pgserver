@@ -59,7 +59,7 @@ bool ShowColumns::next() {
 }
 
 void ShowColumns::getResult(size_t index, ExecutionResult* pInfo) {
-	DBColumnInfo* pColumn = m_pEntry->getColumn(m_iIndex - 1);
+	const DBColumnInfo* pColumn = m_pEntry->getColumn(m_iIndex - 1);
 	assert(pColumn);
 
 	switch (index) {
