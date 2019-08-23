@@ -5,7 +5,7 @@
 #include "PgServer.h"
 #include "IOException.h"
 #include "common/MetaConfig.h"
-#include "execution/ExecutionBuffer.h"
+#include "execution/DataRow.h"
 #include "execution/ExecutionResult.h"
 #include "config.h"
 
@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 	google::InitGoogleLogging(argv[0]);
 
 	LOG(INFO)<< "csv2pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
-	ExecutionBuffer::init();
+	DataRow::init();
 	ExecutionResult::init();
 
 	static_assert(std::numeric_limits<float>::is_iec559);
