@@ -1,15 +1,7 @@
-/*
- * GroupByPlan.cpp
- *
- *  Created on: 2012-5-13
- *      Author: guoxiang
- */
-
 #include "GroupByPlan.h"
 
 GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
-		ExecutionPlan(PlanType::GroupBy), m_pPlan(pPlan) {
-	assert(m_pPlan);
+	SingleChildPlan(PlanType::GroupBy, pPlan) {
 	m_typeMap["sum"] = FuncType::SUM;
 	m_typeMap["avg"] = FuncType::AVG;
 	m_typeMap["count"] = FuncType::COUNT;
@@ -19,7 +11,7 @@ GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
 
 
 void GroupByPlan::explain(std::vector<std::string>& rows) {
-	m_pPlan->explain(rows);
+	SingleChildPlan::explain(rows);
 	std::string s = "GroupBy(";
 	for (size_t i = 0; i < m_groupby.size(); ++i) {
 		s += m_pPlan->getProjectionName(m_groupby[i]);

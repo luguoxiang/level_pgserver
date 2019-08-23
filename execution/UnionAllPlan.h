@@ -12,7 +12,7 @@
 class UnionAllPlan: public ExecutionPlan {
 public:
 	UnionAllPlan(ExecutionPlan* pLeft, ExecutionPlan* pRight) :
-			ExecutionPlan(PlanType::Explain), m_pLeft(pLeft), m_pRight(pRight) {
+			ExecutionPlan(PlanType::Other), m_pLeft(pLeft), m_pRight(pRight) {
 		assert(m_pLeft && m_pRight);
 	}
 
@@ -61,6 +61,15 @@ public:
 
 	virtual void getResult(size_t columnIndex, ExecutionResult* pInfo) override;
 
+	virtual void cancel()override {
+		m_pLeft->cancel();
+		m_pRight->cancel();
+	}
+
+	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
+			bool* pOrder) override {
+		return false;
+	}
 private:
 	std::unique_ptr<ExecutionPlan> m_pLeft;
 	std::unique_ptr<ExecutionPlan> m_pRight;

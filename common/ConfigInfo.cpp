@@ -52,7 +52,7 @@ void TableInfo::addKeyColumn(const std::string& name) {
 
 void TableInfo::getDBColumns(const ParseNode* pColumn,
 		std::vector<DBColumnInfo*>& columns) {
-	if (pColumn == 0) {
+	if (pColumn == nullptr) {
 		//insert into t values(....)
 		//add all columns in table
 		for (auto& p : m_columns) {

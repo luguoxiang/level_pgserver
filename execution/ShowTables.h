@@ -3,12 +3,12 @@
 #include <vector>
 #include <pthread.h>
 #include "execution/ParseTools.h"
-#include "execution/ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/WorkThreadInfo.h"
 
-class ShowTables: public ExecutionPlan {
+class ShowTables: public LeafPlan {
 public:
-	ShowTables() : ExecutionPlan(PlanType::Other) {
+	ShowTables() : LeafPlan(PlanType::Other) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) override{

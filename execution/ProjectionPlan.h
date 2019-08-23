@@ -4,7 +4,7 @@
 #include "execution/ParseTools.h"
 #include <vector>
 #include <map>
-class ProjectionPlan: public ExecutionPlan {
+class ProjectionPlan: public SingleChildPlan {
 	struct ProjectionInfo {
 		size_t m_iSubIndex;
 		std::string_view m_sName;
@@ -13,12 +13,10 @@ class ProjectionPlan: public ExecutionPlan {
 	};
 public:
 	ProjectionPlan(ExecutionPlan* pPlan) :
-			ExecutionPlan(PlanType::Projection), m_pPlan(pPlan) {
-		assert(pPlan);
-	}
+		SingleChildPlan(PlanType::Projection, pPlan){}
 
 	virtual void explain(std::vector<std::string>& rows) override{
-		m_pPlan->explain(rows);
+		SingleChildPlan::explain(rows);
 		std::string s = "Projection ";
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			s.append(m_proj[i].m_sName);
@@ -42,16 +40,6 @@ public:
 		return iter->second;
 	}
 
-	virtual void begin()override {
-		m_pPlan->begin();
-	}
-	virtual bool next() override{
-		return m_pPlan->next();
-	}
-
-	virtual void end()override {
-		return m_pPlan->end();
-	}
 
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			bool* pOrder) override {
@@ -82,9 +70,6 @@ public:
 		return m_pPlan->getResultType(iSubIndex);
 	}
 
-	virtual std::string getInfoString() override{
-		return m_pPlan->getInfoString();
-	}
 
 	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
 		assert(index < m_proj.size());
@@ -106,5 +91,4 @@ public:
 private:
 	std::vector<ProjectionInfo> m_proj;
 	std::map<std::string_view, size_t> m_map;
-	std::unique_ptr<ExecutionPlan> m_pPlan;
 };

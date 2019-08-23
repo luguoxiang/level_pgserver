@@ -12,24 +12,5 @@ ExecutionPlan::ExecutionPlan(PlanType type) :
 ExecutionPlan::~ExecutionPlan() {
 }
 
-void ExecutionPlan::begin() {
-}
-
-void ExecutionPlan::end() {
-}
-
-bool ExecutionPlan::next() {
-	return false;
-}
-
-void ExecutionPlan::cancel() {
-}
 
 
-
-int ExecutionPlan::getResultColumns() {
-	return 0;
-}
-
-void ExecutionPlan::getResult(size_t index, ExecutionResult* pInfo) {
-}

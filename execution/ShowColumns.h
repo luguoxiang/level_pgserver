@@ -4,13 +4,13 @@
 #include <vector>
 #include <pthread.h>
 #include "common/ConfigInfo.h"
-#include "execution/ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/WorkThreadInfo.h"
 
-class ShowColumns: public ExecutionPlan {
+class ShowColumns: public LeafPlan {
 public:
 	ShowColumns(TableInfo* pEntry) :
-			ExecutionPlan(PlanType::Other), m_pEntry(pEntry) {
+		LeafPlan(PlanType::Other), m_pEntry(pEntry) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) override {

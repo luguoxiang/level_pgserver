@@ -109,7 +109,6 @@ int PgServer::bindSocket(int port) {
 }
 
 void PgServer::worker_thread(WorkThreadInfo* pInfo) {
-	pInfo->m_tid = std::this_thread::get_id();
 	WorkThreadInfo::m_pWorkThreadInfo = pInfo;
 	LOG(INFO) << "Working thread is listening on " << pInfo->m_port;
 

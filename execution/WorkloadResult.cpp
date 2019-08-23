@@ -42,9 +42,6 @@ std::string_view WorkloadResult::getProjectionName(size_t index) {
 }
 
 DBDataType WorkloadResult::getResultType(size_t index) {
-	if (index == 0) {
-		return DBDataType::STRING;
-	}
 	return DBDataType::INT32;
 }
 
@@ -54,10 +51,7 @@ void WorkloadResult::getResult(size_t index, ExecutionResult* pInfo) {
 
 	switch (index) {
 	case 0: {
-		std::stringstream ss;
-		ss << pWorker->m_tid;
-		m_tid = ss.str();
-		pInfo->setStringView(m_tid);
+		pInfo->setInt(pWorker->m_iIndex);
 		break;
 	}
 	case 1:

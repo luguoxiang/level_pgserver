@@ -15,8 +15,6 @@ enum class PlanType {
 		Limit,
 		Const,
 		ReadFile,
-		Explain,
-		LzStQuery,
 		Other,
 };
 
@@ -45,24 +43,21 @@ public:
 	 * }
 	 * pPlan->end();
 	 */
-	virtual void begin();
-	virtual bool next();
-	virtual void end();
+	virtual void begin() = 0;
+	virtual bool next() = 0;
+	virtual void end() = 0;
 
-	virtual void cancel();
+	//should call children plan's cancel which make leaf plan throw cancel exception
+	virtual void cancel() = 0;
 
 	/*
 	 * number of projection column
 	 */
-	virtual int getResultColumns();
+	virtual int getResultColumns()= 0;
 
-	virtual std::string_view getProjectionName(size_t index) {
-		return nullptr;
-	}
+	virtual std::string_view getProjectionName(size_t index) = 0;
 
-	virtual DBDataType getResultType(size_t index) {
-		return DBDataType::UNKNOWN;
-	}
+	virtual DBDataType getResultType(size_t index) = 0;
 
 	/*
 	 * Add a projection column and return it's result index.
@@ -71,16 +66,13 @@ public:
 	 * If the column could not be projected, -1 is returned.
 	 * Note that same column must return same index.
 	 */
-	virtual int addProjection(const ParseNode* pColumn) {
-		return -1;
-	}
+	virtual int addProjection(const ParseNode* pColumn) = 0;
 
 	/*
 	 * This is used by 'select *' statement.
 	 * return all the columns needed to be project for 'select *'.
 	 */
-	virtual void getAllColumns(std::vector<std::string_view>& columns) {
-	}
+	virtual void getAllColumns(std::vector<std::string_view>& columns) = 0;
 
 	/*
 	 * query whether this plan is sorted on specific columns with specific order
@@ -88,9 +80,7 @@ public:
 	 * select * from (select * ..order by a) order by a;
 	 */
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-			bool* pOrder) {
-		return false;
-	}
+			bool* pOrder) = 0;
 	/*
 	 * postgres require each SQL statement return a information string
 	 * after execution, the format is like this:
@@ -103,7 +93,7 @@ public:
 	/*
 	 * return result value into corresponding ExecutionResult's union Value fields
 	 */
-	virtual void getResult(size_t index, ExecutionResult* pInfo);
+	virtual void getResult(size_t index, ExecutionResult* pInfo) = 0;
 
 private:
 	PlanType m_type;

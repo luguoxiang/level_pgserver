@@ -16,8 +16,6 @@ struct WorkThreadInfo {
 
 	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
 
-	std::thread::id m_tid;
-
 	int m_iListenFd;
 	int m_iAcceptFd = 0;
 	int m_port;

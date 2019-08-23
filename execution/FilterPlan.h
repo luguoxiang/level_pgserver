@@ -1,21 +1,19 @@
 #pragma once
 
-#include "execution/ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
 #include <vector>
 #include <sstream>
 
 
-class FilterPlan: public ExecutionPlan {
+class FilterPlan: public SingleChildPlan {
 public:
-	FilterPlan(ExecutionPlan* pPlan) : ExecutionPlan(PlanType::Limit), m_pPlan(pPlan), m_iCurrent(0) {
-		assert(pPlan);
-	}
+	FilterPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
 
 
 	virtual void explain(std::vector<std::string>& rows)override {
-		m_pPlan->explain(rows);
+		SingleChildPlan::explain(rows);
 		std::string s = "Filter ";
 		for (size_t i = 0; i < m_predicate.size(); ++i) {
 			s.append(m_predicate[i].m_sExpr);
@@ -25,14 +23,11 @@ public:
 	}
 
 	virtual void begin()override {
-		m_pPlan->begin();
+		SingleChildPlan::begin();
 		m_iCurrent = 0;
 	}
 	virtual bool next() override;
 
-	virtual void end()override {
-		return m_pPlan->end();
-	}
 
 	/*
 	 * number of projection column
@@ -75,12 +70,7 @@ public:
 
 	void addPredicate(const ParseNode* pPredicate);
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-			bool* pOrder) override {
-		return m_pPlan->ensureSortOrder(iSortIndex, sColumn, pOrder);
-	}
 private:
-	std::unique_ptr<ExecutionPlan> m_pPlan;
-	uint64_t m_iCurrent;
+	uint64_t m_iCurrent = 0;
 	std::vector<PredicateInfo> m_predicate;
 };

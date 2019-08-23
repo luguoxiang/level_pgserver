@@ -3,12 +3,12 @@
 #include <sstream>
 #include "common/BuildPlan.h"
 #include "common/ParseException.h"
-#include "execution/ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/ParseTools.h"
 
-class ConstPlan: public ExecutionPlan {
+class ConstPlan: public LeafPlan {
 public:
-	ConstPlan() : ExecutionPlan(PlanType::Const), m_iCurrent(0) {
+	ConstPlan() : LeafPlan(PlanType::Const), m_iCurrent(0) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows)override;
@@ -19,10 +19,8 @@ public:
 	}
 
 	virtual bool next()override {
+		LeafPlan::next();
 		return m_iCurrent++ < m_rows.size();
-	}
-
-	virtual void end()override {
 	}
 
 	/*

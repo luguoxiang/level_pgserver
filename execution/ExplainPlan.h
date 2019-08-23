@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ParseTools.h"
-#include "ExecutionPlan.h"
+#include "execution/ParseTools.h"
+#include "execution/BasePlan.h"
 
 #include <vector>
 #include <string>
@@ -9,13 +9,9 @@
 #include <memory>
 #include <sstream>
 
-class ExplainPlan: public ExecutionPlan {
+class ExplainPlan: public SingleChildPlan {
 public:
-	ExplainPlan(ExecutionPlan* pPlan) : ExecutionPlan(PlanType::Explain), m_iCurrentRow(0), m_pPlan(pPlan) {
-		assert(pPlan);
-	}
-
-
+	ExplainPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Other, pPlan), m_iCurrentRow(0) {	}
 
 	virtual void explain(std::vector<std::string>& rows)override {
 	}
@@ -49,6 +45,5 @@ public:
 private:
 	std::vector<std::string> m_rows;
 	size_t m_iCurrentRow;
-	std::unique_ptr<ExecutionPlan> m_pPlan;
 };
 

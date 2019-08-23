@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
 
@@ -9,7 +9,7 @@
 enum class FuncType {
 	FIRST, SUM, AVG, COUNT, MAX, MIN
 };
-class GroupByPlan: public ExecutionPlan {
+class GroupByPlan: public SingleChildPlan {
 public:
 	GroupByPlan(ExecutionPlan* pPlan);
 
@@ -30,6 +30,7 @@ public:
 	virtual int getResultColumns() override{
 		return m_proj.size();
 	}
+
 
 	virtual DBDataType getResultType(size_t index)override {
 		assert(index < m_proj.size());
@@ -85,11 +86,6 @@ public:
 		return m_proj[index].m_sName;
 	}
 
-	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-			bool* pOrder) override{
-		return m_pPlan->ensureSortOrder(iSortIndex, sColumn, pOrder);
-	}
-
 	virtual void begin() override;
 	virtual bool next() override;
 	virtual void end() override;
@@ -103,7 +99,6 @@ public:
 	}
 
 private:
-	std::unique_ptr<ExecutionPlan> m_pPlan;
 	std::vector<AggrFunc> m_proj;
 	std::vector<size_t> m_groupby;
 	size_t m_iRows = 0;

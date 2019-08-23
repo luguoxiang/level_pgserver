@@ -20,7 +20,6 @@ int ReadFilePlan::addProjection(const ParseNode* pNode) {
 }
 
 void ReadFilePlan::begin() {
-	m_bCancel = false;
 	m_pFile.reset(new std::ifstream(m_sPath));
 	if (m_pFile->fail()) {
 		EXECUTION_ERROR("File ", m_sPath, " does not exists!");
@@ -84,9 +83,7 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 }
 
 bool ReadFilePlan::next() {
-	if (m_bCancel)
-		return false;
-
+	LeafPlan::next();
 	if (!std::getline(*m_pFile, m_line)) {
 		return false;
 	}

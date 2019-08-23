@@ -4,7 +4,6 @@
 #include "execution/ExecutionPlan.h"
 #include "execution/ParseTools.h"
 #include "common/ParseException.h"
-
 /**
  * SortPlan support an order named Any, normally it is same with Ascend,
  * But it can be upgraded to Ascend or Descend. It is used in following situation:
@@ -95,6 +94,10 @@ public:
 			bool* pOrder)override;
 
 	void addSortSpecification(const ParseNode* pNode, SortOrder order);
+
+	virtual void cancel() override {
+		m_pPlan->cancel();
+	}
 private:
 	struct SortSpec {
 		size_t m_iIndex;

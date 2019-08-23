@@ -2,15 +2,16 @@
 
 #include "common/BuildPlan.h"
 #include "common/ParseException.h"
-#include "execution/ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/ParseTools.h"
 #include <sstream>
 #include <fstream>
+#include <atomic>
 
-class ReadFilePlan: public ExecutionPlan {
+class ReadFilePlan: public LeafPlan {
 public:
 	ReadFilePlan(const std::string_view& sPath,	const std::string_view& separator,	bool ignoreFirstLine=false) :
-			ExecutionPlan(PlanType::ReadFile),
+		LeafPlan(PlanType::ReadFile),
 			m_sPath(std::string(sPath.data(), sPath.length())),
 			m_ignoreFirstLine(ignoreFirstLine){
 		switch(separator.size()) {
@@ -36,10 +37,6 @@ public:
 	virtual bool next() override;
 
 	virtual void end() override;
-
-	virtual void cancel() override{
-		m_bCancel = true;
-	}
 
 	/*
 	 * number of projection column
@@ -86,7 +83,7 @@ private:
 	std::string m_line;
 
 	std::unique_ptr<std::ifstream> m_pFile;
-	bool m_bCancel = false;
 	char m_separator;
 	bool m_ignoreFirstLine;
+
 };

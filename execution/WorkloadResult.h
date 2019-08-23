@@ -3,13 +3,13 @@
 #include <stdio.h>
 #include <vector>
 #include <pthread.h>
-#include "ExecutionPlan.h"
+#include "BasePlan.h"
 #include "WorkThreadInfo.h"
 
-class WorkloadResult: public ExecutionPlan {
+class WorkloadResult: public LeafPlan {
 public:
 	WorkloadResult() :
-			ExecutionPlan(PlanType::Other) {
+		LeafPlan(PlanType::Other) {
 	}
 
 	virtual void explain(std::vector<std::string>& rows) override{
@@ -24,9 +24,6 @@ public:
 	virtual void begin()override;
 
 	virtual bool next()override;
-
-	virtual void end() override{
-	}
 
 	virtual int getResultColumns()override {
 		return 7;

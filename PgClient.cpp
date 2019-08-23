@@ -12,9 +12,8 @@
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
 #include "execution/ExecutionException.h"
-#include "execution/ExecutionPlan.h"
+#include "execution/BasePlan.h"
 #include "execution/ParseTools.h"
-
 namespace {
 constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
 constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
@@ -33,21 +32,6 @@ constexpr char PG_DIAG_SOURCE_LINE = 'L';
 constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
 
 
-
-class EmptyResult: public ExecutionPlan {
-public:
-	EmptyResult() :
-			ExecutionPlan(PlanType::Other) {
-	}
-
-	virtual void explain(std::vector<std::string>& rows) override {
-		rows.push_back("Empty");
-	}
-
-	virtual std::string getInfoString() override {
-		return "SELECT 0";
-	}
-};
 }
 
 PgClient::PgClient(WorkThreadInfo* pInfo) :
@@ -288,10 +272,10 @@ void PgClient::run() {
 void PgClient::createPlan(const std::string_view sql) {
 	m_pPlan.reset(nullptr);
 	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
-		m_pPlan.reset(new EmptyResult());
+		m_pPlan.reset(new LeafPlan(PlanType::Other));
 		DLOG(INFO) << sql;
 	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
-		m_pPlan.reset(new EmptyResult());
+		m_pPlan.reset(new LeafPlan(PlanType::Other));
 		DLOG(INFO) << sql;
 	} else {
 		m_pWorker->parse(sql);

@@ -35,6 +35,9 @@ static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode* pTable)
 {
 		assert(pTable);
 		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+		if (pTableInfo == nullptr) {
+			PARSE_ERROR("table ", pTable->m_sValue, " not found");
+		}
 		if (pTableInfo->getKeyCount() == 0){
 			return DbPlanBuilder{buildPlanForFileSelect, nullptr, nullptr};
 		} else {
@@ -385,7 +388,7 @@ load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS 
 	}
 	;
 	
-opt_col_names: /* empty */{$$ = 0;}
+opt_col_names: /* empty */{$$ = nullptr;}
 	| '(' column_list ')' {
 		$2 = pResult->merge($2,"ColumnList", "ColumnList");
 		$$ = $2;
