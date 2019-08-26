@@ -38,3 +38,4 @@ common/SqlParser.lex.*
 Makefile
 CMakeFiles
 CMakeCache.txt
+config.h
