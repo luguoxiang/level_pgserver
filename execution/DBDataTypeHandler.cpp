@@ -33,16 +33,22 @@ public:
 	}
 
 	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
+		int64_t value = 0;
 		switch (pValue->m_type) {
 		case NodeType::INT:
-			result.setInt(pValue->m_iValue);
+			value = pValue->m_iValue;
 			break;
 		case NodeType::PARAM:
-			result.setInt(Tools::bindParamToInt(pValue->m_iValue, pValue->m_sValue));
+			if(pValue->m_iValue == PARAM_TEXT_MODE) {
+				value = Tools::toInt(pValue->m_sValue);
+			} else {
+				value = Tools::binaryToInt(pValue->m_sValue);
+			}
 			break;
 		default:
 			PARSE_ERROR("wrong const value type %d");
 		}
+		result.setInt(value);
 	}
 	void div(ExecutionResult& result, size_t value) override {
 		auto v = result.getInt();
@@ -63,27 +69,7 @@ public:
 		else
 			return 1;
 	}
-	int compare(const ExecutionResult& result, const ParseNode* pValue) override {
-		int64_t b = 0;
-		switch (pValue->m_type) {
-		case NodeType::INT:
-			b = pValue->m_iValue;
-			break;
-		case NodeType::PARAM:
-			b = Tools::bindParamToInt(pValue->m_iValue, pValue->m_sValue);
-			break;
-		default:
-			EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr,
-					", expect int");
-		}
-		int64_t a = result.getInt();
-		if (a == b)
-			return 0;
-		else if (a < b)
-			return -1;
-		else
-			return 1;
-	}
+
 };
 
 template<typename Type>
@@ -123,7 +109,11 @@ public:
 			value = Tools::toDouble(pValue->m_sValue);
 			break;
 		case NodeType::PARAM:
-			value = Tools::bindParamToDouble(pValue->m_iValue,	pValue->m_sValue);
+			if(pValue->m_iValue == PARAM_TEXT_MODE) {
+				value = Tools::toDouble(pValue->m_sValue);
+			} else {
+				value = Tools::binaryToDouble(pValue->m_sValue);
+			}
 			break;
 		default:
 			PARSE_ERROR("wrong const value type %d");
@@ -146,31 +136,6 @@ public:
 		if (aa == bb)
 			return 0;
 		else if (aa < bb)
-			return -1;
-		else
-			return 1;
-	}
-	int compare(const ExecutionResult& result, const ParseNode* pValue) override {
-		double b = 0;
-		switch (pValue->m_type) {
-		case NodeType::INT:
-			b = pValue->m_iValue;
-			break;
-		case NodeType::FLOAT:
-			b = Tools::toDouble(pValue->m_sValue);
-			break;
-		case NodeType::PARAM:
-			b = Tools::bindParamToDouble(pValue->m_iValue,
-					pValue->m_sValue);
-			break;
-		default:
-			EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr,
-					", expect double");
-		}
-		auto a = result.getDouble();
-		if (a == b)
-			return 0;
-		else if (a < b)
 			return -1;
 		else
 			return 1;
@@ -231,22 +196,6 @@ public:
 	}
 	int compare(const ExecutionResult& a, const ExecutionResult& b) override {
 		return a.getString().compare(b.getString());
-	}
-	int compare(const ExecutionResult& result, const ParseNode* pValue)
-			override {
-		switch (pValue->m_type) {
-		case NodeType::STR:
-			break;
-		case NodeType::PARAM:
-			if (pValue->m_iValue == PARAM_TEXT_MODE) {
-				break;
-			}
-			//fall through
-		default:
-			EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr,
-					", expect string");
-		}
-		return result.getString().compare(pValue->m_sValue);
 	}
 };
 

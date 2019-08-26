@@ -9,7 +9,7 @@
 #include "PgMessageSender.h"
 
 PgMessageSender::PgMessageSender(int fd) :
-		DataSender(fd, true, MetaConfig::getInstance().getNetworkBuffer()) {
+		DataSender(fd,  MetaConfig::getInstance().getNetworkBuffer()) {
 }
 
 PgMessageSender::~PgMessageSender() {

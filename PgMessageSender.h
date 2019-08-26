@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DataSender.h"
+#include "common/ParseNode.h"
 
 //https://jdbc.postgresql.org/development/privateapi/constant-values.html
 enum class PgDataType {
@@ -22,13 +23,13 @@ public:
 	void commit();
 
 	void addDataTypeMsg(const std::string_view sName, short columnid, PgDataType type,
-			short datalen) {
+			short datalen, bool binary ) {
 		addString(sName);
 		addInt(0); //oid
 		addShort(columnid);
 		addInt(static_cast<int32_t>(type));
 		addShort(datalen);
 		addInt(-1); //typemod
-		addShort(0); //format
+		addShort(binary ? PARAM_BINARY_MODE : PARAM_TEXT_MODE); //format
 	}
 };

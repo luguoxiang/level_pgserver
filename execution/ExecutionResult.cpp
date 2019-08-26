@@ -29,7 +29,9 @@ int ExecutionResult::compare(const ExecutionResult& result,
 
 int ExecutionResult::compare(const ParseNode* pValue, DBDataType type) const {
 	try {
-		return DBDataTypeHandler::getHandler(type)->compare(*this, pValue);
+		ExecutionResult result;
+		DBDataTypeHandler::getHandler(type)->fromNode(pValue, result);
+		return DBDataTypeHandler::getHandler(type)->compare(*this, result);
 	} catch (const std::bad_variant_access& e) {
 		EXECUTION_ERROR(e.what());
 	}

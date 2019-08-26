@@ -7,18 +7,33 @@
 
 #include "DataSender.h"
 
-DataSender::DataSender(int fd, bool bNetNumber, uint32_t iSendBuffer) :
-		m_nFd(fd), m_iWritten(0), m_iLastPrepare(0), m_bNetNumber(bNetNumber), m_buffer(iSendBuffer, ' ') {
+DataSender::DataSender(int fd,  uint32_t iSendBuffer) :
+		m_nFd(fd), m_iWritten(0), m_iLastPrepare(0),  m_buffer(iSendBuffer, ' ') {
 }
 
 DataSender::~DataSender() {
 }
 
+void DataSender::addFloat(float value) {
+	auto p = reinterpret_cast<int32_t*>(&value);
+	int32_t netval = htonl(*p);
+
+	check(4);
+	m_buffer.replace(m_iWritten, 4, reinterpret_cast<const char*>(&netval), 4);
+	m_iWritten += 4;
+}
+void DataSender::addDouble(double value) {
+	int64_t iValue = static_cast<int64_t>(value);
+	int32_t low = static_cast<int32_t>(iValue & 0xffffffff);
+	int32_t hight = iValue >> 32;
+	addInt(hight);
+	addInt(low);
+}
 void DataSender::setInt(size_t iOffset, int32_t value) {
 	if (iOffset + m_iLastPrepare + 4 > m_iWritten) {
 		throw new IOException("write overflow for DataSender!");
 	}
-	int32_t netval = m_bNetNumber ? htonl(value) : value;
+	int32_t netval = htonl(value);
 
 	memcpy(m_buffer.data() + m_iLastPrepare + iOffset, &netval, 4);
 }
@@ -34,24 +49,22 @@ void DataSender::addByte(int8_t value) {
 }
 
 void DataSender::addInt(int32_t value) {
-	int32_t netval = m_bNetNumber ? htonl(value) : value;
+	int32_t netval = htonl(value);
 
 	check(4);
 	m_buffer.replace(m_iWritten, 4, reinterpret_cast<const char*>(&netval), 4);
 	m_iWritten += 4;
 }
 
-void DataSender::addLongInt(int64_t value) {
-	if (m_bNetNumber) {
-		throw new IOException("hton is not supported for long int!");
-	}
-	check(8);
-	m_buffer.replace(m_iWritten, 8, reinterpret_cast<const char*>(&value), 8);
-	m_iWritten += 8;
+void DataSender::addInt64(int64_t value) {
+	int32_t low = static_cast<int32_t>(value & 0xffffffff);
+	int32_t hight = value >> 32;
+	addInt(hight);
+	addInt(low);
 }
 
 void DataSender::addShort(int16_t value) {
-	int16_t netval = m_bNetNumber ? htons(value) : value;
+	int16_t netval = htons(value);
 
 	check(2);
 	m_buffer.replace(m_iWritten, 2, reinterpret_cast<const char*>(&netval), 2);

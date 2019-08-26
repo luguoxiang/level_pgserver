@@ -6,13 +6,16 @@
 
 class DataSender {
 public:
-	DataSender(int fd, bool bNetNumber, uint32_t iSendBuffer);
+	DataSender(int fd, uint32_t iSendBuffer);
 	virtual ~DataSender();
+
+	void addFloat(float value);
+	void addDouble(double value);
 
 	void addByte(int8_t value);
 	void addInt(int32_t value);
 	void addShort(int16_t value);
-	void addLongInt(int64_t value);
+	void addInt64(int64_t value);
 	void addString(const std::string_view s);
 	void addStringAndLength(const std::string_view s);
 	void addChar(char c);
@@ -44,5 +47,4 @@ private:
 	std::string m_buffer;
 	uint32_t m_iWritten;
 	uint32_t m_iLastPrepare;
-	bool m_bNetNumber;
 };

@@ -301,32 +301,32 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 
 		switch (pPlan->getResultType(i)) {
 		case DBDataType::BYTES:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1, false);
 			break;
 		case DBDataType::INT8:
 		case DBDataType::INT16:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2, false);
 			break;
 		case DBDataType::INT32:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int32, 4);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int32, 4, false);
 			break;
 		case DBDataType::INT64:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8, false);
 			break;
 		case DBDataType::STRING:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1, false);
 			break;
 		case DBDataType::DATETIME:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1, false);
 			break;
 		case DBDataType::DATE:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1, false);
 			break;
 		case DBDataType::FLOAT:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Float, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Float, -1, false);
 			break;
 		case DBDataType::DOUBLE:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Double, -1);
+			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Double, -1, false);
 			break;
 		default:
 			LOG(ERROR) << "Unknown type for " << sName;

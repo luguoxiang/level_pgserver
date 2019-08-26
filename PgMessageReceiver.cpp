@@ -77,7 +77,7 @@ void PgMessageReceiver::processStartupPacket() {
 		if (!hasData())
 			break;
 
-		DLOG(INFO)<< "option:" << sName << getNextString();
+		DLOG(INFO)<< "option:" << sName <<"="<< getNextString();
 	}
 
 }

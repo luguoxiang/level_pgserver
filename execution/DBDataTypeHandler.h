@@ -21,7 +21,6 @@ public:
 	virtual void div(ExecutionResult& result, size_t value) = 0;
 	virtual void add(ExecutionResult& result, const ExecutionResult& add) = 0;
 	virtual int compare(const ExecutionResult& a, const ExecutionResult& b) = 0;
-	virtual int compare(const ExecutionResult& a, const ParseNode* pValue) = 0;
 
 	static void init();
 	static DBDataTypeHandler* getHandler(DBDataType type) {

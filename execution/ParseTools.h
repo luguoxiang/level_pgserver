@@ -17,17 +17,6 @@ inline bool case_equals(const std::string_view a, const std::string_view b)
                       });
 }
 
-inline double toDouble(const std::string_view s)
-{
-	try{
-		std::string ss(s.data(), s.length());
-		return std::stod(ss);
-	} catch (const std::exception& e) {
-		EXECUTION_ERROR(e.what());
-		return 0;
-	}
-}
-
 inline int64_t toInt(const std::string_view s)
 {
 	int64_t result = 0;
@@ -37,10 +26,7 @@ inline int64_t toInt(const std::string_view s)
     return result;
 }
 
-inline int64_t bindParamToInt(int type, std::string_view sValue) {
-	if(type == PARAM_TEXT_MODE) {
-		return toInt(sValue);
-	}
+inline int64_t binaryToInt(std::string_view sValue) {
 	switch(sValue.length()) {
 	case 2:
 		return ntohs(*(int16_t*) sValue.data());
@@ -57,10 +43,18 @@ inline int64_t bindParamToInt(int type, std::string_view sValue) {
 	}
 }
 
-inline double bindParamToDouble(int type, std::string_view sValue) {
-	if(type == PARAM_TEXT_MODE) {
-		return toDouble(sValue);
+inline double toDouble(const std::string_view s)
+{
+	try{
+		std::string ss(s.data(), s.length());
+		return std::stod(ss);
+	} catch (const std::exception& e) {
+		EXECUTION_ERROR(e.what());
+		return 0;
 	}
+}
+
+inline double binaryToDouble(std::string_view sValue) {
 	switch(sValue.length()) {
 	case 4: {
 		int32_t data = ntohl(*(int32_t*)sValue.data());
