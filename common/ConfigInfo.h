@@ -19,27 +19,6 @@ enum class DBDataType {
 	BYTES,
 };
 
-inline size_t GetTypeSize(DBDataType type) {
-	switch (type) {
-	case DBDataType::INT8:
-		return sizeof(int8_t);
-	case DBDataType::INT16:
-		return sizeof(int16_t);
-	case DBDataType::INT32:
-		return sizeof(int32_t);
-	case DBDataType::INT64:
-	case DBDataType::DATETIME:
-	case DBDataType::DATE:
-		return sizeof(int64_t);
-	case DBDataType::FLOAT:
-		return sizeof(float);
-	case DBDataType::DOUBLE:
-		return sizeof(double);
-	default:
-		return -1;
-	}
-}
-
 inline std::string_view GetTypeName(DBDataType type) {
 	switch (type) {
 	case DBDataType::INT8:

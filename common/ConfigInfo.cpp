@@ -26,7 +26,7 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 				CONFIG_ERROR("Illegal type length ", sLen);
 			}
 		} else {
-			pColumn->m_iLen = GetTypeSize(pColumn->m_type);
+			pColumn->m_iLen = -1;
 		}
 	} else {
 		 CONFIG_ERROR("Illegal attribute value ", sValue);
