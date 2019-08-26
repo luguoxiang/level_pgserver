@@ -7,10 +7,10 @@
 
 
 
-void ExplainPlan::getResult(size_t index, ExecutionResult* pInfo) {
+void ExplainPlan::getResult(size_t index, ExecutionResult& result) {
 	assert(m_iCurrentRow <= m_rows.size());
 	assert(m_iCurrentRow > 0);
-	pInfo->setStringView(m_rows[m_iCurrentRow - 1]);
+	result.setStringView(m_rows[m_iCurrentRow - 1]);
 }
 
 void ExplainPlan::begin() {

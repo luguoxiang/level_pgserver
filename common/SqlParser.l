@@ -145,7 +145,7 @@ FALSE {
 
 	size_t resultSize = 0;
 	for (size_t i = 0; i< len ; ++i) {
-		char c = pValue[i];
+		char c = pNode->m_sExpr[i + 1];
 		if (c == '\\') {
 			if (i+3 < len && IS_DIGIT(pValue[i + 1]) && IS_DIGIT(pValue[i + 2]) && IS_DIGIT(pValue[i + 3])) {
 					c = (pValue[++i] - '0') * 64;
@@ -170,6 +170,7 @@ FALSE {
 		}
 		pValue[resultSize++] = c;
 	}
+
 	pNode->m_sValue = std::string_view(pValue, resultSize);
 	return STRING;
 }
@@ -183,17 +184,17 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseNode* pNode = pResult->newParseNode( NodeType::BINARY, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	
-	size_t len =  pNode->m_sExpr.length() - 2;
+	size_t len =  pNode->m_sExpr.length();
 	if (pNode->m_sExpr[pNode->m_sExpr.length() - 1] == '\'') {
 		--len; //remove last quote
 	}
-	char* pValue = pResult->alloc(len);
+	char* pValue = pResult->alloc(len - 2);
 
 	size_t resultSize = 0;
 	char szBuf[3];
-	for (size_t i = 0; i + 1  < len ; i += 2) {
-		szBuf[0] = pValue[i];
-		szBuf[1] = pValue[i+1];
+	for (size_t i = 2; i + 1  < len ; i += 2) {
+		szBuf[0] = pNode->m_sExpr[i];
+		szBuf[1] = pNode->m_sExpr[i+1];
 		szBuf[2] = 0;
 		unsigned char a = strtol(szBuf,0, 16);
 		pValue[resultSize++] = (char)a;

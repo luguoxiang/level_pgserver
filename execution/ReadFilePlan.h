@@ -57,8 +57,8 @@ public:
 		return ConcateToString("SELECT ", m_iRowCount);
 	}
 
-	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
-		*pInfo = m_result[index];
+	virtual void getResult(size_t index, ExecutionResult& result)override {
+		result = m_result[index];
 	}
 
 	virtual void getAllColumns(std::vector<std::string_view>& columns)override {

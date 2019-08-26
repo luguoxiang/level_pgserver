@@ -346,9 +346,9 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 	for (size_t i = 0; i < columnNum; ++i) {
 		DBDataType type = pPlan->getResultType(i);
 
-		ExecutionResult info;
+		ExecutionResult result;
 		try {
-			pPlan->getResult(i, &info);
+			pPlan->getResult(i, result);
 		} catch (...) {
 			for (; i < columnNum; ++i)
 				m_sender.addInt(-1);
@@ -357,7 +357,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			throw;
 		}
 
-		if (info.isNull()) {
+		if (result.isNull()) {
 			m_sender.addInt(-1);
 			continue;
 		}
@@ -367,23 +367,23 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 		case DBDataType::INT32:
 		case DBDataType::INT64:
 		case DBDataType::INT16:
-			m_sender.addStringAndLength(std::to_string(info.getInt()));
+			m_sender.addStringAndLength(std::to_string(result.getInt()));
 			break;
 		case DBDataType::BYTES: {
 			std::ostringstream os;
-			os << "\\x";
-			for (auto& c: info.getString()) {
-				os<< std::hex << c;
+			os << "0x" ;
+			for (auto& c: result.getString()) {
+				os<< std::hex<< (int)c ;
 			}
 			m_sender.addStringAndLength(os.str());
 			break;
 		}
 		case DBDataType::STRING:
-			m_sender.addStringAndLength(info.getString());
+			m_sender.addStringAndLength(result.getString());
 			break;
 		case DBDataType::DATE: {
-			time_t time = info.getInt();
-			struct tm* pToday = localtime(&time);
+			time_t time = result.getInt();
+			struct tm* pToday = gmtime(&time);
 			if (pToday == nullptr) {
 				LOG(ERROR) << "Failed to get localtime "<< (int ) time;
 				m_sender.addInt(0);
@@ -395,10 +395,10 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			break;
 		}
 		case DBDataType::DATETIME: {
-			time_t time = info.getInt();
-			struct tm* pToday = localtime(&time);
+			time_t time = result.getInt();
+			struct tm* pToday = gmtime(&time);
 			if (pToday == nullptr) {
-				LOG(ERROR) << "Failed to get localtime "<< (int ) time;
+				LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
 				m_sender.addInt(0);
 			} else {
 				char szBuf[100];
@@ -409,7 +409,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 		}
 		case DBDataType::FLOAT:
 		case DBDataType::DOUBLE: {
-			m_sender.addStringAndLength(std::to_string(info.getDouble()));
+			m_sender.addStringAndLength(std::to_string(result.getDouble()));
 			break;
 		}
 		default:

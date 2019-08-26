@@ -50,7 +50,7 @@ public:
 		}
 	}
 
-	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
+	virtual void getResult(size_t index, ExecutionResult& result)override {
 		assert(index < m_proj.size());
 		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
@@ -58,14 +58,14 @@ public:
 		case FuncType::MIN:
 		case FuncType::MAX:
 		case FuncType::SUM:
-			*pInfo = func.m_value;
+			result= func.m_value;
 			break;
 		case FuncType::COUNT:
-			pInfo->setInt(func.m_iCount);
+			result.setInt(func.m_iCount);
 			break;
 		case FuncType::AVG:
-			*pInfo = func.m_value;
-			pInfo->div(m_proj[index].m_iCount,
+			result = func.m_value;
+			result.div(m_proj[index].m_iCount,
 					m_pPlan->getResultType(func.m_iIndex));
 			break;
 		default:

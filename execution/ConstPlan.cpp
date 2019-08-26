@@ -1,5 +1,6 @@
-#include "execution/ConstPlan.h"
 #include <sstream>
+#include "execution/ConstPlan.h"
+#include "DBDataTypeHandler.h"
 
 void ConstPlan::explain(std::vector<std::string>& rows) {
 	std::stringstream ss;
@@ -17,6 +18,8 @@ DBDataType ConstPlan::getResultType(size_t index) {
 		return DBDataType::INT64;
 	case NodeType::STR:
 		return DBDataType::STRING;
+	case NodeType::BINARY:
+		return DBDataType::BYTES;
 	case NodeType::FLOAT:
 		return DBDataType::DOUBLE;
 	case NodeType::DATE:
@@ -28,26 +31,14 @@ DBDataType ConstPlan::getResultType(size_t index) {
 	}
 }
 
-void ConstPlan::getResult(size_t index, ExecutionResult* pInfo) {
+void ConstPlan::getResult(size_t index, ExecutionResult& result) {
 	assert(m_iCurrent > 0 && m_iCurrent <= m_rows.size());
 	auto pRow = m_rows[m_iCurrent - 1];
+
 	assert(pRow->children() == m_columns.size());
 	auto pValue = pRow->getChild(index);
-	switch (pValue->m_type) {
-	case NodeType::DATE:
-	case NodeType::INT:
-		pInfo->setInt(pValue->m_iValue);
-		break;
-	case NodeType::FLOAT: {
-		pInfo->setDouble(Tools::toDouble(pValue->m_sValue));
-		break;
-	}
-	case NodeType::STR:
-		pInfo->setStringView(pValue->m_sValue);
-		break;
-	default:
-		PARSE_ERROR("wrong const value type %d");
-	}
+
+	DBDataTypeHandler::getHandler(getResultType(index))->fromNode(pValue, result);
 }
 
 int ConstPlan::addProjection(const ParseNode* pNode) {

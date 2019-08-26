@@ -1,5 +1,6 @@
 #include "execution/ReadFilePlan.h"
 #include "execution/ExecutionException.h"
+#include "execution/DBDataTypeHandler.h"
 
 void ReadFilePlan::explain(std::vector<std::string>& rows) {
 	rows.push_back(
@@ -43,43 +44,13 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 		return;
 	}
 	auto pColumn = m_columns[index];
-
-	switch (pColumn->m_type) {
-	case DBDataType::INT8:
-	case DBDataType::INT16:
-	case DBDataType::INT32:
-	case DBDataType::INT64:
-		if(token.length() == 0) {
-			m_result[index].setInt(0);
-		}else {
-			m_result[index].setInt(Tools::toInt(token));
-		}
-		break;
-	case DBDataType::STRING:
-		if(pColumn->m_iLen > 0 && token.length() > pColumn->m_iLen)  {
-			EXECUTION_ERROR("Column ", pColumn->m_name, " value exceed defined length ", pColumn->m_iLen);
-		}
-		m_result[index].setStringView(token);
-		break;
-	case DBDataType::DATETIME:
-	case DBDataType::DATE:
-		if (int64_t iValue = parseTime(token); iValue > 0) {
-			m_result[index].setInt(iValue);
-		} else {
-			EXECUTION_ERROR("Wrong Time Format:", token);
-		}
-		break;
-	case DBDataType::FLOAT:
-	case DBDataType::DOUBLE:
-		if(token.length() == 0) {
-			m_result[index].setDouble(0);
-			break;
-		}
-		m_result[index].setDouble(Tools::toDouble(token));
-		break;
-	default:
-		break;
+	if(pColumn->m_type == DBDataType::STRING
+			&& pColumn->m_iLen > 0
+			&& token.length() > pColumn->m_iLen)  {
+		EXECUTION_ERROR("Column ", pColumn->m_name, " value exceed defined length ", pColumn->m_iLen);
 	}
+
+	DBDataTypeHandler::getHandler(pColumn->m_type)->fromString(token, m_result[index]);
 }
 
 bool ReadFilePlan::next() {

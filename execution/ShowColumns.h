@@ -24,7 +24,7 @@ public:
 	virtual void end() override{
 	}
 
-	virtual void getResult(size_t index, ExecutionResult* pInfo)override;
+	virtual void getResult(size_t index, ExecutionResult& result)override;
 
 	virtual std::string_view getProjectionName(size_t index)override;
 

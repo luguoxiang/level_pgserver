@@ -14,29 +14,36 @@ void DataRow::getResult(size_t index, ExecutionResult& result) const {
 	for (size_t i = 0; i <= index; ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
 		try {
-			pHandler->read(pStart, result);
-			assert(!result.isNull());
-			pStart += pHandler->getSize(result);
+			if(i == index) {
+				pHandler->read(pStart, result);
+				break;
+			} else {
+				pStart += pHandler->getSize(pStart);
+				assert(m_iSize < 0 || pStart - m_pData < m_iSize);
+			}
 		} catch (const std::bad_variant_access& e) {
 			assert(0);
 		}
 	}
-	assert(m_iSize < 0 || pStart - m_pData <= m_iSize);
+
 }
 
 int DataRow::compare(const DataRow& row) const {
+	const std::byte* pStartA = m_pData;
+	const std::byte* pStartB = row.m_pData;
+
 	for (size_t i = 0; i < m_types.size(); ++i) {
 		ExecutionResult a, b;
-
-		getResult(i, a);
-		row.getResult(i, b);
-
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
 		try {
+			pHandler->read(pStartA, a);
+			pHandler->read(pStartB, b);
 			int ret = pHandler->compare(a, b);
 			if (ret != 0) {
 				return ret;
 			}
+			pStartA += pHandler->getSize(pStartA);
+			pStartB += pHandler->getSize(pStartB);
 		} catch (const std::bad_variant_access& e) {
 			assert(0);
 		}

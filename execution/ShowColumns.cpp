@@ -58,29 +58,29 @@ bool ShowColumns::next() {
 	return m_iIndex <= m_pEntry->getColumnCount();
 }
 
-void ShowColumns::getResult(size_t index, ExecutionResult* pInfo) {
+void ShowColumns::getResult(size_t index, ExecutionResult& result) {
 	const DBColumnInfo* pColumn = m_pEntry->getColumn(m_iIndex - 1);
 	assert(pColumn);
 
 	switch (index) {
 	case 0:
-		pInfo->setStringView(pColumn->m_name);
+		result.setStringView(pColumn->m_name);
 		break;
 	case 1:
-		pInfo->setStringView(MetaConfig::getInstance().typeToString(pColumn->m_type));
+		result.setStringView(MetaConfig::getInstance().typeToString(pColumn->m_type));
 		break;
 	case 2:
 		if (pColumn->m_iKeyIndex < 0) {
-			pInfo->setInt(-1);
+			result.setInt(-1);
 		} else {
-			pInfo->setInt(pColumn->m_iKeyIndex);
+			result.setInt(pColumn->m_iKeyIndex);
 		}
 		break;
 	case 3:
 		if (pColumn->m_iLen < 0) {
-			pInfo->setInt(-1);
+			result.setInt(-1);
 		} else {
-			pInfo->setInt(pColumn->m_iLen);
+			result.setInt(pColumn->m_iLen);
 		}
 		break;
 	default:

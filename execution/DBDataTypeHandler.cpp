@@ -12,6 +12,10 @@ public:
 		return sizeof(Type);
 	}
 
+	size_t getSize(const std::byte* pData) override {
+		return sizeof(Type);
+	}
+
 	void read(const std::byte* pData, ExecutionResult& result) override {
 		const Type v = *reinterpret_cast<const Type*>(pData);
 		result.setInt(v);
@@ -20,6 +24,26 @@ public:
 		*reinterpret_cast<Type*>(pData) = result.getInt();
 	}
 
+	void fromString(std::string_view s, ExecutionResult& result) override{
+		if(s.length() == 0) {
+			result.setInt(0);
+		}else {
+			result.setInt(Tools::toInt(s));
+		}
+	}
+
+	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
+		switch (pValue->m_type) {
+		case NodeType::INT:
+			result.setInt(pValue->m_iValue);
+			break;
+		case NodeType::PARAM:
+			result.setInt(Tools::bindParamToInt(pValue->m_iValue, pValue->m_sValue));
+			break;
+		default:
+			PARSE_ERROR("wrong const value type %d");
+		}
+	}
 	void div(ExecutionResult& result, size_t value) override {
 		auto v = result.getInt();
 		v = v / value;
@@ -69,12 +93,42 @@ public:
 		return sizeof(Type);
 	}
 
+	virtual size_t getSize(const std::byte* pData) override {
+		return sizeof(Type);
+	}
+
 	void read(const std::byte* pData, ExecutionResult& result) override {
 		const Type v = *reinterpret_cast<const Type*>(pData);
 		result.setDouble(v);
 	}
 	void write(std::byte* pData, const ExecutionResult& result) override {
 		*reinterpret_cast<Type*>(pData) = result.getDouble();
+	}
+
+	void fromString(std::string_view s, ExecutionResult& result) override{
+		if(s.length() == 0) {
+			result.setDouble(0);
+		}else {
+			result.setDouble(Tools::toDouble(s));
+		}
+	}
+
+	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
+		double value = 0;
+		switch (pValue->m_type) {
+		case NodeType::INT:
+			value = pValue->m_iValue;
+			break;
+		case NodeType::FLOAT:
+			value = Tools::toDouble(pValue->m_sValue);
+			break;
+		case NodeType::PARAM:
+			value = Tools::bindParamToDouble(pValue->m_iValue,	pValue->m_sValue);
+			break;
+		default:
+			PARSE_ERROR("wrong const value type %d");
+		}
+		result.setDouble(value);
 	}
 
 	void div(ExecutionResult& result, size_t value) override {
@@ -123,10 +177,14 @@ public:
 	}
 };
 class StringDBDataTypeHandler: public DBDataTypeHandler {
+public:
 	size_t getSize(const ExecutionResult& result) override {
 		return result.getString().length() + sizeof(uint16_t);
 	}
 
+	virtual size_t getSize(const std::byte* pData) override {
+		return *(reinterpret_cast<const uint16_t*>(pData)) + sizeof(uint16_t);
+	}
 	void read(const std::byte* pData, ExecutionResult& result) override {
 		size_t len = *(reinterpret_cast<const uint16_t*>(pData));
 		pData += sizeof(uint16_t);
@@ -145,7 +203,26 @@ class StringDBDataTypeHandler: public DBDataTypeHandler {
 		auto pSrc = reinterpret_cast<const std::byte*>(s.data());
 		std::copy(pSrc, pSrc + size, pData);
 	}
+	void fromString(std::string_view s, ExecutionResult& result) override{
+		result.setStringView(s);
+	}
+	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
+		switch (pValue->m_type) {
+		case NodeType::STR:
+		case NodeType::BINARY:
+			break;
+		case NodeType::PARAM:
+			if (pValue->m_iValue == PARAM_TEXT_MODE) {
+				break;
+			}
+			//fall through
+		default:
+			EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr,
+					", expect string");
+		}
+		result.setStringView(pValue->m_sValue);
 
+	}
 	void div(ExecutionResult& result, size_t value) override {
 		EXECUTION_ERROR("div is not supported for string");
 	}
@@ -174,6 +251,38 @@ class StringDBDataTypeHandler: public DBDataTypeHandler {
 };
 
 }
+
+class DatetimeDBDataTypeHandler: public IntDBDataTypeHandler<int64_t> {
+public:
+	void fromString(std::string_view s, ExecutionResult& result) override{
+		if (int64_t iValue = parseTime(s); iValue > 0) {
+			result.setInt(iValue);
+		} else {
+			EXECUTION_ERROR("Wrong Time Format:", s);
+		}
+	}
+
+	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
+		switch (pValue->m_type) {
+		case NodeType::DATE:
+			result.setInt(pValue->m_iValue);
+			break;
+		case NodeType::PARAM:
+			if(pValue->m_iValue == PARAM_TEXT_MODE) {
+				if (int64_t iValue = parseTime(pValue->m_sValue); iValue > 0) {
+					result.setInt(iValue);
+				} else {
+					EXECUTION_ERROR("Wrong Time Format:", pValue->m_sValue);
+				}
+			} else {
+				EXECUTION_ERROR("Wrong binary bind param for datetime");
+			}
+			break;
+		default:
+			PARSE_ERROR("wrong const value type: ", (int)pValue->m_type);
+		}
+	}
+};
 void DBDataTypeHandler::init() {
 	m_typeHandlers[DBDataType::INT8] = std::make_unique<
 			IntDBDataTypeHandler<int8_t>>();
@@ -184,10 +293,8 @@ void DBDataTypeHandler::init() {
 	m_typeHandlers[DBDataType::INT64] = std::make_unique<
 			IntDBDataTypeHandler<int64_t>>();
 
-	m_typeHandlers[DBDataType::DATE] = std::make_unique<
-			IntDBDataTypeHandler<int64_t>>();
-	m_typeHandlers[DBDataType::DATETIME] =std::make_unique<
-			IntDBDataTypeHandler<int64_t>>();
+	m_typeHandlers[DBDataType::DATE] = std::make_unique<DatetimeDBDataTypeHandler>();
+	m_typeHandlers[DBDataType::DATETIME] =std::make_unique<DatetimeDBDataTypeHandler>();
 
 	m_typeHandlers[DBDataType::FLOAT] = std::make_unique<
 			FloatDBDataTypeHandler<float>>();

@@ -48,8 +48,8 @@ public:
 		return ConcateToString("SELECT ", m_iCurrent);
 	}
 
-	virtual void getResult(size_t index, ExecutionResult* pInfo) override {
-		m_pPlan->getResult(index, pInfo);
+	virtual void getResult(size_t index, ExecutionResult& result) override {
+		m_pPlan->getResult(index, result);
 	}
 
 	virtual void getAllColumns(std::vector<std::string_view>& columns) override {

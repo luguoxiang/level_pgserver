@@ -79,7 +79,7 @@ public:
 	}
 
 
-	virtual void getResult(size_t index, ExecutionResult* pInfo) override;
+	virtual void getResult(size_t index, ExecutionResult& result) override;
 
 	virtual int addProjection(const ParseNode* pNode) override;
 

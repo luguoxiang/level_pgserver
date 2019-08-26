@@ -31,7 +31,7 @@ bool FilterPlan::next() {
 			int iSubIndex = info.m_iSubIndex;
 			DBDataType type = m_pPlan->getResultType(iSubIndex);
 			ExecutionResult result;
-			m_pPlan->getResult(iSubIndex, &result);
+			m_pPlan->getResult(iSubIndex, result);
 
 			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
 				if (info.m_pValue->m_type != NodeType::STR) {

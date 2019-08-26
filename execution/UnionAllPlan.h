@@ -59,7 +59,7 @@ public:
 		return ConcateToString("SELECT ", m_iCurrentRow);
 	}
 
-	virtual void getResult(size_t columnIndex, ExecutionResult* pInfo) override;
+	virtual void getResult(size_t columnIndex, ExecutionResult& result) override;
 
 	virtual void cancel()override {
 		m_pLeft->cancel();

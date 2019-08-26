@@ -45,32 +45,32 @@ DBDataType WorkloadResult::getResultType(size_t index) {
 	return DBDataType::INT32;
 }
 
-void WorkloadResult::getResult(size_t index, ExecutionResult* pInfo) {
+void WorkloadResult::getResult(size_t index, ExecutionResult& result) {
 	WorkThreadInfo* pWorker = WorkerManager::getInstance().getWorker(
 			m_iIndex - 1);
 
 	switch (index) {
 	case 0: {
-		pInfo->setInt(pWorker->m_iIndex);
+		result.setInt(pWorker->m_iIndex);
 		break;
 	}
 	case 1:
-		pInfo->setInt(pWorker->m_bRunning);
+		result.setInt(pWorker->m_bRunning);
 		break;
 	case 2:
-		pInfo->setInt(pWorker->m_iSessions);
+		result.setInt(pWorker->m_iSessions);
 		break;
 	case 3:
-		pInfo->setInt(pWorker->m_iExecScanTime / 1000);
+		result.setInt(pWorker->m_iExecScanTime / 1000);
 		break;
 	case 4:
-		pInfo->setInt(pWorker->m_iBiggestExec / 1000);
+		result.setInt(pWorker->m_iBiggestExec / 1000);
 		break;
 	case 5:
-		pInfo->setInt(pWorker->m_iClientTime / 1000);
+		result.setInt(pWorker->m_iClientTime / 1000);
 		break;
 	case 6:
-		pInfo->setInt(pWorker->m_iSqlCount);
+		result.setInt(pWorker->m_iSqlCount);
 		break;
 	default:
 		assert(0);

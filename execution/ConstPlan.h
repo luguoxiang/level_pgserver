@@ -40,7 +40,7 @@ public:
 		return ConcateToString("SELECT ", m_rows.size());
 	}
 
-	virtual void getResult(size_t index, ExecutionResult* pInfo) override;
+	virtual void getResult(size_t index, ExecutionResult& result) override;
 
 	virtual void getAllColumns(std::vector<std::string_view>& columns) override{
 		for (auto& s: m_columns) {

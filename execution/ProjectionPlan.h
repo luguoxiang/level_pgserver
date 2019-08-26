@@ -71,10 +71,10 @@ public:
 	}
 
 
-	virtual void getResult(size_t index, ExecutionResult* pInfo)override {
+	virtual void getResult(size_t index, ExecutionResult& result)override {
 		assert(index < m_proj.size());
 		size_t iSubIndex = m_proj[index].m_iSubIndex;
-		return m_pPlan->getResult(iSubIndex, pInfo);
+		return m_pPlan->getResult(iSubIndex, result);
 	}
 
 	bool addGroupBy() {

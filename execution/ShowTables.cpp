@@ -16,15 +16,15 @@ bool ShowTables::next() {
 	return m_iIndex <= m_tables.size();
 }
 
-void ShowTables::getResult(size_t index, ExecutionResult* pInfo) {
+void ShowTables::getResult(size_t index, ExecutionResult& result) {
 	TableInfo* pTable = m_tables[m_iIndex - 1];
 	if (index == 0) {
-		pInfo->setStringView(pTable->getName());
+		result.setStringView(pTable->getName());
 	} else if (index == 1) {
 		if (pTable->hasAttribute("info")) {
-			pInfo->setStringView(pTable->getAttribute("info"));
+			result.setStringView(pTable->getAttribute("info"));
 		} else {
-			pInfo->setStringView("");
+			result.setStringView("");
 		}
 	} else {
 		assert(0);
