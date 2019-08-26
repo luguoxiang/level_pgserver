@@ -57,7 +57,7 @@ bool GroupByPlan::next() {
 	bool sameGroup = true;
 
 	for (size_t i = 0; i < m_proj.size(); ++i) {
-		GroupByPlan::AggrFunc& proj = m_proj[i];
+		auto& proj = m_proj[i];
 
 		m_pPlan->getResult(proj.m_iIndex, &proj.m_value);
 		proj.m_value.cache();
@@ -70,10 +70,10 @@ bool GroupByPlan::next() {
 		for (size_t i = 0; i < m_last.size(); ++i) {
 			ExecutionResult result;
 			m_pPlan->getResult(m_groupby[i], &result);
-			//make sure result will be valid after next() call
-			result.cache();
 
 			if (result.compare(m_last[i], m_type[i]) != 0) {
+				//make sure result will be valid after next() call
+				result.cache();
 				m_last[i] = result;
 				sameGroup = false;
 			}
@@ -89,13 +89,14 @@ bool GroupByPlan::next() {
 				DBDataType type = m_pPlan->getResultType(proj.m_iIndex);
 				ExecutionResult info;
 				m_pPlan->getResult(proj.m_iIndex, &info);
-				info.cache();
 
 				if (proj.m_func == FuncType::MIN || proj.m_func == FuncType::MAX) {
 					int n = info.compare(proj.m_value, type);
 					if (n < 0 && proj.m_func == FuncType::MIN) {
+						info.cache();
 						proj.m_value = info;
 					} else if (n > 0 && proj.m_func == FuncType::MAX) {
+						info.cache();
 						proj.m_value = info;
 					}
 				} else {

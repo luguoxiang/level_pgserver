@@ -24,6 +24,7 @@ void SortPlan::begin() {
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			int iSubIndex = m_proj[i].m_iSubIndex;
 			m_pPlan->getResult(iSubIndex, &results[i]);
+			assert(!results[i].isNull());
 		}
 		auto [row, size] = m_pBuffer->copyRow(results, m_types);
 

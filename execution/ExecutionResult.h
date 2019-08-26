@@ -41,7 +41,6 @@ public:
 		}
 	}
 
-	static void init();
 private:
 	std::variant<
 		std::nullptr_t, //should set to other value later
@@ -50,12 +49,4 @@ private:
 		int64_t,
 		double> m_result = nullptr;
 
-	using DivFn = void (*) (ExecutionResult& result, size_t value);
-	using AddFn = void (*) (ExecutionResult& result, const ExecutionResult& add);
-	using Compare1Fn = int (*)(const ExecutionResult& a, const ExecutionResult& b);
-	using Compare2Fn =  int (*) (const ExecutionResult& a, const ParseNode* pValue);
-	using TypeOperationTuple = std::tuple<DivFn, AddFn,Compare1Fn, Compare2Fn>;
-
-
-	static std::map<DBDataType, TypeOperationTuple> m_typeOperations;
 };
