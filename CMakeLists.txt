@@ -8,7 +8,7 @@ set (VERSION_MINOR 0)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17 -fno-rtti -DDISABLE_RTTI")
 
 set(BisonOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.tab.cpp)
 set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
