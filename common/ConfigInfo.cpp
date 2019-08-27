@@ -37,9 +37,6 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 void TableInfo::addKeyColumn(const std::string& name) {
 	if(auto iter = m_columnMap.find(name);  iter != m_columnMap.end()) {
 		DBColumnInfo* pColumn = iter->second;
-		if (pColumn->m_iLen <= 0) {
-			CONFIG_ERROR("Missing length for key column config!");
-		}
 		if (pColumn->m_type == DBDataType::DOUBLE) {
 			CONFIG_ERROR(
 					"key column with double type is not supported");

@@ -40,6 +40,7 @@ public:
 	}
 	ExecutionBuffer(const ExecutionBuffer&) = delete;
 	ExecutionBuffer& operator =(const ExecutionBuffer&) = delete;
+
 private:
 	std::vector<GlobalMemBlockPool::MemBlockPtr> m_bufferBlocks;
 

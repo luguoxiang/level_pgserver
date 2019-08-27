@@ -13,16 +13,12 @@ void DataRow::getResult(size_t index, ExecutionResult& result) const {
 	assert(index < m_types.size());
 	for (size_t i = 0; i <= index; ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
-		try {
-			if(i == index) {
-				pHandler->read(pStart, result);
-				break;
-			} else {
-				pStart += pHandler->getSize(pStart);
-				assert(m_iSize < 0 || pStart - m_pData < m_iSize);
-			}
-		} catch (const std::bad_variant_access& e) {
-			assert(0);
+		if(i == index) {
+			pHandler->read(pStart, result);
+			break;
+		} else {
+			pStart += pHandler->getSize(pStart);
+			assert(m_iSize < 0 || pStart - m_pData < m_iSize);
 		}
 	}
 
@@ -35,18 +31,14 @@ int DataRow::compare(const DataRow& row) const {
 	for (size_t i = 0; i < m_types.size(); ++i) {
 		ExecutionResult a, b;
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
-		try {
-			pHandler->read(pStartA, a);
-			pHandler->read(pStartB, b);
-			int ret = pHandler->compare(a, b);
-			if (ret != 0) {
-				return ret;
-			}
-			pStartA += pHandler->getSize(pStartA);
-			pStartB += pHandler->getSize(pStartB);
-		} catch (const std::bad_variant_access& e) {
-			assert(0);
+		pHandler->read(pStartA, a);
+		pHandler->read(pStartB, b);
+		int ret = pHandler->compare(a, b);
+		if (ret != 0) {
+			return ret;
 		}
+		pStartA += pHandler->getSize(pStartA);
+		pStartB += pHandler->getSize(pStartB);
 	}
 	return 0;
 }
@@ -56,12 +48,8 @@ int DataRow::compare(const DataRow& row, size_t index) const {
 
 	getResult(index, a);
 	row.getResult(index, b);
-	try {
-		auto pHandler = DBDataTypeHandler::getHandler(m_types[index]);
-		return pHandler->compare(a, b);
-	} catch (const std::bad_variant_access& e) {
-		assert(0);
-	}
+	auto pHandler = DBDataTypeHandler::getHandler(m_types[index]);
+	return pHandler->compare(a, b);
 }
 
 size_t DataRow::computeSize(const std::vector<ExecutionResult>& results) {
@@ -80,12 +68,8 @@ void DataRow::copy(const std::vector<ExecutionResult>& results,
 	assert(results.size() == m_types.size());
 	for (size_t i = 0; i < results.size(); ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
-		try {
-			pHandler->write(pData, results[i]);
-			pData += pHandler->getSize(results[i]);
-		} catch (const std::bad_variant_access& e) {
-			assert(0);
-		}
+		pHandler->write(pData, results[i]);
+		pData += pHandler->getSize(results[i]);
 	}
 	assert(m_iSize < 0 || pData - m_pData == m_iSize);
 }

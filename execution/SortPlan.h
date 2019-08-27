@@ -94,7 +94,6 @@ private:
 		size_t m_iSubIndex;
 		std::string m_sColumn;
 		SortOrder m_order;
-		DBDataType m_type;
 	};
 
 

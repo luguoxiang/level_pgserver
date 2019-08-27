@@ -15,6 +15,7 @@ enum class PlanType {
 		Limit,
 		Const,
 		ReadFile,
+		Insert,
 		Other,
 };
 

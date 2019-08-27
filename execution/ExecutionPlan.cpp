@@ -9,8 +9,6 @@
 ExecutionPlan::ExecutionPlan(PlanType type) :
 		m_type(type) {
 }
-ExecutionPlan::~ExecutionPlan() {
-}
-
+ExecutionPlan::~ExecutionPlan() = default;
 
 

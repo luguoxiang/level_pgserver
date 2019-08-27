@@ -5,6 +5,7 @@
 extern void buildPlanDefault(const ParseNode* pNode);
 
 extern void buildPlanForFileSelect(const ParseNode* pNode);
+extern void buildPlanForLevelDBInsert(const ParseNode* pNode);
 
 extern void buildPlanForExplain(const ParseNode* pNode);
 extern void buildPlanForGroupBy(const ParseNode* pNode);

@@ -41,7 +41,7 @@ static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode* pTable)
 		if (pTableInfo->getKeyCount() == 0){
 			return DbPlanBuilder{buildPlanForFileSelect, nullptr, nullptr};
 		} else {
-			PARSE_ERROR("Unsupported table type ", pTable->m_sValue);
+			return DbPlanBuilder{nullptr, buildPlanForLevelDBInsert, nullptr};
 		}
 }
 

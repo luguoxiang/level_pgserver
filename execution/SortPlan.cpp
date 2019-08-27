@@ -127,6 +127,5 @@ void SortPlan::addSortSpecification(const ParseNode* pNode, SortOrder order) {
 	spec.m_sColumn = pNode->m_sExpr;
 	spec.m_iSubIndex = m_proj[i].m_iSubIndex;
 	spec.m_order = order;
-	spec.m_type = m_pPlan->getResultType(spec.m_iSubIndex);
 	m_sort.push_back(spec);
 }
