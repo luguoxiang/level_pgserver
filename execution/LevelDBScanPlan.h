@@ -32,8 +32,10 @@ public:
 
 private:
 	struct ScanRange {
-		std::vector<ExecutionResult> m_scanStart;
-		std::vector<const ParseNode* pNode> m_predicates;
+		size_t m_iNotEqualIndex;
+		std::vector<const ParseNode*> m_equals;
+		const ParseNode* m_pStart;
+		const ParseNode* m_pEnd;
 	};
 	const TableInfo* m_pTable;
 

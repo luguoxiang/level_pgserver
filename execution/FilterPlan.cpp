@@ -1,4 +1,5 @@
 #include "execution/FilterPlan.h"
+#include "execution/DBDataTypeHandler.h"
 #include "common/ParseException.h"
 
 namespace {
@@ -24,35 +25,41 @@ bool checkFilter(int iOpCode, int n) {
 	}
 }
 }
+bool FilterPlan::evaluate(const PredicateInfo& info) {
+	ExecutionResult result1, result2;
+	DBDataType type = DBDataType::UNKNOWN;
+	if(info.m_iRightIndex >= 0) {
+		type = m_pPlan->getResultType(info.m_iRightIndex);
+		m_pPlan->getResult(info.m_iRightIndex, result2);
+	}
+	if (info.m_iLeftIndex >= 0) {
+		type = m_pPlan->getResultType(info.m_iLeftIndex);
+		m_pPlan->getResult(info.m_iLeftIndex, result1);
+	}
+	assert(type != DBDataType::UNKNOWN);
+	if(info.m_iLeftIndex < 0) {
+		DBDataTypeHandler::getHandler(type)->fromNode(info.m_pLeft, result1);
+	}
+	if(info.m_iRightIndex < 0) {
+		DBDataTypeHandler::getHandler(type)->fromNode(info.m_pRight, result2);
+	}
+	
+	if (info.m_iOpCode == LIKE) {
+		auto pos = result1.getString().find(result2.getString());
+		return pos != std::string::npos;
+	} else {
+		int n = result1.compare(result2, type);
+		return checkFilter(info.m_iOpCode, n);
+	}
+}
 bool FilterPlan::next() {
 	while (m_pPlan->next()) {
 		for (auto& pAnd : m_predicatesInOr) {
 			bool bMatch = true;
 			for (auto& info : *pAnd) {
-				int iSubIndex = info.m_iSubIndex;
-				DBDataType type = m_pPlan->getResultType(iSubIndex);
-				ExecutionResult result;
-				m_pPlan->getResult(iSubIndex, result);
-
-				if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
-					if (info.m_pValue->m_type != NodeType::STR) {
-						PARSE_ERROR("Wrong data type for ",
-								info.m_pValue->m_sExpr, ", expect string");
-					}
-					if (auto pos = result.getString().find(
-							info.m_pValue->m_sValue); pos
-							== std::string::npos) {
-						//one of predicate in AND list mismatch
-						bMatch = false;
-						break;
-					}
-				} else {
-					int n = result.compare(info.m_pValue, type);
-					if (!checkFilter(info.m_iOpCode, n)) {
-						//one of predicate in AND list mismatch
-						bMatch = false;
-						break;
-					}
+				if (!evaluate(info)) {
+					bMatch = false;
+					break;
 				}
 			}
 			if (bMatch) {
@@ -83,28 +90,17 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
 
-	const ParseNode* pLeft = pPredicate->getChild(0);
-	const ParseNode* pRight = pPredicate->getChild(1);
-
 	PredicateInfo info;
 	info.m_sExpr = pPredicate->m_sExpr;
 	info.m_iOpCode = OP_CODE(pPredicate);
 
-	if(info.m_iOpCode == ANDOP || info.m_iOpCode == OR) {
-		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
-	}
+	info.m_pLeft = pPredicate->getChild(0);
+	info.m_pRight = pPredicate->getChild(1);
+	info.m_iLeftIndex = m_pPlan->addProjection(info.m_pLeft);
+	info.m_iRightIndex =  m_pPlan->addProjection(info.m_pRight);
 
-	if (int i = m_pPlan->addProjection(pLeft); i >= 0) {
-		info.m_sColumn = pLeft->m_sExpr;
-		info.m_iSubIndex = i;
-		info.m_pValue = pRight;
-
-	} else if (int i = m_pPlan->addProjection(pRight); i >= 0) {
-		info.m_sColumn = pRight->m_sExpr;
-		info.m_iSubIndex = i;
-		info.m_pValue = pLeft;
-	} else {
-		PARSE_ERROR("Unrecognized column ", info.m_sColumn);
+	if (info.m_iLeftIndex < 0 && info.m_iRightIndex < 0) {
+		PARSE_ERROR("Unrecognized predicate ", info.m_sExpr);
 	}
 	andList.push_back(info);
 }

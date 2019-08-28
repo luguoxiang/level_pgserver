@@ -18,9 +18,4 @@ int ExecutionResult::compare(const ExecutionResult& result,
 	return DBDataTypeHandler::getHandler(type)->compare(*this, result);
 }
 
-int ExecutionResult::compare(const ParseNode* pValue, DBDataType type) const {
-	ExecutionResult result;
-	DBDataTypeHandler::getHandler(type)->fromNode(pValue, result);
-	return DBDataTypeHandler::getHandler(type)->compare(*this, result);
-}
 

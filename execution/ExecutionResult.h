@@ -60,7 +60,6 @@ public:
 
 	int compare(const ExecutionResult& result, DBDataType type) const;
 
-	int compare(const ParseNode* pValue, DBDataType type) const;
 
 	void add(const ExecutionResult& result, DBDataType type);
 

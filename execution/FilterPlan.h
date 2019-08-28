@@ -68,15 +68,17 @@ public:
 	}
 
 	struct PredicateInfo {
-		std::string m_sColumn;
 		std::string m_sExpr;
 		int m_iOpCode;
-		size_t m_iSubIndex;
-		const ParseNode* m_pValue;
+		size_t m_iLeftIndex;
+		size_t m_iRightIndex;
+		const ParseNode* m_pLeft;
+		const ParseNode* m_pRight;
 	};
 
 	void addPredicate(const ParseNode* pNode);
 private:
+	bool evaluate(const PredicateInfo& info);
 	using AndPredicateListPtr = std::unique_ptr<std::vector<PredicateInfo>>;
 
 	void doAddPredicate(std::vector<PredicateInfo>& andList, const ParseNode* pNode);
