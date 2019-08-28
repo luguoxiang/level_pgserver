@@ -5,7 +5,7 @@
 #include "common/ParseException.h"
 #include <vector>
 #include <sstream>
-
+#include <memory>
 
 class FilterPlan: public SingleChildPlan {
 public:
@@ -15,10 +15,17 @@ public:
 	virtual void explain(std::vector<std::string>& rows)override {
 		SingleChildPlan::explain(rows);
 		std::string s = "Filter ";
-		for (size_t i = 0; i < m_predicate.size(); ++i) {
-			s.append(m_predicate[i].m_sExpr);
-			s.append(", ");
+		assert(!m_predicatesInOr.empty());
+		for (auto& pAnd: m_predicatesInOr) {
+			assert(!pAnd->empty());
+			for(auto& info : *pAnd) {
+				s.append(info.m_sExpr);
+				s.append(" and ");
+			}
+			s.erase (s.begin(), s.end()- 5);
+			s.append(" or ");
 		}
+		s.erase (s.begin(), s.end()- 4);
 		rows.push_back(s);
 	}
 
@@ -68,9 +75,11 @@ public:
 		const ParseNode* m_pValue;
 	};
 
-	void addPredicate(const ParseNode* pPredicate);
-
+	void addPredicate(const std::vector<const ParseNode*>& predicates);
 private:
+	using AndPredicateListPtr = std::unique_ptr<std::vector<PredicateInfo>>;
+
 	uint64_t m_iCurrent = 0;
-	std::vector<PredicateInfo> m_predicate;
+
+	std::vector<AndPredicateListPtr> m_predicatesInOr;
 };

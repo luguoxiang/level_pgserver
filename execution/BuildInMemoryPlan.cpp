@@ -9,6 +9,8 @@
 #include "execution/UnionAllPlan.h"
 #include "execution/GroupByPlan.h"
 
+#include <algorithm>
+
 void buildPlanForOrderBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
@@ -157,22 +159,51 @@ void buildPlanForLimit(const ParseNode* pNode) {
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
+
+static void mergeCondition(int op, const ParseNode* pPredicate, std::vector<const ParseNode*>& predicates) {
+	if (pPredicate->m_type != NodeType::OP) {
+		PARSE_ERROR("Unsupported predicate " , pPredicate->m_sExpr);
+	}
+	if(OP_CODE(pPredicate) == op) {
+		for (size_t i = 0; i < pPredicate->children(); ++i) {
+			const ParseNode* pChild = pPredicate->getChild(i);
+			mergeCondition(op, pChild, predicates);
+		}
+	} else {
+		predicates.push_back(pPredicate);
+	}
+}
 static void parseQueryCondition(const ParseNode* pPredicate, FilterPlan* pFilter) {
 	if (pPredicate->m_type != NodeType::OP) {
 		PARSE_ERROR("Unsupported predicate " , pPredicate->m_sExpr);
 	}
+	switch (OP_CODE(pPredicate)) {
+	case ANDOP: {
+		std::vector<const ParseNode*> predicates;
+		mergeCondition(ANDOP, pPredicate, predicates);
+		pFilter->addPredicate(predicates);
+		break;
+	}
+	case OR: {
+		std::vector<const ParseNode*> predicates;
+		mergeCondition(OR, pPredicate, predicates);
 
-	if (OP_CODE(pPredicate) == ANDOP) {
-		for (int i = 0; i < pPredicate->children(); ++i) {
-			const ParseNode* pChild = pPredicate->getChild(i);
+		for (auto pChild:predicates) {
 			parseQueryCondition(pChild, pFilter);
 		}
-	} else if (pPredicate->children() == 2) {
-		pFilter->addPredicate(pPredicate);
-	} else {
-		PARSE_ERROR("Unsupported query condition!");
+		break;
+	}
+	default:
+		if (pPredicate->children() == 2) {
+			std::vector<const ParseNode*> predicates = {pPredicate};
+			pFilter->addPredicate(predicates);
+		} else {
+			PARSE_ERROR("Unsupported query condition!");
+		}
+		break;
 	}
 }
+
 
 void buildPlanForFilter(const ParseNode* pNode) {
 	if (pNode == nullptr)

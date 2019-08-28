@@ -18,62 +18,88 @@ bool checkFilter(int iOpCode, int n) {
 	case COMP_GE:
 		return n >= 0;
 	default:
-		PARSE_ERROR("Unsupported operation ", iOpCode);
+		PARSE_ERROR("Unsupported operation ", iOpCode)
+		;
 		return 0;
 	}
 }
 }
 bool FilterPlan::next() {
 	while (m_pPlan->next()) {
-		bool bMatch = true;
-		for (size_t i = 0; i < m_predicate.size(); ++i) {
-			PredicateInfo& info = m_predicate[i];
-			int iSubIndex = info.m_iSubIndex;
-			DBDataType type = m_pPlan->getResultType(iSubIndex);
-			ExecutionResult result;
-			m_pPlan->getResult(iSubIndex, result);
+		for (auto& pAnd : m_predicatesInOr) {
+			bool bMatch = true;
+			for (auto& info : *pAnd) {
+				int iSubIndex = info.m_iSubIndex;
+				DBDataType type = m_pPlan->getResultType(iSubIndex);
+				ExecutionResult result;
+				m_pPlan->getResult(iSubIndex, result);
 
-			if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
-				if (info.m_pValue->m_type != NodeType::STR) {
-					PARSE_ERROR("Wrong data type for ", info.m_pValue->m_sExpr, ", expect string");
-				}
-				if(auto pos = result.getString().find(info.m_pValue->m_sValue); pos == std::string::npos) {
-					bMatch = false;
-					break;
-				}
-			} else {
-				int n = result.compare(info.m_pValue, type);
-				if (!checkFilter(info.m_iOpCode, n)) {
-					bMatch = false;
-					break;
+				if (type == DBDataType::STRING && info.m_iOpCode == LIKE) {
+					if (info.m_pValue->m_type != NodeType::STR) {
+						PARSE_ERROR("Wrong data type for ",
+								info.m_pValue->m_sExpr, ", expect string");
+					}
+					if (auto pos = result.getString().find(
+							info.m_pValue->m_sValue); pos
+							== std::string::npos) {
+						//one of predicate in AND list mismatch
+						bMatch = false;
+						break;
+					}
+				} else {
+					int n = result.compare(info.m_pValue, type);
+					if (!checkFilter(info.m_iOpCode, n)) {
+						//one of predicate in AND list mismatch
+						bMatch = false;
+						break;
+					}
 				}
 			}
+			if (bMatch) {
+				//one of predicate in OR list match
+				++m_iCurrent;
+				return true;
+			}
 		}
-		if (!bMatch)
-			continue;
-		++m_iCurrent;
-		return true;
 	}
 	return false;
 }
 
-void FilterPlan::addPredicate(const ParseNode* pPredicate) {
-	if (pPredicate->m_type != NodeType::OP || pPredicate->children() != 2) {
-		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
-	}
-	assert(pPredicate);
-	assert(pPredicate->children() == 2);
-	assert(pPredicate->m_type == NodeType::OP);
-	PredicateInfo info;
-	info.m_sColumn = pPredicate->getChild(0)->m_sExpr;
-	info.m_sExpr = pPredicate->m_sExpr;
-	if(int i = m_pPlan->addProjection(pPredicate->getChild(0)); i>=0 ) {
-		info.m_iSubIndex = i;
-		info.m_iOpCode = OP_CODE(pPredicate);
-		info.m_pValue = pPredicate->getChild(1);
-		m_predicate.push_back(info);
-	}else {
-		PARSE_ERROR("Unrecognized column ", info.m_sColumn);
-	}
 
+void FilterPlan::addPredicate(const std::vector<const ParseNode*>& predicates) {
+	m_predicatesInOr.emplace_back(new std::vector<PredicateInfo>());
+	auto pAnd = m_predicatesInOr.back().get();
+	pAnd->reserve(predicates.size());
+	for (auto pPredicate : predicates) {
+		assert(pPredicate);
+		if (pPredicate->m_type != NodeType::OP
+				|| pPredicate->children() != 2) {
+			PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
+		}
+
+		const ParseNode* pLeft = pPredicate->getChild(0);
+		const ParseNode* pRight = pPredicate->getChild(1);
+
+		PredicateInfo info;
+		info.m_sExpr = pPredicate->m_sExpr;
+		info.m_iOpCode = OP_CODE(pPredicate);
+
+		if(info.m_iOpCode == ANDOP || info.m_iOpCode == OR) {
+			PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
+		}
+
+		if (int i = m_pPlan->addProjection(pLeft); i >= 0) {
+			info.m_sColumn = pLeft->m_sExpr;
+			info.m_iSubIndex = i;
+			info.m_pValue = pRight;
+
+		} else if (int i = m_pPlan->addProjection(pRight); i >= 0) {
+			info.m_sColumn = pRight->m_sExpr;
+			info.m_iSubIndex = i;
+			info.m_pValue = pLeft;
+		} else {
+			PARSE_ERROR("Unrecognized column ", info.m_sColumn);
+		}
+		pAnd->push_back(info);
+	}
 }
