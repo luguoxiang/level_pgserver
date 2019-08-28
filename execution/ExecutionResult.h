@@ -20,13 +20,13 @@ public:
 	}
 
 	bool isNull() const {
-		return m_result.index() == 0;
+		return m_result.index() == NULLPTR;
 	}
 
 	//Warning, if cache() is not called, return value will only be valid before next pPlan->next() call
 	std::string_view getString() const {
 		try{
-			if (m_result.index() == 2) {
+			if (m_result.index() == STRING) {
 				return std::get < std::string > (m_result);
 			} else {
 				return std::get < std::string_view > (m_result);
@@ -44,7 +44,11 @@ public:
 	}
 	double getDouble() const {
 		try {
-			return std::get<double>(m_result);
+			if (m_result.index() == INT) {
+				return std::get<int64_t>(m_result);
+			} else {
+				return std::get<double>(m_result);
+			}
 		} catch (const std::bad_variant_access& e) {
 			EXECUTION_ERROR("wrong DataType expect double");
 		}
@@ -67,6 +71,11 @@ public:
 	}
 
 private:
+	static constexpr size_t NULLPTR = 0;
+	static constexpr size_t STRING_VIEW = 1;
+	static constexpr size_t STRING = 2;
+	static constexpr size_t INT = 3;
+	static constexpr size_t DOUBLE = 4;
 	std::variant<std::nullptr_t, //should set to other value later
 			std::string_view, std::string, int64_t, double> m_result = nullptr;
 

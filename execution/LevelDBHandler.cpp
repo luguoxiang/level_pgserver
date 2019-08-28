@@ -1,5 +1,5 @@
 #include "LevelDBHandler.h"
-#include "execution/DataRow.h"
+
 #include "execution/ExecutionException.h"
 #include <sstream>
 #include <cassert>
@@ -7,42 +7,6 @@
 
 
 namespace {
-class KeyComparator: public leveldb::Comparator {
-public:
-	KeyComparator(const TableInfo* pTable) {
-		std::ostringstream os;
-		for (size_t i = 0; i < pTable->getKeyCount(); ++i) {
-			auto pColumn = pTable->getKeyColumn(i);
-			m_keyTypes.push_back(pColumn->m_type);
-			os << GetTypeName(pColumn->m_type);
-			os << ",";
-		}
-		m_sName = os.str();
-	}
-	virtual ~KeyComparator() = default;
-
-	virtual int Compare(const leveldb::Slice& a, const leveldb::Slice& b)
-			const override {
-		DataRow rowa(reinterpret_cast<const std::byte*>(a.data()), m_keyTypes,	a.size());
-		DataRow rowb(reinterpret_cast<const std::byte*>(b.data()), m_keyTypes,	b.size());
-		return rowa.compare(rowb);
-	}
-
-	virtual const char* Name() const override {
-		return m_sName.c_str();
-	}
-
-	virtual void FindShortestSeparator(std::string* start,
-			const leveldb::Slice& limit) const override {
-	}
-
-	virtual void FindShortSuccessor(std::string* key) const override {
-	}
-private:
-	std::vector<DBDataType> m_keyTypes;
-	std::string m_sName;
-};
-
 static std::mutex s_mutex;
 static std::map<const TableInfo*, std::unique_ptr<LevelDBHandler>> s_handlers;
 }
@@ -62,13 +26,13 @@ LevelDBHandler* LevelDBHandler::getHandler(const TableInfo* pTable){
 	}
 }
 
-LevelDBHandler::LevelDBHandler(const TableInfo* pTable) : m_pTable(pTable), m_pCompare(new KeyComparator(pTable)){
+LevelDBHandler::LevelDBHandler(const TableInfo* pTable) : m_pTable(pTable), m_compare(pTable){
 	leveldb::DB* pDB;
 	leveldb::Options options;
 	options.create_if_missing = true;
 
 
-	options.comparator = m_pCompare.get();
+	options.comparator = &m_compare;
 	std::string_view sPath = pTable->getAttribute("path");
 
 	leveldb::Status status = leveldb::DB::Open(options,

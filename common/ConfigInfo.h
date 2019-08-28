@@ -37,6 +37,8 @@ inline std::string_view GetTypeName(DBDataType type) {
 		return "float";
 	case DBDataType::DOUBLE:
 		return "double";
+	case DBDataType::STRING:
+		return "string";
 	default:
 		return "unknown";
 	}
