@@ -65,41 +65,52 @@ bool FilterPlan::next() {
 	return false;
 }
 
-
-void FilterPlan::addPredicate(const std::vector<const ParseNode*>& predicates) {
-	m_predicatesInOr.emplace_back(new std::vector<PredicateInfo>());
-	auto pAnd = m_predicatesInOr.back().get();
-	pAnd->reserve(predicates.size());
-	for (auto pPredicate : predicates) {
-		assert(pPredicate);
-		if (pPredicate->m_type != NodeType::OP
-				|| pPredicate->children() != 2) {
-			PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
-		}
-
-		const ParseNode* pLeft = pPredicate->getChild(0);
-		const ParseNode* pRight = pPredicate->getChild(1);
-
-		PredicateInfo info;
-		info.m_sExpr = pPredicate->m_sExpr;
-		info.m_iOpCode = OP_CODE(pPredicate);
-
-		if(info.m_iOpCode == ANDOP || info.m_iOpCode == OR) {
-			PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
-		}
-
-		if (int i = m_pPlan->addProjection(pLeft); i >= 0) {
-			info.m_sColumn = pLeft->m_sExpr;
-			info.m_iSubIndex = i;
-			info.m_pValue = pRight;
-
-		} else if (int i = m_pPlan->addProjection(pRight); i >= 0) {
-			info.m_sColumn = pRight->m_sExpr;
-			info.m_iSubIndex = i;
-			info.m_pValue = pLeft;
-		} else {
-			PARSE_ERROR("Unrecognized column ", info.m_sColumn);
-		}
-		pAnd->push_back(info);
+void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const ParseNode* pPredicate) {
+	assert(pPredicate);
+	if (pPredicate->m_type != NodeType::OP) {
+		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
+
+	auto op = OP_CODE(pPredicate);
+	if (op == ANDOP) {
+		for (size_t i=0;i<pPredicate->children(); ++i ) {
+			doAddPredicate(andList, pPredicate->getChild(i));
+		}
+		return;
+	}
+	assert(op != OR);
+	if (pPredicate->children() != 2) {
+		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
+	}
+
+	const ParseNode* pLeft = pPredicate->getChild(0);
+	const ParseNode* pRight = pPredicate->getChild(1);
+
+	PredicateInfo info;
+	info.m_sExpr = pPredicate->m_sExpr;
+	info.m_iOpCode = OP_CODE(pPredicate);
+
+	if(info.m_iOpCode == ANDOP || info.m_iOpCode == OR) {
+		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
+	}
+
+	if (int i = m_pPlan->addProjection(pLeft); i >= 0) {
+		info.m_sColumn = pLeft->m_sExpr;
+		info.m_iSubIndex = i;
+		info.m_pValue = pRight;
+
+	} else if (int i = m_pPlan->addProjection(pRight); i >= 0) {
+		info.m_sColumn = pRight->m_sExpr;
+		info.m_iSubIndex = i;
+		info.m_pValue = pLeft;
+	} else {
+		PARSE_ERROR("Unrecognized column ", info.m_sColumn);
+	}
+	andList.push_back(info);
+}
+
+void FilterPlan::addPredicate(const ParseNode* pPredicate) {
+	m_predicatesInOr.emplace_back(new std::vector<PredicateInfo>());
+	auto& pAnd = m_predicatesInOr.back();
+	doAddPredicate(*pAnd, pPredicate);
 }

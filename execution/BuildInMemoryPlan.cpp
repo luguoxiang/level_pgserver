@@ -62,16 +62,17 @@ void buildPlanForProjection(const ParseNode* pNode) {
 		std::vector<std::string_view> columns;
 		pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
-			PARSE_ERROR("select * is not supported in current projection context");
+			PARSE_ERROR(
+					"select * is not supported in current projection context");
 		}
-		for (auto& column: columns) {
+		for (auto& column : columns) {
 			ParseNode node(NodeType::NAME, column, 0, nullptr);
 			node.m_sValue = column;
 			pProjPlan->project(&node, column);
 		}
 		return;
 	}
-	for(int i =0 ;i< pNode->children(); ++i) {
+	for (int i = 0; i < pNode->children(); ++i) {
 		auto pColumn = pNode->getChild(i);
 		std::string_view sAlias;
 		if (pColumn->m_type == NodeType::OP && OP_CODE(pColumn) == AS) {
@@ -87,10 +88,11 @@ void buildPlanForProjection(const ParseNode* pNode) {
 		bool bOK = pProjPlan->project(pColumn, sAlias);
 		if (!bOK) {
 			if (pColumn->m_type != NodeType::FUNC) {
-					PARSE_ERROR("Unrecognized column ", pColumn->m_sExpr);
+				PARSE_ERROR("Unrecognized column ", pColumn->m_sExpr);
 			}
 
-			if (!pProjPlan->addGroupBy() || !pProjPlan->project(pColumn, sAlias)) {
+			if (!pProjPlan->addGroupBy()
+					|| !pProjPlan->project(pColumn, sAlias)) {
 				PARSE_ERROR("Unrecognized column ", pNode->m_sExpr);
 			}
 
@@ -121,7 +123,7 @@ void buildPlanForGroupBy(const ParseNode* pNode) {
 	if (bNeedSort) {
 		SortPlan* pSort = new SortPlan(pChildPlan.release());
 		pChildPlan.reset(pSort);
-		for(size_t i=0;i<pNode->children(); ++i) {
+		for (size_t i = 0; i < pNode->children(); ++i) {
 			auto pChild = pNode->getChild(i);
 			assert(pChild);
 
@@ -130,7 +132,7 @@ void buildPlanForGroupBy(const ParseNode* pNode) {
 	}
 	GroupByPlan* pPlan = new GroupByPlan(pChildPlan.release());
 	Tools::pushPlan(pPlan);
-	for(size_t i=0;i<pNode->children(); ++i) {
+	for (size_t i = 0; i < pNode->children(); ++i) {
 		auto pChild = pNode->getChild(i);
 		assert(pChild);
 
@@ -159,109 +161,52 @@ void buildPlanForLimit(const ParseNode* pNode) {
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
+struct PredicateAnalyzer {
+	ParseResult& result = WorkThreadInfo::getParseResult();
 
-static void mergeCondition(int op, const ParseNode* pPredicate, std::vector<const ParseNode*>& predicates) {
-	if (pPredicate->m_type != NodeType::OP) {
-		PARSE_ERROR("Unsupported predicate " , pPredicate->m_sExpr);
-	}
-	if(OP_CODE(pPredicate) == op) {
-		for (size_t i = 0; i < pPredicate->children(); ++i) {
-			const ParseNode* pChild = pPredicate->getChild(i);
-			mergeCondition(op, pChild, predicates);
+	void collectOrOperators(const ParseNode* pPredicate,
+			std::vector<const ParseNode*>& operators) {
+		if (pPredicate->m_type != NodeType::OP) {
+			PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 		}
-	} else {
-		predicates.push_back(pPredicate);
-	}
-}
-
-
-static void parseQueryCondition(const ParseNode* pPredicate, FilterPlan* pFilter) {
-	if (pPredicate->m_type != NodeType::OP) {
-		PARSE_ERROR("Unsupported predicate " , pPredicate->m_sExpr);
-	}
-	switch (OP_CODE(pPredicate)) {
-	case ANDOP: {
-		std::vector<const ParseNode*> predicates;
-		std::map<int, std::unique_ptr<std::vector<const ParseNode*>>> indexToOrPredicates;
-		mergeCondition(ANDOP, pPredicate, predicates);
-
-		parseAndCondition(predicates, 0,  pFilter);
-		break;
-	}
-	case OR: {
-		std::vector<const ParseNode*> predicates;
-		mergeCondition(OR, pPredicate, predicates);
-
-		for (auto pChild:predicates) {
-			parseQueryCondition(pChild, pFilter);
-		}
-		break;
-	}
-	default:
-		if (pPredicate->children() == 2) {
-			std::vector<const ParseNode*> predicates = {pPredicate};
-			pFilter->addPredicate(predicates);
-		} else {
-			PARSE_ERROR("Unsupported query condition!");
-		}
-		break;
-	}
-}
-namespace {
-	using CollectFn = void (std::vector<const ParseNode*>& predicates);
-}
-static void parseAndCondition(std::vector<const ParseNode*>& predicates, size_t index, CollectFn) {
-	if(index == predicates.size()) {
-		CollectFn(predicates);
-		return;
-	}
-	auto pNode = predicates[index];
-	if(OP_CODE(pNode) == OR ) {
-		std::vector<const ParseNode*> orPredicates;
-		mergeCondition(OR, pNode, orPredicates);
-		for(auto pChild : orPredicates) {
-			predicates[index] = pChild;
-			parseAndCondition(predicates, index + 1, pFilter);
-			predicates[index] = pNode;
-		}
-	} else {
-		parseAndCondition(predicates, index + 1, pFilter);
-	}
-}
-
-void collectOR(const ParseNode* pNode, std::vector<const ParseNode*>& predicates) {
-	if (pPredicate->m_type != NodeType::OP) {
-		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
-	}
-	switch (OP_CODE(pPredicate)) {
+		switch (OP_CODE(pPredicate)) {
 		case ANDOP: {
-			std::vector<const ParseNode*> predicates;
+			assert(pPredicate->children() == 2);
+			std::vector<const ParseNode*> left, right;
 
-			mergeCondition(ANDOP, pPredicate, predicates);
+			collectOrOperators(pPredicate->getChild(0), left);
+			collectOrOperators(pPredicate->getChild(1), right);
 
-			ParseResult& result = WorkThreadInfo::getResult();
-			parseAndCondition(predicates, 0, [result](std::vector<const ParseNode*>& predicates) {
-				auto pNode = result.newParseNode(NodeType::OP, pPredicate->m_sExpr, predicates.begin(), predicates.end());
-				pNode->iValue = ANDOP;
-				predicates.push_back(pNode);
-			});
+			if(left.size() == 1 && right.size() == 1) {
+				operators.push_back(pPredicate);
+			} else {
+				for (size_t i = 0; i < left.size(); ++i) {
+					for (size_t j = 0; j < right.size(); ++j) {
+						auto pOp = result.newParseNode(NodeType::OP, pPredicate->m_sExpr, { left[i], right[j] });
+						pOp->m_iValue = ANDOP;
+						operators.push_back(pOp);
+					}
+				}
+			}
 			break;
 		}
 		case OR: {
-			for (auto pChild:predicates) {
-				collectOR(pChild, predicates);
+			for (size_t i = 0; i < pPredicate->children(); ++i) {
+				collectOrOperators(pPredicate->getChild(i), operators);
 			}
 			break;
 		}
 		default:
 			if (pPredicate->children() == 2) {
-				predicates.push_back(pPredicate);
+				operators.push_back(pPredicate);
 			} else {
 				PARSE_ERROR("Unsupported query condition!");
 			}
-		break;
+			break;
+		}
 	}
-}
+};
+
 void buildPlanForFilter(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
@@ -271,7 +216,13 @@ void buildPlanForFilter(const ParseNode* pNode) {
 	FilterPlan* pFilter = new FilterPlan(pPlan);
 	Tools::pushPlan(pFilter);
 
-	parseQueryCondition(pNode, pFilter);
+	std::vector<const ParseNode*> operators;
+	PredicateAnalyzer analyzer;
+	analyzer.collectOrOperators(pNode, operators);
+
+	for (auto pChild : operators) {
+		pFilter->addPredicate(pChild);
+	}
 }
 
 void buildPlanForExplain(const ParseNode* pNode) {

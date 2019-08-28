@@ -22,10 +22,10 @@ public:
 				s.append(info.m_sExpr);
 				s.append(" and ");
 			}
-			s.erase (s.begin(), s.end()- 5);
+			s.erase (s.end()- 5, s.end());
 			s.append(" or ");
 		}
-		s.erase (s.begin(), s.end()- 4);
+		s.erase (s.end()- 4, s.end());
 		rows.push_back(s);
 	}
 
@@ -75,9 +75,12 @@ public:
 		const ParseNode* m_pValue;
 	};
 
-	void addPredicate(const std::vector<const ParseNode*>& predicates);
+	void addPredicate(const ParseNode* pNode);
 private:
 	using AndPredicateListPtr = std::unique_ptr<std::vector<PredicateInfo>>;
+
+	void doAddPredicate(std::vector<PredicateInfo>& andList, const ParseNode* pNode);
+
 
 	uint64_t m_iCurrent = 0;
 

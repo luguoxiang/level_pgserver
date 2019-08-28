@@ -18,6 +18,10 @@ struct WorkThreadInfo {
 		return m_pWorkThreadInfo;
 	}
 
+	static ParseResult& getParseResult() {
+		return m_pWorkThreadInfo->m_result;
+	}
+
 	static void setThreadInfo(WorkThreadInfo* pInfo) {
 		m_pWorkThreadInfo = pInfo;
 	}
