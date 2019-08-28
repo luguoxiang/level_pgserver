@@ -42,32 +42,29 @@ void PgMessageReceiver::processStartupPacket() {
 
 	size_t iLen = getDataLen();
 	if (iLen < sizeof(ProtocolVersion) || iLen > MAX_STARTUP_PACKET_LENGTH) {
-		throw new IOException("Illegal startup packet length!");
+		IO_ERROR("Illegal startup packet length!");
 	}
 
 	ProtocolVersion proto = (ProtocolVersion) getNextInt();
 	if (proto == CANCEL_REQUEST_CODE) {
-		char buf[100];
 		uint32_t iBackendPID = getNextInt();
 		uint32_t iCancelAuthCode = getNextInt();
-		snprintf(buf, 100, "Cacnel WorkerID=%d, CancelAuthCode=%d", iBackendPID,
-				iCancelAuthCode);
 		ExecutionPlan* pPlan = WorkerManager::getInstance().getWorker(
 				iBackendPID)->m_pPlan;
 		if (pPlan != nullptr)
 			pPlan->cancel();
-		throw new IOException(buf);
+		IO_ERROR("Cacnel WorkerID=", iBackendPID,", CancelAuthCode=",	iCancelAuthCode);
 	}
 	if (proto == NEGOTIATE_SSL_CODE) {
 		if (write(getFd(), "N", 1) != 1) // SSL is not supported
 				{
-			throw new IOException("send() failed!");
+			IO_ERROR("send() failed!");
 		}
 		processStartupPacket();
 		return;
 	}
 	if (PG_PROTOCOL_MAJOR(proto) < 3) {
-		throw new IOException("Unsupported protocol!");
+		IO_ERROR("Unsupported protocol!");
 	}
 	while (hasData()) {
 		size_t iLen;

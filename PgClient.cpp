@@ -248,7 +248,7 @@ void PgClient::run() {
 #endif
 		MessageHandler handler = m_handler[qtype];
 		if (handler == nullptr) {
-			throw new IOException(ConcateToString("Unable to handler message ", qtype));
+			IO_ERROR("Unable to handler message ", qtype);
 		}
 
 		try {
@@ -367,7 +367,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 		case DBDataType::INT32:
 		case DBDataType::INT64:
 		case DBDataType::INT16:
-			m_sender.addStringAndLength(std::to_string(result.getInt()));
+			m_sender.addIntAsString(result.getInt());
 			break;
 		case DBDataType::BYTES: {
 			std::ostringstream os;
@@ -388,9 +388,7 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 				LOG(ERROR) << "Failed to get localtime "<< (int ) time;
 				m_sender.addInt(0);
 			} else {
-				char szBuf[100];
-				strftime(szBuf, 30, "%Y-%m-%d", pToday);
-				m_sender.addStringAndLength(szBuf);
+				m_sender.addDateAsString(pToday);
 			}
 			break;
 		}
@@ -401,15 +399,13 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 				LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
 				m_sender.addInt(0);
 			} else {
-				char szBuf[100];
-				strftime(szBuf, 30, "%Y-%m-%d %H:%M:%S", pToday);
-				m_sender.addStringAndLength(szBuf);
+				m_sender.addDateTimeAsString(pToday);
 			}
 			break;
 		}
 		case DBDataType::FLOAT:
 		case DBDataType::DOUBLE: {
-			m_sender.addStringAndLength(std::to_string(result.getDouble()));
+			m_sender.addDoubleAsString(result.getDouble());
 			break;
 		}
 		default:

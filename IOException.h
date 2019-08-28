@@ -33,3 +33,5 @@ private:
 
 	std::string m_sErrMsg;
 };
+
+#define IO_ERROR(args...) {auto sError = ConcateToString(args);LOG(ERROR)<<sError;throw new IOException(sError);}

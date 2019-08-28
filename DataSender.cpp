@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <cassert>
-
+#include <stdio.h>
 #include "DataSender.h"
 
 DataSender::DataSender(int fd,  uint32_t iSendBuffer) :
@@ -29,13 +29,16 @@ void DataSender::addDouble(double value) {
 	addInt(hight);
 	addInt(low);
 }
+
+
+
 void DataSender::setInt(size_t iOffset, int32_t value) {
 	if (iOffset + m_iLastPrepare + 4 > m_iWritten) {
 		throw new IOException("write overflow for DataSender!");
 	}
 	int32_t netval = htonl(value);
 
-	memcpy(m_buffer.data() + m_iLastPrepare + iOffset, &netval, 4);
+	m_buffer.replace(m_iLastPrepare + iOffset, 4, reinterpret_cast<const char*>(&netval), 4);
 }
 
 void DataSender::begin() {
@@ -85,6 +88,21 @@ void DataSender::addStringAndLength(const std::string_view s) {
 	check(len);
 	m_buffer.replace(m_iWritten, len, s.data(), len);
 	m_iWritten += len;
+}
+
+void DataSender::addDateAsString(struct tm* pTime) {
+	addInt(10);
+	check(11);
+	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, "%Y-%m-%d", pTime);
+	assert(iWritten == 10);
+	m_iWritten += iWritten;
+}
+void DataSender::addDateTimeAsString(struct tm* pTime) {
+	addInt(19);
+	check(20);
+	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, "%Y-%m-%d %H:%M:%S", pTime);
+	assert(iWritten == 19);
+	m_iWritten += iWritten;
 }
 
 void DataSender::addChar(char c) {
