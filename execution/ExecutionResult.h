@@ -23,6 +23,10 @@ public:
 		return m_result.index() == NULLPTR;
 	}
 
+	void setMin() {};
+
+	void setMax() {};
+
 	//Warning, if cache() is not called, return value will only be valid before next pPlan->next() call
 	std::string_view getString() const {
 		try{

@@ -32,11 +32,8 @@ public:
 
 private:
 	struct ScanRange {
-		DataRow begin;
-		DataRow end;
-		size_t keyCount;
-		bool includeBegin;
-		bool includeEnd;
+		std::vector<ExecutionResult> m_scanStart;
+		std::vector<const ParseNode* pNode> m_predicates;
 	};
 	const TableInfo* m_pTable;
 

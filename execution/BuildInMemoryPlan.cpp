@@ -182,7 +182,7 @@ struct PredicateAnalyzer {
 			} else {
 				for (size_t i = 0; i < left.size(); ++i) {
 					for (size_t j = 0; j < right.size(); ++j) {
-						auto pOp = result.newParseNode(NodeType::OP, pPredicate->m_sExpr, { left[i], right[j] });
+						auto pOp = result.newParseNode(NodeType::OP, "", { left[i], right[j] });
 						pOp->m_iValue = ANDOP;
 						operators.push_back(pOp);
 					}
