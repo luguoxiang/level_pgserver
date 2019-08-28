@@ -173,6 +173,8 @@ static void mergeCondition(int op, const ParseNode* pPredicate, std::vector<cons
 		predicates.push_back(pPredicate);
 	}
 }
+
+
 static void parseQueryCondition(const ParseNode* pPredicate, FilterPlan* pFilter) {
 	if (pPredicate->m_type != NodeType::OP) {
 		PARSE_ERROR("Unsupported predicate " , pPredicate->m_sExpr);
@@ -180,8 +182,10 @@ static void parseQueryCondition(const ParseNode* pPredicate, FilterPlan* pFilter
 	switch (OP_CODE(pPredicate)) {
 	case ANDOP: {
 		std::vector<const ParseNode*> predicates;
+		std::map<int, std::unique_ptr<std::vector<const ParseNode*>>> indexToOrPredicates;
 		mergeCondition(ANDOP, pPredicate, predicates);
-		pFilter->addPredicate(predicates);
+
+		parseAndCondition(predicates, 0,  pFilter);
 		break;
 	}
 	case OR: {
@@ -203,8 +207,61 @@ static void parseQueryCondition(const ParseNode* pPredicate, FilterPlan* pFilter
 		break;
 	}
 }
+namespace {
+	using CollectFn = void (std::vector<const ParseNode*>& predicates);
+}
+static void parseAndCondition(std::vector<const ParseNode*>& predicates, size_t index, CollectFn) {
+	if(index == predicates.size()) {
+		CollectFn(predicates);
+		return;
+	}
+	auto pNode = predicates[index];
+	if(OP_CODE(pNode) == OR ) {
+		std::vector<const ParseNode*> orPredicates;
+		mergeCondition(OR, pNode, orPredicates);
+		for(auto pChild : orPredicates) {
+			predicates[index] = pChild;
+			parseAndCondition(predicates, index + 1, pFilter);
+			predicates[index] = pNode;
+		}
+	} else {
+		parseAndCondition(predicates, index + 1, pFilter);
+	}
+}
 
+void collectOR(const ParseNode* pNode, std::vector<const ParseNode*>& predicates) {
+	if (pPredicate->m_type != NodeType::OP) {
+		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
+	}
+	switch (OP_CODE(pPredicate)) {
+		case ANDOP: {
+			std::vector<const ParseNode*> predicates;
 
+			mergeCondition(ANDOP, pPredicate, predicates);
+
+			ParseResult& result = WorkThreadInfo::getResult();
+			parseAndCondition(predicates, 0, [result](std::vector<const ParseNode*>& predicates) {
+				auto pNode = result.newParseNode(NodeType::OP, pPredicate->m_sExpr, predicates.begin(), predicates.end());
+				pNode->iValue = ANDOP;
+				predicates.push_back(pNode);
+			});
+			break;
+		}
+		case OR: {
+			for (auto pChild:predicates) {
+				collectOR(pChild, predicates);
+			}
+			break;
+		}
+		default:
+			if (pPredicate->children() == 2) {
+				predicates.push_back(pPredicate);
+			} else {
+				PARSE_ERROR("Unsupported query condition!");
+			}
+		break;
+	}
+}
 void buildPlanForFilter(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
