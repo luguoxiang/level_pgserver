@@ -24,7 +24,7 @@ public:
 
 	void addDataTypeMsg(const std::string_view sName, short columnid, PgDataType type,
 			short datalen, bool binary ) {
-		addString(sName);
+		addStringZeroEnd(sName);
 		addInt(0); //oid
 		addShort(columnid);
 		addInt(static_cast<int32_t>(type));

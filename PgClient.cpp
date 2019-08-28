@@ -173,7 +173,7 @@ void PgClient::handleExecute() {
 	DLOG(INFO)<< "Execute result:" << sInfo;
 
 	m_sender.prepare('C');
-	m_sender.addString(sInfo); //data len
+	m_sender.addStringZeroEnd(sInfo); //data len
 	m_sender.commit();
 	m_pWorker->m_pPlan = nullptr;
 }
@@ -181,15 +181,15 @@ void PgClient::handleExecute() {
 void PgClient::handleException(Exception* pe) {
 	m_sender.prepare('E');
 	m_sender.addByte(PG_DIAG_SEVERITY);
-	m_sender.addString("ERROR");
+	m_sender.addStringZeroEnd("ERROR");
 	m_sender.addByte(PG_DIAG_SQLSTATE);
-	m_sender.addString("00000");
+	m_sender.addStringZeroEnd("00000");
 	m_sender.addByte(PG_DIAG_MESSAGE_PRIMARY);
-	m_sender.addString(pe->what());
+	m_sender.addStringZeroEnd(pe->what());
 
 	if (pe->getLine() >= 0) {
 		m_sender.addByte(PG_DIAG_STATEMENT_POSITION);
-		m_sender.addString(std::to_string(pe->getStartPos()));
+		m_sender.addStringZeroEnd(std::to_string(pe->getStartPos()));
 	}
 	m_sender.addByte('\0');
 	delete pe;
@@ -210,18 +210,18 @@ void PgClient::run() {
 	m_sender.commit();
 
 	m_sender.prepare('S');
-	m_sender.addString("server_encoding");
-	m_sender.addString("UTF8");
+	m_sender.addStringZeroEnd("server_encoding");
+	m_sender.addStringZeroEnd("UTF8");
 	m_sender.commit();
 
 	m_sender.prepare('S');
-	m_sender.addString("client_encoding");
-	m_sender.addString("UTF8");
+	m_sender.addStringZeroEnd("client_encoding");
+	m_sender.addStringZeroEnd("UTF8");
 	m_sender.commit();
 
 	m_sender.prepare('S');
-	m_sender.addString("server_version");
-	m_sender.addString("9.0.4");
+	m_sender.addStringZeroEnd("server_version");
+	m_sender.addStringZeroEnd("9.0.4");
 	m_sender.commit();
 
 	m_sender.prepare('K');
@@ -375,11 +375,11 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			for (auto& c: result.getString()) {
 				os<< std::hex<< (int)c ;
 			}
-			m_sender.addStringAndLength(os.str());
+			m_sender.addString(os.str());
 			break;
 		}
 		case DBDataType::STRING:
-			m_sender.addStringAndLength(result.getString());
+			m_sender.addString(result.getString());
 			break;
 		case DBDataType::DATE: {
 			time_t time = result.getInt();

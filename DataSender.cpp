@@ -74,7 +74,7 @@ void DataSender::addShort(int16_t value) {
 	m_iWritten += 2;
 }
 
-void DataSender::addString(const std::string_view s) {
+void DataSender::addStringZeroEnd(const std::string_view s) {
 	auto len = s.length();
 	check( len + 1);
 	m_buffer.replace(m_iWritten, len, s.data(), len);
@@ -82,7 +82,7 @@ void DataSender::addString(const std::string_view s) {
 	m_buffer[m_iWritten] = '\0';
 	++m_iWritten;
 }
-void DataSender::addStringAndLength(const std::string_view s) {
+void DataSender::addString(const std::string_view s) {
 	auto len = s.length();
 	addInt(len);
 	check(len);

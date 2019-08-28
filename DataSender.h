@@ -17,7 +17,7 @@ public:
 	void addInt(int32_t value);
 	void addShort(int16_t value);
 	void addInt64(int64_t value);
-	void addString(const std::string_view s);
+	void addStringZeroEnd(const std::string_view s);
 
 	void addIntAsString(int64_t value) {
 		addValueAsString(value, "%lld");
@@ -30,7 +30,7 @@ public:
 	void addDateAsString(struct tm* pTime);
 	void addDateTimeAsString(struct tm* pTime);
 
-	void addStringAndLength(const std::string_view s);
+	void addString(const std::string_view s);
 	void addChar(char c);
 
 	void flush();
