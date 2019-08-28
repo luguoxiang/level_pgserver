@@ -40,29 +40,6 @@ void buildPlanForShowTables(const ParseNode* pNode) {
 	Tools::pushPlan(new ShowTables());
 }
 
-void buildPlanForReadFile(const ParseNode* pNode) {
-	ReadFilePlan* pValuePlan = new ReadFilePlan(
-			pNode->getChild(0)->m_sValue, //path
-			pNode->getChild(3)->m_sValue); //seperator
-	Tools::pushPlan(pValuePlan);
-
-	auto pTable = pNode->getChild(1);
-	assert(pTable && pTable->m_type == NodeType::NAME);
-
-	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
-			pTable->m_sValue);
-	if (pTableInfo == nullptr) {
-		PARSE_ERROR("Table ", pTable->m_sValue, " does not exist!");
-	}
-
-	auto pColumn = pNode->getChild(2);
-	std::vector<const DBColumnInfo*> columns;
-	pTableInfo->getDBColumns(pColumn, columns);
-	for (auto p: columns) {
-		pValuePlan->addColumn(p);
-	}
-}
-
 void buildPlanForFileSelect(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 7);
 

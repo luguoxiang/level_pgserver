@@ -153,7 +153,7 @@ static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode* pTable)
 %type <pNode> table_factor
 %type <pNode> sort_list opt_asc_desc
 %type <pNode> sql_stmt stmt
-%type <pNode> insert_stmt load_stmt opt_col_names value_list 
+%type <pNode> insert_stmt opt_col_names value_list 
 
 %type <pNode> column_list row_value
 %type <pNode> update_stmt update_asgn_list 
@@ -195,7 +195,6 @@ get_stmt: select_stmt {$$ = $1;}
 
 stmt: get_stmt {$$ = $1;}
 	| insert_stmt { $$ = $1;}
-	| load_stmt { $$ = $1;}	
 	| update_stmt {$$ = $1;}
 	| delete_stmt {$$ = $1;}
 	;
@@ -368,24 +367,7 @@ workload_stmt:WORKLOAD
 		$$->m_fnBuildPlan = buildPlanForWorkload;	
 	}
  	;
- 	
-load_stmt: LOAD DATA INFILE STRING INTO TABLE table_factor opt_col_names FIELDS TERMINATED BY STRING
-	{
-		ParseNode* pTable = $7;
-		auto builder = getPlanBuilder(pResult, pTable);
-		if(builder.m_pfnInsert == nullptr)
-		{
-			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
-			YYERROR;
-		}
 
-		ParseNode* pFileNode = pResult->newParentNode( "FileNode", @$.first_column, @$.last_column, { $4, pTable, $8, $12 });
-		pFileNode->m_fnBuildPlan = buildPlanForReadFile;	
-
-		$$ = pResult->newParentNode( "Loadtmt", @$.first_column, @$.last_column, { pTable, $8, pFileNode });
-		$$->m_fnBuildPlan = builder.m_pfnInsert;
-	}
-	;
 	
 opt_col_names: /* empty */{$$ = nullptr;}
 	| '(' column_list ')' {

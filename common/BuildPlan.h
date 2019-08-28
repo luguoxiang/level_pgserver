@@ -18,5 +18,4 @@ extern void buildPlanForUnionAll(const ParseNode* pNode);
 extern void buildPlanForDesc(const ParseNode* pNode);
 extern void buildPlanForWorkload(const ParseNode* pNode);
 extern void buildPlanForShowTables(const ParseNode* pNode);
-extern void buildPlanForReadFile(const ParseNode* pNode);
 
