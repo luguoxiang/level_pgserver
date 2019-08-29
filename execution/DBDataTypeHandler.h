@@ -9,6 +9,7 @@
 
 class DBDataTypeHandler {
 public:
+	DBDataTypeHandler(const std::string& name) : m_name(name) {};
 	virtual ~DBDataTypeHandler() {}
 	virtual size_t getSize(const ExecutionResult& result) = 0;
 	virtual size_t getSize(const std::byte* pData) = 0;
@@ -31,8 +32,11 @@ public:
 		EXECUTION_ERROR("Unknown data type: ", GetTypeName(type));
 		return nullptr;
 	}
+	std::string getName() {
+		return m_name;
+	}
 private:
 	static std::map<DBDataType, std::unique_ptr<DBDataTypeHandler>> m_typeHandlers;
-
+	const std::string m_name;
 };
 

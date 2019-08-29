@@ -9,17 +9,16 @@ namespace {
 template<typename Type>
 class IntDBDataTypeHandler: public DBDataTypeHandler {
 private:
-	void setValue(int64_t value, ExecutionResult& result) {
+	void checkValue(int64_t value) {
 		static_assert(std::numeric_limits<Type>::is_signed);
 
-		if (value >= std::numeric_limits<Type>::min() &&
-		               value <= std::numeric_limits<Type>::max() ){
-			result.setInt(value);
-		} else {
+		if (value < std::numeric_limits<Type>::min() ||
+		               value > std::numeric_limits<Type>::max() ){
 			PARSE_ERROR("integer ", value, " exceed data type range");
 		}
 	}
 public:
+	IntDBDataTypeHandler(const std::string& name) : DBDataTypeHandler(name) {};
 	size_t getSize(const ExecutionResult& result) override {
 		return sizeof(Type);
 	}
@@ -33,14 +32,18 @@ public:
 		result.setInt(v);
 	}
 	void write(std::byte* pData, const ExecutionResult& result) override {
-		*reinterpret_cast<Type*>(pData) = result.getInt();
+		int64_t value = result.getInt();
+		checkValue(value);
+		*reinterpret_cast<Type*>(pData) = value;
 	}
 
 	void fromString(std::string_view s, ExecutionResult& result) override{
 		if(s.length() == 0) {
 			result.setInt(0);
 		}else {
-			setValue(Tools::toInt(s), result);
+			int64_t value = Tools::toInt(s);
+			checkValue(value);
+			result.setInt(value);
 		}
 	}
 
@@ -60,7 +63,8 @@ public:
 		default:
 			PARSE_ERROR("wrong const value type %d");
 		}
-		setValue(value, result);
+		checkValue(value);
+		result.setInt(value);
 	}
 	void div(ExecutionResult& result, size_t value) override {
 		auto v = result.getInt();
@@ -68,7 +72,9 @@ public:
 		result.setInt(v);
 	}
 	void add(ExecutionResult& result, const ExecutionResult& add) override {
-		result.setInt(result.getInt() + add.getInt());
+		int64_t value = result.getInt() + add.getInt();
+		checkValue(value);
+		result.setInt(value);
 
 	}
 	int compare(const ExecutionResult& a, const ExecutionResult& b) override {
@@ -87,15 +93,14 @@ public:
 template<typename Type>
 class FloatDBDataTypeHandler: public DBDataTypeHandler {
 private:
-	void setValue(double value, ExecutionResult& result) {
+	void checkValue(double value) {
 		static_assert(! std::numeric_limits<Type>::is_integer );
-		if( (value > 0 ? value  : -value) <= std::numeric_limits<Type>::max() ) {
-			result.setDouble(value);
-		} else {
+		if( (value > 0 ? value  : -value) > std::numeric_limits<Type>::max() ) {
 			PARSE_ERROR("float ", value, " exceed data type range");
 		}
 	}
 public:
+	FloatDBDataTypeHandler(const std::string& name) : DBDataTypeHandler(name) {};
 	size_t getSize(const ExecutionResult& result) override {
 		return sizeof(Type);
 	}
@@ -109,14 +114,18 @@ public:
 		result.setDouble(v);
 	}
 	void write(std::byte* pData, const ExecutionResult& result) override {
-		*reinterpret_cast<Type*>(pData) = result.getDouble();
+		double value = result.getDouble();
+		checkValue(value);
+		*reinterpret_cast<Type*>(pData) = value;
 	}
 
 	void fromString(std::string_view s, ExecutionResult& result) override{
 		if(s.length() == 0) {
 			result.setDouble(0);
 		}else {
-			setValue(Tools::toDouble(s), result);
+			double value = Tools::toDouble(s);
+			checkValue(value);
+			result.setDouble(value);
 		}
 	}
 
@@ -139,7 +148,8 @@ public:
 		default:
 			PARSE_ERROR("wrong const value type ", pValue->m_sExpr);
 		}
-		setValue(value, result);
+		checkValue(value);
+		result.setDouble(value);
 	}
 
 	void div(ExecutionResult& result, size_t value) override {
@@ -148,7 +158,9 @@ public:
 		result.setDouble(v);
 	}
 	void add(ExecutionResult& result, const ExecutionResult& add) override {
-		result.setDouble(result.getDouble() + add.getDouble());
+		double value = result.getDouble() + add.getDouble();
+		checkValue(value);
+		result.setDouble(value);
 
 	}
 	int compare(const ExecutionResult& a, const ExecutionResult& b) override {
@@ -164,6 +176,7 @@ public:
 };
 class StringDBDataTypeHandler: public DBDataTypeHandler {
 public:
+	StringDBDataTypeHandler(const std::string& name) : DBDataTypeHandler(name) {};
 	size_t getSize(const ExecutionResult& result) override {
 		return result.getString().length() + sizeof(uint16_t);
 	}
@@ -224,6 +237,7 @@ public:
 
 class DatetimeDBDataTypeHandler: public IntDBDataTypeHandler<int64_t> {
 public:
+	DatetimeDBDataTypeHandler(const std::string& name) : IntDBDataTypeHandler<int64_t>(name) {};
 	void fromString(std::string_view s, ExecutionResult& result) override{
 		if (int64_t iValue = parseTime(s); iValue > 0) {
 			result.setInt(iValue);
@@ -255,22 +269,22 @@ public:
 };
 void DBDataTypeHandler::init() {
 	m_typeHandlers[DBDataType::INT8] = std::make_unique<
-			IntDBDataTypeHandler<int8_t>>();
+			IntDBDataTypeHandler<int8_t>>("int8");
 	m_typeHandlers[DBDataType::INT16] = std::make_unique<
-			IntDBDataTypeHandler<int16_t>>();
+			IntDBDataTypeHandler<int16_t>>("int16");
 	m_typeHandlers[DBDataType::INT32] = std::make_unique<
-			IntDBDataTypeHandler<int32_t>>();
+			IntDBDataTypeHandler<int32_t>>("int32");
 	m_typeHandlers[DBDataType::INT64] = std::make_unique<
-			IntDBDataTypeHandler<int64_t>>();
+			IntDBDataTypeHandler<int64_t>>("int64");
 
-	m_typeHandlers[DBDataType::DATE] = std::make_unique<DatetimeDBDataTypeHandler>();
-	m_typeHandlers[DBDataType::DATETIME] =std::make_unique<DatetimeDBDataTypeHandler>();
+	m_typeHandlers[DBDataType::DATE] = std::make_unique<DatetimeDBDataTypeHandler>("date");
+	m_typeHandlers[DBDataType::DATETIME] =std::make_unique<DatetimeDBDataTypeHandler>("datetime");
 
 	m_typeHandlers[DBDataType::FLOAT] = std::make_unique<
-			FloatDBDataTypeHandler<float>>();
+			FloatDBDataTypeHandler<float>>("float");
 	m_typeHandlers[DBDataType::DOUBLE] = std::make_unique<
-			FloatDBDataTypeHandler<double>>();
+			FloatDBDataTypeHandler<double>>("double");
 
-	m_typeHandlers[DBDataType::STRING] = std::make_unique<StringDBDataTypeHandler>();
-	m_typeHandlers[DBDataType::BYTES] =  std::make_unique<StringDBDataTypeHandler>();
+	m_typeHandlers[DBDataType::STRING] = std::make_unique<StringDBDataTypeHandler>("varchar");
+	m_typeHandlers[DBDataType::BYTES] =  std::make_unique<StringDBDataTypeHandler>("bytes");
 }

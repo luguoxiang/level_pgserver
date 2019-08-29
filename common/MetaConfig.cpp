@@ -14,6 +14,7 @@ MetaConfig::MetaConfig() {
 	m_dataTypeMap["float"] = DBDataType::FLOAT;
 	m_dataTypeMap["double"] = DBDataType::DOUBLE;
 	m_dataTypeMap["varchar"] = DBDataType::STRING;
+	m_dataTypeMap["bytes"] = DBDataType::BYTES;
 	m_dataTypeMap["datetime"] = DBDataType::DATETIME;
 	m_dataTypeMap["date"] = DBDataType::DATE;
 }
