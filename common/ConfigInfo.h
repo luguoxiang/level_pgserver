@@ -51,8 +51,8 @@ struct DBColumnInfo {
 
 	std::string m_name;
 	DBDataType m_type;
-	int m_iLen = 0;
-	int m_iIndex = 0;
+	size_t m_iLen = 0;
+	size_t m_iIndex = 0;
 	int m_iKeyIndex = -1;
 };
 

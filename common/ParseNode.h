@@ -77,17 +77,18 @@ using BuildPlanFunc = void (*)(const ParseNode* pNode);
 class ParseNode {
 public:
 	ParseNode(NodeType type,
+			Operation op,
 			const std::string_view sExpr,
 			size_t childNum,
 			const ParseNode** children);
 
-	NodeType m_type;
+	const NodeType m_type;
 	std::string_view m_sValue;
 	int64_t m_iValue = 0;
-	Operation m_op = Operation::NONE;
+	const Operation m_op;
 
 	//string view on ParseResult.m_sSql
-	std::string_view m_sExpr;
+	const std::string_view m_sExpr;
 
 	BuildPlanFunc m_fnBuildPlan;
 
@@ -97,7 +98,20 @@ public:
     	assert(i < m_iChildNum);
     	return m_children[i];
     }
-
+    bool isConst() const {
+    	switch(m_type) {
+    	case NodeType::INT:
+    	case NodeType::STR:
+    	case NodeType::BINARY:
+    	case NodeType::DATE:
+    	case NodeType::FLOAT:
+    	case NodeType::BOOL:
+    	case NodeType::PARAM:
+    		return true;
+    	default:
+    		return false;
+    	}
+    }
 private:
     const ParseNode** m_children;
     size_t m_iChildNum;

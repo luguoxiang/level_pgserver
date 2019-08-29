@@ -28,23 +28,80 @@ void LevelDBScanPlan::end() {
 
 }
 
-void LevelDBScanPlan::addPredicate(const ParseNode* pPredicate) {
+bool LevelDBScanPlan::addPredicate(const ParseNode* pPredicate, std::vector<const ParseNode*>& unsolved) {
 	assert(pPredicate);
 	if (pPredicate->m_type != NodeType::OP) {
-		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
+		unsolved.push_back(pPredicate);
+		return false;
 	}
 
 	auto op = pPredicate->m_op;
 	if (op == Operation::AND) {
+		bool valid = false;
 		for (size_t i=0;i<pPredicate->children(); ++i ) {
-			addPredicate(pPredicate->getChild(i));
+			valid = addPredicate(pPredicate->getChild(i), unsolved) || valid;
 		}
-		return;
+		return valid;
 	}
 	assert(op != Operation::OR);
+
+	if(!addSimplePredicate(pPredicate)) {
+		unsolved.push_back(pPredicate);
+		return false;
+	}
+	return true;
+}
+
+bool LevelDBScanPlan::addSimplePredicate(const ParseNode* pPredicate) {
 	if (pPredicate->children() != 2) {
-		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
+		return false;
+	}
+	auto op = pPredicate->m_op;
+	auto pLeft = pPredicate->getChild(0);
+	auto pRight = pPredicate->getChild(1);
+
+	const DBColumnInfo* pKeyColumn = nullptr;
+	const ParseNode* pValue = nullptr;
+	if(pLeft->m_type == NodeType::NAME) {
+		pKeyColumn = m_pTable->getColumnByName(pLeft->m_sValue);
+		pValue = pRight;
+		switch (op) {
+		case Operation::COMP_EQ:
+		case Operation::COMP_LE:
+		case Operation::COMP_LT:
+		case Operation::COMP_GT:
+		case Operation::COMP_GE:
+			break;
+		default:
+			return false;
+		}
+	} else if (pRight->m_type == NodeType::NAME) {
+		pKeyColumn = m_pTable->getColumnByName(pRight->m_sValue);
+		pValue = pLeft;
+		switch (op) {
+		case Operation::COMP_EQ:
+			break;
+		case Operation::COMP_LE:
+			op = Operation::COMP_GE;
+			break;
+		case Operation::COMP_LT:
+			op = Operation::COMP_GT;
+			break;
+		case Operation::COMP_GT:
+			op = Operation::COMP_LT;
+			break;
+		case Operation::COMP_GE:
+			op = Operation::COMP_LE;
+			break;
+		default:
+			return false;
+		}
+	} else {
+		return false;
+	}
+	if(pKeyColumn->m_iKeyIndex < 0 || !pValue->isConst()) {
+		return false;
 	}
 
-
+	return true;
 }

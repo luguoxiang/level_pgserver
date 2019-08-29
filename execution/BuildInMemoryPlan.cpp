@@ -65,7 +65,7 @@ void buildPlanForProjection(const ParseNode* pNode) {
 					"select * is not supported in current projection context");
 		}
 		for (auto& column : columns) {
-			ParseNode node(NodeType::NAME, column, 0, nullptr);
+			ParseNode node(NodeType::NAME,  Operation::NONE, column, 0, nullptr);
 			node.m_sValue = column;
 			pProjPlan->project(&node, column);
 		}
@@ -181,8 +181,7 @@ struct PredicateAnalyzer {
 			} else {
 				for (size_t i = 0; i < left.size(); ++i) {
 					for (size_t j = 0; j < right.size(); ++j) {
-						auto pOp = result.newParseNode(NodeType::OP, "", { left[i], right[j] });
-						pOp->m_op = Operation::AND;
+						auto pOp = result.newExprNode(Operation::AND, "", { left[i], right[j] });
 						operators.push_back(pOp);
 					}
 				}

@@ -26,12 +26,13 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 		m_columnMap[pColumn->m_name] = pColumn;
 		std::string sLen = matches[3];
 		if (sLen.length() > 0) {
-			pColumn->m_iLen = atoi(sLen.c_str() + 1);
-			if (pColumn->m_iLen <= 0) {
+			auto len = atoi(sLen.c_str() + 1);
+			if ( len <= 0) {
 				CONFIG_ERROR("Illegal type length ", sLen);
 			}
+			pColumn->m_iLen = len;
 		} else {
-			pColumn->m_iLen = -1;
+			pColumn->m_iLen = 0;
 		}
 	} else {
 		 CONFIG_ERROR("Illegal attribute value ", sValue);

@@ -89,7 +89,7 @@ USING {return USING;}
 
 [0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	try {
 		pNode->m_iValue = std::stol(yytext);
@@ -106,7 +106,7 @@ USING {return USING;}
 [0-9]+"."[0-9]*E[-+]?[0-9]+ |
 "."[0-9]+E[-+]?[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	pNode->m_sValue = pNode->m_sExpr;
 	return APPROXNUM;
@@ -114,21 +114,21 @@ USING {return USING;}
 
 TRUE {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode(NodeType::BOOL, "true");
+	ParseNode* pNode = pResult->newSimpleNode(NodeType::BOOL, "true");
 	pNode->m_iValue = 1;
 	yylval->pNode = pNode;
 	return BOOL;
 }
 UNKNOWN {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::BOOL,"unknown");
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::BOOL,"unknown");
 	pNode->m_iValue = -1;
 	yylval->pNode = pNode;
 	return BOOL;
 }
 FALSE {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::BOOL,"false");
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::BOOL,"false");
 	pNode->m_iValue = 0;
 	yylval->pNode = pNode;
 	return BOOL;
@@ -136,7 +136,7 @@ FALSE {
 
 '(\\.|''|[^'\n])*'|\"(\\.|\"\"|[^"\n])*\" {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::STR, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::STR, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 
 	//remove first and last quote charactors
@@ -181,7 +181,7 @@ FALSE {
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::BINARY, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::BINARY, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 	
 	size_t len =  pNode->m_sExpr.length();
@@ -206,7 +206,7 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 
 D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::DATE,yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE,yylloc->first_column, yylloc->last_column);
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
@@ -220,7 +220,7 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 }
 D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::DATE, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE, yylloc->first_column, yylloc->last_column);
 
 	pNode->m_iValue = parseTime(yytext + 2);
 	if(pNode->m_iValue == 0)
@@ -248,7 +248,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 [A-Za-z_][A_Za-z0-9_]* {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::NAME, yylloc->first_column, yylloc->last_column);
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::NAME, yylloc->first_column, yylloc->last_column);
 	pNode->m_sValue = pNode->m_sExpr;
 	yylval->pNode = pNode;
 	return NAME;
@@ -256,7 +256,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 
 $[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
-	ParseNode* pNode = pResult->newParseNode( NodeType::PARAM, "unbound");
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::PARAM, "unbound");
 	yylval->pNode = pNode;
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)

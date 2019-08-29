@@ -220,7 +220,7 @@ expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column,
 	| '-' expr %prec UMINUS {
 		if($2->m_type == NodeType::INT)
 		{
-			$2 = pResult->newParseNode(NodeType::INT,@$.first_column, @$.last_column);
+			$2 = pResult->newSimpleNode(NodeType::INT,@$.first_column, @$.last_column);
 			$2->m_iValue = - $2->m_iValue;
 			$$ = $2;
 		}

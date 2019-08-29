@@ -77,7 +77,7 @@ void ShowColumns::getResult(size_t index, ExecutionResult& result) {
 		}
 		break;
 	case 3:
-		if (pColumn->m_iLen < 0) {
+		if (pColumn->m_iLen == 0) {
 			result.setInt(-1);
 		} else {
 			result.setInt(pColumn->m_iLen);

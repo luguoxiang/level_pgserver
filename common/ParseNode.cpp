@@ -47,12 +47,19 @@ void printTree(const ParseNode* pRoot, int level) {
 	}
 }
 
-ParseNode::ParseNode(NodeType type, const std::string_view sExpr,
-		size_t childNum, const ParseNode** children) :
-		m_type(type), m_sExpr(sExpr), m_fnBuildPlan(buildPlanDefault), m_iChildNum(
-				childNum), m_children(children) {
+ParseNode::ParseNode(NodeType type,
+		Operation op,
+		const std::string_view sExpr,
+		size_t childNum,
+		const ParseNode** children) :
+				m_type(type),
+				m_sExpr(sExpr),
+				m_fnBuildPlan(buildPlanDefault),
+				m_iChildNum(childNum),
+				m_children(children), m_op(op) {
 
 }
+
 
 int64_t parseTime(std::string_view sTime) {
 	std::tm time = {};

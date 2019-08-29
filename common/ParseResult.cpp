@@ -43,11 +43,14 @@ ParseNode* ParseResult::merge(const ParseNode* pNode, const std::string sNewName
 	std::vector<const ParseNode*> new_children;
 
 	if (collect(pNode, new_children, sRemove)) {
-		auto pResult = newParseNode(pNode->m_type, pNode->m_sExpr, new_children.size(), new_children.begin(), new_children.end());
+		auto pResult = newParseNode(pNode->m_type, Operation::NONE, pNode->m_sExpr, new_children);
 		pResult->m_sValue = sNewName;
 		return pResult;
 	}
-	auto pResult = newParseNode(NodeType::PARENT, pNode->m_sExpr, {pNode});
+	std::initializer_list<const ParseNode*> children = {pNode};
+
+	auto pResult = newParseNode(NodeType::PARENT, Operation::NONE, pNode->m_sExpr, children);
+
 	pResult->m_sValue = sNewName;
 	return pResult;
 }

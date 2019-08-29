@@ -2,28 +2,7 @@
 #include "execution/DBDataTypeHandler.h"
 #include "common/ParseException.h"
 
-namespace {
 
-bool checkFilter(Operation op, int n, const std::string_view sExpr) {
-	switch (op) {
-	case Operation::COMP_EQ:
-		return n == 0;
-	case Operation::COMP_NE:
-		return n != 0;
-	case Operation::COMP_LE:
-		return n <= 0;
-	case Operation::COMP_LT:
-		return n < 0;
-	case Operation::COMP_GT:
-		return n > 0;
-	case Operation::COMP_GE:
-		return n >= 0;
-	default:
-		PARSE_ERROR("Unsupported operation ", sExpr);
-		return 0;
-	}
-}
-}
 bool FilterPlan::evaluate(const PredicateInfo& info) {
 
 	ExecutionResult result1, result2;
@@ -52,7 +31,23 @@ bool FilterPlan::evaluate(const PredicateInfo& info) {
 		return pos != std::string::npos;
 	} else {
 		int n = result1.compare(result2, type);
-		return checkFilter(info.m_op, n, info.m_sExpr);
+		switch (info.m_op) {
+		case Operation::COMP_EQ:
+			return n == 0;
+		case Operation::COMP_NE:
+			return n != 0;
+		case Operation::COMP_LE:
+			return n <= 0;
+		case Operation::COMP_LT:
+			return n < 0;
+		case Operation::COMP_GT:
+			return n > 0;
+		case Operation::COMP_GE:
+			return n >= 0;
+		default:
+			PARSE_ERROR("Unsupported operation ", info.m_sExpr);
+			return 0;
+		}
 	}
 }
 bool FilterPlan::next() {
@@ -103,6 +98,12 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 	info.m_iRightIndex =  m_pPlan->addProjection(info.m_pRight);
 
 	if (info.m_iLeftIndex < 0 && info.m_iRightIndex < 0) {
+		PARSE_ERROR("Unrecognized predicate ", info.m_sExpr);
+	}
+	if(info.m_iLeftIndex < 0 && !info.m_pLeft->isConst()) {
+		PARSE_ERROR("Unrecognized predicate ", info.m_sExpr);
+	}
+	if(info.m_iRightIndex < 0 && !info.m_pRight->isConst()) {
 		PARSE_ERROR("Unrecognized predicate ", info.m_sExpr);
 	}
 	andList.push_back(info);

@@ -29,14 +29,14 @@ public:
 	virtual bool next() override;
 	virtual void end() override;
 
-	void addPredicate(const ParseNode* pNode);
+	bool addPredicate(const ParseNode* pNode, std::vector<const ParseNode*>& unsolved);
 private:
-	struct ScanRange {
-		size_t m_iNotEqualIndex;
-		std::vector<const ParseNode*> m_equals;
-		const ParseNode* m_pStart;
-		const ParseNode* m_pEnd;
-	};
+	bool addSimplePredicate(const ParseNode* pNode);
+	size_t m_iNotEqualIndex;
+	std::vector<const ParseNode*> m_equals;
+	const ParseNode* m_pStart;
+	const ParseNode* m_pEnd;
+
 	const TableInfo* m_pTable;
 
 	size_t m_iRows = 0;
