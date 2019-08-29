@@ -53,3 +53,18 @@ void LevelDBHandler::commit(LevelDBBatch& batch) {
 		EXECUTION_ERROR("Failed to write to leveldb", status.ToString());
 	}
 }
+void LevelDBIterator::seek(const std::string_view key) {
+	m_pIter->Seek(leveldb::Slice(key.data(), key.length()));
+}
+LevelDBIterator::~LevelDBIterator() {
+	m_pIter.reset(nullptr);
+	m_pDB->ReleaseSnapshot(m_options.snapshot);
+}
+LevelDBIterator* LevelDBHandler::createIterator(const std::string_view key) {
+	std::unique_ptr<LevelDBIterator> pIter(new LevelDBIterator());
+	pIter->m_options.snapshot = m_pDB->GetSnapshot();
+
+	pIter->m_pIter.reset(m_pDB->NewIterator(pIter->m_options));
+	pIter->m_pDB = m_pDB.get();
+	return pIter.release();
+}

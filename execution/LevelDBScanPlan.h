@@ -30,17 +30,29 @@ public:
 	virtual void end() override;
 
 	bool addPredicate(const ParseNode* pNode, std::vector<const ParseNode*>& unsolved);
+
+	void setDBIterator(LevelDBIteratorPtr& pIter) {
+		m_pDBIter = pIter;
+	}
 private:
 	bool addSimplePredicate(const ParseNode* pNode);
-	size_t m_iNotEqualIndex;
-	std::vector<const ParseNode*> m_equals;
-	const ParseNode* m_pStart;
-	const ParseNode* m_pEnd;
+	void doAddPredicate(const ParseNode* pNode, std::vector<const ParseNode*>& unsolved);
+
+	struct PredicateInfo {
+		const ParseNode* m_pStart = nullptr;
+		const ParseNode* m_pEnd = nullptr;
+		Operation m_startOp = Operation::NONE;
+		Operation m_endOp = Operation::NONE;
+
+		const ParseNode* m_pStartExpr = nullptr;
+		const ParseNode* m_pEndExpr = nullptr;
+	};
+	std::vector<PredicateInfo> m_predicates;
 
 	const TableInfo* m_pTable;
 
 	size_t m_iRows = 0;
 	std::unique_ptr<ExecutionBuffer> m_pBuffer;
-
+	LevelDBIteratorPtr m_pDBIter;
 
 };

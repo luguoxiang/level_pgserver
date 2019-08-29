@@ -56,13 +56,32 @@ public:
 private:
 	leveldb::WriteBatch m_batch;
 };
+class LevelDBIterator {
+	friend class LevelDBHandler;
+public:
+	~LevelDBIterator() ;
+	void seek(const std::string_view key);
+	void next() {
+		m_pIter->Next();
+	}
+	bool valid() {
+		return m_pIter->Valid();
+	}
+
+private:
+	leveldb::ReadOptions m_options;
+	std::unique_ptr<leveldb::Iterator> m_pIter;
+	leveldb::DB* m_pDB;
+};
+
+using LevelDBIteratorPtr = std::shared_ptr<LevelDBIterator>;
 
 class LevelDBHandler {
 public:
 	LevelDBHandler(const TableInfo* pTable);
 
 	void commit(LevelDBBatch& batch);
-
+	LevelDBIterator* createIterator(const std::string_view key);
 	static LevelDBHandler* getHandler(const TableInfo* pTable);
 private:
 	std::unique_ptr<leveldb::DB> m_pDB;
