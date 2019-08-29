@@ -34,7 +34,7 @@ public:
 	std::string_view getString() const {
 		switch(m_result.index()) {
 		case STRING:
-			return "";
+			return std::get < std::string > (m_result);
 		case STRING_VIEW:
 			return std::get < std::string_view > (m_result);
 		default:
