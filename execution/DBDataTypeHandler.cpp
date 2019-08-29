@@ -1,5 +1,6 @@
 #include "DBDataTypeHandler.h"
 #include "ParseTools.h"
+#include <limits>
 
 std::map<DBDataType, std::unique_ptr<DBDataTypeHandler>> DBDataTypeHandler::m_typeHandlers;
 
@@ -7,6 +8,17 @@ namespace {
 
 template<typename Type>
 class IntDBDataTypeHandler: public DBDataTypeHandler {
+private:
+	void setValue(int64_t value, ExecutionResult& result) {
+		static_assert(std::numeric_limits<Type>::is_signed);
+
+		if (value >= std::numeric_limits<Type>::min() &&
+		               value <= std::numeric_limits<Type>::max() ){
+			result.setInt(value);
+		} else {
+			PARSE_ERROR("integer ", value, " exceed data type range");
+		}
+	}
 public:
 	size_t getSize(const ExecutionResult& result) override {
 		return sizeof(Type);
@@ -28,7 +40,7 @@ public:
 		if(s.length() == 0) {
 			result.setInt(0);
 		}else {
-			result.setInt(Tools::toInt(s));
+			setValue(Tools::toInt(s), result);
 		}
 	}
 
@@ -48,7 +60,7 @@ public:
 		default:
 			PARSE_ERROR("wrong const value type %d");
 		}
-		result.setInt(value);
+		setValue(value, result);
 	}
 	void div(ExecutionResult& result, size_t value) override {
 		auto v = result.getInt();
@@ -74,6 +86,15 @@ public:
 
 template<typename Type>
 class FloatDBDataTypeHandler: public DBDataTypeHandler {
+private:
+	void setValue(double value, ExecutionResult& result) {
+		static_assert(! std::numeric_limits<Type>::is_integer );
+		if( (value > 0 ? value  : -value) <= std::numeric_limits<Type>::max() ) {
+			result.setDouble(value);
+		} else {
+			PARSE_ERROR("float ", value, " exceed data type range");
+		}
+	}
 public:
 	size_t getSize(const ExecutionResult& result) override {
 		return sizeof(Type);
@@ -95,7 +116,7 @@ public:
 		if(s.length() == 0) {
 			result.setDouble(0);
 		}else {
-			result.setDouble(Tools::toDouble(s));
+			setValue(Tools::toDouble(s), result);
 		}
 	}
 
@@ -118,7 +139,7 @@ public:
 		default:
 			PARSE_ERROR("wrong const value type %d");
 		}
-		result.setDouble(value);
+		setValue(value, result);
 	}
 
 	void div(ExecutionResult& result, size_t value) override {
