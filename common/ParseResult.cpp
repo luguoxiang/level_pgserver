@@ -1,5 +1,10 @@
 #include "ParseResult.h"
 
+constexpr int PARSE_BUFFER_SIZE = 512 * 1024;
+
+ParseResult::ParseResult() : m_sParseBuffer(PARSE_BUFFER_SIZE, ' ') {
+}
+
 char* ParseResult::alloc(size_t size)  {
 	if (m_iCurrent + size > PARSE_BUFFER_SIZE) {
 		return nullptr;

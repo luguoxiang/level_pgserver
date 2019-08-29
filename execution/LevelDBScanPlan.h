@@ -5,14 +5,13 @@
 #include "execution/BasePlan.h"
 #include "execution/ExecutionBuffer.h"
 #include "execution/LevelDBHandler.h"
-
-class LevelDBScanPlan : public SingleChildPlan
+#include "common/ParseNode.h"
+class LevelDBScanPlan : public LeafPlan
 {
 public:
-	LevelDBScanPlan(const TableInfo* pTable, ExecutionPlan* pPlan);
+	LevelDBScanPlan(const TableInfo* pTable);
 
 	virtual void explain(std::vector<std::string>& rows)override {
-		SingleChildPlan::explain(rows);
 		std::ostringstream os;
 		os << "leveldb:scan " << m_pTable->getName();
 		rows.push_back(os.str());
@@ -30,6 +29,7 @@ public:
 	virtual bool next() override;
 	virtual void end() override;
 
+	void addPredicate(const ParseNode* pNode);
 private:
 	struct ScanRange {
 		size_t m_iNotEqualIndex;

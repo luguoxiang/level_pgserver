@@ -1,4 +1,3 @@
-#include "common/SqlParser.tab.h"
 #include "common/BuildPlan.h"
 #include "common/ParseException.h"
 #include "execution/SortPlan.h"
@@ -25,7 +24,7 @@ void buildPlanForOrderBy(const ParseNode* pNode) {
 
 		assert(pChild->children() == 2);
 		const ParseNode* pColumn = pChild->getChild(0);
-		bool bAscend = (OP_CODE(pChild->getChild(1)) == ASC);
+		bool bAscend = (pChild->getChild(1)->m_op == Operation::ASC);
 		if (!pPlan->ensureSortOrder(i, pColumn->m_sValue, &bAscend)) {
 			bAlreadySorted = false;
 			break;
@@ -44,7 +43,7 @@ void buildPlanForOrderBy(const ParseNode* pNode) {
 		const ParseNode* pChild = pNode->getChild(i);
 		const ParseNode* pColumn = pChild->getChild(0);
 
-		bool bAscend = (OP_CODE(pChild->getChild(1)) == ASC);
+		bool bAscend = (pChild->getChild(1)->m_op == Operation::ASC);
 		pSort->addSortSpecification(pColumn,
 				bAscend ? SortOrder::Ascend : SortOrder::Descend);
 	}
@@ -58,7 +57,7 @@ void buildPlanForProjection(const ParseNode* pNode) {
 
 	assert(pNode && pNode->getChild(0));
 	if (pNode->getChild(0)->m_type == NodeType::INFO
-			&& pNode->getChild(0)->m_iValue == ALL_COLUMN) {
+			&& pNode->getChild(0)->m_op == Operation::ALL_COLUMNS) {
 		std::vector<std::string_view> columns;
 		pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
@@ -75,7 +74,7 @@ void buildPlanForProjection(const ParseNode* pNode) {
 	for (int i = 0; i < pNode->children(); ++i) {
 		auto pColumn = pNode->getChild(i);
 		std::string_view sAlias;
-		if (pColumn->m_type == NodeType::OP && OP_CODE(pColumn) == AS) {
+		if (pColumn->m_type == NodeType::OP && pColumn->m_op == Operation::AS) {
 			assert(pColumn->children() == 2);
 
 			sAlias = pColumn->getChild(1)->m_sValue;
@@ -169,8 +168,8 @@ struct PredicateAnalyzer {
 		if (pPredicate->m_type != NodeType::OP) {
 			PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 		}
-		switch (OP_CODE(pPredicate)) {
-		case ANDOP: {
+		switch (pPredicate->m_op) {
+		case Operation::AND: {
 			assert(pPredicate->children() == 2);
 			std::vector<const ParseNode*> left, right;
 
@@ -183,14 +182,14 @@ struct PredicateAnalyzer {
 				for (size_t i = 0; i < left.size(); ++i) {
 					for (size_t j = 0; j < right.size(); ++j) {
 						auto pOp = result.newParseNode(NodeType::OP, "", { left[i], right[j] });
-						pOp->m_iValue = ANDOP;
+						pOp->m_op = Operation::AND;
 						operators.push_back(pOp);
 					}
 				}
 			}
 			break;
 		}
-		case OR: {
+		case Operation::OR: {
 			for (size_t i = 0; i < pPredicate->children(); ++i) {
 				collectOrOperators(pPredicate->getChild(i), operators);
 			}

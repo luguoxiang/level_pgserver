@@ -1,7 +1,6 @@
 #include "ExplainPlan.h"
 #include "common/ParseException.h"
 #include "ExecutionException.h"
-#include "common/SqlParser.tab.h"
 #include "WorkThreadInfo.h"
 #include <algorithm>
 

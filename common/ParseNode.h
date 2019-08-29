@@ -23,6 +23,42 @@ enum class NodeType {
 	INFO,
 	PARAM,
 };
+
+enum class Operation {
+ NONE,
+ COMP_EQ,
+ COMP_NE,
+ COMP_LE,
+ COMP_LT,
+ COMP_GT,
+ COMP_GE,
+ LIKE,
+ IN,
+ NOT_IN,
+
+ MINUS,
+ ADD,
+ SUB,
+ DIV,
+ MUL,
+ MOD,
+
+ MEMBER,
+ AS,
+
+ AND,
+ OR,
+
+ ASC,
+ DESC,
+
+ ALL_COLUMNS,
+
+ SHOW_TABLES,
+ WORKLOAD,
+
+};
+
 constexpr int16_t PARAM_TEXT_MODE = 0;
 constexpr int16_t PARAM_BINARY_MODE = 1;
 
@@ -33,8 +69,6 @@ constexpr int SQL_SELECT_GROUPBY = 3;
 constexpr int SQL_SELECT_HAVING = 4;
 constexpr int SQL_SELECT_ORDERBY = 5;
 constexpr int SQL_SELECT_LIMIT = 6;
-
-
 
 class ParseNode;
 
@@ -49,7 +83,8 @@ public:
 
 	NodeType m_type;
 	std::string_view m_sValue;
-	int64_t m_iValue;
+	int64_t m_iValue = 0;
+	Operation m_op = Operation::NONE;
 
 	//string view on ParseResult.m_sSql
 	std::string_view m_sExpr;
@@ -68,8 +103,6 @@ private:
     size_t m_iChildNum;
 };
 
-inline int OP_CODE(const ParseNode* pNode) {return pNode->m_iValue;}
-inline int FUNC_CODE(const ParseNode* pNode) { return pNode->m_iValue;}
 
 inline void BUILD_PLAN(const ParseNode* pNode) {
 	if(pNode) pNode->m_fnBuildPlan(pNode);

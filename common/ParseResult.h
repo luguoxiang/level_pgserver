@@ -3,13 +3,13 @@
 #include "ParseNode.h"
 #include "ParseException.h"
 
-constexpr int PARSE_BUFFER_SIZE = 512 * 1024;
+
+
+
 
 class ParseResult {
 public:
-	ParseResult() {
-		m_sParseBuffer.reserve(PARSE_BUFFER_SIZE);
-	}
+	ParseResult();
 
 	std::string m_sSql;
 	void* m_scanInfo = nullptr;
@@ -71,17 +71,17 @@ public:
 		return pNode;
 	}
 
-	ParseNode* newExprNode(int value, int firstColumn,
+	ParseNode* newExprNode(Operation op, int firstColumn,
 		int lastColumn, std::initializer_list<const ParseNode*> children) {
 		ParseNode* pNode = newParseNode(NodeType::OP,firstColumn, lastColumn, children);
-		pNode->m_iValue = value;
+		pNode->m_op = op;
 		return pNode;
 	}
 
-	ParseNode* newInfoNode(int value,
+	ParseNode* newInfoNode(Operation op,
 			int firstColumn, int lastColumn) {
 		ParseNode* pNode = newParseNode(NodeType::INFO,  firstColumn, lastColumn, {});
-		pNode->m_iValue = value;
+		pNode->m_op = op;
 		return pNode;
 	}
 

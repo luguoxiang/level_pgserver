@@ -4,23 +4,22 @@
 
 namespace {
 
-bool checkFilter(int iOpCode, int n) {
-	switch (iOpCode) {
-	case COMP_EQ:
+bool checkFilter(Operation op, int n, const std::string_view sExpr) {
+	switch (op) {
+	case Operation::COMP_EQ:
 		return n == 0;
-	case COMP_NE:
+	case Operation::COMP_NE:
 		return n != 0;
-	case COMP_LE:
+	case Operation::COMP_LE:
 		return n <= 0;
-	case COMP_LT:
+	case Operation::COMP_LT:
 		return n < 0;
-	case COMP_GT:
+	case Operation::COMP_GT:
 		return n > 0;
-	case COMP_GE:
+	case Operation::COMP_GE:
 		return n >= 0;
 	default:
-		PARSE_ERROR("Unsupported operation ", iOpCode)
-		;
+		PARSE_ERROR("Unsupported operation ", sExpr);
 		return 0;
 	}
 }
@@ -48,12 +47,12 @@ bool FilterPlan::evaluate(const PredicateInfo& info) {
 	assert(!result1.isNull());
 	assert(!result2.isNull());
 
-	if (info.m_iOpCode == LIKE) {
+	if (info.m_op == Operation::LIKE) {
 		auto pos = result1.getString().find(result2.getString());
 		return pos != std::string::npos;
 	} else {
 		int n = result1.compare(result2, type);
-		return checkFilter(info.m_iOpCode, n);
+		return checkFilter(info.m_op, n, info.m_sExpr);
 	}
 }
 bool FilterPlan::next() {
@@ -82,21 +81,21 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
 
-	auto op = OP_CODE(pPredicate);
-	if (op == ANDOP) {
+	auto op = pPredicate->m_op;
+	if (op == Operation::AND) {
 		for (size_t i=0;i<pPredicate->children(); ++i ) {
 			doAddPredicate(andList, pPredicate->getChild(i));
 		}
 		return;
 	}
-	assert(op != OR);
+	assert(op != Operation::OR);
 	if (pPredicate->children() != 2) {
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
 
 	PredicateInfo info;
 	info.m_sExpr = pPredicate->m_sExpr;
-	info.m_iOpCode = OP_CODE(pPredicate);
+	info.m_op = op;
 
 	info.m_pLeft = pPredicate->getChild(0);
 	info.m_pRight = pPredicate->getChild(1);

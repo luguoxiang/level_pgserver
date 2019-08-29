@@ -207,16 +207,16 @@ expr: NAME { $$ = $1;}
 	| APPROXNUM {$$ = $1;}
 	| BOOL {$$ = $1;}
 	| PARAM {$$ = $1;}
-	| NAME '.' NAME {$$ = pResult->newExprNode( '.', @$.first_column, @$.last_column,{ $1, $3});}
+	| NAME '.' NAME {$$ = pResult->newExprNode( Operation::MEMBER, @$.first_column, @$.last_column,{ $1, $3});}
 	| ERROR {$$ = 0;YYERROR;}
 	;
 
-expr: expr '+' expr {$$ = pResult->newExprNode( '+', @$.first_column, @$.last_column, {$1, $3});}
-	| expr '-' expr {$$ = pResult->newExprNode( '-', @$.first_column, @$.last_column, { $1, $3});}
-	| expr '*' expr {$$ = pResult->newExprNode( '*', @$.first_column, @$.last_column, { $1, $3});}
-	| expr '/' expr {$$ = pResult->newExprNode( '/', @$.first_column, @$.last_column, { $1, $3});}
-	| expr '%' expr {$$ = pResult->newExprNode( '%', @$.first_column, @$.last_column, { $1, $3});}
-	| expr MOD expr {$$ = pResult->newExprNode( '%', @$.first_column, @$.last_column, { $1, $3});}
+expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column, @$.last_column, {$1, $3});}
+	| expr '-' expr {$$ = pResult->newExprNode( Operation::SUB, @$.first_column, @$.last_column, { $1, $3});}
+	| expr '*' expr {$$ = pResult->newExprNode( Operation::MUL, @$.first_column, @$.last_column, { $1, $3});}
+	| expr '/' expr {$$ = pResult->newExprNode( Operation::DIV, @$.first_column, @$.last_column, { $1, $3});}
+	| expr '%' expr {$$ = pResult->newExprNode( Operation::MOD, @$.first_column, @$.last_column, { $1, $3});}
+	| expr MOD expr {$$ = pResult->newExprNode( Operation::MOD, @$.first_column, @$.last_column, { $1, $3});}
 	| '-' expr %prec UMINUS {
 		if($2->m_type == NodeType::INT)
 		{
@@ -226,18 +226,18 @@ expr: expr '+' expr {$$ = pResult->newExprNode( '+', @$.first_column, @$.last_co
 		}
 		else
 		{
-			$$ = pResult->newExprNode( '-',@$.first_column, @$.last_column, { $2 });
+			$$ = pResult->newExprNode( Operation::MINUS,@$.first_column, @$.last_column, { $2 });
 		}
 	}
 	| '+' expr %prec UMINUS {
 		$$ = $2;
 	}
-	| expr COMP_LE expr {$$ = pResult->newExprNode( COMP_LE, @$.first_column, @$.last_column, {$1, $3});}
-	| expr COMP_LT expr {$$ = pResult->newExprNode( COMP_LT, @$.first_column, @$.last_column, { $1, $3});}
-	| expr COMP_EQ expr {$$ = pResult->newExprNode( COMP_EQ, @$.first_column, @$.last_column, { $1, $3});}
-	| expr COMP_GE expr {$$ = pResult->newExprNode( COMP_GE, @$.first_column, @$.last_column, { $1, $3});}
-	| expr COMP_GT expr {$$ = pResult->newExprNode( COMP_GT, @$.first_column, @$.last_column, { $1, $3});}
-	| expr COMP_NE expr {$$ = pResult->newExprNode( COMP_NE, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_LE expr {$$ = pResult->newExprNode( Operation::COMP_LE, @$.first_column, @$.last_column, {$1, $3});}
+	| expr COMP_LT expr {$$ = pResult->newExprNode( Operation::COMP_LT, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_EQ expr {$$ = pResult->newExprNode( Operation::COMP_EQ, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_GE expr {$$ = pResult->newExprNode( Operation::COMP_GE, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_GT expr {$$ = pResult->newExprNode( Operation::COMP_GT, @$.first_column, @$.last_column, { $1, $3});}
+	| expr COMP_NE expr {$$ = pResult->newExprNode( Operation::COMP_NE, @$.first_column, @$.last_column, { $1, $3});}
 	| expr LIKE STRING {
 		auto len =  $3->m_sValue.length();
 		if($3->m_sValue[0] != '%' || $3->m_sValue[len - 1] != '%')
@@ -246,29 +246,29 @@ expr: expr '+' expr {$$ = pResult->newExprNode( '+', @$.first_column, @$.last_co
 			YYERROR;
 		}
 		$3->m_sValue =  $3->m_sValue.substr(1, len -2);
-		$$ = pResult->newExprNode( LIKE, @$.first_column, @$.last_column, { $1, $3});
+		$$ = pResult->newExprNode( Operation::LIKE, @$.first_column, @$.last_column, { $1, $3});
 	}
-	| expr ANDOP expr {$$ = pResult->newExprNode( ANDOP, @$.first_column, @$.last_column, { $1, $3});}
-	| expr OR expr {$$ = pResult->newExprNode( OR, @$.first_column, @$.last_column, { $1, $3});}
+	| expr ANDOP expr {$$ = pResult->newExprNode( Operation::AND, @$.first_column, @$.last_column, { $1, $3});}
+	| expr OR expr {$$ = pResult->newExprNode( Operation::OR, @$.first_column, @$.last_column, { $1, $3});}
 	| '(' expr ')' { $$ = $2;}
 	;
 
 
 expr: expr IS NULLX {
-		$$ = pResult->newExprNode(COMP_EQ, @$.first_column, @$.last_column, { $1, $3}); 
+		$$ = pResult->newExprNode(Operation::COMP_EQ, @$.first_column, @$.last_column, { $1, $3}); 
 	}
 	| expr IS NOT NULLX {
-		$$ = pResult->newExprNode( COMP_NE, @$.first_column, @$.last_column, { $1, $4}); 
+		$$ = pResult->newExprNode( Operation::COMP_NE, @$.first_column, @$.last_column, { $1, $4}); 
 	}
 	;
 
 expr: expr IN '(' val_list ')' {
 		$4 = pResult->merge($4,"ValueList", "ValueList");
-		$$ = pResult->newExprNode( IN, @$.first_column, @$.last_column, { $1, $4});
+		$$ = pResult->newExprNode( Operation::IN, @$.first_column, @$.last_column, { $1, $4});
 		}
 	| expr NOT IN '(' val_list ')' { 
 		$5 = pResult->merge($5,"ValueList", "ValueList");
-		$$ = pResult->newExprNode( NOT_IN, @$.first_column, @$.last_column, { $1, $5});
+		$$ = pResult->newExprNode( Operation::NOT_IN, @$.first_column, @$.last_column, { $1, $5});
 	}
 	;
 	
@@ -349,7 +349,7 @@ insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 
 show_tables_stmt:SHOW TABLES
 	{
-		$$ = pResult->newInfoNode(  SHOW,  @$.first_column, @$.last_column);
+		$$ = pResult->newInfoNode(  Operation::SHOW_TABLES,  @$.first_column, @$.last_column);
 		$$->m_fnBuildPlan = buildPlanForShowTables;
 	}
 	;
@@ -363,7 +363,7 @@ desc_table_stmt:DESC table_factor
 
 workload_stmt:WORKLOAD
 	{
-		$$ = pResult->newInfoNode(  WORKLOAD,  @$.first_column, @$.last_column);
+		$$ = pResult->newInfoNode(  Operation::WORKLOAD,  @$.first_column, @$.last_column);
 		$$->m_fnBuildPlan = buildPlanForWorkload;	
 	}
  	;
@@ -479,9 +479,9 @@ sort_list: expr opt_asc_desc {
 		}
 	;
 
-opt_asc_desc:{$$ = pResult->newInfoNode( ASC,  @$.first_column, @$.last_column);}
-	| ASC {$$ = pResult->newInfoNode( ASC,  @$.first_column, @$.last_column);}
-	| DESC {$$ = pResult->newInfoNode( DESC,  @$.first_column, @$.last_column);}
+opt_asc_desc:{$$ = pResult->newInfoNode( Operation::ASC,  @$.first_column, @$.last_column);}
+	| ASC {$$ = pResult->newInfoNode(  Operation::ASC,  @$.first_column, @$.last_column);}
+	| DESC {$$ = pResult->newInfoNode(  Operation::DESC,  @$.first_column, @$.last_column);}
 	;
 
 opt_having:{$$ = 0;}
@@ -503,7 +503,7 @@ opt_orderby:{$$ = 0;}
 projection: expr {
 		$$ = $1; 
 	} | expr AS NAME { 
-		$$ = pResult->newExprNode( AS, @$.first_column, @$.last_column, { $1, $3 }); 
+		$$ = pResult->newExprNode( Operation::AS, @$.first_column, @$.last_column, { $1, $3 }); 
 	}
 
 select_expr_list: projection { 
@@ -513,7 +513,7 @@ select_expr_list: projection {
 		$$ = pResult->newParentNode( "ExprList", @$.first_column, @$.last_column, { $1, $3 });
 	}
 	| '*' {
-		$$ = pResult->newInfoNode( ALL_COLUMN,  @$.first_column, @$.last_column);
+		$$ = pResult->newInfoNode( Operation::ALL_COLUMNS,  @$.first_column, @$.last_column);
 	}
 	;
 

@@ -69,7 +69,7 @@ public:
 
 	struct PredicateInfo {
 		std::string m_sExpr;
-		int m_iOpCode;
+		Operation m_op;
 		int m_iLeftIndex;
 		int m_iRightIndex;
 		const ParseNode* m_pLeft;

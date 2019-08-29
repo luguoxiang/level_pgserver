@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include "common/SqlParser.tab.h"
 #include "common/ParseNode.h"
 #include "execution/WorkThreadInfo.h"
 #include "execution/ExecutionPlan.h"
