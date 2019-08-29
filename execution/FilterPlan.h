@@ -14,19 +14,19 @@ public:
 
 	virtual void explain(std::vector<std::string>& rows)override {
 		SingleChildPlan::explain(rows);
-		std::string s = "Filter ";
+		rows.push_back("Filter OR");
+
 		assert(!m_predicatesInOr.empty());
 		for (auto& pAnd: m_predicatesInOr) {
+			std::string s = "  ";
 			assert(!pAnd->empty());
 			for(auto& info : *pAnd) {
 				s.append(info.m_sExpr);
 				s.append(" and ");
 			}
 			s.erase (s.end()- 5, s.end());
-			s.append(" or ");
+			rows.push_back(s);
 		}
-		s.erase (s.end()- 4, s.end());
-		rows.push_back(s);
 	}
 
 	virtual void begin()override {
@@ -70,8 +70,8 @@ public:
 	struct PredicateInfo {
 		std::string m_sExpr;
 		int m_iOpCode;
-		size_t m_iLeftIndex;
-		size_t m_iRightIndex;
+		int m_iLeftIndex;
+		int m_iRightIndex;
 		const ParseNode* m_pLeft;
 		const ParseNode* m_pRight;
 	};

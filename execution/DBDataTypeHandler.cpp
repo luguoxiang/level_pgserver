@@ -137,7 +137,7 @@ public:
 			}
 			break;
 		default:
-			PARSE_ERROR("wrong const value type %d");
+			PARSE_ERROR("wrong const value type ", pValue->m_sExpr);
 		}
 		setValue(value, result);
 	}

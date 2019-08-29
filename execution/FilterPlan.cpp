@@ -26,6 +26,7 @@ bool checkFilter(int iOpCode, int n) {
 }
 }
 bool FilterPlan::evaluate(const PredicateInfo& info) {
+
 	ExecutionResult result1, result2;
 	DBDataType type = DBDataType::UNKNOWN;
 	if(info.m_iRightIndex >= 0) {
@@ -43,7 +44,10 @@ bool FilterPlan::evaluate(const PredicateInfo& info) {
 	if(info.m_iRightIndex < 0) {
 		DBDataTypeHandler::getHandler(type)->fromNode(info.m_pRight, result2);
 	}
-	
+
+	assert(!result1.isNull());
+	assert(!result2.isNull());
+
 	if (info.m_iOpCode == LIKE) {
 		auto pos = result1.getString().find(result2.getString());
 		return pos != std::string::npos;

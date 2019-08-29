@@ -23,10 +23,6 @@ public:
 		return m_result.index() == NULLPTR;
 	}
 
-	void setMin() {};
-
-	void setMax() {};
-
 	//Warning, if cache() is not called, return value will only be valid before next pPlan->next() call
 	std::string_view getString() const {
 		try{
@@ -36,16 +32,17 @@ public:
 				return std::get < std::string_view > (m_result);
 			}
 		} catch (const std::bad_variant_access& e) {
-			EXECUTION_ERROR("wrong DataType expect string");
+			EXECUTION_ERROR("wrong DataType expect string, got ", toString());
 		}
 	}
 	int64_t getInt() const {
 		try {
 			return std::get < int64_t > (m_result);
 		} catch (const std::bad_variant_access& e) {
-			EXECUTION_ERROR("wrong DataType expect int");
+			EXECUTION_ERROR("wrong DataType expect int, got ", toString());
 		}
 	}
+
 	double getDouble() const {
 		try {
 			if (m_result.index() == INT) {
@@ -54,7 +51,7 @@ public:
 				return std::get<double>(m_result);
 			}
 		} catch (const std::bad_variant_access& e) {
-			EXECUTION_ERROR("wrong DataType expect double");
+			EXECUTION_ERROR("wrong DataType expect double, got ", toString());
 		}
 	}
 
@@ -71,6 +68,17 @@ public:
 			std::string_view v = std::get < std::string_view > (m_result);
 			m_result = std::string(v.data(), v.length());
 		}
+	}
+	struct GetString
+	{
+	    std::string operator()(const std::nullptr_t& ) { return "null"; }
+	    std::string operator()(const std::string_view& v) { return ConcateToString("string:", v); }
+		std::string operator()(const std::string& v) { return ConcateToString("string:", v); }
+		std::string operator()(const int64_t& v) { return ConcateToString("int:", v); }
+		std::string operator()(const double& v) { return ConcateToString("double:", v); }
+	};
+	std::string toString() const{
+		return std::visit(GetString(), m_result);
 	}
 
 private:
