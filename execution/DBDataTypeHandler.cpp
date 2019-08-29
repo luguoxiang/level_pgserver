@@ -27,6 +27,14 @@ public:
 		return sizeof(Type);
 	}
 
+	void setToMin(ExecutionResult& result) override {
+		result.setInt(std::numeric_limits<Type>::min());
+	}
+
+	void setToMax(ExecutionResult& result) override {
+		result.setInt(std::numeric_limits<Type>::max());
+	}
+
 	void read(const std::byte* pData, ExecutionResult& result) override {
 		const Type v = *reinterpret_cast<const Type*>(pData);
 		result.setInt(v);
@@ -109,6 +117,14 @@ public:
 		return sizeof(Type);
 	}
 
+	void setToMin(ExecutionResult& result) override {
+		result.setDouble(-std::numeric_limits<Type>::lowest());
+	}
+
+	void setToMax(ExecutionResult& result) override {
+		result.setDouble(-std::numeric_limits<Type>::max());
+	}
+
 	void read(const std::byte* pData, ExecutionResult& result) override {
 		const Type v = *reinterpret_cast<const Type*>(pData);
 		result.setDouble(v);
@@ -178,22 +194,44 @@ class StringDBDataTypeHandler: public DBDataTypeHandler {
 public:
 	StringDBDataTypeHandler(const std::string& name) : DBDataTypeHandler(name) {};
 	size_t getSize(const ExecutionResult& result) override {
+		if(result.isMaxString()) {
+			return sizeof(uint16_t);
+		}
 		return result.getString().length() + sizeof(uint16_t);
+	}
+	void setToMin(ExecutionResult& result) override {
+		result.setStringView("");
+	}
+
+	void setToMax(ExecutionResult& result) override {
+		result.setMaxString();
 	}
 
 	virtual size_t getSize(const std::byte* pData) override {
-		return *(reinterpret_cast<const uint16_t*>(pData)) + sizeof(uint16_t);
+		size_t len = *(reinterpret_cast<const uint16_t*>(pData)) + sizeof(uint16_t);
+		if(len == std::numeric_limits<uint16_t>::max()) {
+			return sizeof(uint16_t);
+		}
+		return len;
 	}
 	void read(const std::byte* pData, ExecutionResult& result) override {
 		size_t len = *(reinterpret_cast<const uint16_t*>(pData));
+		if(len == std::numeric_limits<uint16_t>::max()) {
+			result.setMaxString();
+			return;
+		}
 		pData += sizeof(uint16_t);
 		std::string_view s(reinterpret_cast<const char*>(pData), len);
 		result.setStringView(s);
 	}
 	void write(std::byte* pData, const ExecutionResult& result) override {
+		if(result.isMaxString()) {
+			*reinterpret_cast<uint16_t*>(pData) = std::numeric_limits<uint16_t>::max();
+			return;
+		}
 		auto s = result.getString();
 		auto size = s.length();
-		if (size > std::numeric_limits < uint16_t > ::max()) {
+		if (size >= std::numeric_limits<uint16_t>::max()) {
 			EXECUTION_ERROR("too large string value");
 		}
 
@@ -229,6 +267,15 @@ public:
 		EXECUTION_ERROR("add is not supported for string");
 	}
 	int compare(const ExecutionResult& a, const ExecutionResult& b) override {
+		if( a.isMaxString()) {
+			if( b.isMaxString()) {
+				return 0;
+			} else {
+				return 1;
+			}
+		} else if( b.isMaxString()){
+			return -1;
+		}
 		return a.getString().compare(b.getString());
 	}
 };
