@@ -60,7 +60,7 @@ LevelDBIterator::~LevelDBIterator() {
 	m_pIter.reset(nullptr);
 	m_pDB->ReleaseSnapshot(m_options.snapshot);
 }
-LevelDBIterator* LevelDBHandler::createIterator(const std::string_view key) {
+LevelDBIterator* LevelDBHandler::createIterator() {
 	std::unique_ptr<LevelDBIterator> pIter(new LevelDBIterator());
 	pIter->m_options.snapshot = m_pDB->GetSnapshot();
 

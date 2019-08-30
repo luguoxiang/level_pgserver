@@ -1,27 +1,55 @@
 #include "LevelDBScanPlan.h"
 #include "ExecutionException.h"
+#include "common/ParseNodeVisitor.h"
 #include "execution/ParseTools.h"
 #include "execution/DBDataTypeHandler.h"
 #include "execution/LevelDBHandler.h"
 
-constexpr size_t SCAN_BUFFER_SIZE = 1 * 1024 * 1024;
+ScanRange::ScanRange(const TableInfo* pTable, const ParseNode* pNode, ExecutionBuffer* pBuffer)
+	: m_predicates(pTable->getKeyCount() + 1, PredicateInfo{}), m_pTable(pTable) {
+	ExprFlattenVisitor visitor(Operation::AND, std::bind(&ScanRange::visit, this, pNode));
+	visitor.visit(pNode);
 
-LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
-	: LeafPlan(PlanType::Scan), m_pTable(pTable),
-	  m_predicates(pTable->getKeyCount(), PredicateInfo{}){
-	m_pBuffer = std::make_unique<ExecutionBuffer>(SCAN_BUFFER_SIZE);
-}
-
-void LevelDBScanPlan::begin() {
-	m_iRows = 0;
-
-	size_t keyCount = m_pTable->getKeyCount();
+	bool keyInvalid = true;
+	for(size_t i=0;i<m_predicates.size();++i) {
+		if(!keyInvalid) {
+			m_predicates[i].m_op = Operation::NONE;
+			continue;
+		}
+		switch(m_predicates[i].m_op) {
+		case Operation::COMP_EQ:
+			break;
+		case Operation::COMP_GE:
+		case Operation::COMP_GT:
+			//ex. m_predicates[i] is key > x and m_predicates[i + 1] is key < y
+			if(i + 1 < m_predicates.size() && m_predicates[i + 1].isPrevEndRange()) {
+				break;
+			}
+			keyInvalid = false;
+			break;
+		case Operation::COMP_LE:
+		case Operation::COMP_LT:
+			assert(i > 0);
+			if(m_predicates[i - 1].m_op == Operation::COMP_EQ) {
+				//ex. m_predicates[i - 1] is key == x and m_predicates[i] is key < y
+				//ignore end range since
+				m_predicates[i].m_op = Operation::NONE;
+			}
+			keyInvalid = false;
+			break;
+		case Operation::NONE:
+			keyInvalid = true;
+			break;
+		default:
+			assert(0);
+		}
+	}
+	size_t keyCount = pTable->getKeyCount();
 	std::vector<ExecutionResult> startKeyResults(keyCount);
+	std::vector<ExecutionResult> endKeyResults(keyCount);
 	std::vector<DBDataType> keyTypes(keyCount);
 
-	assert(m_predicates.size() == keyCount);
-
-	bool setMin = false, setMax = false;
+	bool nextStartMax = false;
 	for(size_t i=0;i<keyCount;++i) {
 		auto pColumn = m_pTable->getColumn(i);
 		keyTypes[i] = pColumn->m_type;
@@ -29,111 +57,47 @@ void LevelDBScanPlan::begin() {
 		auto pHandler = DBDataTypeHandler::getHandler(keyTypes[i]);
 		auto& info = m_predicates[i];
 
-		if(info.m_startOp == Operation::COMP_EQ) {
-			assert(info.m_endOp == Operation::COMP_EQ);
-			//set ith key column to m_pStart, key columns has larger index should be set to
-			//minimum value to include all possible keys have same ith key column value
-			pHandler->fromNode(info.m_pStart, startKeyResults[i]);
-			setMin = true;
+		switch(info.m_op) {
+		case Operation::COMP_EQ:
+			pHandler->fromNode(info.m_pValue, startKeyResults[i]);
+			endKeyResults[i] = startKeyResults[i];
 			continue;
-		}
-		if(info.m_startOp == Operation::COMP_GE) {
+		case Operation::COMP_GE:
 			//same with equals
-			pHandler->fromNode(info.m_pStart, startKeyResults[i]);
-			setMin = true;
-			continue;
-		} else if(info.m_startOp == Operation::COMP_GT) {
-			//set ith key column to m_pStart, key columns has larger index should be set to
+			pHandler->fromNode(info.m_pValue, startKeyResults[i]);
+			break;
+		case Operation::COMP_GT:
+			//key columns has larger index should be set to
 			//maximum value to exclude all possible keys have same ith key column value
-			pHandler->fromNode(info.m_pStart, startKeyResults[i]);
-			setMax = true;
-			continue;
-		}
-
-		if(info.m_endOp ==  Operation::COMP_LE || info.m_endOp == Operation::COMP_LT) {
-			//should set current key column to minimum value to include all possible keys
-			setMin = true;
+			pHandler->fromNode(info.m_pValue, startKeyResults[i]);
+			nextStartMax = true;
+			break;
+		default:
+			if(nextStartMax) {
+				pHandler->setToMax(startKeyResults[i]);
+			} else {
+				pHandler->setToMin(startKeyResults[i]);
+			}
 			break;
 		}
-		if(setMin) {
-			assert(!setMax);
-			pHandler->setToMin(startKeyResults[i]);
-		}
-		if(setMax) {
-			assert(!setMin);
-			pHandler->setToMax(startKeyResults[i]);
-		}
-	}
-	auto [keyRow, iKeySize] = m_pBuffer->copyRow(startKeyResults, keyTypes);
-	m_pDBIter->seek(std::string_view(reinterpret_cast<const char*>(keyRow), iKeySize));
-}
-bool LevelDBScanPlan::next() {
-	if(m_iRows > 0) {
-		m_pDBIter->next();
-	}
-	if(!m_pDBIter->valid()) {
-		return false;
-	}
-	++m_iRows;
-	return true;
-}
-void LevelDBScanPlan::end() {
-	m_pDBIter = nullptr;
-}
-
-bool LevelDBScanPlan::addPredicate(const ParseNode* pPredicate, std::vector<const ParseNode*>& unsolved) {
-	doAddPredicate(pPredicate, unsolved);
-	if(m_predicates[0].m_startOp == Operation::NONE && m_predicates[0].m_endOp == Operation::NONE) {
-		return false;
-	}
-	bool keyValid = true;
-	for(size_t i=0;i<m_predicates.size();++i) {
-		auto& info = m_predicates[i];
-		if(!keyValid) {
-			info.m_startOp = Operation::NONE;
-			info.m_endOp = Operation::NONE;
-			if(info.m_pStartExpr != nullptr) {
-				unsolved.push_back(info.m_pStartExpr);
-			}
-			if(info.m_pEndExpr != nullptr && info.m_pEndExpr != info.m_pStartExpr) {
-				unsolved.push_back(info.m_pEndExpr);
-			}
-			continue;
-		}
-		if(info.m_startOp == Operation::COMP_EQ) {
-			assert(info.m_endOp == Operation::COMP_EQ && info.m_pStart != nullptr && info.m_pStart == info.m_pEnd);
+		if(m_predicates[i + 1].isPrevEndRange()) {
+			pHandler->fromNode(m_predicates[i + 1].m_pValue, endKeyResults[i]);
 		} else {
-			keyValid = false;
+			pHandler->setToMax(endKeyResults[i]);
 		}
 	}
-	return true;
+	m_sStartRow = pBuffer->copyRow(startKeyResults, keyTypes);
+
+	m_sEndRow = pBuffer->copyRow(endKeyResults, keyTypes);
 }
-void LevelDBScanPlan::doAddPredicate(const ParseNode* pPredicate, std::vector<const ParseNode*>& unsolved) {
-	assert(pPredicate);
+void ScanRange::visit(const ParseNode* pPredicate) {
 	if (pPredicate->m_type != NodeType::OP) {
-		unsolved.push_back(pPredicate);
 		return;
 	}
 
 	auto op = pPredicate->m_op;
-	if (op == Operation::AND) {
-		for (size_t i=0;i<pPredicate->children(); ++i ) {
-			doAddPredicate(pPredicate->getChild(i), unsolved);
-		}
-		return;
-	}
 	assert(op != Operation::OR);
 
-	if(!addSimplePredicate(pPredicate)) {
-		unsolved.push_back(pPredicate);
-	}
-}
-
-bool LevelDBScanPlan::addSimplePredicate(const ParseNode* pPredicate) {
-	if (pPredicate->children() != 2) {
-		return false;
-	}
-	auto op = pPredicate->m_op;
 	Operation reverseOp;
 	switch (op) {
 	case Operation::COMP_EQ:
@@ -152,48 +116,115 @@ bool LevelDBScanPlan::addSimplePredicate(const ParseNode* pPredicate) {
 		reverseOp = Operation::COMP_LE;
 		break;
 	default:
-		return false;
+		return;
 	}
 
 	auto pLeft = pPredicate->getChild(0);
 	auto pRight = pPredicate->getChild(1);
 
-	const DBColumnInfo* pKeyColumn = nullptr;
-	const ParseNode* pValue = nullptr;
 	if(pLeft->m_type == NodeType::NAME) {
-		pKeyColumn = m_pTable->getColumnByName(pLeft->m_sValue);
-		pValue = pRight;
+		setPredicateInfo(op, pLeft, pRight, pPredicate);
 	} else if (pRight->m_type == NodeType::NAME) {
-		pKeyColumn = m_pTable->getColumnByName(pRight->m_sValue);
-		pValue = pLeft;
-		op = reverseOp;
+		setPredicateInfo(reverseOp, pRight, pLeft, pPredicate);
 	} else {
-		return false;
+		return;
 	}
-	if(pKeyColumn->m_iKeyIndex < 0 || !pValue->isConst()) {
-		return false;
-	}
-	assert(pKeyColumn->m_iKeyIndex < m_predicates.size());
-	auto& predicte= m_predicates[pKeyColumn->m_iKeyIndex];
+}
 
-	if(op == Operation::COMP_EQ || op == Operation::COMP_LE || op == Operation::COMP_LT) {
-		if(predicte.m_pEnd != nullptr) {
-			assert(predicte.m_pEndExpr);
-			PARSE_ERROR("Duplicate or conflict predicates on ", pKeyColumn->m_name, ", operator:", predicte.m_pEndExpr->m_sExpr, ",", pPredicate->m_sExpr);
-		}
-		predicte.m_pEnd = pValue;
-		predicte.m_pEndExpr = pPredicate;
-		predicte.m_endOp = op;
+void ScanRange::setPredicateInfo(Operation op, const ParseNode* pKey, const ParseNode* pValue, const ParseNode* pPredicate) {
+	if(!pValue->isConst()) {
+		return;
 	}
-	if(op == Operation::COMP_EQ || op == Operation::COMP_GT || op == Operation::COMP_GE) {
-		if(predicte.m_pStart != nullptr) {
-			assert(predicte.m_pStartExpr);
-			PARSE_ERROR("Duplicate or conflict predicates on ", pKeyColumn->m_name, ", operator:", predicte.m_pStartExpr->m_sExpr, ",", pPredicate->m_sExpr);
-		}
-		predicte.m_pStart = pValue;
-		predicte.m_pStartExpr = pPredicate;
-		predicte.m_startOp = op;
+	auto pKeyColumn = m_pTable->getColumnByName(pKey->m_sValue);
+	if(pKeyColumn->m_iKeyIndex < 0) {
+		return;
 	}
 
+	assert(pKeyColumn->m_iKeyIndex + 1 < m_predicates.size());
+
+	//it is ok to ignore some predicates, since we have FilterPlan to check all predicates
+	PredicateInfo* pInfo;
+	switch(op) {
+	case Operation::COMP_EQ:
+		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex;
+		if(pInfo->m_op == Operation::COMP_LE || pInfo->m_op == Operation::COMP_LT) {
+			// <,<= for index - 1 is set to index, it will overwrite = at index
+			// since it make any key search at index invalid
+			return;
+		}
+		break;
+	case Operation::COMP_GT:
+		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex;
+		if(pInfo->m_op == Operation::COMP_GE) {
+			//> can overwrite >=, since it has smaller scan range
+			break;
+		}else if(pInfo->m_op != Operation::NONE) {
+			return;
+		}
+		break;
+	case Operation::COMP_GE:
+		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex;
+		if(pInfo->m_op != Operation::NONE) {
+			return;
+		}
+		break;
+	case Operation::COMP_LE:
+		// <= at index is set to index + 1, this will overwrite >, >=,= at index + 1
+		// since <= at index make any key search at index + 1 invalid
+		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex + 1;
+		if(pInfo->m_op == Operation::COMP_LT) {
+			//<= can not overwrite <, since it has larger scan range
+			return;
+		}
+		break;
+	case Operation::COMP_LT:
+		// < at index is set to index + 1, this will overwrite >, >=,= at index + 1
+		// since < at index make any key search at index + 1 invalid
+		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex + 1;
+		break;
+	default:
+		return;
+	}
+	pInfo->m_pKeyColumn = pKeyColumn;
+	pInfo->m_pValue = pValue;
+	pInfo->m_op = op;
+	pInfo->m_sExpr = pPredicate->m_sExpr;
+}
+constexpr size_t SCAN_BUFFER_SIZE = 1 * 1024 * 1024;
+
+LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
+	: LeafPlan(PlanType::Scan), m_pTable(pTable){
+	m_pBuffer = std::make_unique<ExecutionBuffer>(SCAN_BUFFER_SIZE);
+}
+
+int LevelDBScanPlan::addProjection(const ParseNode* pColumn) {
+	return 0;
+}
+
+void LevelDBScanPlan::begin() {
+	m_iRows = 0;
+	m_pDBIter.reset(LevelDBHandler::getHandler(m_pTable)->createIterator());
+
+
+}
+bool LevelDBScanPlan::next() {
+	++m_iRows;
+	return true;
+}
+void LevelDBScanPlan::end() {
+	m_pDBIter = nullptr;
+}
+
+bool LevelDBScanPlan::addPredicate(const ParseNode* pPredicate) {
+	if(!m_scanRanges.empty() && m_scanRanges.front()->isFullScan() ){
+		return false;
+	}
+	auto pRange = std::make_shared<ScanRange>(m_pTable, pPredicate, m_pBuffer.get());
+	if(pRange->isFullScan()){
+		m_scanRanges.clear();
+		m_scanRanges.push_back(pRange);
+		return false;
+	}
+	m_scanRanges.push_back(pRange);
 	return true;
 }

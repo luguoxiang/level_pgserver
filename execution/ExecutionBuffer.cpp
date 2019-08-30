@@ -14,7 +14,7 @@ int ExecutionBuffer::compare(Row pData1, Row pData2, size_t index, const std::ve
 	return row1.compare(row2, index);
 }
 
-std::pair<ExecutionBuffer::Row, size_t>
+std::string_view
 ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types) {
 	DataRow row(nullptr, types);
 	size_t rowSize = row.computeSize(results);
@@ -24,7 +24,7 @@ ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std:
 
 	row.copy(results, pData);
 
-	return std::pair<ExecutionBuffer::Row, size_t>(pData, rowSize);
+	return std::string_view((const char*)pData, rowSize);
 }
 
 std::byte* ExecutionBuffer::doAlloc(size_t size) {

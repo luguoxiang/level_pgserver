@@ -81,7 +81,7 @@ public:
 	LevelDBHandler(const TableInfo* pTable);
 
 	void commit(LevelDBBatch& batch);
-	LevelDBIterator* createIterator(const std::string_view key);
+	LevelDBIterator* createIterator();
 	static LevelDBHandler* getHandler(const TableInfo* pTable);
 private:
 	std::unique_ptr<leveldb::DB> m_pDB;

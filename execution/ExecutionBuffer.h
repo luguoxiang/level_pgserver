@@ -20,7 +20,7 @@ public:
 
 	using Row = std::byte*;
 
-	std::pair<Row, size_t> copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types);
+	std::string_view copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types);
 
 	void purge() {
 		m_iUsed = 0;

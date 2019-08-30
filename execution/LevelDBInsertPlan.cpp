@@ -53,11 +53,9 @@ bool LevelDBInsertPlan::next() {
 		EXECUTION_ERROR("Missing keys: have ", keyIndexSet.size(), ", expect ", m_pTable->getKeyCount());
 	}
 
-	auto [keyRow, iKeySize] = m_pBuffer->copyRow(keyResults, keyTypes);
-	auto [valueRow, iValueSize] = m_pBuffer->copyRow(valueResults, valueTypes);
-	m_batch.insert(
-			std::string_view(reinterpret_cast<const char*>(keyRow), iKeySize),
-			std::string_view(reinterpret_cast<const char*>(valueRow), iValueSize));
+	auto keyRow = m_pBuffer->copyRow(keyResults, keyTypes);
+	auto valueRow = m_pBuffer->copyRow(valueResults, valueTypes);
+	m_batch.insert(keyRow, valueRow);
 	++m_iInsertRows;
 	return true;
 }

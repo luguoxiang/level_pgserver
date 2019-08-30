@@ -26,9 +26,9 @@ void SortPlan::begin() {
 			m_pPlan->getResult(iSubIndex, results[i]);
 			assert(!results[i].isNull());
 		}
-		auto [row, size] = m_pBuffer->copyRow(results, m_types);
+		auto row = m_pBuffer->copyRow(results, m_types);
 
-		m_rows.push_back(row);
+		m_rows.push_back((ExecutionBuffer::Row)row.data());
 	}
 	m_pPlan->end();
 	auto comp =
