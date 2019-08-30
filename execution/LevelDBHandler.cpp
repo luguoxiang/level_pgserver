@@ -53,7 +53,7 @@ void LevelDBHandler::commit(LevelDBBatch& batch) {
 		EXECUTION_ERROR("Failed to write to leveldb", status.ToString());
 	}
 }
-void LevelDBIterator::seek(DataRow& key) {
+void LevelDBIterator::seek(const DataRow& key) {
 	m_pIter->Seek(leveldb::Slice(key.data(), key.size()));
 }
 LevelDBIterator::~LevelDBIterator() {

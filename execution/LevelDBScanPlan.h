@@ -93,7 +93,7 @@ public:
 	}
 
 	virtual int getResultColumns() override	{
-		return m_columnValues.size() + m_predicateProjections.size() + 1;
+		return m_columnValues.size()  + 1;
 	}
 
 	virtual void begin() override;
@@ -108,14 +108,13 @@ private:
 	using ScanRangePtr = std::unique_ptr<ScanRange>;
 	std::list<ScanRangePtr> m_scanRanges;
 
-	std::vector<KeyPredicateInfo*> m_predicateProjections;
-	std::string_view m_sRowKey;
 	std::vector<bool> m_projection;
 	std::vector<ExecutionResult> m_columnValues;
 
 	std::vector<DBDataType> m_keyTypes;
 	const TableInfo* m_pTable;
 
+	DataRow m_currentRow;
 	size_t m_iRows = 0;
 	std::unique_ptr<ExecutionBuffer> m_pBuffer;
 	LevelDBIteratorPtr m_pDBIter;

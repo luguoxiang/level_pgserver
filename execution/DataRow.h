@@ -8,7 +8,9 @@
 
 class DataRow {
 public:
-	DataRow(const std::byte* pData, const std::vector<DBDataType>& types, size_t iSize = 0);
+	DataRow(const std::byte* pData, const std::vector<DBDataType>& types, size_t iSize);
+
+	DataRow(const std::vector<DBDataType>& types):DataRow{nullptr,types, 0} {};
 
 	void getResult(size_t index, ExecutionResult& result) const ;
 

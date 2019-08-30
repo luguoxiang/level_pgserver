@@ -1,6 +1,5 @@
 #include "LevelDBScanPlan.h"
 #include "ExecutionException.h"
-#include "common/ParseNodeVisitor.h"
 #include "execution/ParseTools.h"
 #include "execution/DBDataTypeHandler.h"
 #include "execution/LevelDBHandler.h"
@@ -9,8 +8,8 @@
 ScanRange::ScanRange(const ParseNode* pNode, LevelDBScanPlan* pPlan)
 	: m_predicates(pPlan->m_pTable->getKeyCount() + 1, KeyPredicateInfo{})
 	, m_pPlan(pPlan)
-	, m_startRow(nullptr, m_pPlan->m_keyTypes, 0)
-	, m_endRow(nullptr, m_pPlan->m_keyTypes, 0){
+	, m_startRow(m_pPlan->m_keyTypes)
+	, m_endRow(m_pPlan->m_keyTypes){
 	visit(pNode);
 
 	bool keyInvalid = true;
@@ -206,6 +205,7 @@ LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 	: LeafPlan(PlanType::Scan), m_pTable(pTable)
 	, m_columnValues(pTable->getColumnCount())
 	, m_projection(pTable->getColumnCount())
+	, m_currentRow(m_keyTypes)
 	, m_keyTypes(pTable->getKeyCount()) {
 
 	m_pBuffer = std::make_unique<ExecutionBuffer>(SCAN_BUFFER_SIZE);
@@ -225,27 +225,75 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 		m_projection[pColumn->m_iIndex] = true;
 		return pColumn->m_iIndex;
 	}
-	for(auto& pRange:m_scanRanges) {
-		for(auto& info:pRange->m_predicates) {
-			if(info.m_op != Operation::NONE && info.m_sExpr == pNode->m_sExpr) {
-				m_predicateProjections.push_back(&info);
-				//+1 rowkey - 1 current
-				return m_columnValues.size() + m_predicateProjections.size();
-			}
-		}
-	}
 	return -1;
 }
 
 void LevelDBScanPlan::begin() {
 	m_iRows = 0;
 	m_pDBIter.reset(LevelDBHandler::getHandler(m_pTable)->createIterator());
-	for(auto& pRange : m_scanRanges) {
-
+	auto& pRange = m_scanRanges.front();
+	if(pRange->isFullScan()) {
+		m_pDBIter->first();
+	} else {
+		m_pDBIter->seek(pRange->m_startRow);
 	}
 
 }
 bool LevelDBScanPlan::next() {
+	if(!m_pDBIter->valid()) {
+		return false;
+	}
+	m_currentRow = m_pDBIter->key(m_keyTypes);
+
+	bool needValue = false;
+	std::vector<DBDataType> m_valueTypes;
+
+	for(size_t i = 0;i<m_projection.size();++i) {
+		auto pColumn = m_pTable->getColumn(i);
+		if(pColumn->m_iKeyIndex >= 0) {
+			m_currentRow.getResult(pColumn->m_iKeyIndex, m_columnValues[i]);
+			continue;
+		}
+		m_valueTypes.push_back(pColumn->m_type);
+		if(m_projection[i]) {
+			needValue =true;
+		}
+	}
+	if(needValue) {
+		size_t iValueIndex = 0;
+		auto valueRow = m_pDBIter->value(m_valueTypes);
+		for(size_t i = 0;i<m_projection.size();++i) {
+			auto pColumn = m_pTable->getColumn(i);
+			if(pColumn->m_iKeyIndex >= 0) {
+				continue;
+			} else {
+				++iValueIndex;
+			}
+			if(m_projection[i]) {
+				valueRow.getResult(iValueIndex - 1, m_columnValues[i]);
+			}
+		}
+	}
+	auto value = m_pDBIter->value(m_keyTypes);
+	bool bInRange = true;
+	for(auto& pRange: m_scanRanges) {
+		int nStart = m_currentRow.compare(pRange->m_startRow);
+		if(nStart <0 ) {
+			if(!bInRange) {
+				 m_pDBIter->seek(m_keyTypes);
+				 return true;
+			}
+			break;
+		}
+		int nEnd = m_currentRow.compare(pRange->m_endRow);
+		if(nEnd > 0 ) {
+			bInRange = false;
+		} else {
+			bInRange = true;
+		}
+
+	}
+	m_pDBIter->next();
 	++m_iRows;
 	return true;
 }

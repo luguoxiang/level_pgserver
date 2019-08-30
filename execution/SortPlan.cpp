@@ -36,8 +36,8 @@ void SortPlan::begin() {
 				for (size_t i = 0; i < m_sort.size(); ++i) {
 					const SortSpec& spec = m_sort[i];
 					assert(spec.m_iIndex < m_proj.size());
-					DataRow row1(pRow1, m_types);
-					DataRow row2(pRow2, m_types);
+					DataRow row1(pRow1, m_types, 0);
+					DataRow row2(pRow2, m_types, 0);
 					int n = m_pBuffer->compare(row1, row2, spec.m_iIndex);
 					if (n == 0) {
 						continue;
@@ -76,7 +76,7 @@ bool SortPlan::next() {
 
 void SortPlan::getResult(size_t index, ExecutionResult& result) {
 	assert(m_iCurrent > 0);
-	DataRow row(m_rows[m_iCurrent - 1], m_types);
+	DataRow row(m_rows[m_iCurrent - 1], m_types, 0);
 	m_pBuffer->getResult(row, index, result);
 }
 

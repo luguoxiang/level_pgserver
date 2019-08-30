@@ -12,7 +12,7 @@ int ExecutionBuffer::compare(DataRow& row1,DataRow& row2, size_t index) {
 
 DataRow
 ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types) {
-	DataRow row(nullptr, types);
+	DataRow row(types);
 	size_t rowSize = row.computeSize(results);
 
 	auto pData = doAlloc(rowSize);

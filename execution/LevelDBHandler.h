@@ -60,9 +60,24 @@ class LevelDBIterator {
 	friend class LevelDBHandler;
 public:
 	~LevelDBIterator() ;
-	void seek(DataRow& key);
+	void seek(const DataRow& key);
+	void first() {
+		m_pIter->SeekToFirst();
+	}
+	void last() {
+		m_pIter->SeekToLast();
+	}
 	void next() {
 		m_pIter->Next();
+	}
+
+	DataRow key( const std::vector<DBDataType>& types) {
+		auto data = m_pIter->key();
+		return DataRow(reinterpret_cast<const std::byte*>(data.data()), types,	data.size());
+	}
+	DataRow value( const std::vector<DBDataType>& types) {
+		auto data = m_pIter->value();
+		return DataRow(reinterpret_cast<const std::byte*>(data.data()), types,	data.size());
 	}
 	bool valid() {
 		return m_pIter->Valid();
