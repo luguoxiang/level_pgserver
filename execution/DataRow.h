@@ -14,6 +14,8 @@ public:
 
 	void getResult(size_t index, ExecutionResult& result) const ;
 
+	void getResult(std::vector<ExecutionResult>& results) const ;
+
 	int compare(const DataRow& row, size_t index) const ;
 
 	int compare(const DataRow& row) const ;

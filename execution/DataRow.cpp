@@ -7,7 +7,17 @@ DataRow::DataRow(const std::byte* pData, const std::vector<DBDataType>& types,
 		m_types(types), m_pData(pData), m_iSize(iSize) {
 
 }
+void DataRow::getResult(std::vector<ExecutionResult>& results) const  {
+	results.reserve(m_types.size());
+	const std::byte* pStart = m_pData;
+	for (size_t i = 0; i <= results.size(); ++i) {
+		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
+		pHandler->read(pStart, results[i]);
+		pStart += pHandler->getSize(pStart);
+	}
+	assert(m_iSize == 0 || pStart - m_pData == m_iSize);
 
+}
 void DataRow::getResult(size_t index, ExecutionResult& result) const {
 	const std::byte* pStart = m_pData;
 	assert(index < m_types.size());
