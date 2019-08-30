@@ -68,3 +68,11 @@ LevelDBIterator* LevelDBHandler::createIterator() {
 	pIter->m_pDB = m_pDB.get();
 	return pIter.release();
 }
+
+uint64_t LevelDBHandler::getCost(DataRow& start, DataRow& end) {
+	leveldb::Range ranges[2];
+	ranges[0] = leveldb::Range(leveldb::Slice(start.data(), start.size()), leveldb::Slice(end.data(), end.size()));
+	uint64_t sizes[1];
+	m_pDB->GetApproximateSizes(ranges, 2, sizes);
+	return sizes[0];
+}

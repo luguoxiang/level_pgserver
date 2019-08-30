@@ -13,7 +13,6 @@ void LevelDBScanPlan::setPredicate(const ParseNode* pNode, std::vector<const Par
 	for(size_t i=0;i<m_predicates.size();++i) {
 		if(!keyInvalid) {
 			m_predicates[i].m_op = Operation::NONE;
-			continue;
 		}
 
 		switch(m_predicates[i].m_op) {
@@ -289,4 +288,7 @@ void LevelDBScanPlan::end() {
 	m_pDBIter = nullptr;
 }
 
+uint64_t LevelDBScanPlan::getCost() {
+	return LevelDBHandler::getHandler(m_pTable)->getCost(m_startRow, m_endRow);
+}
 

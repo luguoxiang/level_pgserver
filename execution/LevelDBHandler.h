@@ -98,6 +98,8 @@ public:
 	void commit(LevelDBBatch& batch);
 	LevelDBIterator* createIterator();
 	static LevelDBHandler* getHandler(const TableInfo* pTable);
+
+	uint64_t getCost(DataRow& start,	DataRow& end);
 private:
 	std::unique_ptr<leveldb::DB> m_pDB;
 	const TableInfo* m_pTable;

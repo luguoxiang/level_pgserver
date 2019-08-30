@@ -42,7 +42,9 @@ public:
 				s.append(" and ");
 			}
 		}
-		s.erase (s.end()- 5, s.end());
+		s.erase (s.end()- 4, s.end());
+		s.append("cost:");
+		s.append(std::to_string(getCost()));
 		rows.push_back(s);
 	}
 	virtual std::string getInfoString() override {
@@ -61,6 +63,7 @@ public:
 
 	void setPredicate(const ParseNode* pNode, std::vector<const ParseNode*>& unsolved);
 
+	uint64_t getCost();
 private:
 	std::vector<KeyPredicateInfo> m_predicates;
 
