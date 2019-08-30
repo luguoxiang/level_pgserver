@@ -11,8 +11,7 @@ ScanRange::ScanRange(const ParseNode* pNode, LevelDBScanPlan* pPlan)
 	, m_pPlan(pPlan)
 	, m_startRow(nullptr, m_pPlan->m_keyTypes, 0)
 	, m_endRow(nullptr, m_pPlan->m_keyTypes, 0){
-	ExprFlattenVisitor visitor(Operation::AND, std::bind(&ScanRange::visit, this, pNode));
-	visitor.visit(pNode);
+	visit(pNode);
 
 	bool keyInvalid = true;
 	for(size_t i=0;i<m_predicates.size();++i) {
@@ -100,10 +99,17 @@ void ScanRange::visit(const ParseNode* pPredicate) {
 	}
 
 	auto op = pPredicate->m_op;
-	assert(op != Operation::OR);
 
 	Operation reverseOp;
 	switch (op) {
+	case Operation::OR:
+		assert(0);
+		return;
+	case Operation::AND:
+		for(size_t i=0;i<pPredicate->children();++i) {
+			visit(pPredicate->getChild(i));
+		}
+		return;
 	case Operation::COMP_EQ:
 		reverseOp = op;
 		break;
