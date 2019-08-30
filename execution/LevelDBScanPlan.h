@@ -46,6 +46,20 @@ public:
 			SortOrder order)override;
 
 	virtual void getResult(size_t columnIndex, ExecutionResult& result)override;
+
+	virtual void getAllColumns(std::vector<std::string_view>& columns)override {
+		for (size_t i=0;i<m_pTable->getColumnCount();++i) {
+			columns.push_back(m_pTable->getColumn(i)->m_name);
+		}
+	}
+	virtual DBDataType getResultType(size_t index)override{
+		if(index == m_pTable->getColumnCount()) {
+			return DBDataType::BYTES;
+		} else  {
+			assert(index < m_pTable->getColumnCount());
+			return m_pTable->getColumn(index)->m_type;
+		}
+	}
 private:
 	std::vector<KeyPredicateInfo> m_predicates;
 	KeyPredicateInfo m_endPredicate;

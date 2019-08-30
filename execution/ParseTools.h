@@ -18,11 +18,13 @@ inline bool case_equals(const std::string_view a, const std::string_view b)
 
 inline int64_t toInt(const std::string_view s)
 {
-	int64_t result = 0;
-    for(auto c: s) {
-    	result = result * 10 + (c - '0');
-    }
-    return result;
+	try{
+		std::string ss(s.data(), s.length());
+		return std::stoi(ss);
+	} catch (const std::exception& e) {
+		EXECUTION_ERROR(e.what());
+		return 0;
+	}
 }
 
 inline int64_t binaryToInt(std::string_view sValue) {
