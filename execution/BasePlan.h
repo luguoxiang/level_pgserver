@@ -50,8 +50,8 @@ public:
 	}
 
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-			bool* pOrder) override{
-		return m_pPlan->ensureSortOrder(iSortIndex, sColumn, pOrder);
+			SortOrder order) override{
+		return m_pPlan->ensureSortOrder(iSortIndex, sColumn, order);
 	}
 
 	virtual std::string getInfoString()override {
@@ -99,7 +99,7 @@ public:
 	}
 
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-			bool* pOrder) {
+			SortOrder order) {
 		return false;
 	}
 

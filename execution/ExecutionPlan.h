@@ -19,7 +19,21 @@ enum class PlanType {
 		Scan,
 		Other,
 };
-
+/**
+ * SortPlan support an order named Any, normally it is same with Ascend,
+ * But it can be upgraded to Ascend or Descend. It is used in following situation:
+ * select a from (select * from t) group by a order by a desc;
+ * group by will generate a SortPlan so that it can do sort group-by.
+ * Because this sql has a 'order by a desc', it better to sort by desc order,
+ * But BuildGroupBy plan is called before BuildSortPlan, it has no idea about the latter sort
+ * requirement. At this time, Any order take effect:
+ * GroupBy Plan can generate a SortPlan which sort a by order Any.
+ * later, when BuilSortPlan query SortPlan::ensureSortOrder,
+ * Any order can be upgrated to Descend order.
+ */
+enum class SortOrder {
+	Ascend, Descend, Any
+};
 
 class ExecutionPlan {
 public:
@@ -82,7 +96,7 @@ public:
 	 * select * from (select * ..order by a) order by a;
 	 */
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-			bool* pOrder) = 0;
+			SortOrder order) = 0;
 	/*
 	 * postgres require each SQL statement return a information string
 	 * after execution, the format is like this:

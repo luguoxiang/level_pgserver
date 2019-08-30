@@ -67,7 +67,7 @@ public:
 	}
 
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-			bool* pOrder) override {
+			SortOrder order) override {
 		return false;
 	}
 private:

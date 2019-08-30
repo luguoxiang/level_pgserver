@@ -10,24 +10,34 @@ void LevelDBScanPlan::setPredicate(const ParseNode* pNode, std::vector<const Par
 	doSetPredicate(pNode, unsolved);
 
 	bool keyInvalid = true;
+	m_bStartInclusive = true;
+	m_bEndInclusive = true;
+
 	for(size_t i=0;i<m_predicates.size();++i) {
 		if(!keyInvalid) {
 			m_predicates[i].m_op = Operation::NONE;
 		}
+		auto op = m_predicates[i].m_op;
 
-		switch(m_predicates[i].m_op) {
+		switch(op) {
 		case Operation::COMP_EQ:
 			break;
-		case Operation::COMP_GE:
 		case Operation::COMP_GT:
+			m_bEndInclusive = false;
+			//fall throught
+		case Operation::COMP_GE:
 			//ex. m_predicates[i] is key > x and m_predicates[i + 1] is key < y
 			if(i + 1 < m_predicates.size() && m_predicates[i + 1].isPrevEndRange()) {
 				break;
 			}
 			keyInvalid = false;
 			break;
-		case Operation::COMP_LE:
+
 		case Operation::COMP_LT:
+			m_bEndInclusive = false;
+			//fall throught
+		case Operation::COMP_LE:
+
 			assert(i > 0);
 			if(m_predicates[i - 1].m_op == Operation::COMP_EQ) {
 				//ex. m_predicates[i - 1] is key == x and m_predicates[i] is key < y
@@ -213,9 +223,13 @@ LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 
 	m_pBuffer = std::make_unique<ExecutionBuffer>(SCAN_BUFFER_SIZE);
 
-	for(size_t i=0;i<pTable->getKeyCount();++i) {
-		auto pColumn = pTable->getKeyColumn(i);
-		m_keyTypes[i] = pColumn->m_type;
+	for(size_t i = 0;i<pTable->getColumnCount();++i) {
+		auto pColumn = m_pTable->getColumn(i);
+		if(pColumn->m_iKeyIndex < 0) {
+			m_valueTypes.push_back(pColumn->m_type);
+		} else {
+			m_keyTypes[pColumn->m_iKeyIndex] = pColumn->m_type;
+		}
 	}
 }
 
@@ -234,10 +248,41 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 void LevelDBScanPlan::begin() {
 	m_iRows = 0;
 	m_pDBIter.reset(LevelDBHandler::getHandler(m_pTable)->createIterator());
-	if(isSeekToFirst()) {
-		m_pDBIter->first();
+	if(m_order ==SortOrder::Descend) {
+		if(isSeekToLast()) {
+			m_pDBIter->last();
+			return;
+		}
+		m_pDBIter->seek(m_endRow);
+		if(!m_pDBIter->valid()) {
+			m_pDBIter->last();
+			return;
+		}
+		if(!m_bEndInclusive) {
+			for(;m_pDBIter->valid();m_pDBIter->prev()) {
+				m_currentRow = m_pDBIter->key(m_keyTypes);
+				int n = m_currentRow.compare(m_endRow);
+				if(n < 0) {
+					return;
+				}
+			}
+		}
 	} else {
+		if(isSeekToFirst()) {
+			m_pDBIter->first();
+			return;
+		}
 		m_pDBIter->seek(m_startRow);
+
+		if(!m_bStartInclusive) {
+			for(;m_pDBIter->valid();m_pDBIter->next()) {
+				m_currentRow = m_pDBIter->key(m_keyTypes);
+				int n = m_currentRow.compare(m_startRow);
+				if(n > 0) {
+					return;
+				}
+			}
+		}
 	}
 
 }
@@ -247,19 +292,37 @@ bool LevelDBScanPlan::next() {
 	}
 	m_currentRow = m_pDBIter->key(m_keyTypes);
 
+	if(m_order ==SortOrder::Descend) {
+		if(!isSeekToFirst()) {
+			int n = m_currentRow.compare(m_startRow);
+			if (n == 0 && !m_bStartInclusive) {
+				return false;
+			} else if(n < 0) {
+				return false;
+			}
+		}
+	} else if(!isSeekToLast() ) {
+		int n = m_currentRow.compare(m_endRow);
+		if (n == 0 && !m_bEndInclusive) {
+			return false;
+		} else if(n > 0) {
+			return false;
+		}
+	}
+
 	bool needValue = false;
-	std::vector<DBDataType> m_valueTypes;
 
 	for(size_t i = 0;i<m_projection.size();++i) {
+		if(!m_projection[i]){
+			continue;
+		}
 		auto pColumn = m_pTable->getColumn(i);
 		if(pColumn->m_iKeyIndex >= 0) {
 			m_currentRow.getResult(pColumn->m_iKeyIndex, m_columnValues[i]);
-			continue;
-		}
-		m_valueTypes.push_back(pColumn->m_type);
-		if(m_projection[i]) {
+		} else {
 			needValue =true;
 		}
+
 	}
 	if(needValue) {
 		size_t iValueIndex = 0;
@@ -276,9 +339,7 @@ bool LevelDBScanPlan::next() {
 			}
 		}
 	}
-	if(!isSeekToLast() &&  m_currentRow.compare(m_endRow) > 0) {
-		return false;
-	}
+
 
 	m_pDBIter->next();
 	++m_iRows;
@@ -292,3 +353,22 @@ uint64_t LevelDBScanPlan::getCost() {
 	return LevelDBHandler::getHandler(m_pTable)->getCost(m_startRow, m_endRow);
 }
 
+bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
+		SortOrder order) {
+	if ( iSortIndex > m_pTable->getColumnCount()) {
+		return false;
+	}
+	auto pColumn = m_pTable->getColumnByName(sColumn);
+	if(pColumn->m_iKeyIndex != iSortIndex) {
+		return false;
+	}
+
+	if (order == SortOrder::Any) {
+		return true;
+	}
+	if(m_order == SortOrder::Any) {
+		m_order = order;
+	}
+	return m_order == order;
+
+}

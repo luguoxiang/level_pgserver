@@ -71,6 +71,9 @@ public:
 		m_pIter->Next();
 	}
 
+	void prev() {
+		m_pIter->Prev();
+	}
 	DataRow key( const std::vector<DBDataType>& types) {
 		auto data = m_pIter->key();
 		return DataRow(reinterpret_cast<const std::byte*>(data.data()), types,	data.size());

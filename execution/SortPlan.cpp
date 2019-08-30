@@ -97,26 +97,24 @@ int SortPlan::addProjection(const ParseNode* pNode)  {
 }
 
 bool SortPlan::ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
-		bool* pOrder) {
-	if (m_sort.size() <= iSortIndex)
-	return false;
+		SortOrder order) {
+	if (m_sort.size() <= iSortIndex) {
+		return false;
+	}
 
 	SortSpec& spec = m_sort[iSortIndex];
 
-	if (sColumn != spec.m_sColumn)
-	return false;
+	if (sColumn != spec.m_sColumn) {
+		return false;
+	}
 
-	if (pOrder == nullptr)
-	return true;
-	switch (spec.m_order) {
-		case SortOrder::Ascend:
-		return *pOrder;
-		case SortOrder::Descend:
-		return *pOrder == false;
-		case SortOrder::Any:
-		spec.m_order = *pOrder ? SortOrder::Ascend : SortOrder::Descend;
+	if (order == SortOrder::Any) {
 		return true;
-	};
+	}
+	if(spec.m_order == SortOrder::Any) {
+		spec.m_order = order;
+	}
+	return spec.m_order == order;
 }
 
 void SortPlan::addSortSpecification(const ParseNode* pNode, SortOrder order) {

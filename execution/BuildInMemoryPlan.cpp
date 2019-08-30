@@ -24,8 +24,11 @@ void buildPlanForOrderBy(const ParseNode* pNode) {
 
 		assert(pChild->children() == 2);
 		const ParseNode* pColumn = pChild->getChild(0);
-		bool bAscend = (pChild->getChild(1)->m_op == Operation::ASC);
-		if (!pPlan->ensureSortOrder(i, pColumn->m_sValue, &bAscend)) {
+		if(pColumn->m_type != NodeType::NAME) {
+			PARSE_ERROR("Unsupported sort spec: ",pColumn->m_sExpr);
+		}
+		SortOrder order = (pChild->getChild(1)->m_op == Operation::ASC) ? SortOrder::Ascend: SortOrder::Descend;
+		if (!pPlan->ensureSortOrder(i, pColumn->m_sValue, order)) {
 			bAlreadySorted = false;
 			break;
 		}
@@ -115,7 +118,7 @@ void buildPlanForGroupBy(const ParseNode* pNode) {
 			PARSE_ERROR("Wrong group by clause!");
 		}
 
-		if (!pChildPlan->ensureSortOrder(i, pChild->m_sValue, nullptr)) {
+		if (!pChildPlan->ensureSortOrder(i, pChild->m_sValue, SortOrder::Any)) {
 			bNeedSort = true;
 		}
 	}
