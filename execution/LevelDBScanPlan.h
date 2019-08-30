@@ -27,10 +27,41 @@ struct KeyPredicateInfo {
 	}
 };
 
-class LevelDBScanPlan;
-struct ScanRange {
-	ScanRange(const ParseNode* pNode, LevelDBScanPlan* pPlan);
+class LevelDBScanPlan : public LeafPlan
+{
+	friend class ScanRange;
+public:
+	LevelDBScanPlan(const TableInfo* pTable);
 
+	virtual void explain(std::vector<std::string>& rows)override {
+		std::string s = "leveldb:scan  ";
+		s.append(m_pTable->getName());
+		for(auto& info:m_predicates) {
+			if(info.m_op != Operation::NONE) {
+				s.append(info.m_sExpr);
+				s.append(" and ");
+			}
+		}
+		s.erase (s.end()- 5, s.end());
+		rows.push_back(s);
+	}
+	virtual std::string getInfoString() override {
+		return ConcateToString("SELECT ", m_iRows);
+	}
+
+	virtual int getResultColumns() override	{
+		return m_columnValues.size()  + 1;
+	}
+
+	virtual void begin() override;
+	virtual bool next() override;
+	virtual void end() override;
+
+	virtual int addProjection(const ParseNode* pColumn) override;
+
+	void setPredicate(const ParseNode* pNode, std::vector<const ParseNode*>& unsolved);
+
+private:
 	std::vector<KeyPredicateInfo> m_predicates;
 
 	bool isSeekToFirst() {
@@ -58,55 +89,9 @@ struct ScanRange {
 	}
 	DataRow m_startRow;
 	DataRow m_endRow;
-private:
-	void visit(const ParseNode* pPredicate);
-	void setPredicateInfo(Operation op, const ParseNode* pKey, const ParseNode* pValue, const ParseNode* pPredicate);
-	const LevelDBScanPlan* m_pPlan;
-};
 
-class LevelDBScanPlan : public LeafPlan
-{
-	friend class ScanRange;
-public:
-	LevelDBScanPlan(const TableInfo* pTable);
-
-	virtual void explain(std::vector<std::string>& rows)override {
-		rows.push_back(ConcateToString("leveldb:scan " , m_pTable->getName()));
-		for(auto& pRange:m_scanRanges) {
-			if(pRange->isFullScan()) {
-				return;
-			}
-			std::string s = "  ";
-			for(auto& info:pRange->m_predicates) {
-				if(info.m_op != Operation::NONE) {
-					s.append(info.m_sExpr);
-					s.append(" and ");
-				}
-			}
-			s.erase (s.end()- 5, s.end());
-			rows.push_back(s);
-		}
-	}
-
-	virtual std::string getInfoString() override {
-		return ConcateToString("SELECT ", m_iRows);
-	}
-
-	virtual int getResultColumns() override	{
-		return m_columnValues.size()  + 1;
-	}
-
-	virtual void begin() override;
-	virtual bool next() override;
-	virtual void end() override;
-
-	virtual int addProjection(const ParseNode* pColumn) override;
-
-	void addPredicate(const ParseNode* pNode);
-
-private:
-	using ScanRangePtr = std::unique_ptr<ScanRange>;
-	std::list<ScanRangePtr> m_scanRanges;
+	void doSetPredicate(const ParseNode* pPredicate, std::vector<const ParseNode*>& unsolved);
+	bool setPredicateInfo(Operation op, const ParseNode* pKey, const ParseNode* pValue, const ParseNode* pPredicate);
 
 	std::vector<bool> m_projection;
 	std::vector<ExecutionResult> m_columnValues;
