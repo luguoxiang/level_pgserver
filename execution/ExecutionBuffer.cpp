@@ -1,20 +1,16 @@
 #include "ExecutionBuffer.h"
-#include "DataRow.h"
 #include <cassert>
 #include <cstring>
 
-void ExecutionBuffer::getResult(Row pData, size_t index, ExecutionResult& result, const std::vector<DBDataType>& types) {
-	DataRow row(pData, types);
+void ExecutionBuffer::getResult(DataRow& row, size_t index, ExecutionResult& result) {
 	row.getResult(index, result);
 }
 
-int ExecutionBuffer::compare(Row pData1, Row pData2, size_t index, const std::vector<DBDataType>& types) {
-	DataRow row1(pData1, types);
-	DataRow row2(pData2, types);
+int ExecutionBuffer::compare(DataRow& row1,DataRow& row2, size_t index) {
 	return row1.compare(row2, index);
 }
 
-std::string_view
+DataRow
 ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types) {
 	DataRow row(nullptr, types);
 	size_t rowSize = row.computeSize(results);
@@ -24,7 +20,7 @@ ExecutionBuffer::copyRow(const std::vector<ExecutionResult>& results, const std:
 
 	row.copy(results, pData);
 
-	return std::string_view((const char*)pData, rowSize);
+	return DataRow(pData, types, rowSize);
 }
 
 std::byte* ExecutionBuffer::doAlloc(size_t size) {

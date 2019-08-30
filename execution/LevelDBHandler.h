@@ -52,7 +52,7 @@ private:
 class LevelDBBatch {
 	friend class LevelDBHandler;
 public:
-	void insert(const std::string_view key,	const std::string_view value);
+	void insert(DataRow& key, DataRow& value);
 private:
 	leveldb::WriteBatch m_batch;
 };
@@ -60,7 +60,7 @@ class LevelDBIterator {
 	friend class LevelDBHandler;
 public:
 	~LevelDBIterator() ;
-	void seek(const std::string_view key);
+	void seek(DataRow& key);
 	void next() {
 		m_pIter->Next();
 	}

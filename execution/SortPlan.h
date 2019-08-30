@@ -97,7 +97,7 @@ private:
 	};
 
 
-	std::vector<ExecutionBuffer::Row> m_rows;
+	std::vector<const std::byte*> m_rows;
 	std::vector<SortProjection> m_proj;
 	std::vector<SortSpec> m_sort;
 

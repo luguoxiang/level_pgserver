@@ -1,32 +1,37 @@
 #pragma once
 #include <sstream>
 #include <vector>
+#include <list>
 #include "common/ConfigInfo.h"
 #include "execution/BasePlan.h"
 #include "execution/ExecutionBuffer.h"
 #include "execution/LevelDBHandler.h"
 #include "common/ParseNode.h"
 
-struct ScanRange {
-	ScanRange(const TableInfo* pTable, const ParseNode* pNode, ExecutionBuffer* pBuffer);
-	struct PredicateInfo {
-		const DBColumnInfo* m_pKeyColumn;
-		const ParseNode* m_pValue;
-		Operation m_op = Operation::NONE;
-		std::string_view m_sExpr;
+struct KeyPredicateInfo {
+	const DBColumnInfo* m_pKeyColumn;
+	const ParseNode* m_pValue;
+	Operation m_op = Operation::NONE;
+	std::string_view m_sExpr;
+	bool m_bResult = false;
 
-		//non-equal end range is set to m_predicates[index +1]
-		bool isPrevEndRange() {
-			switch(m_op){
-			case Operation::COMP_LT:
-			case Operation::COMP_LE:
-				return true;
-			default:
-				return false;
-			}
+	//non-equal end range is set to m_predicates[index +1]
+	bool isPrevEndRange() {
+		switch(m_op){
+		case Operation::COMP_LT:
+		case Operation::COMP_LE:
+			return true;
+		default:
+			return false;
 		}
-	};
-	std::vector<PredicateInfo> m_predicates;
+	}
+};
+
+class LevelDBScanPlan;
+struct ScanRange {
+	ScanRange(const ParseNode* pNode, LevelDBScanPlan* pPlan);
+
+	std::vector<KeyPredicateInfo> m_predicates;
 
 	bool isSeekToFirst() {
 		switch(m_predicates[0].m_op){
@@ -51,23 +56,36 @@ struct ScanRange {
 	bool isFullScan() {
 		return m_predicates[0].m_op == Operation::NONE;
 	}
-	std::string_view m_sStartRow;
-	std::string_view m_sEndRow;
+	DataRow m_startRow;
+	DataRow m_endRow;
 private:
 	void visit(const ParseNode* pPredicate);
 	void setPredicateInfo(Operation op, const ParseNode* pKey, const ParseNode* pValue, const ParseNode* pPredicate);
-	const TableInfo* m_pTable;
+	const LevelDBScanPlan* m_pPlan;
 };
 
 class LevelDBScanPlan : public LeafPlan
 {
+	friend class ScanRange;
 public:
 	LevelDBScanPlan(const TableInfo* pTable);
 
 	virtual void explain(std::vector<std::string>& rows)override {
-		std::ostringstream os;
-		os << "leveldb:scan " << m_pTable->getName();
-		rows.push_back(os.str());
+		rows.push_back(ConcateToString("leveldb:scan " , m_pTable->getName()));
+		for(auto& pRange:m_scanRanges) {
+			if(pRange->isFullScan()) {
+				return;
+			}
+			std::string s = "  ";
+			for(auto& info:pRange->m_predicates) {
+				if(info.m_op != Operation::NONE) {
+					s.append(info.m_sExpr);
+					s.append(" and ");
+				}
+			}
+			s.erase (s.end()- 5, s.end());
+			rows.push_back(s);
+		}
 	}
 
 	virtual std::string getInfoString() override {
@@ -75,7 +93,7 @@ public:
 	}
 
 	virtual int getResultColumns() override	{
-		return 0;
+		return m_columnValues.size() + m_predicateProjections.size() + 1;
 	}
 
 	virtual void begin() override;
@@ -84,11 +102,18 @@ public:
 
 	virtual int addProjection(const ParseNode* pColumn) override;
 
-	bool addPredicate(const ParseNode* pNode);
+	void addPredicate(const ParseNode* pNode);
 
 private:
-	using ScanRangePtr = std::shared_ptr<ScanRange>;
-	std::vector<ScanRangePtr> m_scanRanges;
+	using ScanRangePtr = std::unique_ptr<ScanRange>;
+	std::list<ScanRangePtr> m_scanRanges;
+
+	std::vector<KeyPredicateInfo*> m_predicateProjections;
+	std::string_view m_sRowKey;
+	std::vector<bool> m_projection;
+	std::vector<ExecutionResult> m_columnValues;
+
+	std::vector<DBDataType> m_keyTypes;
 	const TableInfo* m_pTable;
 
 	size_t m_iRows = 0;

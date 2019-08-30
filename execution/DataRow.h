@@ -8,7 +8,7 @@
 
 class DataRow {
 public:
-	DataRow(const std::byte* pData, const std::vector<DBDataType>& types, int iSize = -1);
+	DataRow(const std::byte* pData, const std::vector<DBDataType>& types, size_t iSize = 0);
 
 	void getResult(size_t index, ExecutionResult& result) const ;
 
@@ -20,12 +20,20 @@ public:
 
 	size_t computeSize(const std::vector<ExecutionResult>& results);
 
-	DataRow(const DataRow&) = delete;
-	DataRow& operator =(const DataRow&) = delete;
+	const char* data()const {return (const char*)m_pData;}
+
+	size_t size()const {return m_iSize;}
+
+	DataRow& operator =(const DataRow& row) {
+		assert(m_types == row.m_types);
+		m_pData = row.m_pData;
+		m_iSize = row.m_iSize;
+		return *this;
+	}
 private:
 	const std::byte* m_pData;
 
 	const std::vector<DBDataType>& m_types;
 
-	int m_iSize;
+	size_t m_iSize;
 };

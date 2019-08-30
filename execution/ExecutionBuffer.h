@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 
+#include "DataRow.h"
 #include "ExecutionResult.h"
 #include "ExecutionException.h"
 #include "common/ConfigInfo.h"
@@ -18,9 +19,7 @@ public:
 		GlobalMemBlockPool::getInstance().free(m_bufferBlocks.begin(), m_bufferBlocks.end());
 	}
 
-	using Row = std::byte*;
-
-	std::string_view copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types);
+	DataRow copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types);
 
 	void purge() {
 		m_iUsed = 0;
@@ -28,8 +27,8 @@ public:
 		m_iCurrentBlock = 0;
 	}
 
-	void getResult(Row row, size_t index, ExecutionResult& result, const std::vector<DBDataType>& types);
-	int compare(Row row1, Row row2, size_t index, const std::vector<DBDataType>& types);
+	void getResult(DataRow& row, size_t index, ExecutionResult& result);
+	int compare(DataRow& row1, DataRow& row2, size_t index);
 
 	std::byte* doAlloc(size_t size);
 

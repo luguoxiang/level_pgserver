@@ -3,7 +3,7 @@
 #include "DBDataTypeHandler.h"
 
 DataRow::DataRow(const std::byte* pData, const std::vector<DBDataType>& types,
-		int iSize) :
+		size_t iSize) :
 		m_types(types), m_pData(pData), m_iSize(iSize) {
 
 }
@@ -18,7 +18,7 @@ void DataRow::getResult(size_t index, ExecutionResult& result) const {
 			break;
 		} else {
 			pStart += pHandler->getSize(pStart);
-			assert(m_iSize < 0 || pStart - m_pData < m_iSize);
+			assert(m_iSize == 0 || pStart - m_pData < m_iSize);
 		}
 	}
 
@@ -71,6 +71,6 @@ void DataRow::copy(const std::vector<ExecutionResult>& results,
 		pHandler->write(pData, results[i]);
 		pData += pHandler->getSize(results[i]);
 	}
-	assert(m_iSize < 0 || pData - m_pData == m_iSize);
+	assert(m_iSize == 0 || pData - m_pData == m_iSize);
 }
 

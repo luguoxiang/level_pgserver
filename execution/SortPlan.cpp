@@ -28,16 +28,17 @@ void SortPlan::begin() {
 		}
 		auto row = m_pBuffer->copyRow(results, m_types);
 
-		m_rows.push_back((ExecutionBuffer::Row)row.data());
+		m_rows.push_back(reinterpret_cast<const std::byte*>(row.data()));
 	}
 	m_pPlan->end();
 	auto comp =
-			[this](ExecutionBuffer::Row pRow1, ExecutionBuffer::Row pRow2) {
+			[this](const std::byte* pRow1, const std::byte* pRow2) {
 				for (size_t i = 0; i < m_sort.size(); ++i) {
 					const SortSpec& spec = m_sort[i];
 					assert(spec.m_iIndex < m_proj.size());
-
-					int n = m_pBuffer->compare(pRow1, pRow2, spec.m_iIndex, m_types);
+					DataRow row1(pRow1, m_types);
+					DataRow row2(pRow2, m_types);
+					int n = m_pBuffer->compare(row1, row2, spec.m_iIndex);
 					if (n == 0) {
 						continue;
 					}
@@ -75,7 +76,8 @@ bool SortPlan::next() {
 
 void SortPlan::getResult(size_t index, ExecutionResult& result) {
 	assert(m_iCurrent > 0);
-	m_pBuffer->getResult(m_rows[m_iCurrent - 1], index, result, m_types);
+	DataRow row(m_rows[m_iCurrent - 1], m_types);
+	m_pBuffer->getResult(row, index, result);
 }
 
 int SortPlan::addProjection(const ParseNode* pNode)  {
