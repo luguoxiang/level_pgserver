@@ -414,7 +414,6 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 		ParseNode* pAlias = $5;
 		ParseNode* pPredicate = $6;
 
-		pProject->m_fnBuildPlan = buildPlanForProjection;
 		if(pAlias != nullptr)
 		{
 			yyerror(&@5,pResult,nullptr, "table alias name is not supported");
@@ -446,7 +445,6 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 opt_where:{$$ = 0;}
 	| WHERE expr {
 		$$ = $2;
-		$$->m_fnBuildPlan = buildPlanForFilter;
 	}
 	;
 
@@ -454,19 +452,16 @@ opt_limit:{$$ = 0;}
 	| LIMIT INTNUM OFFSET INTNUM 
 	{
 	       $$ = pResult->newParentNode( "Limit",@$.first_column, @$.last_column, { $2, $4}); 
-		$$->m_fnBuildPlan = buildPlanForLimit;
 	}
 	| LIMIT INTNUM ',' INTNUM 
 	{
 	       $$ = pResult->newParentNode( "Limit",@$.first_column, @$.last_column,{ $4, $2 }); 
-		$$->m_fnBuildPlan = buildPlanForLimit;
 	}
 
 opt_groupby:{$$ = 0;}
 	| GROUP BY column_list {
 		$3 = pResult->merge($3,"GroupBy",  "ColumnList");
 		$$ = $3;
-		$$->m_fnBuildPlan = buildPlanForGroupBy;
 	}
 	;
 
@@ -487,7 +482,6 @@ opt_asc_desc:{$$ = pResult->newInfoNode( Operation::ASC,  @$.first_column, @$.la
 opt_having:{$$ = 0;}
 	| HAVING expr {
 		$$ = $2;
-		$$->m_fnBuildPlan = buildPlanForFilter;
 	}
 
 	;
@@ -496,7 +490,6 @@ opt_orderby:{$$ = 0;}
 	| ORDER BY sort_list {
 		$3 = pResult->merge($3,"OrderBy", "SortList");
 		$$ = $3;
-		$$->m_fnBuildPlan = buildPlanForOrderBy;
 	}
 	;
 

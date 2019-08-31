@@ -1,5 +1,6 @@
 #include "common/BuildPlan.h"
 #include "common/ParseException.h"
+#include "common/MetaConfig.h"
 #include "execution/SortPlan.h"
 #include "execution/LimitPlan.h"
 #include "execution/FilterPlan.h"
@@ -7,8 +8,8 @@
 #include "execution/ExplainPlan.h"
 #include "execution/UnionAllPlan.h"
 #include "execution/GroupByPlan.h"
+#include "execution/ReadFilePlan.h"
 
-#include <algorithm>
 
 void buildPlanForOrderBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
@@ -279,3 +280,35 @@ void buildPlanForUnionAll(const ParseNode* pNode) {
 		}
 	}
 }
+
+
+void buildPlanForFileSelect(const ParseNode* pNode) {
+	assert(pNode && pNode->children() == 7);
+
+	const ParseNode* pTable = pNode->getChild(SQL_SELECT_TABLE);
+	assert(pTable && pTable->m_type == NodeType::NAME);
+	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
+			pTable->m_sValue);
+	if (pTableInfo == nullptr) {
+		PARSE_ERROR("Table ", pTable->m_sValue," does not exist!");
+	}
+
+	ReadFilePlan* pValuePlan = new ReadFilePlan(
+			pTableInfo->getAttribute("path"),
+			pTableInfo->getAttribute("seperator", ","),
+			Tools::case_equals(pTableInfo->getAttribute("ignore_first_line", "false"), "true"));
+	Tools::pushPlan(pValuePlan);
+
+	std::vector<const DBColumnInfo*> columns;
+	pTableInfo->getDBColumns(nullptr, columns);
+	for (auto p:columns) {
+		pValuePlan->addColumn(p);
+	}
+	buildPlanForFilter(pNode->getChild(SQL_SELECT_PREDICATE));
+	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
+	buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING));
+	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
+	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
+	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
+}
+
