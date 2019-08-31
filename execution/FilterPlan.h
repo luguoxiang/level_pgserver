@@ -9,7 +9,7 @@
 
 class FilterPlan: public SingleChildPlan {
 public:
-	FilterPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
+	FilterPlan(ExecutionPlanPtr& pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
 
 
 	virtual void explain(std::vector<std::string>& rows)override {

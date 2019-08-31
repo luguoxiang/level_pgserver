@@ -7,7 +7,7 @@
 class SingleChildPlan : public ExecutionPlan {
 public:
 
-	SingleChildPlan(PlanType type, ExecutionPlan* pChild);
+	SingleChildPlan(PlanType type, ExecutionPlanPtr& pChild);
 
 	virtual ~SingleChildPlan() {}
 
@@ -62,7 +62,7 @@ public:
 		return m_pPlan->getResult(index, result);
 	}
 protected:
-	std::unique_ptr<ExecutionPlan> m_pPlan;
+	ExecutionPlanPtr m_pPlan;
 };
 
 

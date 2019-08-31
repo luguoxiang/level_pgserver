@@ -5,15 +5,15 @@
 #include "execution/ConstPlan.h"
 
 void buildPlanForConst(const ParseNode* pNode) {
-	ConstPlan* pPlan = new ConstPlan();
-	Tools::pushPlan(pPlan);
+	ConstPlan* pConst = new ConstPlan();
+	Tools::pushPlan(pConst);
 	const ParseNode* pLastRow = nullptr;
 	for (size_t i=0;i<pNode->children(); ++i) {
 		auto pRow = pNode->getChild(i);
 		if (pLastRow != nullptr && pLastRow->children() != pRow->children()) {
 			PARSE_ERROR("Values column number does not match: expect ", pLastRow->children(), " but got ", pRow->children());
 		}
-		pPlan->addRow(pRow);
+		pConst->addRow(pRow);
 		pLastRow = pRow;
 	}
 }
@@ -36,6 +36,7 @@ void buildPlanForLevelDBInsert(const ParseNode* pNode)
 
 	BUILD_PLAN(pValue);
 
-	LevelDBInsertPlan* pPlan = new LevelDBInsertPlan(pTableInfo, Tools::popPlan());
+	auto pValuePlan = Tools::popPlan();
+	ExecutionPlanPtr pPlan(new LevelDBInsertPlan(pTableInfo, pValuePlan));
 	Tools::pushPlan(pPlan);
 }

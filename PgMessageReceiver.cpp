@@ -49,10 +49,8 @@ void PgMessageReceiver::processStartupPacket() {
 	if (proto == CANCEL_REQUEST_CODE) {
 		uint32_t iBackendPID = getNextInt();
 		uint32_t iCancelAuthCode = getNextInt();
-		ExecutionPlan* pPlan = WorkerManager::getInstance().getWorker(
-				iBackendPID)->m_pPlan;
-		if (pPlan != nullptr)
-			pPlan->cancel();
+		WorkerManager::getInstance().getWorker(
+				iBackendPID)->cancel();
 		IO_ERROR("Cacnel WorkerID=", iBackendPID,", CancelAuthCode=",	iCancelAuthCode);
 	}
 	if (proto == NEGOTIATE_SSL_CODE) {

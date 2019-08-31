@@ -1,6 +1,6 @@
 #include "GroupByPlan.h"
 
-GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
+GroupByPlan::GroupByPlan(ExecutionPlanPtr& pPlan) :
 	SingleChildPlan(PlanType::GroupBy, pPlan) {
 	m_typeMap["sum"] = FuncType::SUM;
 	m_typeMap["avg"] = FuncType::AVG;

@@ -11,7 +11,7 @@
 
 class ExplainPlan: public SingleChildPlan {
 public:
-	ExplainPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Other, pPlan), m_iCurrentRow(0) {	}
+	ExplainPlan(ExecutionPlanPtr& pPlan) : SingleChildPlan(PlanType::Other, pPlan), m_iCurrentRow(0) {	}
 
 	virtual void explain(std::vector<std::string>& rows)override {
 	}

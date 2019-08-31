@@ -122,13 +122,20 @@ inline std::string escapeString(const char* pszSrc) {
 	return s;
 }
 
-inline void pushPlan(ExecutionPlan* pPlan) {
+inline void pushPlan(ExecutionPlanPtr& pPlan) {
 	WorkThreadInfo* pInfo = WorkThreadInfo::getThreadInfo();
 	assert(pInfo);
 	pInfo->pushPlan(pPlan);
 }
 
-inline ExecutionPlan* popPlan() {
+inline void pushPlan(ExecutionPlan* pPlan) {
+	WorkThreadInfo* pInfo = WorkThreadInfo::getThreadInfo();
+	assert(pInfo);
+	ExecutionPlanPtr ptr(pPlan);
+	pInfo->pushPlan(ptr);
+}
+
+inline ExecutionPlanPtr popPlan() {
 	WorkThreadInfo* pInfo = WorkThreadInfo::getThreadInfo();
 	assert(pInfo);
 	return pInfo->popPlan();

@@ -11,11 +11,9 @@
 #include "execution/ReadFilePlan.h"
 
 
-void buildPlanForOrderBy(const ParseNode* pNode) {
+ExecutionPlanPtr buildPlanForOrderBy(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
 	if (pNode == nullptr)
-		return;
-	ExecutionPlan* pPlan = Tools::popPlan();
-	assert(pPlan);
+		return pPlan;
 
 	assert(pNode->children() > 0);
 	bool bAlreadySorted = true;
@@ -35,12 +33,11 @@ void buildPlanForOrderBy(const ParseNode* pNode) {
 		}
 	}
 	if (bAlreadySorted) {
-		Tools::pushPlan(pPlan);
-		return;
+		return pPlan;
 	}
 
 	SortPlan* pSort = new SortPlan(pPlan);
-	Tools::pushPlan(pSort);
+	ExecutionPlanPtr pResult(pSort);
 
 	assert(pNode->children() > 0);
 	for (size_t i = 0; i < pNode->children(); ++i) {
@@ -51,13 +48,12 @@ void buildPlanForOrderBy(const ParseNode* pNode) {
 		pSort->addSortSpecification(pColumn,
 				bAscend ? SortOrder::Ascend : SortOrder::Descend);
 	}
+	return pResult;
 }
 
-void buildPlanForProjection(const ParseNode* pNode) {
-	ExecutionPlan* pPlan = Tools::popPlan();
-	assert(pPlan);
+ExecutionPlanPtr buildPlanForProjection(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
 	ProjectionPlan* pProjPlan = new ProjectionPlan(pPlan);
-	Tools::pushPlan(pProjPlan);
+	ExecutionPlanPtr pResult(pProjPlan);
 
 	assert(pNode && pNode->getChild(0));
 	if (pNode->getChild(0)->m_type == NodeType::INFO
@@ -73,7 +69,7 @@ void buildPlanForProjection(const ParseNode* pNode) {
 			node.m_sValue = column;
 			pProjPlan->project(&node, column);
 		}
-		return;
+		return pResult;
 	}
 	for (int i = 0; i < pNode->children(); ++i) {
 		auto pColumn = pNode->getChild(i);
@@ -101,14 +97,12 @@ void buildPlanForProjection(const ParseNode* pNode) {
 
 		}
 	}
+	return pResult;
 }
 
-void buildPlanForGroupBy(const ParseNode* pNode) {
+ExecutionPlanPtr buildPlanForGroupBy(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
 	if (pNode == nullptr)
-		return;
-
-	std::unique_ptr<ExecutionPlan> pChildPlan(Tools::popPlan());
-	assert(pChildPlan.get());
+		return pPlan;
 
 	bool bNeedSort = false;
 	for (size_t i = 0; i < pNode->children(); ++i) {
@@ -119,13 +113,14 @@ void buildPlanForGroupBy(const ParseNode* pNode) {
 			PARSE_ERROR("Wrong group by clause!");
 		}
 
-		if (!pChildPlan->ensureSortOrder(i, pChild->m_sValue, SortOrder::Any)) {
+		if (!pPlan->ensureSortOrder(i, pChild->m_sValue, SortOrder::Any)) {
 			bNeedSort = true;
 		}
 	}
+	ExecutionPlanPtr pResult = pPlan;
 	if (bNeedSort) {
-		SortPlan* pSort = new SortPlan(pChildPlan.release());
-		pChildPlan.reset(pSort);
+		auto pSort = new SortPlan(pPlan);
+		pResult = ExecutionPlanPtr(pSort);
 		for (size_t i = 0; i < pNode->children(); ++i) {
 			auto pChild = pNode->getChild(i);
 			assert(pChild);
@@ -133,24 +128,24 @@ void buildPlanForGroupBy(const ParseNode* pNode) {
 			pSort->addSortSpecification(pChild, SortOrder::Any);
 		}
 	}
-	GroupByPlan* pPlan = new GroupByPlan(pChildPlan.release());
-	Tools::pushPlan(pPlan);
+	auto pGroupBy = new GroupByPlan(pPlan);
+	pResult = ExecutionPlanPtr(pGroupBy);
 	for (size_t i = 0; i < pNode->children(); ++i) {
 		auto pChild = pNode->getChild(i);
 		assert(pChild);
 
-		pPlan->addGroupByColumn(pChild);
+		pGroupBy->addGroupByColumn(pChild);
 	}
+	return pResult;
 }
 
-void buildPlanForLimit(const ParseNode* pNode) {
+ExecutionPlanPtr buildPlanForLimit(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
 	if (pNode == nullptr)
-		return;
+		return pPlan;
 
-	ExecutionPlan* pPlan = Tools::popPlan();
-	assert(pPlan);
+
 	LimitPlan* pLimitPlan = new LimitPlan(pPlan);
-	Tools::pushPlan(pLimitPlan);
+	ExecutionPlanPtr pResult(pLimitPlan);
 
 	assert(pNode->children() == 2);
 
@@ -162,6 +157,7 @@ void buildPlanForLimit(const ParseNode* pNode) {
 	int64_t iOffset = pOffset->m_iValue;
 	int64_t iCount = pCount->m_iValue;
 	pLimitPlan->setLimit(iCount, iOffset);
+	return pResult;
 }
 
 struct PredicateAnalyzer {
@@ -209,14 +205,12 @@ struct PredicateAnalyzer {
 	}
 };
 
-void buildPlanForFilter(const ParseNode* pNode) {
+ExecutionPlanPtr buildPlanForFilter(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
 	if (pNode == nullptr)
-		return;
+		return pPlan;
 
-	ExecutionPlan* pPlan = Tools::popPlan();
-	assert(pPlan);
 	FilterPlan* pFilter = new FilterPlan(pPlan);
-	Tools::pushPlan(pFilter);
+	ExecutionPlanPtr pResult(pFilter);
 
 	std::vector<const ParseNode*> operators;
 	PredicateAnalyzer analyzer;
@@ -225,13 +219,14 @@ void buildPlanForFilter(const ParseNode* pNode) {
 	for (auto pChild : operators) {
 		pFilter->addPredicate(pChild);
 	}
+	return pResult;
 }
 
 void buildPlanForExplain(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 1);
 
 	BUILD_PLAN(pNode->getChild(0));
-	ExecutionPlan* pPlan = Tools::popPlan();
+	ExecutionPlanPtr pPlan = Tools::popPlan();
 	assert(pPlan);
 	ExplainPlan* pExplain = new ExplainPlan(pPlan);
 	Tools::pushPlan(pExplain);
@@ -241,8 +236,8 @@ void buildPlanForUnionAll(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 2);
 	BUILD_PLAN(pNode->getChild(0));
 	BUILD_PLAN(pNode->getChild(1));
-	ExecutionPlan* pRight = Tools::popPlan();
-	ExecutionPlan* pLeft = Tools::popPlan();
+	ExecutionPlanPtr pRight = Tools::popPlan();
+	ExecutionPlanPtr pLeft = Tools::popPlan();
 	assert(pLeft && pRight);
 	UnionAllPlan* pPlan = new UnionAllPlan(pLeft, pRight);
 	Tools::pushPlan(pPlan);
@@ -297,18 +292,21 @@ void buildPlanForFileSelect(const ParseNode* pNode) {
 			pTableInfo->getAttribute("path"),
 			pTableInfo->getAttribute("seperator", ","),
 			Tools::case_equals(pTableInfo->getAttribute("ignore_first_line", "false"), "true"));
-	Tools::pushPlan(pValuePlan);
+
+	ExecutionPlanPtr pResult(pValuePlan);
 
 	std::vector<const DBColumnInfo*> columns;
 	pTableInfo->getDBColumns(nullptr, columns);
 	for (auto p:columns) {
 		pValuePlan->addColumn(p);
 	}
-	buildPlanForFilter(pNode->getChild(SQL_SELECT_PREDICATE));
-	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
-	buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING));
-	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
-	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
-	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
+	pResult= buildPlanForFilter(pNode->getChild(SQL_SELECT_PREDICATE), pResult);
+	pResult= buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY), pResult);
+	pResult= buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING), pResult);
+	pResult= buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY), pResult);
+	pResult= buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT), pResult);
+	pResult= buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT), pResult);
+
+	Tools::pushPlan(pResult);
 }
 

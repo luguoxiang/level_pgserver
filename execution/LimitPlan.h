@@ -7,7 +7,7 @@
 
 class LimitPlan: public SingleChildPlan {
 public:
-	LimitPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
+	LimitPlan(ExecutionPlanPtr& pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
 
 
 	virtual void explain(std::vector<std::string>& rows) override {

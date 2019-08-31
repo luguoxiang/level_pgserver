@@ -27,6 +27,7 @@ void buildPlanForDesc(const ParseNode* pNode) {
 	if (pEntry == nullptr) {
 		PARSE_ERROR("Undefined table ", pTable->m_sValue);
 	}
+
 	Tools::pushPlan(new ShowColumns(pEntry));
 }
 

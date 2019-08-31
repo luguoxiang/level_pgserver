@@ -50,7 +50,7 @@ public:
 	/*
 	 * To execute this plan, client must use following pattern
 	 *
-	 * ExecutionPlan* pPlan =  ...
+	 * ExecutionPlanPtr pPlan =  ...
 	 * pPlan->begin();
 	 * while(pPlan->next())
 	 * {
@@ -115,3 +115,4 @@ private:
 	PlanType m_type;
 };
 
+using ExecutionPlanPtr = std::shared_ptr<ExecutionPlan>;

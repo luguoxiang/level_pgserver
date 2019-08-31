@@ -12,7 +12,7 @@ class SortPlan: public SingleChildPlan {
 		std::string_view m_sName;
 	};
 public:
-	SortPlan(ExecutionPlan* pPlan);
+	SortPlan(ExecutionPlanPtr& pPlan);
 	virtual ~SortPlan() {}
 
 	virtual void explain(std::vector<std::string>& rows)override {

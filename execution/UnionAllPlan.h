@@ -11,7 +11,7 @@
 
 class UnionAllPlan: public ExecutionPlan {
 public:
-	UnionAllPlan(ExecutionPlan* pLeft, ExecutionPlan* pRight) :
+	UnionAllPlan(ExecutionPlanPtr& pLeft, ExecutionPlanPtr& pRight) :
 			ExecutionPlan(PlanType::Other), m_pLeft(pLeft), m_pRight(pRight) {
 		assert(m_pLeft && m_pRight);
 	}
@@ -71,8 +71,8 @@ public:
 		return false;
 	}
 private:
-	std::unique_ptr<ExecutionPlan> m_pLeft;
-	std::unique_ptr<ExecutionPlan> m_pRight;
+	ExecutionPlanPtr m_pLeft;
+	ExecutionPlanPtr m_pRight;
 	uint64_t m_iCurrentRow = 0;
 	bool m_bLeftDone = false;
 };

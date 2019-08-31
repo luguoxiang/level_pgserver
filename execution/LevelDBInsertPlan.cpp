@@ -6,7 +6,7 @@
 
 constexpr size_t INSERT_BUFFER_SIZE = 1 * 1024 * 1024;
 
-LevelDBInsertPlan::LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPlan)
+LevelDBInsertPlan::LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlanPtr& pPlan)
 	: SingleChildPlan(PlanType::Insert, pPlan), m_pTable(pTable) {
 	m_pBuffer = std::make_unique<ExecutionBuffer>(INSERT_BUFFER_SIZE);
 }

@@ -70,7 +70,7 @@ void PgClient::handleQuery() {
 	DLOG(INFO) << "Q:"<< sql;
 	createPlan(sql);
 
-	describeColumn(m_pPlan.get());
+	describeColumn();
 	handleExecute();
 }
 
@@ -146,17 +146,17 @@ void PgClient::handleDescribe() {
 
 	DLOG(INFO)<< "D:type "<<type << ",name "<< sName;
 
-	describeColumn(m_pPlan.get());
+	describeColumn();
 
 }
 
 void PgClient::handleExecute() {
-	if (m_pPlan.get() == nullptr)
+	if (m_pPlan == nullptr)
 		return;
 
 	size_t columnNum = m_pPlan->getResultColumns();
 
-	m_pWorker->m_pPlan = m_pPlan.get();
+	m_pWorker->setPlan(m_pPlan);
 
 	m_pPlan->begin();
 
@@ -175,7 +175,7 @@ void PgClient::handleExecute() {
 	m_sender.prepare('C');
 	m_sender.addStringZeroEnd(sInfo); //data len
 	m_sender.commit();
-	m_pWorker->m_pPlan = nullptr;
+	m_pWorker->clearPlan();
 }
 
 void PgClient::handleException(Exception* pe) {
@@ -196,7 +196,7 @@ void PgClient::handleException(Exception* pe) {
 
 	m_sender.commit();
 	m_pWorker->clearPlan();
-	m_pPlan.reset(nullptr);
+	m_pPlan = nullptr;
 }
 
 void PgClient::run() {
@@ -256,7 +256,7 @@ void PgClient::run() {
 		} catch (Exception* pe) {
 			handleException(pe);
 		}
-		m_pWorker->m_pPlan = nullptr;
+		m_pWorker->clearPlan();
 		if (qtype == 'Q')
 			handleSync();
 
@@ -270,7 +270,7 @@ void PgClient::run() {
 }
 
 void PgClient::createPlan(const std::string_view sql) {
-	m_pPlan.reset(nullptr);
+	m_pPlan = nullptr;
 	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
 		m_pPlan.reset(new LeafPlan(PlanType::Other));
 		DLOG(INFO) << sql;
@@ -279,17 +279,17 @@ void PgClient::createPlan(const std::string_view sql) {
 		DLOG(INFO) << sql;
 	} else {
 		m_pWorker->parse(sql);
-		m_pPlan.reset(m_pWorker->resolve());
+		m_pPlan = m_pWorker->resolve();
 		if (m_pPlan.get() == nullptr) {
 			throw new ParseException("No statement!");
 		}
 	}
 }
 
-void PgClient::describeColumn(ExecutionPlan* pPlan) {
-	assert(pPlan);
+void PgClient::describeColumn() {
+	assert(m_pPlan.get());
 
-	size_t columnNum = pPlan->getResultColumns();
+	size_t columnNum = m_pPlan->getResultColumns();
 	if (columnNum == 0)
 		return;
 
@@ -297,9 +297,9 @@ void PgClient::describeColumn(ExecutionPlan* pPlan) {
 	m_sender.addShort(columnNum);
 
 	for (size_t i = 0; i < columnNum; ++i) {
-		auto sName = pPlan->getProjectionName(i);
+		auto sName = m_pPlan->getProjectionName(i);
 
-		switch (pPlan->getResultType(i)) {
+		switch (m_pPlan->getResultType(i)) {
 		case DBDataType::BYTES:
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1, false);
 			break;

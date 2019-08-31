@@ -37,12 +37,12 @@ void WorkThreadInfo::print() {
 	printTree(m_result.m_pResult, 0);
 }
 
-ExecutionPlan* WorkThreadInfo::resolve() {
+ExecutionPlanPtr WorkThreadInfo::resolve() {
 	assert(m_result.m_pResult);
 
 	BUILD_PLAN(m_result.m_pResult);
 
-	ExecutionPlan* pPlan = popPlan();
+	ExecutionPlanPtr pPlan = popPlan();
 	assert(pPlan && m_plans.empty());
 	return pPlan;
 }

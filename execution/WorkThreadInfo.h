@@ -10,10 +10,6 @@ struct WorkThreadInfo {
 
 	~WorkThreadInfo();
 
-	void clearPlan() {
-		m_plans.clear();
-	}
-
 	static WorkThreadInfo* getThreadInfo() {
 		return m_pWorkThreadInfo;
 	}
@@ -38,25 +34,29 @@ struct WorkThreadInfo {
 	uint64_t m_iExecScanTime = 0;
 	uint64_t m_iBiggestExec = 0;
 	int m_iSqlCount = 0;
-	ExecutionPlan* m_pPlan = nullptr;
+
 
 	//throws ParseException
 	void parse(const std::string_view sql);
 
 	void print();
 
-	ExecutionPlan* resolve();
-
-
-	void pushPlan(ExecutionPlan* pPlan) {
-		assert(pPlan);
-		m_plans.emplace_back(pPlan);
+	ExecutionPlanPtr resolve();
+	void cancel() {
+		if (m_pPlan != nullptr){
+			m_pPlan->cancel();
+		}
 	}
 
-	ExecutionPlan* popPlan() {
+	void pushPlan(ExecutionPlanPtr& pPlan) {
+		assert(pPlan.get());
+		m_plans.push_back(pPlan);
+	}
+
+	ExecutionPlanPtr popPlan() {
 		if (m_plans.empty())
 			return nullptr;
-		ExecutionPlan* pPlan = m_plans.back().release();
+		ExecutionPlanPtr pPlan = m_plans.back();
 		m_plans.pop_back();
 		return pPlan;
 	}
@@ -75,9 +75,17 @@ struct WorkThreadInfo {
 	}
 	void markParseBuffer() {m_result.mark(); }
 	void restoreParseBuffer() {m_result.restore(); }
+	void setPlan(ExecutionPlanPtr& pPlan) {
+		m_pPlan = pPlan;
+	}
+
+	void clearPlan() {
+		m_pPlan = nullptr;
+	}
 private:
+	ExecutionPlanPtr m_pPlan = nullptr;
 	ParseResult m_result;
-	std::vector<std::unique_ptr<ExecutionPlan>> m_plans;
+	std::vector<ExecutionPlanPtr> m_plans;
 	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
 };
 
@@ -100,6 +108,7 @@ public:
 	void addWorker(WorkThreadInfo* pWorker) {
 		m_workers.emplace_back(pWorker);
 	}
+
 private:
 	WorkerManager() {
 	}
