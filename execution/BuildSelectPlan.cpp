@@ -1,19 +1,17 @@
-#include "common/BuildPlan.h"
-#include "common/ParseException.h"
 #include "common/MetaConfig.h"
+#include "common/ParseException.h"
+#include "execution/BuildPlan.h"
 #include "execution/SortPlan.h"
 #include "execution/LimitPlan.h"
 #include "execution/FilterPlan.h"
 #include "execution/ProjectionPlan.h"
-#include "execution/ExplainPlan.h"
-#include "execution/UnionAllPlan.h"
 #include "execution/GroupByPlan.h"
 #include "execution/ReadFilePlan.h"
 
 
-ExecutionPlanPtr buildPlanForOrderBy(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
+void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
-		return pPlan;
+		return;
 
 	assert(pNode->children() > 0);
 	bool bAlreadySorted = true;
@@ -27,17 +25,17 @@ ExecutionPlanPtr buildPlanForOrderBy(const ParseNode* pNode, ExecutionPlanPtr& p
 			PARSE_ERROR("Unsupported sort spec: ",pColumn->m_sExpr);
 		}
 		SortOrder order = (pChild->getChild(1)->m_op == Operation::ASC) ? SortOrder::Ascend: SortOrder::Descend;
-		if (!pPlan->ensureSortOrder(i, pColumn->m_sValue, order)) {
+		if (!m_pPlan->ensureSortOrder(i, pColumn->m_sValue, order)) {
 			bAlreadySorted = false;
 			break;
 		}
 	}
 	if (bAlreadySorted) {
-		return pPlan;
+		return;
 	}
 
-	SortPlan* pSort = new SortPlan(pPlan);
-	ExecutionPlanPtr pResult(pSort);
+	SortPlan* pSort = new SortPlan(m_pPlan);
+	m_pPlan.reset(pSort);
 
 	assert(pNode->children() > 0);
 	for (size_t i = 0; i < pNode->children(); ++i) {
@@ -48,18 +46,18 @@ ExecutionPlanPtr buildPlanForOrderBy(const ParseNode* pNode, ExecutionPlanPtr& p
 		pSort->addSortSpecification(pColumn,
 				bAscend ? SortOrder::Ascend : SortOrder::Descend);
 	}
-	return pResult;
+	return;
 }
 
-ExecutionPlanPtr buildPlanForProjection(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
-	ProjectionPlan* pProjPlan = new ProjectionPlan(pPlan);
-	ExecutionPlanPtr pResult(pProjPlan);
+void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
+	ProjectionPlan* pProjPlan = new ProjectionPlan(m_pPlan);
+	m_pPlan.reset(pProjPlan);
 
 	assert(pNode && pNode->getChild(0));
 	if (pNode->getChild(0)->m_type == NodeType::INFO
 			&& pNode->getChild(0)->m_op == Operation::ALL_COLUMNS) {
 		std::vector<std::string_view> columns;
-		pPlan->getAllColumns(columns);
+		m_pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
 			PARSE_ERROR(
 					"select * is not supported in current projection context");
@@ -69,7 +67,7 @@ ExecutionPlanPtr buildPlanForProjection(const ParseNode* pNode, ExecutionPlanPtr
 			node.m_sValue = column;
 			pProjPlan->project(&node, column);
 		}
-		return pResult;
+		return;
 	}
 	for (int i = 0; i < pNode->children(); ++i) {
 		auto pColumn = pNode->getChild(i);
@@ -97,12 +95,11 @@ ExecutionPlanPtr buildPlanForProjection(const ParseNode* pNode, ExecutionPlanPtr
 
 		}
 	}
-	return pResult;
 }
 
-ExecutionPlanPtr buildPlanForGroupBy(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
+void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
-		return pPlan;
+		return;
 
 	bool bNeedSort = false;
 	for (size_t i = 0; i < pNode->children(); ++i) {
@@ -113,14 +110,14 @@ ExecutionPlanPtr buildPlanForGroupBy(const ParseNode* pNode, ExecutionPlanPtr& p
 			PARSE_ERROR("Wrong group by clause!");
 		}
 
-		if (!pPlan->ensureSortOrder(i, pChild->m_sValue, SortOrder::Any)) {
+		if (!m_pPlan->ensureSortOrder(i, pChild->m_sValue, SortOrder::Any)) {
 			bNeedSort = true;
 		}
 	}
-	ExecutionPlanPtr pResult = pPlan;
+
 	if (bNeedSort) {
-		auto pSort = new SortPlan(pPlan);
-		pResult = ExecutionPlanPtr(pSort);
+		auto pSort = new SortPlan(m_pPlan);
+		m_pPlan.reset(pSort);
 		for (size_t i = 0; i < pNode->children(); ++i) {
 			auto pChild = pNode->getChild(i);
 			assert(pChild);
@@ -128,24 +125,24 @@ ExecutionPlanPtr buildPlanForGroupBy(const ParseNode* pNode, ExecutionPlanPtr& p
 			pSort->addSortSpecification(pChild, SortOrder::Any);
 		}
 	}
-	auto pGroupBy = new GroupByPlan(pPlan);
-	pResult = ExecutionPlanPtr(pGroupBy);
+	auto pGroupBy = new GroupByPlan(m_pPlan);
+	m_pPlan.reset(pGroupBy);
 	for (size_t i = 0; i < pNode->children(); ++i) {
 		auto pChild = pNode->getChild(i);
 		assert(pChild);
 
 		pGroupBy->addGroupByColumn(pChild);
 	}
-	return pResult;
 }
 
-ExecutionPlanPtr buildPlanForLimit(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
-	if (pNode == nullptr)
-		return pPlan;
+void SelectPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
+	if (pNode == nullptr) {
+		return;
+	}
 
 
-	LimitPlan* pLimitPlan = new LimitPlan(pPlan);
-	ExecutionPlanPtr pResult(pLimitPlan);
+	LimitPlan* pLimitPlan = new LimitPlan(m_pPlan);
+	m_pPlan.reset(pLimitPlan);
 
 	assert(pNode->children() == 2);
 
@@ -157,7 +154,6 @@ ExecutionPlanPtr buildPlanForLimit(const ParseNode* pNode, ExecutionPlanPtr& pPl
 	int64_t iOffset = pOffset->m_iValue;
 	int64_t iCount = pCount->m_iValue;
 	pLimitPlan->setLimit(iCount, iOffset);
-	return pResult;
 }
 
 struct PredicateAnalyzer {
@@ -205,12 +201,12 @@ struct PredicateAnalyzer {
 	}
 };
 
-ExecutionPlanPtr buildPlanForFilter(const ParseNode* pNode, ExecutionPlanPtr& pPlan) {
+void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	if (pNode == nullptr)
-		return pPlan;
+		return;
 
-	FilterPlan* pFilter = new FilterPlan(pPlan);
-	ExecutionPlanPtr pResult(pFilter);
+	FilterPlan* pFilter = new FilterPlan(m_pPlan);
+	m_pPlan.reset(pFilter);
 
 	std::vector<const ParseNode*> operators;
 	PredicateAnalyzer analyzer;
@@ -219,94 +215,38 @@ ExecutionPlanPtr buildPlanForFilter(const ParseNode* pNode, ExecutionPlanPtr& pP
 	for (auto pChild : operators) {
 		pFilter->addPredicate(pChild);
 	}
-	return pResult;
 }
 
-void buildPlanForExplain(const ParseNode* pNode) {
-	assert(pNode && pNode->children() == 1);
+SelectPlanBuilder::SelectPlanBuilder(const TableInfo* pTableInfo) {
+	if (pTableInfo->getKeyCount() > 0){
+		PARSE_ERROR("not supported");
 
-	BUILD_PLAN(pNode->getChild(0));
-	ExecutionPlanPtr pPlan = Tools::popPlan();
-	assert(pPlan);
-	ExplainPlan* pExplain = new ExplainPlan(pPlan);
-	Tools::pushPlan(pExplain);
-}
-
-void buildPlanForUnionAll(const ParseNode* pNode) {
-	assert(pNode && pNode->children() == 2);
-	BUILD_PLAN(pNode->getChild(0));
-	BUILD_PLAN(pNode->getChild(1));
-	ExecutionPlanPtr pRight = Tools::popPlan();
-	ExecutionPlanPtr pLeft = Tools::popPlan();
-	assert(pLeft && pRight);
-	UnionAllPlan* pPlan = new UnionAllPlan(pLeft, pRight);
-	Tools::pushPlan(pPlan);
-	int count = pLeft->getResultColumns();
-	if (count != pRight->getResultColumns()) {
-		PARSE_ERROR(
-				"left sub query's column number is not same with right one's!");
 	}
-	for (int i = 0; i < count; ++i) {
-		DBDataType type1 = pLeft->getResultType(i);
-		DBDataType type2 = pRight->getResultType(i);
-
-		switch (type1) {
-		case DBDataType::INT16:
-		case DBDataType::INT32:
-		case DBDataType::INT64:
-			type1 = DBDataType::INT64;
-			break;
-		default:
-			break;
-		}
-
-		switch (type2) {
-		case DBDataType::INT16:
-		case DBDataType::INT32:
-		case DBDataType::INT64:
-			type2 = DBDataType::INT64;
-			break;
-		default:
-			break;
-		}
-
-		if (type1 != type2) {
-			PARSE_ERROR("sub query column %d's type are not match");
-		}
-	}
-}
-
-
-void buildPlanForFileSelect(const ParseNode* pNode) {
-	assert(pNode && pNode->children() == 7);
-
-	const ParseNode* pTable = pNode->getChild(SQL_SELECT_TABLE);
-	assert(pTable && pTable->m_type == NodeType::NAME);
-	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(
-			pTable->m_sValue);
-	if (pTableInfo == nullptr) {
-		PARSE_ERROR("Table ", pTable->m_sValue," does not exist!");
-	}
-
 	ReadFilePlan* pValuePlan = new ReadFilePlan(
 			pTableInfo->getAttribute("path"),
 			pTableInfo->getAttribute("seperator", ","),
 			Tools::case_equals(pTableInfo->getAttribute("ignore_first_line", "false"), "true"));
 
-	ExecutionPlanPtr pResult(pValuePlan);
+	m_pPlan.reset(pValuePlan);
 
 	std::vector<const DBColumnInfo*> columns;
 	pTableInfo->getDBColumns(nullptr, columns);
 	for (auto p:columns) {
 		pValuePlan->addColumn(p);
 	}
-	pResult= buildPlanForFilter(pNode->getChild(SQL_SELECT_PREDICATE), pResult);
-	pResult= buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY), pResult);
-	pResult= buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING), pResult);
-	pResult= buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY), pResult);
-	pResult= buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT), pResult);
-	pResult= buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT), pResult);
-
-	Tools::pushPlan(pResult);
 }
 
+
+
+ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
+	assert(pNode && pNode->children() == 7);
+
+	buildPlanForFilter(pNode->getChild(SQL_SELECT_PREDICATE));
+	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
+	buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING));
+	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
+	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
+	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
+	return m_pPlan;
+
+}

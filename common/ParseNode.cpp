@@ -4,14 +4,6 @@
 #include <time.h>
 #include <iomanip>
 
-void buildPlanDefault(const ParseNode* pNode) {
-	for (size_t i = 0; i < pNode->children(); ++i) {
-		auto pChild = pNode->getChild(i);
-		if (pChild && pChild->m_fnBuildPlan) {
-			BUILD_PLAN(pChild);
-		}
-	};
-}
 
 void printTree(const ParseNode* pRoot, int level) {
 	int i;
@@ -54,7 +46,6 @@ ParseNode::ParseNode(NodeType type,
 		const ParseNode** children) :
 				m_type(type),
 				m_sExpr(sExpr),
-				m_fnBuildPlan(buildPlanDefault),
 				m_iChildNum(childNum),
 				m_children(children), m_op(op) {
 

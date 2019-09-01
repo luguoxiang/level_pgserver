@@ -1,12 +1,12 @@
-#include "common/BuildPlan.h"
 #include "common/MetaConfig.h"
+#include "execution/BuildPlan.h"
 #include "execution/ParseTools.h"
 #include "execution/LevelDBInsertPlan.h"
 #include "execution/ConstPlan.h"
 
-void buildPlanForConst(const ParseNode* pNode) {
+ExecutionPlanPtr buildPlanForConst(const ParseNode* pNode) {
 	ConstPlan* pConst = new ConstPlan();
-	Tools::pushPlan(pConst);
+	ExecutionPlanPtr pResult(pConst);
 	const ParseNode* pLastRow = nullptr;
 	for (size_t i=0;i<pNode->children(); ++i) {
 		auto pRow = pNode->getChild(i);
@@ -16,10 +16,11 @@ void buildPlanForConst(const ParseNode* pNode) {
 		pConst->addRow(pRow);
 		pLastRow = pRow;
 	}
+	return pResult;
 }
 
 
-void buildPlanForLevelDBInsert(const ParseNode* pNode)
+ExecutionPlanPtr buildPlanForLevelDBInsert(const ParseNode* pNode)
 {
 	assert(pNode && pNode->children() >= 3);
 	const ParseNode* pTable = pNode->getChild(0);
@@ -27,16 +28,14 @@ void buildPlanForLevelDBInsert(const ParseNode* pNode)
 	const ParseNode* pValue = pNode->getChild(2);
 
 	if(pColumn != nullptr) {
-		EXECUTION_ERROR("insert partial columns is not supported");
+		PARSE_ERROR("insert partial columns is not supported");
 	}
 	assert(pTable && pTable->m_type == NodeType::NAME);
 
 	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
 	assert(pTableInfo != nullptr);
 
-	BUILD_PLAN(pValue);
+	auto pValuePlan = buildPlan(pValue);
 
-	auto pValuePlan = Tools::popPlan();
-	ExecutionPlanPtr pPlan(new LevelDBInsertPlan(pTableInfo, pValuePlan));
-	Tools::pushPlan(pPlan);
+	return ExecutionPlanPtr(new LevelDBInsertPlan(pTableInfo, pValuePlan));
 }

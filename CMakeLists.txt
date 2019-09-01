@@ -67,7 +67,8 @@ file(GLOB EXECUTION_SOURCES "execution/*.cpp")
 
 include_directories(PUBLIC . glog glog/src leveldb/include)
  
-add_library( ExecutionLib STATIC ${EXECUTION_SOURCES} ${COMMON_SOURCES}  ${BisonOutput} ${FlexOutput})
+add_library( Common STATIC ${COMMON_SOURCES}  ${BisonOutput} ${FlexOutput})
+add_library( Execution STATIC ${EXECUTION_SOURCES})
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} ExecutionLib glog::glog leveldb)
+target_link_libraries( ${APP_EXEC} Execution Common glog::glog leveldb)

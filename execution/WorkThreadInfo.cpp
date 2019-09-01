@@ -6,6 +6,8 @@
 #include "common/ParseNode.h"
 #include "execution/ExecutionException.h"
 #include "execution/ParseTools.h"
+#include "execution/BuildPlan.h"
+#include "execution/BasePlan.h"
 
 thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 
@@ -21,30 +23,30 @@ WorkThreadInfo::WorkThreadInfo(int fd, int port, int iIndex) :
 
 WorkThreadInfo::~WorkThreadInfo() {
 	parseTerminate(&m_result);
-	m_plans.clear();
 }
 
-void WorkThreadInfo::parse(const std::string_view sql) {
-	parseSql(&m_result, sql);
+void WorkThreadInfo::resolve(const std::string_view sql) {
+	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
+		m_pPlan.reset(new LeafPlan(PlanType::Other));
+		DLOG(INFO) << sql;
+	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
+		m_pPlan.reset(new LeafPlan(PlanType::Other));
+		DLOG(INFO) << sql;
+	} else {
+		m_pPlan = nullptr;
+		parseSql(&m_result, sql);
 
-	if (m_result.m_pResult == 0) {
-		throw new ParseException(&m_result);
+		if (m_result.m_pResult == nullptr) {
+			throw new ParseException(&m_result);
+		}
+
+		m_pPlan = buildPlan(m_result.m_pResult);
 	}
 }
 
 void WorkThreadInfo::print() {
 	assert(m_result.m_pResult);
 	printTree(m_result.m_pResult, 0);
-}
-
-ExecutionPlanPtr WorkThreadInfo::resolve() {
-	assert(m_result.m_pResult);
-
-	BUILD_PLAN(m_result.m_pResult);
-
-	ExecutionPlanPtr pPlan = popPlan();
-	assert(pPlan && m_plans.empty());
-	return pPlan;
 }
 
 

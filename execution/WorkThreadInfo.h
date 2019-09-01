@@ -37,28 +37,14 @@ struct WorkThreadInfo {
 
 
 	//throws ParseException
-	void parse(const std::string_view sql);
+	void resolve(const std::string_view sql);
 
 	void print();
 
-	ExecutionPlanPtr resolve();
 	void cancel() {
 		if (m_pPlan != nullptr){
 			m_pPlan->cancel();
 		}
-	}
-
-	void pushPlan(ExecutionPlanPtr& pPlan) {
-		assert(pPlan.get());
-		m_plans.push_back(pPlan);
-	}
-
-	ExecutionPlanPtr popPlan() {
-		if (m_plans.empty())
-			return nullptr;
-		ExecutionPlanPtr pPlan = m_plans.back();
-		m_plans.pop_back();
-		return pPlan;
 	}
 
 	size_t getBindParamNumber() {return m_result.m_bindParamNodes.size(); }
@@ -75,17 +61,17 @@ struct WorkThreadInfo {
 	}
 	void markParseBuffer() {m_result.mark(); }
 	void restoreParseBuffer() {m_result.restore(); }
-	void setPlan(ExecutionPlanPtr& pPlan) {
-		m_pPlan = pPlan;
-	}
 
 	void clearPlan() {
 		m_pPlan = nullptr;
 	}
+
+	ExecutionPlanPtr getPlan() {
+		return m_pPlan;
+	}
 private:
 	ExecutionPlanPtr m_pPlan = nullptr;
 	ParseResult m_result;
-	std::vector<ExecutionPlanPtr> m_plans;
 	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
 };
 

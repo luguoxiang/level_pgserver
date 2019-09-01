@@ -95,6 +95,22 @@ public:
 		return pNode;
 	}
 
+	ParseNode* newPlanNode(const std::string_view& sName, Operation op,
+				int firstColumn, int lastColumn,
+			std::initializer_list<const ParseNode*> children) {
+		ParseNode* pNode = newParseNode(NodeType::PLAN,op, getExpr(firstColumn, lastColumn), children);
+		pNode->m_sValue = sName;
+		return pNode;
+	}
+
+	ParseNode* newListNode(const std::string_view& sName,
+				int firstColumn, int lastColumn, const ParseNode* pLeft, const ParseNode* pRight) {
+		auto children = {pLeft, pRight};
+		ParseNode* pNode = newParseNode(NodeType::LIST,Operation::NONE, getExpr(firstColumn, lastColumn), children);
+		pNode->m_sValue = sName;
+		return pNode;
+	}
+
 	void mark() {m_iMark = m_iCurrent;}
 	void restore() {m_iCurrent = m_iMark;}
 private:

@@ -74,20 +74,10 @@ inline double binaryToDouble(std::string_view sValue) {
 
 
 
-inline bool isRowKeyNode(ParseNode* pNode) {
-	return pNode->m_type == NodeType::NAME
-			&& case_equals(pNode->m_sValue, "_rowkey");
+inline bool isRowKeyNode(const ParseNode* pNode) {
+	return pNode->m_type == NodeType::NAME && pNode->m_sValue == "_rowkey";
 }
 
-inline bool isTimestampNode(ParseNode* pNode) {
-	return pNode->m_type == NodeType::NAME
-			&& case_equals(pNode->m_sValue, "_timestamp");
-}
-
-inline bool isRowCountNode(ParseNode* pNode) {
-	return pNode->m_type == NodeType::NAME
-			&& case_equals(pNode->m_sValue, "_rowcount");
-}
 
 
 inline std::string escapeString(const char* pszSrc) {
@@ -122,22 +112,5 @@ inline std::string escapeString(const char* pszSrc) {
 	return s;
 }
 
-inline void pushPlan(ExecutionPlanPtr& pPlan) {
-	WorkThreadInfo* pInfo = WorkThreadInfo::getThreadInfo();
-	assert(pInfo);
-	pInfo->pushPlan(pPlan);
-}
 
-inline void pushPlan(ExecutionPlan* pPlan) {
-	WorkThreadInfo* pInfo = WorkThreadInfo::getThreadInfo();
-	assert(pInfo);
-	ExecutionPlanPtr ptr(pPlan);
-	pInfo->pushPlan(ptr);
-}
-
-inline ExecutionPlanPtr popPlan() {
-	WorkThreadInfo* pInfo = WorkThreadInfo::getThreadInfo();
-	assert(pInfo);
-	return pInfo->popPlan();
-}
 }

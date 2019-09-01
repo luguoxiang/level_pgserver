@@ -5,7 +5,6 @@
 %code requires {
 typedef void* yyscan_t;
 #include "ParseResult.h"
-#include "BuildPlan.h"
 #include "MetaConfig.h"
 #include <stdint.h>
 }
@@ -22,28 +21,6 @@ typedef void* yyscan_t;
 #define YYLEX_PARAM pResult->m_scanInfo
 
 extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const std::string& msg);
-
-struct DbPlanBuilder
-{
-	BuildPlanFunc m_pfnSelect;
-	BuildPlanFunc m_pfnInsert;
-	BuildPlanFunc m_pfnDelete;
-};
-
-
-static DbPlanBuilder getPlanBuilder(ParseResult* pResult, ParseNode* pTable)
-{
-		assert(pTable);
-		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
-		if (pTableInfo == nullptr) {
-			PARSE_ERROR("table ", pTable->m_sValue, " not found");
-		}
-		if (pTableInfo->getKeyCount() == 0){
-			return DbPlanBuilder{buildPlanForFileSelect, nullptr, nullptr};
-		} else {
-			return DbPlanBuilder{nullptr, buildPlanForLevelDBInsert, nullptr};
-		}
-}
 
 %}
 
@@ -172,8 +149,7 @@ sql_stmt: stmt ';'
 	}
 	| EXPLAIN stmt ';'
 	{
-		$$ = pResult->newParentNode( "ExplainStmt", @$.first_column, @$.last_column, { $2 });
-		$$->m_fnBuildPlan = buildPlanForExplain;
+		$$ = pResult->newPlanNode( "ExplainStmt", Operation::EXPLAIN, @$.first_column, @$.last_column, { $2 });
 		pResult->m_pResult = $$;
 		YYACCEPT;
 	}
@@ -181,8 +157,7 @@ sql_stmt: stmt ';'
 
 merge_stmt: '(' get_stmt ')' UNION ALL '(' get_stmt ')'
 	{
-		$$ = pResult->newParentNode( "UnionAll", @$.first_column, @$.last_column, { $2, $7 });
-		$$->m_fnBuildPlan = buildPlanForUnionAll;
+		$$ = pResult->newPlanNode( "UnionAll", Operation::UNION_ALL, @$.first_column, @$.last_column, { $2, $7 });
 	}
   ;
 get_stmt: select_stmt {$$ = $1;}
@@ -220,13 +195,17 @@ expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column,
 	| '-' expr %prec UMINUS {
 		if($2->m_type == NodeType::INT)
 		{
-			$2 = pResult->newSimpleNode(NodeType::INT,@$.first_column, @$.last_column);
-			$2->m_iValue = - $2->m_iValue;
-			$$ = $2;
+			$$ = pResult->newSimpleNode(NodeType::INT,@$.first_column, @$.last_column);
+			$$->m_iValue = - $$->m_iValue;
+		}
+		else if($2->m_type == NodeType::FLOAT) 
+		{
+			$$ = pResult->newSimpleNode( NodeType::FLOAT, @$.first_column, @$.last_column);
+			$$->m_sValue = $$->m_sExpr;
 		}
 		else
 		{
-			$$ = pResult->newExprNode( Operation::MINUS,@$.first_column, @$.last_column, { $2 });
+			yyerror(&@2,pResult, nullptr, "minus is not supporteed");
 		}
 	}
 	| '+' expr %prec UMINUS {
@@ -263,11 +242,9 @@ expr: expr IS NULLX {
 	;
 
 expr: expr IN '(' val_list ')' {
-		$4 = pResult->merge($4,"ValueList", "ValueList");
 		$$ = pResult->newExprNode( Operation::IN, @$.first_column, @$.last_column, { $1, $4});
 		}
 	| expr NOT IN '(' val_list ')' { 
-		$5 = pResult->merge($5,"ValueList", "ValueList");
 		$$ = pResult->newExprNode( Operation::NOT_IN, @$.first_column, @$.last_column, { $1, $5});
 	}
 	;
@@ -278,26 +255,18 @@ expr: NAME '(' expr ')' {
 ;
 
 val_list: expr {$$ = $1;}
-	| expr ',' val_list { $$ = pResult->newParentNode( "ValueList",@$.first_column, @$.last_column,  {$1, $3});}
+	| expr ',' val_list { $$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  $1, $3);}
 	;
 
 delete_stmt: DELETE FROM table_factor opt_where
 	{
 		ParseNode* pTable = $3;
-		auto builder = getPlanBuilder(pResult, pTable);
-		if(builder.m_pfnDelete == nullptr)
-		{
-		  yyerror(&@3,pResult,nullptr, "Delete is not supported for current database");
-		  YYERROR;
-		}
-		$$ = pResult->newParentNode( "DeleteStmt", @$.first_column, @$.last_column, {pTable, $4 });
-		$$->m_fnBuildPlan = builder.m_pfnDelete;
+		$$ = pResult->newPlanNode( "DeleteStmt", Operation::DELETE, @$.first_column, @$.last_column, {pTable, $4 });
 	}
 
 update_stmt: UPDATE table_factor SET update_asgn_list opt_where
 	{
-		$4 = pResult->merge($4,"AssignValueList", "AssignValueList");
-		yyerror(&@1,pResult,nullptr, "Update is not supported for current database");
+		yyerror(&@1,pResult,nullptr, "Update is not supported");
 		YYERROR;
 	}
 	;
@@ -309,90 +278,69 @@ update_asgn_list:NAME COMP_EQ expr
 	| update_asgn_list ',' NAME COMP_EQ expr
 	{
 		ParseNode* pNode = pResult->newParentNode( "AssignValue",@$.first_column, @$.last_column,  {$3, $5 }); 
-		$$ = pResult->newParentNode( "AssignValueList",@$.first_column, @$.last_column,  {$1, pNode });
+		$$ = pResult->newListNode( "AssignValueList",@$.first_column, @$.last_column,  $1, pNode);
 
 	}
 	;
 values_stmt:VALUES value_list
 	{
-		$2 = pResult->merge($2,"ValueList","ValueList");
-		$$ = $2;
-		$$->m_fnBuildPlan = buildPlanForConst;
+		$$ = pResult->newPlanNode( "Values", Operation::VALUES, @$.first_column, @$.last_column, { $2 });
 	}
 	;
 
 insert_stmt: INSERT INTO table_factor opt_col_names select_stmt
 	{
-	  ParseNode* pTable = $3;
-		auto builder = getPlanBuilder(pResult, pTable);
-		if(builder.m_pfnInsert == nullptr)
-		{
-			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
-			YYERROR;
-		}
-		$$ = pResult->newParentNode( "InsertStmt",@$.first_column, @$.last_column,  { pTable,$4,$5 });
-		$$->m_fnBuildPlan = builder.m_pfnInsert;
+	  	ParseNode* pTable = $3;
+		$$ = pResult->newPlanNode( "InsertStmt", Operation::INSERT, @$.first_column, @$.last_column,  { pTable,$4,$5 });
 	}
 	| INSERT INTO table_factor opt_col_names values_stmt
 	{
-	  ParseNode* pTable = $3;
-		auto builder = getPlanBuilder(pResult, pTable);
-		if(builder.m_pfnInsert == nullptr)
-		{
-			yyerror(&@3,pResult,nullptr, "Insert is not supported for current database");
-			YYERROR;
-		}
-		$$ = pResult->newParentNode( "InsertStmt",  @$.first_column, @$.last_column, { pTable,$4,$5 });
-		$$->m_fnBuildPlan = builder.m_pfnInsert;
+	  	ParseNode* pTable = $3;
+		$$ = pResult->newPlanNode( "InsertStmt", Operation::INSERT, @$.first_column, @$.last_column, { pTable,$4,$5 });
+
 	}
 	;
 
 show_tables_stmt:SHOW TABLES
 	{
-		$$ = pResult->newInfoNode(  Operation::SHOW_TABLES,  @$.first_column, @$.last_column);
-		$$->m_fnBuildPlan = buildPlanForShowTables;
+		$$ = pResult->newPlanNode("ShowTable",  Operation::SHOW_TABLES,  @$.first_column, @$.last_column, {});
 	}
 	;
 	
 desc_table_stmt:DESC table_factor
 	{
-		$$ = pResult->newParentNode( "DescStmt", @$.first_column, @$.last_column, {$2 });
-		$$->m_fnBuildPlan = buildPlanForDesc;
+		$$ = pResult->newPlanNode( "DescStmt", Operation::DESC_TABLE,  @$.first_column, @$.last_column, {$2 });
 	}
 	; 
 
 workload_stmt:WORKLOAD
 	{
-		$$ = pResult->newInfoNode(  Operation::WORKLOAD,  @$.first_column, @$.last_column);
-		$$->m_fnBuildPlan = buildPlanForWorkload;	
+		$$ = pResult->newPlanNode("Workload",  Operation::WORKLOAD,  @$.first_column, @$.last_column, {});	
 	}
  	;
 
 	
 opt_col_names: /* empty */{$$ = nullptr;}
 	| '(' column_list ')' {
-		$2 = pResult->merge($2,"ColumnList", "ColumnList");
 		$$ = $2;
 	}
 	;
 
 value_list: '(' row_value ')' { 
-		$2 = pResult->merge($2,"ExprList", "ExprList");
 		$$ = $2;
 	}
 	| value_list ',' '(' row_value ')' {
-		$4 = pResult->merge($4,"ExprList", "ExprList");
-		$$ = pResult->newParentNode( "ValueList",@$.first_column, @$.last_column,  { $1, $4 });
+		$$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  $1, $4);
 	}
 
 row_value: expr {$$ = $1;}
 	| row_value ',' expr { 
-	$$ = pResult->newParentNode( "ExprList", @$.first_column, @$.last_column,{ $1, $3 });}
+	$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, $1, $3);}
 	;
 
 column_list: NAME { $$ = $1;}
 	| column_list ',' NAME {
-		$$ = pResult->newParentNode( "ColumnList", @$.first_column, @$.last_column,{ $1, $3 });
+		$$ = pResult->newListNode( "ColumnList", @$.first_column, @$.last_column,$1, $3);
 	}
 	;
 
@@ -408,7 +356,6 @@ opt_alias: {$$ = 0;}
 select_stmt: SELECT select_expr_list FROM table_or_query opt_alias 
 			opt_where opt_groupby opt_having opt_orderby opt_limit
 	{
-		$2 = pResult->merge($2, "SelectExprList","ExprList");
 		ParseNode* pProject = $2;
 		ParseNode* pTable = $4;
 		ParseNode* pAlias = $5;
@@ -419,24 +366,14 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			yyerror(&@5,pResult,nullptr, "table alias name is not supported");
 			YYERROR;
 		}
-		if(pTable->m_type != NodeType::NAME && pTable->m_type != NodeType::OP)
+		if(pTable->m_type != NodeType::NAME)
 		{
 			//this is a select statement with subquery
-			// children order is important, it is the BuildPlan order
-			$$ = pResult->newParentNode( "SubQueryStmt", @$.first_column, @$.last_column, { pTable, pPredicate, $7, $8, $9, $10, pProject});
-			$$->m_fnBuildPlan = buildPlanDefault;
+			$$ = pResult->newPlanNode( "SubQueryStmt", Operation::SELECT_WITH_SUBQUERY, @$.first_column, @$.last_column, { pTable, pPredicate, $7, $8, $9, $10, pProject});
 		}
 		else
 		{
-			auto builder = getPlanBuilder(pResult, pTable);
-		    if(builder.m_pfnSelect == nullptr)
-		    {
-		      yyerror(&@3,pResult,nullptr, "Select is not supported for current database");
-		      YYERROR;
-		    }
-
-			$$ = pResult->newParentNode( "SelectStmt", @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10 });
-			$$->m_fnBuildPlan = builder.m_pfnSelect;
+			$$ = pResult->newPlanNode( "SelectStmt", Operation::SELECT, @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10 });
 		}
 }
 	;
@@ -460,7 +397,6 @@ opt_limit:{$$ = 0;}
 
 opt_groupby:{$$ = 0;}
 	| GROUP BY column_list {
-		$3 = pResult->merge($3,"GroupBy",  "ColumnList");
 		$$ = $3;
 	}
 	;
@@ -470,7 +406,7 @@ sort_list: expr opt_asc_desc {
 		}
 	| sort_list ',' expr opt_asc_desc { 
 			auto pChild =  pResult->newParentNode( "SortItem",@$.first_column, @$.last_column, { $3, $4 });
-			$$ = pResult->newParentNode( "SortList",@$.first_column, @$.last_column, { $1,pChild });
+			$$ = pResult->newListNode( "SortList",@$.first_column, @$.last_column, $1,pChild);
 		}
 	;
 
@@ -488,7 +424,6 @@ opt_having:{$$ = 0;}
 	
 opt_orderby:{$$ = 0;}
 	| ORDER BY sort_list {
-		$3 = pResult->merge($3,"OrderBy", "SortList");
 		$$ = $3;
 	}
 	;
@@ -503,7 +438,7 @@ select_expr_list: projection {
 		$$ = $1;
 	}
 	| select_expr_list ',' projection {
-		$$ = pResult->newParentNode( "ExprList", @$.first_column, @$.last_column, { $1, $3 });
+		$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, $1, $3);
 	}
 	| '*' {
 		$$ = pResult->newInfoNode( Operation::ALL_COLUMNS,  @$.first_column, @$.last_column);

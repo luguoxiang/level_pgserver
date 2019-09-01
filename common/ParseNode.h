@@ -22,6 +22,8 @@ enum class NodeType {
 	FUNC,
 	INFO,
 	PARAM,
+	LIST,
+	PLAN,
 };
 
 enum class Operation {
@@ -55,24 +57,21 @@ enum class Operation {
  ALL_COLUMNS,
 
  SHOW_TABLES,
+ DESC_TABLE,
  WORKLOAD,
-
+ SELECT,
+ INSERT,
+ DELETE,
+ EXPLAIN,
+ UNION_ALL,
+ VALUES,
+ SELECT_WITH_SUBQUERY,
 };
 
 constexpr int16_t PARAM_TEXT_MODE = 0;
 constexpr int16_t PARAM_BINARY_MODE = 1;
 
-constexpr int SQL_SELECT_PROJECT = 0;
-constexpr int SQL_SELECT_TABLE = 1;
-constexpr int SQL_SELECT_PREDICATE = 2;
-constexpr int SQL_SELECT_GROUPBY = 3;
-constexpr int SQL_SELECT_HAVING = 4;
-constexpr int SQL_SELECT_ORDERBY = 5;
-constexpr int SQL_SELECT_LIMIT = 6;
 
-class ParseNode;
-
-using BuildPlanFunc = void (*)(const ParseNode* pNode);
 
 class ParseNode {
 public:
@@ -89,8 +88,6 @@ public:
 
 	//string view on ParseResult.m_sSql
 	const std::string_view m_sExpr;
-
-	BuildPlanFunc m_fnBuildPlan;
 
     const size_t children() const {return m_iChildNum;}
 
@@ -117,10 +114,6 @@ private:
     size_t m_iChildNum;
 };
 
-
-inline void BUILD_PLAN(const ParseNode* pNode) {
-	if(pNode) pNode->m_fnBuildPlan(pNode);
-}
 
 inline bool IS_DIGIT(char c) {
 	return c >='0' && c<='9';

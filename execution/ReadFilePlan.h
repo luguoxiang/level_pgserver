@@ -1,6 +1,5 @@
 #pragma once
 
-#include "common/BuildPlan.h"
 #include "common/ParseException.h"
 #include "execution/BasePlan.h"
 #include "execution/ParseTools.h"

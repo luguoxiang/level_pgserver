@@ -12,8 +12,8 @@
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
 #include "execution/ExecutionException.h"
-#include "execution/BasePlan.h"
 #include "execution/ParseTools.h"
+
 namespace {
 constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
 constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
@@ -95,7 +95,7 @@ void PgClient::handleParse() {
 }
 
 void PgClient::handleBind() {
-	if (m_pPlan.get() == nullptr)
+	if (m_pWorker->getPlan() == nullptr)
 		return;
 
 	auto portal = m_receiver.getNextString();
@@ -139,8 +139,6 @@ void PgClient::handleBind() {
 }
 
 void PgClient::handleDescribe() {
-	if (m_pPlan.get() == nullptr)
-		return;
 	int type = m_receiver.getNextByte();
 	auto sName = m_receiver.getNextString();
 
@@ -151,25 +149,24 @@ void PgClient::handleDescribe() {
 }
 
 void PgClient::handleExecute() {
-	if (m_pPlan == nullptr)
+	auto pPlan = m_pWorker->getPlan();
+	if (pPlan == nullptr) {
 		return;
+	}
+	size_t columnNum = pPlan->getResultColumns();
 
-	size_t columnNum = m_pPlan->getResultColumns();
+	pPlan->begin();
 
-	m_pWorker->setPlan(m_pPlan);
-
-	m_pPlan->begin();
-
-	while (m_pPlan->next()) {
+	while (pPlan->next()) {
 		if (columnNum == 0)
 			continue;
-		sendRow(m_pPlan.get());
+		sendRow(pPlan);
 	} //while
 	m_sender.flush();
 
-	auto sInfo = m_pPlan->getInfoString();
+	auto sInfo = pPlan->getInfoString();
 
-	m_pPlan->end();
+	pPlan->end();
 	DLOG(INFO)<< "Execute result:" << sInfo;
 
 	m_sender.prepare('C');
@@ -196,7 +193,7 @@ void PgClient::handleException(Exception* pe) {
 
 	m_sender.commit();
 	m_pWorker->clearPlan();
-	m_pPlan = nullptr;
+	m_pWorker->clearPlan();
 }
 
 void PgClient::run() {
@@ -270,26 +267,18 @@ void PgClient::run() {
 }
 
 void PgClient::createPlan(const std::string_view sql) {
-	m_pPlan = nullptr;
-	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
-		m_pPlan.reset(new LeafPlan(PlanType::Other));
-		DLOG(INFO) << sql;
-	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
-		m_pPlan.reset(new LeafPlan(PlanType::Other));
-		DLOG(INFO) << sql;
-	} else {
-		m_pWorker->parse(sql);
-		m_pPlan = m_pWorker->resolve();
-		if (m_pPlan.get() == nullptr) {
-			throw new ParseException("No statement!");
-		}
+	m_pWorker->resolve(sql);
+	if (m_pWorker->getPlan() == nullptr) {
+		PARSE_ERROR("No statement!");
 	}
 }
 
 void PgClient::describeColumn() {
-	assert(m_pPlan.get());
 
-	size_t columnNum = m_pPlan->getResultColumns();
+	auto pPlan = m_pWorker->getPlan();
+	assert(pPlan != nullptr);
+
+	size_t columnNum = pPlan->getResultColumns();
 	if (columnNum == 0)
 		return;
 
@@ -297,9 +286,9 @@ void PgClient::describeColumn() {
 	m_sender.addShort(columnNum);
 
 	for (size_t i = 0; i < columnNum; ++i) {
-		auto sName = m_pPlan->getProjectionName(i);
+		auto sName = pPlan->getProjectionName(i);
 
-		switch (m_pPlan->getResultType(i)) {
+		switch (pPlan->getResultType(i)) {
 		case DBDataType::BYTES:
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1, false);
 			break;
@@ -338,7 +327,7 @@ void PgClient::describeColumn() {
 	m_sender.flush();
 }
 
-void PgClient::sendRow(ExecutionPlan* pPlan) {
+void PgClient::sendRow(ExecutionPlanPtr& pPlan) {
 	size_t columnNum = pPlan->getResultColumns();
 	assert(columnNum > 0);
 	m_sender.prepare('D');

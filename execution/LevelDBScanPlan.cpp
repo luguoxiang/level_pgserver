@@ -219,10 +219,9 @@ LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 }
 
 int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
-	if(pNode->m_type == NodeType::NAME) {
-		if(pNode->m_sValue == "_rowkey") {
-			return m_columnValues.size();
-		}
+	if(Tools::isRowKeyNode(pNode)) {
+		return m_columnValues.size();
+	} else if(pNode->m_type == NodeType::NAME) {
 		auto pColumn = m_pTable->getColumnByName(pNode->m_sValue);
 		m_projection[pColumn->m_iIndex] = true;
 		return pColumn->m_iIndex;
