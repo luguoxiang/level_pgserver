@@ -43,7 +43,7 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 	case Operation::EXPLAIN:{
 		assert(pNode->children() == 1);
 		auto pPlan = buildPlan(pNode->getChild(0));
-		return ExecutionPlanPtr(new ExplainPlan(pPlan));
+		return ExecutionPlanPtr(new ExplainPlan(pPlan.release()));
 	}
 	case Operation::UNION_ALL:
 		return buildPlanForUnionAll(pNode);
@@ -54,7 +54,7 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 	case Operation::SELECT_WITH_SUBQUERY:{
 		const ParseNode* pQuery = pNode->getChild(SQL_SELECT_TABLE);
 		auto pSource = buildPlan(pQuery);
-		SelectPlanBuilder builder(pSource);
+		SelectPlanBuilder builder(pSource.release());
 		return builder.build(pNode);
 	}
 	default:

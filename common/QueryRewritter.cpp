@@ -37,8 +37,8 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 						pChild->m_sExpr, { pLeft, pChild });
 				expressions.push_back(pChild);
 			}
-			return m_result.newParseNode(NodeType::OP, Operation::AND,
-					pNode->m_sExpr, expressions);
+			auto sExpr = m_result.concate({pLeft->m_sExpr,"=", pNode->m_sExpr});
+			return m_result.newParseNode(NodeType::OP, Operation::AND, sExpr, expressions);
 		}
 		case Operation::NOT_IN: {
 			auto pLeft = pNode->getChild(0);
@@ -55,8 +55,9 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 						pChild->m_sExpr, { pLeft, pChild });
 				expressions.push_back(pChild);
 			}
+			auto sExpr = m_result.concate({pLeft->m_sExpr,"!=", pNode->m_sExpr});
 			return m_result.newParseNode(NodeType::OP, Operation::AND,
-					pNode->m_sExpr, expressions);
+					sExpr, expressions);
 		}
 		default:
 			break;

@@ -115,4 +115,4 @@ private:
 	PlanType m_type;
 };
 
-using ExecutionPlanPtr = std::shared_ptr<ExecutionPlan>;
+using ExecutionPlanPtr = std::unique_ptr<ExecutionPlan>;

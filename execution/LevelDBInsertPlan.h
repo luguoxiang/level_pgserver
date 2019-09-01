@@ -9,7 +9,7 @@
 class LevelDBInsertPlan : public SingleChildPlan
 {
 public:
-	LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlanPtr& pPlan);
+	LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPlan);
 
 	virtual void explain(std::vector<std::string>& rows)override {
 		SingleChildPlan::explain(rows);

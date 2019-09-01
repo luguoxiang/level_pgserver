@@ -10,7 +10,7 @@
 
 class FilterPlan: public SingleChildPlan {
 public:
-	FilterPlan(ExecutionPlanPtr& pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
+	FilterPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
 
 
 	virtual void explain(std::vector<std::string>& rows)override {
@@ -77,7 +77,10 @@ public:
 		const ParseNode* m_pRight;
 	};
 
-	void addPredicate(const ParseNode* pNode, std::set<std::string_view>* pIgnore = nullptr);
+	bool addPredicate(const ParseNode* pNode, std::set<std::string_view>* pIgnore = nullptr);
+	void clearPredicates() {
+		m_predicatesInOr.clear();
+	}
 private:
 	bool evaluate(const PredicateInfo& info);
 	using AndPredicateListPtr = std::unique_ptr<std::vector<PredicateInfo>>;

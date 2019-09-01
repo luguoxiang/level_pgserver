@@ -111,8 +111,9 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 	andList.push_back(info);
 }
 
-void FilterPlan::addPredicate(const ParseNode* pPredicate, std::set<std::string_view>* pIgnore) {
+bool FilterPlan::addPredicate(const ParseNode* pPredicate, std::set<std::string_view>* pIgnore) {
 	m_predicatesInOr.emplace_back(new std::vector<PredicateInfo>());
 	auto& pAnd = m_predicatesInOr.back();
 	doAddPredicate(*pAnd, pPredicate, pIgnore);
+	return !pAnd->empty();
 }

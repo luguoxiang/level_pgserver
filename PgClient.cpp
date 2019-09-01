@@ -327,7 +327,7 @@ void PgClient::describeColumn() {
 	m_sender.flush();
 }
 
-void PgClient::sendRow(ExecutionPlanPtr& pPlan) {
+void PgClient::sendRow(ExecutionPlan* pPlan) {
 	size_t columnNum = pPlan->getResultColumns();
 	assert(columnNum > 0);
 	m_sender.prepare('D');

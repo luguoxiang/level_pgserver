@@ -13,6 +13,9 @@ void UnionAllPlan::getResult(size_t index,  ExecutionResult& result) {
 }
 
 void UnionAllPlan::begin() {
+	if (m_order == SortOrder::Descend) {
+		std::reverse(m_plans.begin(), m_plans.end());
+	}
 	for (auto& pPlan : m_plans) {
 		pPlan->begin();
 	}

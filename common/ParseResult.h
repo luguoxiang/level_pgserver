@@ -26,6 +26,20 @@ public:
 	void initParse(const std::string_view sql);
 	char* alloc(size_t size);
 
+	std::string_view concate(std::initializer_list<const std::string_view> children) {
+		size_t iLen = 0;
+		for(auto& s: children) {
+			iLen += s.size();
+		}
+		size_t iStart = 0;
+		char* pAlloc = alloc(iLen);
+		for(auto& s: children) {
+			memcpy(pAlloc+ iStart,s.data(), s.size());
+			iStart += s.size();
+		}
+		return std::string_view(pAlloc, iLen);
+	}
+
 	template <typename Iteratable>
 	ParseNode* newParseNode(NodeType type,
 			Operation op,

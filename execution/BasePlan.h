@@ -7,7 +7,7 @@
 class SingleChildPlan : public ExecutionPlan {
 public:
 
-	SingleChildPlan(PlanType type, ExecutionPlanPtr& pChild);
+	SingleChildPlan(PlanType type, ExecutionPlan* pChild) : ExecutionPlan(type), m_pPlan(pChild) {};
 
 	virtual ~SingleChildPlan() {}
 

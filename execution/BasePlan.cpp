@@ -2,9 +2,6 @@
 #include "BasePlan.h"
 #include "ExecutionException.h"
 
-SingleChildPlan::SingleChildPlan(PlanType type, ExecutionPlanPtr& pChild) : ExecutionPlan(type), m_pPlan(pChild) {
-	assert(pChild);
-}
 
 LeafPlan::LeafPlan(PlanType type) : ExecutionPlan(type){
 

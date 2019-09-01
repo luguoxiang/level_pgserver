@@ -6,7 +6,7 @@
 
 constexpr size_t SORT_BUFFER_SIZE = 64 * 1024 * 1024;
 
-SortPlan::SortPlan(ExecutionPlanPtr& pPlan) :
+SortPlan::SortPlan(ExecutionPlan* pPlan) :
 		SingleChildPlan(PlanType::Sort, pPlan){
 	assert(m_pPlan);
 }

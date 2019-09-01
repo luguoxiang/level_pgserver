@@ -60,6 +60,19 @@ public:
 			return m_pTable->getColumn(index)->m_type;
 		}
 	}
+	const DataRow& getStartRow() const {
+		return m_startRow;
+	}
+
+	const DataRow& getEndRow() const {
+		return m_endRow;
+	}
+	bool startInclusive() const {
+		return m_bStartInclusive;
+	}
+	bool endInclusive() const {
+		return m_bEndInclusive;
+	}
 private:
 	std::vector<KeyPredicateInfo> m_predicates;
 	KeyPredicateInfo m_endPredicate;

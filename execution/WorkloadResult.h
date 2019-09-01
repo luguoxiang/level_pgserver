@@ -35,7 +35,7 @@ public:
 
 	virtual int addProjection(const ParseNode* pNode)override;
 private:
-	size_t m_iIndex;
+	size_t m_iIndex = 0;
 	std::string m_tid;
 };
 

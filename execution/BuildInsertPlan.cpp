@@ -37,5 +37,5 @@ ExecutionPlanPtr buildPlanForLevelDBInsert(const ParseNode* pNode)
 
 	auto pValuePlan = buildPlan(pValue);
 
-	return ExecutionPlanPtr(new LevelDBInsertPlan(pTableInfo, pValuePlan));
+	return ExecutionPlanPtr(new LevelDBInsertPlan(pTableInfo, pValuePlan.release()));
 }

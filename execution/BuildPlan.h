@@ -14,7 +14,7 @@ constexpr int SQL_SELECT_LIMIT = 6;
 class SelectPlanBuilder {
 public:
 	SelectPlanBuilder(const TableInfo* pTableInfo);
-	SelectPlanBuilder(ExecutionPlanPtr pSubQuery) : m_pPlan(pSubQuery) {};
+	SelectPlanBuilder(ExecutionPlan* pSubQuery) : m_pPlan(pSubQuery) {};
 	SelectPlanBuilder() {}
 	ExecutionPlanPtr build(const ParseNode* pNode);
 
@@ -32,6 +32,8 @@ public:
 	LevelDBSelectPlanBuilder(const TableInfo* pTableInfo) : m_pTableInfo(pTableInfo) {}
 	ExecutionPlanPtr build(const ParseNode* pNode);
 private:
+	void buildFullScan(const ParseNode* pNode);
+	void buildUnionAll(const ParseNode* pNode);
 	const TableInfo* m_pTableInfo;
 };
 

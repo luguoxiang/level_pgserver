@@ -11,11 +11,15 @@
 
 class UnionAllPlan: public ExecutionPlan {
 public:
-	UnionAllPlan() :
-			ExecutionPlan(PlanType::Other) {
+	UnionAllPlan(bool hasOrder) :
+			ExecutionPlan(PlanType::Other), m_hasOrder(hasOrder) {
 	}
-
-	void addChildPlan(ExecutionPlanPtr& pPlan) {
+	virtual ~UnionAllPlan() {
+		for(auto pPlan : m_plans) {
+			delete pPlan;
+		}
+	}
+	void addChildPlan(ExecutionPlan* pPlan) {
 		assert(pPlan != nullptr);
 		m_plans.push_back(pPlan);
 	}
@@ -80,11 +84,24 @@ public:
 
 	virtual bool ensureSortOrder(size_t iSortIndex,
 			const std::string_view& sColumn, SortOrder order) override {
-		return false;
+		if(!m_hasOrder) {
+			return false;
+		}
+
+		for (auto& pPlan : m_plans) {
+			if(!pPlan->ensureSortOrder(iSortIndex, sColumn, order)) {
+				return false;
+			}
+		}
+
+		m_order = order;
+		return true;
 	}
 private:
-	std::vector<ExecutionPlanPtr> m_plans;
+	std::vector<ExecutionPlan*> m_plans;
 	uint64_t m_iCurrentRow = 0;
 	size_t m_iCurrentIndex = 0;
+	bool m_hasOrder;
+	SortOrder m_order = SortOrder::Any;
 };
 

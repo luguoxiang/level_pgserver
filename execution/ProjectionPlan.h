@@ -12,7 +12,7 @@ class ProjectionPlan: public SingleChildPlan {
 		const ParseNode* pNode;
 	};
 public:
-	ProjectionPlan(ExecutionPlanPtr& pPlan) :
+	ProjectionPlan(ExecutionPlan*pPlan) :
 		SingleChildPlan(PlanType::Projection, pPlan){}
 
 	virtual void explain(std::vector<std::string>& rows) override{
@@ -78,14 +78,13 @@ public:
 	}
 
 	bool addGroupBy() {
-		ExecutionPlanPtr pGroupBy(new GroupByPlan(m_pPlan));
+		m_pPlan.reset(new GroupByPlan(m_pPlan.release()));
 		for(auto& proj : m_proj) {
-			proj.m_iSubIndex = pGroupBy->addProjection(proj.pNode);
+			proj.m_iSubIndex = m_pPlan->addProjection(proj.pNode);
 			if (proj.m_iSubIndex < 0) {
 				return false;
 			}
 		}
-		m_pPlan = pGroupBy;
 		return true;
 	}
 private:

@@ -47,11 +47,15 @@ struct WorkThreadInfo {
 		}
 	}
 
-	size_t getBindParamNumber() {return m_result.m_bindParamNodes.size(); }
+	size_t getBindParamNumber() {
+		return m_result.m_bindParamNodes.size();
+	}
+
 	ParseNode* getBindParam(size_t i) {
 		assert(i < getBindParamNumber());
 		return m_result.m_bindParamNodes[i];
 	}
+
 	std::string_view allocString(std::string_view s) {
 		size_t len = s.length();
 		char* alloc = m_result.alloc(len);
@@ -59,6 +63,7 @@ struct WorkThreadInfo {
 		std::copy(s.data(), s.data() + len, alloc);
 		return std::string_view(alloc, len);
 	}
+
 	void markParseBuffer() {m_result.mark(); }
 	void restoreParseBuffer() {m_result.restore(); }
 
@@ -66,8 +71,8 @@ struct WorkThreadInfo {
 		m_pPlan = nullptr;
 	}
 
-	ExecutionPlanPtr getPlan() {
-		return m_pPlan;
+	ExecutionPlan* getPlan() {
+		return m_pPlan.get();
 	}
 private:
 	ExecutionPlanPtr m_pPlan = nullptr;

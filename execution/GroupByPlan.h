@@ -11,7 +11,7 @@ enum class FuncType {
 };
 class GroupByPlan: public SingleChildPlan {
 public:
-	GroupByPlan(ExecutionPlanPtr& pPlan);
+	GroupByPlan(ExecutionPlan* pPlan);
 
 	struct AggrFunc {
 		FuncType m_func;

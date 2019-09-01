@@ -17,7 +17,7 @@ public:
 	using MessageHandler = void (PgClient::*)();
 private:
 	void describeColumn();
-	void sendRow(ExecutionPlanPtr& pPlan);
+	void sendRow(ExecutionPlan* pPlan);
 
 	void createPlan(const std::string_view sql);
 	void handleException(Exception* pe);

@@ -41,10 +41,12 @@ ExecutionPlanPtr buildPlanForUnionAll(const ParseNode* pNode) {
 	ExecutionPlanPtr pRight = buildPlan(pNode->getChild(1));
 	assert(pLeft && pRight);
 
-	UnionAllPlan* pPlan = new UnionAllPlan();
-	pPlan->addChildPlan(pLeft);
-	pPlan->addChildPlan(pRight);
+	UnionAllPlan* pPlan = new UnionAllPlan(false);
 	ExecutionPlanPtr pResult(pPlan);
+
+	pPlan->addChildPlan(pLeft.release());
+	pPlan->addChildPlan(pRight.release());
+
 
 	int count = pLeft->getResultColumns();
 	if (count != pRight->getResultColumns()) {
