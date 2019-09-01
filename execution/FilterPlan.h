@@ -6,6 +6,7 @@
 #include <vector>
 #include <sstream>
 #include <memory>
+#include <set>
 
 class FilterPlan: public SingleChildPlan {
 public:
@@ -76,12 +77,12 @@ public:
 		const ParseNode* m_pRight;
 	};
 
-	void addPredicate(const ParseNode* pNode);
+	void addPredicate(const ParseNode* pNode, std::set<std::string_view>* pIgnore = nullptr);
 private:
 	bool evaluate(const PredicateInfo& info);
 	using AndPredicateListPtr = std::unique_ptr<std::vector<PredicateInfo>>;
 
-	void doAddPredicate(std::vector<PredicateInfo>& andList, const ParseNode* pNode);
+	void doAddPredicate(std::vector<PredicateInfo>& andList, const ParseNode* pNode, std::set<std::string_view>* pIgnore);
 
 
 	uint64_t m_iCurrent = 0;

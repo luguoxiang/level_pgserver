@@ -5,9 +5,9 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 	switch (pNode->m_type) {
 	case NodeType::LIST: {
 		std::vector<ParseNode*> elements;
-		collectElements(pNode, elements);
-		pNode = m_result.newParseNode(NodeType::LIST, Operation::NONE,
-				pNode->m_sExpr, elements);
+		collectElements(pNode, pNode->m_sValue, elements);
+		pNode = m_result.newParseNode(NodeType::LIST,
+				Operation::NONE, pNode->m_sExpr, elements);
 		break;
 	}
 	case NodeType::OP:
@@ -23,34 +23,36 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 					pNode->m_sExpr, operators);
 		}
 		case Operation::IN: {
-			auto pLeft = pNode->getChildNonConst(0);
-			auto pValue = pNode->getChildNonConst(1);
+			auto pLeft = pNode->getChild(0);
+			auto pValue = pNode->getChild(1);
 			std::vector<ParseNode*> expressions(pValue->children());
 
 			for (size_t i = 0; i < pValue->children(); ++i) {
-				auto pChild = pValue->getChildNonConst(i);
-				if(!pChild->isConst()) {
+				auto pChild = pValue->getChild(i);
+				if (!pChild->isConst()) {
 					PARSE_ERROR("expect const value:", pChild->m_sExpr);
 				}
 
-				pChild = m_result.newExprNode(Operation::COMP_EQ,pChild->m_sExpr, {pLeft, pChild});
+				pChild = m_result.newExprNode(Operation::COMP_EQ,
+						pChild->m_sExpr, { pLeft, pChild });
 				expressions.push_back(pChild);
 			}
 			return m_result.newParseNode(NodeType::OP, Operation::AND,
 					pNode->m_sExpr, expressions);
 		}
-		case Operation::NOT_IN:{
-			auto pLeft = pNode->getChildNonConst(0);
-			auto pValue = pNode->getChildNonConst(1);
+		case Operation::NOT_IN: {
+			auto pLeft = pNode->getChild(0);
+			auto pValue = pNode->getChild(1);
 			std::vector<ParseNode*> expressions(pValue->children());
 
 			for (size_t i = 0; i < pValue->children(); ++i) {
-				auto pChild = pValue->getChildNonConst(i);
-				if(!pChild->isConst()) {
+				auto pChild = pValue->getChild(i);
+				if (!pChild->isConst()) {
 					PARSE_ERROR("expect const value:", pChild->m_sExpr);
 				}
 
-				pChild = m_result.newExprNode(Operation::COMP_NE,pChild->m_sExpr, {pLeft, pChild});
+				pChild = m_result.newExprNode(Operation::COMP_NE,
+						pChild->m_sExpr, { pLeft, pChild });
 				expressions.push_back(pChild);
 			}
 			return m_result.newParseNode(NodeType::OP, Operation::AND,
@@ -63,16 +65,17 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 		break;
 	}
 	for (size_t i = 0; i < pNode->children(); ++i) {
-		auto pChild = pNode->getChildNonConst(i);
+		auto pChild = pNode->getChild(i);
 		pNode->setChild(i, rewrite(pChild));
 	}
 	return pNode;
 }
 
-void QueryRewritter::collectElements(ParseNode* pNode, std::vector<ParseNode*>& elements) {
-	if (pNode->m_type == NodeType::LIST) {
+void QueryRewritter::collectElements(ParseNode* pNode,
+		const std::string_view sName, std::vector<ParseNode*>& elements) {
+	if (pNode->m_type == NodeType::LIST && pNode->m_sValue == sName) {
 		for (size_t i = 0; i < pNode->children(); ++i) {
-			collectElements(pNode->getChildNonConst(i), elements);
+			collectElements(pNode->getChild(i), sName, elements);
 		}
 	} else {
 		elements.push_back(pNode);
@@ -89,8 +92,8 @@ void QueryRewritter::collectOrOperators(ParseNode* pPredicate,
 		assert(pPredicate->children() == 2);
 		std::vector<ParseNode*> left, right;
 
-		collectOrOperators(pPredicate->getChildNonConst(0), left);
-		collectOrOperators(pPredicate->getChildNonConst(1), right);
+		collectOrOperators(pPredicate->getChild(0), left);
+		collectOrOperators(pPredicate->getChild(1), right);
 
 		if (left.size() == 1 && right.size() == 1) {
 			operators.push_back(pPredicate);
@@ -107,7 +110,7 @@ void QueryRewritter::collectOrOperators(ParseNode* pPredicate,
 	}
 	case Operation::OR: {
 		for (size_t i = 0; i < pPredicate->children(); ++i) {
-			collectOrOperators(pPredicate->getChildNonConst(i), operators);
+			collectOrOperators(pPredicate->getChild(i), operators);
 		}
 		break;
 	}

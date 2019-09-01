@@ -7,7 +7,8 @@
 #include "execution/ProjectionPlan.h"
 #include "execution/GroupByPlan.h"
 #include "execution/ReadFilePlan.h"
-
+#include "execution/LevelDBScanPlan.h"
+#include "execution/UnionAllPlan.h"
 
 void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
@@ -175,11 +176,8 @@ void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	}
 }
 
-SelectPlanBuilder::SelectPlanBuilder(const TableInfo* pTableInfo) {
-	if (pTableInfo->getKeyCount() > 0){
-		PARSE_ERROR("not supported");
 
-	}
+SelectPlanBuilder::SelectPlanBuilder(const TableInfo* pTableInfo) {
 	ReadFilePlan* pValuePlan = new ReadFilePlan(
 			pTableInfo->getAttribute("path"),
 			pTableInfo->getAttribute("seperator", ","),
@@ -194,12 +192,58 @@ SelectPlanBuilder::SelectPlanBuilder(const TableInfo* pTableInfo) {
 	}
 }
 
-
-
 ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 7);
 
 	buildPlanForFilter(pNode->getChild(SQL_SELECT_PREDICATE));
+	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
+	buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING));
+	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
+	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
+	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
+	return m_pPlan;
+}
+
+ExecutionPlanPtr LevelDBSelectPlanBuilder::build(const ParseNode* pNode) {
+	auto pPredicate = pNode->getChild(SQL_SELECT_PREDICATE);
+	if(pPredicate == nullptr) {
+		auto pScan = new LevelDBScanPlan(m_pTableInfo);
+		m_pPlan.reset(pScan);
+	} else if( pPredicate->m_op == Operation::OR) {
+		UnionAllPlan* pUnion = new UnionAllPlan();
+		m_pPlan.reset(pUnion);
+		for (size_t i=0;i<pNode->children();++i) {
+			auto pChild = pNode->getChild(i);
+			//should be rewritten
+			assert(pChild->m_op != Operation::OR);
+
+			auto pScan = new LevelDBScanPlan(m_pTableInfo);
+			ExecutionPlanPtr pChildPlan(pScan);
+
+			std::set<std::string_view> solved;
+			pScan->setPredicate(pChild, solved);
+
+
+			FilterPlan* pFilter = new FilterPlan(pChildPlan);
+			pChildPlan.reset(pFilter);
+
+			pFilter->addPredicate(pPredicate, &solved);
+			pUnion->addChildPlan(pChildPlan);
+		}
+		//TODO: Check key range overlapping
+	} else {
+		auto pScan = new LevelDBScanPlan(m_pTableInfo);
+		m_pPlan.reset(pScan);
+
+		std::set<std::string_view> solved;
+		pScan->setPredicate(pNode, solved);
+
+		FilterPlan* pFilter = new FilterPlan(m_pPlan);
+		m_pPlan.reset(pFilter);
+
+		pFilter->addPredicate(pPredicate, &solved);
+
+	}
 	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
 	buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING));
 	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));

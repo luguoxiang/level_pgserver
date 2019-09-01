@@ -15,14 +15,24 @@ class SelectPlanBuilder {
 public:
 	SelectPlanBuilder(const TableInfo* pTableInfo);
 	SelectPlanBuilder(ExecutionPlanPtr pSubQuery) : m_pPlan(pSubQuery) {};
+	SelectPlanBuilder() {}
 	ExecutionPlanPtr build(const ParseNode* pNode);
-private:
+
+protected:
 	void buildPlanForOrderBy(const ParseNode* pNode);
 	void buildPlanForProjection(const ParseNode* pNode);
 	void buildPlanForGroupBy(const ParseNode* pNode);
 	void buildPlanForLimit(const ParseNode* pNode);
 	void buildPlanForFilter(const ParseNode* pNode);
 	ExecutionPlanPtr m_pPlan;
+};
+
+class LevelDBSelectPlanBuilder : public SelectPlanBuilder {
+public:
+	LevelDBSelectPlanBuilder(const TableInfo* pTableInfo) : m_pTableInfo(pTableInfo) {}
+	ExecutionPlanPtr build(const ParseNode* pNode);
+private:
+	const TableInfo* m_pTableInfo;
 };
 
 ExecutionPlanPtr buildPlan(const ParseNode* pNode);

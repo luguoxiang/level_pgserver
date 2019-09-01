@@ -91,14 +91,11 @@ public:
 
     const size_t children() const {return m_iChildNum;}
 
-    const ParseNode* getChild(size_t i) const {
+    ParseNode* getChild(size_t i) const {
     	assert(i < m_iChildNum);
     	return m_children[i];
     }
-    ParseNode* getChildNonConst(size_t i) {
-    	assert(i < m_iChildNum);
-    	return m_children[i];
-    }
+
     void setChild(size_t i,  ParseNode* pChild) {
     	assert(i < m_iChildNum);
     	m_children[i] = pChild;

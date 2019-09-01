@@ -3,11 +3,8 @@
 #include "common/ParseException.h"
 
 #include "execution/ParseTools.h"
-#include "execution/WorkloadResult.h"
-#include "execution/ShowTables.h"
 #include "execution/ShowColumns.h"
 #include "execution/BuildPlan.h"
-#include "execution/ExplainPlan.h"
 #include "execution/UnionAllPlan.h"
 
 ExecutionPlanPtr buildPlanForDesc(const ParseNode* pNode) {
@@ -35,31 +32,18 @@ ExecutionPlanPtr buildPlanForDesc(const ParseNode* pNode) {
 	return ExecutionPlanPtr(new ShowColumns(pEntry));
 }
 
-ExecutionPlanPtr buildPlanForWorkload(const ParseNode* pNode) {
-	return ExecutionPlanPtr(new WorkloadResult());
-}
-
-ExecutionPlanPtr buildPlanForShowTables(const ParseNode* pNode) {
-	return ExecutionPlanPtr(new ShowTables());
-}
 
 
-void buildPlanForExplain(const ParseNode* pNode) {
-	assert(pNode && pNode->children() == 1);
-
-
-	ExecutionPlanPtr pPlan = buildPlan(pNode->getChild(0));
-	assert(pPlan);
-	ExplainPlan* pExplain = new ExplainPlan(pPlan);
-}
 
 ExecutionPlanPtr buildPlanForUnionAll(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 2);
-	ExecutionPlanPtr pRight = buildPlan(pNode->getChild(0));
-	ExecutionPlanPtr pLeft = buildPlan(pNode->getChild(1));
+	ExecutionPlanPtr pLeft = buildPlan(pNode->getChild(0));
+	ExecutionPlanPtr pRight = buildPlan(pNode->getChild(1));
 	assert(pLeft && pRight);
 
-	UnionAllPlan* pPlan = new UnionAllPlan(pLeft, pRight);
+	UnionAllPlan* pPlan = new UnionAllPlan();
+	pPlan->addChildPlan(pLeft);
+	pPlan->addChildPlan(pRight);
 	ExecutionPlanPtr pResult(pPlan);
 
 	int count = pLeft->getResultColumns();

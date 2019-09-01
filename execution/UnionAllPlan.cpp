@@ -7,39 +7,35 @@
 
 
 void UnionAllPlan::getResult(size_t index,  ExecutionResult& result) {
-	if (!m_bLeftDone)
-		return m_pLeft->getResult(index, result);
-	else
-		return m_pRight->getResult(index, result);
+	if(m_iCurrentIndex < m_plans.size()) {
+		m_plans[m_iCurrentIndex]->getResult(index, result);
+	}
 }
 
 void UnionAllPlan::begin() {
-	m_pLeft->begin();
-	m_pRight->begin();
-	m_bLeftDone = false;
+	for (auto& pPlan : m_plans) {
+		pPlan->begin();
+	}
 	m_iCurrentRow = 0;
+	m_iCurrentIndex = 0;
 }
 
 bool UnionAllPlan::next() {
-	if (!m_bLeftDone) {
-		if (m_pLeft->next()) {
-			++m_iCurrentRow;
-			return true;
-		} else {
-			m_bLeftDone = true;
-		}
-	}
-	assert(m_bLeftDone);
-	if (m_pRight->next()) {
-		++m_iCurrentRow;
-		return true;
-	} else {
+	if(m_iCurrentIndex >= m_plans.size()) {
 		return false;
 	}
+	while (!m_plans[m_iCurrentIndex]->next()) {
+		if(++m_iCurrentIndex >= m_plans.size()) {
+			return false;
+		}
+	}
+	++m_iCurrentRow;
+	return true;
 }
 
 void UnionAllPlan::end() {
-	m_pLeft->end();
-	m_pRight->end();
+	for (auto& pPlan : m_plans) {
+		pPlan->end();
+	}
 }
 

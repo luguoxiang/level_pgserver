@@ -69,7 +69,7 @@ bool FilterPlan::next() {
 	return false;
 }
 
-void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const ParseNode* pPredicate) {
+void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const ParseNode* pPredicate, std::set<std::string_view>* pIgnore) {
 	assert(pPredicate);
 	if (pPredicate->m_type != NodeType::OP) {
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
@@ -78,7 +78,7 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 	auto op = pPredicate->m_op;
 	if (op == Operation::AND) {
 		for (size_t i=0;i<pPredicate->children(); ++i ) {
-			doAddPredicate(andList, pPredicate->getChild(i));
+			doAddPredicate(andList, pPredicate->getChild(i), pIgnore);
 		}
 		return;
 	}
@@ -87,6 +87,9 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
 
+	if(pIgnore != nullptr && pIgnore->find(pPredicate->m_sExpr) != pIgnore->end()) {
+		return;
+	}
 	PredicateInfo info = {};
 	info.m_sExpr = pPredicate->m_sExpr;
 	info.m_op = op;
@@ -108,8 +111,8 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 	andList.push_back(info);
 }
 
-void FilterPlan::addPredicate(const ParseNode* pPredicate) {
+void FilterPlan::addPredicate(const ParseNode* pPredicate, std::set<std::string_view>* pIgnore) {
 	m_predicatesInOr.emplace_back(new std::vector<PredicateInfo>());
 	auto& pAnd = m_predicatesInOr.back();
-	doAddPredicate(*pAnd, pPredicate);
+	doAddPredicate(*pAnd, pPredicate, pIgnore);
 }
