@@ -4,6 +4,7 @@
 #include "WorkThreadInfo.h"
 #include "common/ParseException.h"
 #include "common/ParseNode.h"
+#include "common/QueryRewritter.h"
 #include "execution/ExecutionException.h"
 #include "execution/ParseTools.h"
 #include "execution/BuildPlan.h"
@@ -39,8 +40,9 @@ void WorkThreadInfo::resolve(const std::string_view sql) {
 		if (m_result.m_pResult == nullptr) {
 			throw new ParseException(&m_result);
 		}
-
-		m_pPlan = buildPlan(m_result.m_pResult);
+		QueryRewritter rewritter(m_result);
+		auto pTree = rewritter.rewrite(m_result.m_pResult);
+		m_pPlan = buildPlan(pTree);
 	}
 }
 

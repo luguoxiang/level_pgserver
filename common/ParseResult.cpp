@@ -23,35 +23,3 @@ void ParseResult::initParse(const std::string_view sql) {
 	m_sSql.assign(sql.data(), sql.length());
 	m_sError = "";
 }
-
-bool ParseResult::collect(const ParseNode* pNode, std::vector<const ParseNode*>& result, const std::string sRemove) {
-		if (pNode->m_type == NodeType::PARENT && pNode->m_sValue == sRemove) {
-			for(size_t i=0;i<pNode->children();++i) {
-				auto pChild = pNode->getChild(i);
-				if (!collect(pChild, result, sRemove)) {
-					result.push_back(pChild);
-				}
-			}
-			return true;
-		} else {
-			return false;
-		}
-
-	}
-
-ParseNode* ParseResult::merge(const ParseNode* pNode, const std::string sNewName, const std::string sRemove) {
-	std::vector<const ParseNode*> new_children;
-
-	if (collect(pNode, new_children, sRemove)) {
-		auto pResult = newParseNode(pNode->m_type, Operation::NONE, pNode->m_sExpr, new_children);
-		pResult->m_sValue = sNewName;
-		return pResult;
-	}
-	std::initializer_list<const ParseNode*> children = {pNode};
-
-	auto pResult = newParseNode(NodeType::PARENT, Operation::NONE, pNode->m_sExpr, children);
-
-	pResult->m_sValue = sNewName;
-	return pResult;
-}
-

@@ -156,51 +156,6 @@ void SelectPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
-struct PredicateAnalyzer {
-	ParseResult& result = WorkThreadInfo::getParseResult();
-
-	void collectOrOperators(const ParseNode* pPredicate,
-			std::vector<const ParseNode*>& operators) {
-		if (pPredicate->m_type != NodeType::OP) {
-			PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
-		}
-		switch (pPredicate->m_op) {
-		case Operation::AND: {
-			assert(pPredicate->children() == 2);
-			std::vector<const ParseNode*> left, right;
-
-			collectOrOperators(pPredicate->getChild(0), left);
-			collectOrOperators(pPredicate->getChild(1), right);
-
-			if(left.size() == 1 && right.size() == 1) {
-				operators.push_back(pPredicate);
-			} else {
-				for (size_t i = 0; i < left.size(); ++i) {
-					for (size_t j = 0; j < right.size(); ++j) {
-						auto pOp = result.newExprNode(Operation::AND, "", { left[i], right[j] });
-						operators.push_back(pOp);
-					}
-				}
-			}
-			break;
-		}
-		case Operation::OR: {
-			for (size_t i = 0; i < pPredicate->children(); ++i) {
-				collectOrOperators(pPredicate->getChild(i), operators);
-			}
-			break;
-		}
-		default:
-			if (pPredicate->children() == 2) {
-				operators.push_back(pPredicate);
-			} else {
-				PARSE_ERROR("Unsupported query condition!");
-			}
-			break;
-		}
-	}
-};
-
 void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
@@ -208,12 +163,15 @@ void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	FilterPlan* pFilter = new FilterPlan(m_pPlan);
 	m_pPlan.reset(pFilter);
 
-	std::vector<const ParseNode*> operators;
-	PredicateAnalyzer analyzer;
-	analyzer.collectOrOperators(pNode, operators);
-
-	for (auto pChild : operators) {
-		pFilter->addPredicate(pChild);
+	if(pNode->m_op == Operation::OR) {
+		for (size_t i=0;i<pNode->children();++i) {
+			auto pChild = pNode->getChild(i);
+			//should be rewritten
+			assert(pChild->m_op != Operation::OR);
+			pFilter->addPredicate(pChild);
+		}
+	} else {
+		pFilter->addPredicate(pNode);
 	}
 }
 

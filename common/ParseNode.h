@@ -79,7 +79,7 @@ public:
 			Operation op,
 			const std::string_view sExpr,
 			size_t childNum,
-			const ParseNode** children);
+			ParseNode** children);
 
 	const NodeType m_type;
 	std::string_view m_sValue;
@@ -94,6 +94,14 @@ public:
     const ParseNode* getChild(size_t i) const {
     	assert(i < m_iChildNum);
     	return m_children[i];
+    }
+    ParseNode* getChildNonConst(size_t i) {
+    	assert(i < m_iChildNum);
+    	return m_children[i];
+    }
+    void setChild(size_t i,  ParseNode* pChild) {
+    	assert(i < m_iChildNum);
+    	m_children[i] = pChild;
     }
     bool isConst() const {
     	switch(m_type) {
@@ -110,7 +118,7 @@ public:
     	}
     }
 private:
-    const ParseNode** m_children;
+    ParseNode** m_children;
     size_t m_iChildNum;
 };
 

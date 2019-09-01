@@ -43,7 +43,7 @@ ParseNode::ParseNode(NodeType type,
 		Operation op,
 		const std::string_view sExpr,
 		size_t childNum,
-		const ParseNode** children) :
+		ParseNode** children) :
 				m_type(type),
 				m_sExpr(sExpr),
 				m_iChildNum(childNum),
