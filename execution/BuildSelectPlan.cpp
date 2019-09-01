@@ -204,7 +204,7 @@ ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
 	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
 	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
-	return ExecutionPlanPtr(m_pPlan.release());
+	return std::move(m_pPlan);
 }
 
 struct ScanPlanInfo {
@@ -317,7 +317,7 @@ ExecutionPlanPtr LevelDBSelectPlanBuilder::build(const ParseNode* pNode) {
 	} else {
 		ScanPlanInfo info;
 		info.build(pNode, m_pTableInfo);
-		m_pPlan.reset(info.m_pPlan.release());
+		m_pPlan = std::move(info.m_pPlan);
 
 	}
 	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
@@ -325,6 +325,6 @@ ExecutionPlanPtr LevelDBSelectPlanBuilder::build(const ParseNode* pNode) {
 	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
 	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
 	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
-	return ExecutionPlanPtr(m_pPlan.release());
+	return std::move(m_pPlan);
 
 }
