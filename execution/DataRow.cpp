@@ -2,11 +2,7 @@
 #include "ExecutionException.h"
 #include "DBDataTypeHandler.h"
 
-DataRow::DataRow(const std::byte* pData, const std::vector<DBDataType>& types,
-		size_t iSize) :
-		m_types(types), m_pData(pData), m_iSize(iSize) {
 
-}
 void DataRow::getResult(std::vector<ExecutionResult>& results) const  {
 	results.reserve(m_types.size());
 	const std::byte* pStart = m_pData;

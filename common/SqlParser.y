@@ -133,7 +133,6 @@ extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const st
 %type <pNode> insert_stmt opt_col_names value_list 
 
 %type <pNode> column_list row_value
-%type <pNode> update_stmt update_asgn_list 
 %type <pNode> delete_stmt
 %type <pNode> get_stmt merge_stmt values_stmt
 %type <pNode> show_tables_stmt desc_table_stmt workload_stmt
@@ -170,7 +169,6 @@ get_stmt: select_stmt {$$ = $1;}
 
 stmt: get_stmt {$$ = $1;}
 	| insert_stmt { $$ = $1;}
-	| update_stmt {$$ = $1;}
 	| delete_stmt {$$ = $1;}
 	;
 
@@ -268,24 +266,7 @@ delete_stmt: DELETE FROM table_factor opt_where
 		$$ = pResult->newPlanNode( "DeleteStmt", Operation::DELETE, @$.first_column, @$.last_column, {pTable, $4 });
 	}
 
-update_stmt: UPDATE table_factor SET update_asgn_list opt_where
-	{
-		yyerror(&@1,pResult,nullptr, "Update is not supported");
-		YYERROR;
-	}
-	;
 
-update_asgn_list:NAME COMP_EQ expr 
-	{
-		$$ = pResult->newParentNode( "AssignValue",@$.first_column, @$.last_column, {$1, $3}); 
-	}
-	| update_asgn_list ',' NAME COMP_EQ expr
-	{
-		ParseNode* pNode = pResult->newParentNode( "AssignValue",@$.first_column, @$.last_column,  {$3, $5 }); 
-		$$ = pResult->newListNode( "AssignValueList",@$.first_column, @$.last_column, { $1, pNode });
-
-	}
-	;
 values_stmt:VALUES value_list
 	{
 		$$ = pResult->newPlanNode( "Values", Operation::VALUES, @$.first_column, @$.last_column, { $2 });
@@ -337,12 +318,17 @@ value_list: '(' row_value ')' {
 		$$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  { $1, $4 });
 	}
 
-row_value: expr {$$ = $1;}
+row_value: expr {
+		$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, { $1 });
+	}
 	| row_value ',' expr { 
-	$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, { $1, $3 });}
+		$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, { $1, $3 });
+	}
 	;
 
-column_list: NAME { $$ = $1;}
+column_list: NAME { 
+		$$ = pResult->newListNode( "ColumnList", @$.first_column, @$.last_column, { $1 });
+	}
 	| column_list ',' NAME {
 		$$ = pResult->newListNode( "ColumnList", @$.first_column, @$.last_column, { $1, $3 });
 	}
@@ -373,7 +359,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 		if(pTable->m_type != NodeType::NAME)
 		{
 			//this is a select statement with subquery
-			$$ = pResult->newPlanNode( "SubQueryStmt", Operation::SELECT_WITH_SUBQUERY, @$.first_column, @$.last_column, { pTable, pPredicate, $7, $8, $9, $10, pProject});
+			$$ = pResult->newPlanNode( "SubQueryStmt", Operation::SELECT_WITH_SUBQUERY, @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10});
 		}
 		else
 		{
@@ -406,7 +392,8 @@ opt_groupby:{$$ = 0;}
 	;
 
 sort_list: expr opt_asc_desc {
-			$$ = pResult->newParentNode( "SortItem", @$.first_column, @$.last_column,{ $1, $2 }); 
+			auto pChild = pResult->newParentNode( "SortItem", @$.first_column, @$.last_column,{ $1, $2 }); 
+			$$ = pResult->newListNode( "SortList",@$.first_column, @$.last_column, { pChild });
 		}
 	| sort_list ',' expr opt_asc_desc { 
 			auto pChild =  pResult->newParentNode( "SortItem",@$.first_column, @$.last_column, { $3, $4 });
@@ -439,7 +426,7 @@ projection: expr {
 	}
 
 select_expr_list: projection { 
-		$$ = $1;
+		$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, { $1 });
 	}
 	| select_expr_list ',' projection {
 		$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, { $1, $3 });

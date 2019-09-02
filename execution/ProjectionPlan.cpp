@@ -8,6 +8,7 @@ bool ProjectionPlan::project(const ParseNode* pNode, const std::string_view& sNa
 	if (iSubIndex < 0) {
 		return false;
 	}
+
 	info.m_iSubIndex = iSubIndex;
 	info.m_sName = sName;
 	info.m_sRaw = pNode->m_sExpr;

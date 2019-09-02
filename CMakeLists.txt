@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.9)
 cmake_policy(SET CMP0048 NEW)
-project(csv2pgserver VERSION 1.0 LANGUAGES CXX)
+project(level_pgserver VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 set (VERSION_MAJOR 1)
@@ -14,7 +14,7 @@ set(BisonOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.tab.cpp)
 set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
 
-set(APP_EXEC csv2pgserver)
+set(APP_EXEC level_pgserver)
 option (WITH_GFLAGS "Use gflags" OFF)
 option(BUILD_TESTING "glog unit tests" OFF) 
 option(LEVELDB_BUILD_TESTS "Build LevelDB's unit tests" OFF)

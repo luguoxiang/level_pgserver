@@ -22,8 +22,11 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 			CONFIG_ERROR("Unknown datatype ", matches.str(2));
 		}
 		DBColumnInfo* pColumn = new DBColumnInfo(matches.str(1), type);
+
+		pColumn->m_iIndex = m_columns.size();
 		m_columns.emplace_back(pColumn);
 		m_columnMap[pColumn->m_name] = pColumn;
+
 		std::string sLen = matches[3];
 		if (sLen.length() > 0) {
 			auto len = atoi(sLen.c_str() + 1);
@@ -34,6 +37,7 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 		} else {
 			pColumn->m_iLen = 0;
 		}
+
 	} else {
 		 CONFIG_ERROR("Illegal attribute value ", sValue);
 	}

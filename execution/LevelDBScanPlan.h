@@ -40,8 +40,6 @@ public:
 
 	void setPredicate(const ParseNode* pNode, std::set<std::string_view>& solved);
 
-	uint64_t getCost();
-
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			SortOrder order)override;
 
@@ -74,6 +72,8 @@ public:
 		return m_bEndInclusive;
 	}
 private:
+	uint64_t getCost();
+
 	std::vector<KeyPredicateInfo> m_predicates;
 	KeyPredicateInfo m_endPredicate;
 	bool isSeekToFirst() {

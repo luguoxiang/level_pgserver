@@ -69,7 +69,7 @@ public:
 			}
 			break;
 		default:
-			PARSE_ERROR("wrong const value type %d");
+			PARSE_ERROR("wrong const value type");
 		}
 		checkValue(value);
 		result.setInt(value);
@@ -118,11 +118,11 @@ public:
 	}
 
 	void setToMin(ExecutionResult& result) override {
-		result.setDouble(-std::numeric_limits<Type>::lowest());
+		result.setDouble(std::numeric_limits<Type>::lowest());
 	}
 
 	void setToMax(ExecutionResult& result) override {
-		result.setDouble(-std::numeric_limits<Type>::max());
+		result.setDouble(std::numeric_limits<Type>::max());
 	}
 
 	void read(const std::byte* pData, ExecutionResult& result) override {

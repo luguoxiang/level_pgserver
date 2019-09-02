@@ -29,29 +29,33 @@ bool LevelDBInsertPlan::next() {
 
 	m_pBuffer->purge();
 
-	std::set<int> keyIndexSet;
 	std::vector<ExecutionResult> keyResults;
 	std::vector<ExecutionResult> valueResults;
 	std::vector<DBDataType> keyTypes;
 	std::vector<DBDataType> valueTypes;
+
+	for(size_t i=0;i<m_pTable->getKeyCount();++i) {
+		auto pColumn = m_pTable->getKeyColumn(i);
+
+		ExecutionResult result;
+		m_pPlan->getResult(pColumn->m_iIndex, result);
+
+		keyResults.push_back(result);
+		keyTypes.push_back(pColumn->m_type);
+	}
+
 	for(size_t i=0;i<m_pTable->getColumnCount();++i) {
 		auto pColumn = m_pTable->getColumn(i);
-
+		if(pColumn->m_iKeyIndex>= 0) {
+			continue;
+		}
 		ExecutionResult result;
 		m_pPlan->getResult(i, result);
 
-		if(pColumn->m_iKeyIndex>= 0) {
-			keyIndexSet.insert(pColumn->m_iKeyIndex);
-			keyResults.push_back(result);
-			keyTypes.push_back(pColumn->m_type);
-		} else {
-			valueResults.push_back(result);
-			valueTypes.push_back(pColumn->m_type);
-		}
+		valueResults.push_back(result);
+		valueTypes.push_back(pColumn->m_type);
 	}
-	if(keyIndexSet.size() != m_pTable->getKeyCount()) {
-		EXECUTION_ERROR("Missing keys: have ", keyIndexSet.size(), ", expect ", m_pTable->getKeyCount());
-	}
+
 
 	auto keyRow = m_pBuffer->copyRow(keyResults, keyTypes);
 	auto valueRow = m_pBuffer->copyRow(valueResults, valueTypes);

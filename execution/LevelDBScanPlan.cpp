@@ -223,6 +223,10 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 		return m_columnValues.size();
 	} else if(pNode->m_type == NodeType::NAME) {
 		auto pColumn = m_pTable->getColumnByName(pNode->m_sValue);
+		if(pColumn == nullptr ) {
+			PARSE_ERROR("Unknown column: ", pNode->m_sValue);
+		}
+
 		m_projection[pColumn->m_iIndex] = true;
 		return pColumn->m_iIndex;
 	}
@@ -357,10 +361,20 @@ bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view&
 
 }
 void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
-	std::vector<ExecutionResult> start;
-	std::vector<ExecutionResult> end;
-	m_startRow.getResult(start);
-	m_endRow.getResult(end);
+	std::vector<ExecutionResult> start(m_keyTypes.size());
+	std::vector<ExecutionResult> end(m_keyTypes.size());
+	if(m_startRow.data() == nullptr) {
+		for(size_t i=0;i<m_keyTypes.size();++i) {
+			auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
+			pHandler->setToMin(start[i]);
+			pHandler->setToMax(end[i]);
+		}
+		m_startRow = m_pBuffer->copyRow(start, m_keyTypes);
+		m_endRow = m_pBuffer->copyRow(end, m_keyTypes);
+	} else {
+		m_startRow.getResult(start);
+		m_endRow.getResult(end);
+	}
 
 	assert(start.size() == end.size());
 	std::string s = "leveldb:scan  ";
@@ -383,6 +397,7 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
 	s.erase(s.length() -1, 1);
 	s.append(m_bEndInclusive?"]":")");
 	rows.push_back(s);
+
 }
 
 void LevelDBScanPlan::getResult(size_t columnIndex, ExecutionResult& result) {
