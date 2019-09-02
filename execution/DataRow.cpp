@@ -4,10 +4,12 @@
 
 
 void DataRow::getResult(std::vector<ExecutionResult>& results) const  {
-	results.reserve(m_types.size());
+	results.resize(m_types.size());
+
 	const std::byte* pStart = m_pData;
-	for (size_t i = 0; i <= results.size(); ++i) {
+	for (size_t i = 0; i < m_types.size(); ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
+		assert(pHandler);
 		pHandler->read(pStart, results[i]);
 		pStart += pHandler->getSize(pStart);
 	}
@@ -19,6 +21,7 @@ void DataRow::getResult(size_t index, ExecutionResult& result) const {
 	assert(index < m_types.size());
 	for (size_t i = 0; i <= index; ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
+		assert(pHandler);
 		if(i == index) {
 			pHandler->read(pStart, result);
 			break;
@@ -37,6 +40,7 @@ int DataRow::compare(const DataRow& row) const {
 	for (size_t i = 0; i < m_types.size(); ++i) {
 		ExecutionResult a, b;
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
+		assert(pHandler);
 		pHandler->read(pStartA, a);
 		pHandler->read(pStartB, b);
 		int ret = pHandler->compare(a, b);
@@ -55,6 +59,7 @@ int DataRow::compare(const DataRow& row, size_t index) const {
 	getResult(index, a);
 	row.getResult(index, b);
 	auto pHandler = DBDataTypeHandler::getHandler(m_types[index]);
+	assert(pHandler);
 	return pHandler->compare(a, b);
 }
 
@@ -64,6 +69,7 @@ size_t DataRow::computeSize(const std::vector<ExecutionResult>& results) {
 	assert(results.size() == m_types.size());
 	for (size_t i = 0; i < results.size(); ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
+		assert(pHandler);
 		rowSize += pHandler->getSize(results[i]);
 	}
 	return rowSize;
@@ -74,6 +80,7 @@ void DataRow::copy(const std::vector<ExecutionResult>& results,
 	assert(results.size() == m_types.size());
 	for (size_t i = 0; i < results.size(); ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_types[i]);
+		assert(pHandler);
 		pHandler->write(pData, results[i]);
 		pData += pHandler->getSize(results[i]);
 	}

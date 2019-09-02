@@ -37,7 +37,18 @@ public:
 
 	virtual int addProjection(const ParseNode* pColumn) override {
 		assert(!m_plans.empty());
-		return m_plans[0]->addProjection(pColumn);
+		int lastProj = -1;
+		for (auto& pPlan : m_plans) {
+			int proj = pPlan->addProjection(pColumn);
+			if(proj <0) {
+				return -1;
+			}
+			if(lastProj >= 0 && proj != lastProj) {
+				PARSE_ERROR("projection conflict for ", pColumn->m_sExpr);
+			}
+			lastProj = proj;
+		}
+		return lastProj;
 	}
 
 	virtual std::string_view getProjectionName(size_t index) override {

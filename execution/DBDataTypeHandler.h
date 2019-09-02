@@ -32,7 +32,6 @@ public:
 		if (auto iter = m_typeHandlers.find(type); iter != m_typeHandlers.end() ){
 			return iter->second.get();
 		}
-		EXECUTION_ERROR("Unknown data type: ", GetTypeName(type));
 		return nullptr;
 	}
 	std::string getName() {

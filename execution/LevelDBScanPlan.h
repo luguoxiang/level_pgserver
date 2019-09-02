@@ -71,6 +71,10 @@ public:
 	bool endInclusive() const {
 		return m_bEndInclusive;
 	}
+
+	void setLevelDBIterator(LevelDBIteratorPtr& pIter) {
+		m_pDBIter = pIter;
+	}
 private:
 	uint64_t getCost();
 

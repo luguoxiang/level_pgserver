@@ -97,7 +97,7 @@ void MetaConfig::load(const std::string& sPath) {
 							pCurrentTable->addKeyColumn(sName);
 						}
 					} else {
-						LOG(INFO) <<"add attribute "<< sKey << " = " << sValue << " to table " << pCurrentTable->getName();
+						DLOG(INFO) <<"add attribute "<< sKey << " = " << sValue;
 						pCurrentTable->addAttribute(sKey, sValue);
 					}
 				}

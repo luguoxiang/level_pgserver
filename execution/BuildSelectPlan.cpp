@@ -170,16 +170,7 @@ void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	FilterPlan* pFilter = new FilterPlan(m_pPlan.release());
 	m_pPlan.reset(pFilter);
 
-	if (pNode->m_op == Operation::OR) {
-		for (size_t i = 0; i < pNode->children(); ++i) {
-			auto pChild = pNode->getChild(i);
-			//should be rewritten
-			assert(pChild->m_op != Operation::OR);
-			pFilter->addPredicate(pChild);
-		}
-	} else {
-		pFilter->addPredicate(pNode);
-	}
+	pFilter->setPredicate(pNode);
 }
 
 SelectPlanBuilder::SelectPlanBuilder(const TableInfo* pTableInfo) {
@@ -240,6 +231,7 @@ void ScanPlanInfo::build(const ParseNode* pNode, const TableInfo* pTableInfo) {
 }
 
 bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
+	assert(pNode->m_op != Operation::OR);
 	if (pNode->m_op == Operation::AND) {
 		for (size_t i = 0; i < pNode->children(); ++i) {
 			if (needFilter(pNode->getChild(i))) {
@@ -250,11 +242,7 @@ bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
 	}
 	return m_solved.find(pNode->m_sExpr) == m_solved.end();
 }
-void LevelDBSelectPlanBuilder::buildFullScan(const ParseNode* pNode) {
-	auto pFilter = new FilterPlan(new LevelDBScanPlan(m_pTableInfo));
-	m_pPlan.reset(pFilter);
-	pFilter->addPredicate(pNode);
-}
+
 
 void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
 
@@ -270,7 +258,8 @@ void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
 
 		if (scanInfo.isFullScan()) {
 			//back to full scan plan
-			buildFullScan(pNode);
+			m_pPlan.reset(new LevelDBScanPlan(m_pTableInfo));
+			buildPlanForFilter(pNode);
 			return;
 		}
 		rangePtrList[i] = rangeScanList.data() + i;
@@ -280,7 +269,7 @@ void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
 			[](ScanPlanInfo* pRange1, ScanPlanInfo* pRange2) {
 				auto& start1 = pRange1->m_pScan->getStartRow();
 				auto& start2 = pRange2->m_pScan->getStartRow();
-				return start1.compare(start2);
+				return start1.compare(start2) < 0;
 	});
 
 	for (size_t i = 1; i < pNode->children(); ++i) {
@@ -301,13 +290,18 @@ void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
 		}
 
 		//key scan ranges have overlap, back to full scan
-		buildFullScan(pNode);
+		m_pPlan.reset(new LevelDBScanPlan(m_pTableInfo));
+		buildPlanForFilter(pNode);
 		return;
 	}
 	UnionAllPlan* pUnion = new UnionAllPlan(true);
 	m_pPlan.reset(pUnion);
+
+	auto pDBIter = LevelDBHandler::getHandler(m_pTableInfo)->createIterator();
+
 	for (size_t i = 0; i < pNode->children(); ++i) {
 		auto pScanInfo = rangePtrList[i];
+		pScanInfo->m_pScan->setLevelDBIterator(pDBIter);
 		pUnion->addChildPlan(pScanInfo->m_pPlan.release());
 	}
 }
@@ -318,10 +312,10 @@ ExecutionPlanPtr LevelDBSelectPlanBuilder::build(const ParseNode* pNode) {
 	if (pPredicate == nullptr) {
 		m_pPlan.reset(new LevelDBScanPlan(m_pTableInfo));
 	} else if (pPredicate->m_op == Operation::OR) {
-		buildUnionAll(pNode);
+		buildUnionAll(pPredicate);
 	} else {
 		ScanPlanInfo info;
-		info.build(pNode, m_pTableInfo);
+		info.build(pPredicate, m_pTableInfo);
 		m_pPlan = std::move(info.m_pPlan);
 
 	}

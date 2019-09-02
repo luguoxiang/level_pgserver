@@ -81,6 +81,7 @@ public:
 	void clearPredicates() {
 		m_predicatesInOr.clear();
 	}
+	void setPredicate(const ParseNode* pNode);
 private:
 	bool evaluate(const PredicateInfo& info);
 	using AndPredicateListPtr = std::unique_ptr<std::vector<PredicateInfo>>;

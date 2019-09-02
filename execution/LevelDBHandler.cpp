@@ -60,13 +60,13 @@ LevelDBIterator::~LevelDBIterator() {
 	m_pIter.reset(nullptr);
 	m_pDB->ReleaseSnapshot(m_options.snapshot);
 }
-LevelDBIterator* LevelDBHandler::createIterator() {
-	std::unique_ptr<LevelDBIterator> pIter(new LevelDBIterator());
+LevelDBIteratorPtr LevelDBHandler::createIterator() {
+	LevelDBIteratorPtr pIter = std::make_shared<LevelDBIterator>();
 	pIter->m_options.snapshot = m_pDB->GetSnapshot();
 
 	pIter->m_pIter.reset(m_pDB->NewIterator(pIter->m_options));
 	pIter->m_pDB = m_pDB.get();
-	return pIter.release();
+	return pIter;
 }
 
 uint64_t LevelDBHandler::getCost(DataRow& start, DataRow& end) {

@@ -99,7 +99,7 @@ public:
 	LevelDBHandler(const TableInfo* pTable);
 
 	void commit(LevelDBBatch& batch);
-	LevelDBIterator* createIterator();
+	LevelDBIteratorPtr createIterator();
 	static LevelDBHandler* getHandler(const TableInfo* pTable);
 
 	uint64_t getCost(DataRow& start,	DataRow& end);

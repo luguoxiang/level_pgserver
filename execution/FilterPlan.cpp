@@ -104,7 +104,9 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 	if(info.m_iLeftIndex < 0) {
 		if(pLeft->isConst()) {
 			auto type = m_pPlan->getResultType(info.m_iRightIndex);
-			DBDataTypeHandler::getHandler(type)->fromNode(pLeft, info.m_leftConst);
+			auto pHandler = DBDataTypeHandler::getHandler(type);
+			assert(pHandler!= nullptr);
+			pHandler->fromNode(pLeft, info.m_leftConst);
 		}else{
 			PARSE_ERROR("Unsupported predicate ", info.m_sExpr);
 		}
@@ -112,7 +114,9 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 	if(info.m_iRightIndex < 0) {
 		if(pRight->isConst()) {
 			auto type = m_pPlan->getResultType(info.m_iLeftIndex);
-			DBDataTypeHandler::getHandler(type)->fromNode(pRight, info.m_rightConst);
+			auto pHandler = DBDataTypeHandler::getHandler(type);
+			assert(pHandler!= nullptr);
+			pHandler->fromNode(pRight, info.m_rightConst);
 		}else{
 			PARSE_ERROR("Unsupported predicate ", info.m_sExpr);
 		}
@@ -126,4 +130,21 @@ bool FilterPlan::addPredicate(const ParseNode* pPredicate, std::set<std::string_
 	auto& pAnd = m_predicatesInOr.back();
 	doAddPredicate(*pAnd, pPredicate, pIgnore);
 	return !pAnd->empty();
+}
+
+void FilterPlan::setPredicate(const ParseNode* pNode) {
+	m_predicatesInOr.clear();
+	if(pNode == nullptr) {
+		return;
+	}
+	if (pNode->m_op == Operation::OR) {
+		for (size_t i = 0; i < pNode->children(); ++i) {
+			auto pChild = pNode->getChild(i);
+			//should be rewritten
+			assert(pChild->m_op != Operation::OR);
+			addPredicate(pChild);
+		}
+	} else {
+		addPredicate(pNode);
+	}
 }

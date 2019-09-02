@@ -1,6 +1,18 @@
 #include "QueryRewritter.h"
 #include "ParseException.h"
 
+bool QueryRewritter::hasOrPredicate(ParseNode* pNode) {
+	if(pNode->m_op == Operation::OR) {
+		return true;
+	}
+	for (size_t i = 0; i < pNode->children(); ++i) {
+		auto pChild = pNode->getChild(i);
+		if(hasOrPredicate(pChild)) {
+			return true;
+		}
+	}
+	return false;
+}
 ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 	if(pNode == nullptr) {
 		return nullptr;
@@ -18,14 +30,19 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 	case NodeType::OP:
 		switch (pNode->m_op) {
 		case Operation::AND:
+			if(!hasOrPredicate(pNode)) {
+				break;
+			};
+			[[fallthrough]];
 		case Operation::OR: {
 			std::vector<ParseNode*> operators;
 			collectOrOperators(pNode, operators);
 			if (operators.size() == 1) {
 				return operators[0];
 			}
-			return m_result.newParseNode(NodeType::OP, Operation::OR,
+			pNode = m_result.newParseNode(NodeType::OP, Operation::OR,
 					pNode->m_sExpr, operators);
+			break;
 		}
 		case Operation::IN:
 			return rewriteInOrNotIN(pNode, true);
@@ -88,6 +105,10 @@ void QueryRewritter::collectOrOperators(ParseNode* pPredicate,
 	}
 	switch (pPredicate->m_op) {
 	case Operation::AND: {
+		if(!hasOrPredicate(pPredicate)) {
+			operators.push_back(pPredicate);
+			break;
+		}
 		assert(pPredicate->children() == 2);
 		std::vector<ParseNode*> left, right;
 
@@ -114,7 +135,6 @@ void QueryRewritter::collectOrOperators(ParseNode* pPredicate,
 		break;
 	}
 	default:
-		pPredicate = rewrite(pPredicate);
 		operators.push_back(pPredicate);
 		break;
 	}
