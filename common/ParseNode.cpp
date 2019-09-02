@@ -27,6 +27,8 @@ void printTree(const ParseNode* pRoot, int level) {
 		break;
 	case NodeType::PARENT:
 	case NodeType::NAME:
+	case NodeType::PLAN:
+	case NodeType::LIST:
 		std::cout << pRoot->m_sValue << std::endl;
 		break;
 	default:

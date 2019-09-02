@@ -18,7 +18,6 @@ public:
 	}
 
 	virtual bool next()override {
-		LeafPlan::next();
 		return m_iCurrent++ < m_rows.size();
 	}
 

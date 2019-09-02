@@ -2,12 +2,17 @@
 #include "ParseException.h"
 
 ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
+	if(pNode == nullptr) {
+		return nullptr;
+	}
 	switch (pNode->m_type) {
 	case NodeType::LIST: {
 		std::vector<ParseNode*> elements;
-		collectElements(pNode, pNode->m_sValue, elements);
+		auto sName = pNode->m_sValue;
+		collectElements(pNode, sName, elements);
 		pNode = m_result.newParseNode(NodeType::LIST,
 				Operation::NONE, pNode->m_sExpr, elements);
+		pNode->m_sValue = sName;
 		break;
 	}
 	case NodeType::OP:
@@ -22,43 +27,10 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 			return m_result.newParseNode(NodeType::OP, Operation::OR,
 					pNode->m_sExpr, operators);
 		}
-		case Operation::IN: {
-			auto pLeft = pNode->getChild(0);
-			auto pValue = pNode->getChild(1);
-			std::vector<ParseNode*> expressions(pValue->children());
-
-			for (size_t i = 0; i < pValue->children(); ++i) {
-				auto pChild = pValue->getChild(i);
-				if (!pChild->isConst()) {
-					PARSE_ERROR("expect const value:", pChild->m_sExpr);
-				}
-
-				pChild = m_result.newExprNode(Operation::COMP_EQ,
-						pChild->m_sExpr, { pLeft, pChild });
-				expressions.push_back(pChild);
-			}
-			auto sExpr = m_result.concate({pLeft->m_sExpr,"=", pNode->m_sExpr});
-			return m_result.newParseNode(NodeType::OP, Operation::AND, sExpr, expressions);
-		}
-		case Operation::NOT_IN: {
-			auto pLeft = pNode->getChild(0);
-			auto pValue = pNode->getChild(1);
-			std::vector<ParseNode*> expressions(pValue->children());
-
-			for (size_t i = 0; i < pValue->children(); ++i) {
-				auto pChild = pValue->getChild(i);
-				if (!pChild->isConst()) {
-					PARSE_ERROR("expect const value:", pChild->m_sExpr);
-				}
-
-				pChild = m_result.newExprNode(Operation::COMP_NE,
-						pChild->m_sExpr, { pLeft, pChild });
-				expressions.push_back(pChild);
-			}
-			auto sExpr = m_result.concate({pLeft->m_sExpr,"!=", pNode->m_sExpr});
-			return m_result.newParseNode(NodeType::OP, Operation::AND,
-					sExpr, expressions);
-		}
+		case Operation::IN:
+			return rewriteInOrNotIN(pNode, true);
+		case Operation::NOT_IN:
+			return rewriteInOrNotIN(pNode, false);
 		default:
 			break;
 		}
@@ -71,9 +43,34 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 	}
 	return pNode;
 }
+ParseNode* QueryRewritter::rewriteInOrNotIN(ParseNode* pNode, bool in) {
+	assert(pNode);
+	auto pLeft = pNode->getChild(0);
+	auto pValue = rewrite(pNode->getChild(1));
+	assert(pLeft && pValue);
+
+	std::vector<ParseNode*> expressions(pValue->children());
+
+	for (size_t i = 0; i < pValue->children(); ++i) {
+		auto pChild = pValue->getChild(i);
+		if (!pChild->isConst()) {
+			PARSE_ERROR("expect const value:", pChild->m_sExpr);
+		}
+		Operation op = in ? Operation::COMP_EQ: Operation::COMP_NE;
+
+		auto sExpr = m_result.concate({pLeft->m_sExpr,in ? "=" : "!=", pChild->m_sExpr});
+
+		pChild = m_result.newExprNode(op, sExpr, { pLeft, pChild });
+		expressions[i] = pChild;
+	}
+
+	return m_result.newParseNode(NodeType::OP, Operation::AND,
+			pNode->m_sExpr, expressions);
+}
 
 void QueryRewritter::collectElements(ParseNode* pNode,
 		const std::string_view sName, std::vector<ParseNode*>& elements) {
+	assert(pNode);
 	if (pNode->m_type == NodeType::LIST && pNode->m_sValue == sName) {
 		for (size_t i = 0; i < pNode->children(); ++i) {
 			collectElements(pNode->getChild(i), sName, elements);
@@ -85,6 +82,7 @@ void QueryRewritter::collectElements(ParseNode* pNode,
 
 void QueryRewritter::collectOrOperators(ParseNode* pPredicate,
 		std::vector<ParseNode*>& operators) {
+	assert(pPredicate);
 	if (pPredicate->m_type != NodeType::OP) {
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}

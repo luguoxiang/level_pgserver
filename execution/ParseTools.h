@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <exception>
 #include "common/ParseNode.h"
 #include "execution/WorkThreadInfo.h"
 #include "execution/ExecutionPlan.h"
@@ -21,10 +22,12 @@ inline int64_t toInt(const std::string_view s)
 	try{
 		std::string ss(s.data(), s.length());
 		return std::stoi(ss);
-	} catch (const std::exception& e) {
-		EXECUTION_ERROR(e.what());
-		return 0;
+	} catch(std::invalid_argument& e) {
+		EXECUTION_ERROR("Invalid integer value: ", s);
+	} catch (std::out_of_range& e) {
+		EXECUTION_ERROR("Value out of range: ", s);
 	}
+	return 0;
 }
 
 inline int64_t binaryToInt(std::string_view sValue) {
@@ -49,10 +52,12 @@ inline double toDouble(const std::string_view s)
 	try{
 		std::string ss(s.data(), s.length());
 		return std::stod(ss);
-	} catch (const std::exception& e) {
-		EXECUTION_ERROR(e.what());
-		return 0;
+	} catch(std::invalid_argument& e) {
+		EXECUTION_ERROR("Invalid float value: ", s);
+	} catch (std::out_of_range& e) {
+		EXECUTION_ERROR("Value out of range: ", s);
 	}
+	return 0;
 }
 
 inline double binaryToDouble(std::string_view sValue) {

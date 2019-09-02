@@ -26,11 +26,12 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 
 	case Operation::SELECT: {
 		const ParseNode* pTable = pNode->getChild(SQL_SELECT_TABLE);
+		assert(pTable);
 		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
 		if (pTableInfo == nullptr) {
 			PARSE_ERROR("table ", pTable->m_sValue, " not found");
 		}
-		if(pTableInfo->getKeyCount() >= 0) {
+		if(pTableInfo->getKeyCount() > 0) {
 			LevelDBSelectPlanBuilder builder(pTableInfo);
 			return builder.build(pNode);
 		} else {

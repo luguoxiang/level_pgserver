@@ -54,18 +54,18 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 }
 
 void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
-	ProjectionPlan* pProjPlan = new ProjectionPlan(m_pPlan.release());
-	m_pPlan.reset(pProjPlan);
-
-	assert(pNode && pNode->getChild(0));
-	if (pNode->getChild(0)->m_type == NodeType::INFO
-			&& pNode->getChild(0)->m_op == Operation::ALL_COLUMNS) {
+	if (pNode->m_type == NodeType::INFO
+			&& pNode->m_op == Operation::ALL_COLUMNS) {
 		std::vector<std::string_view> columns;
 		m_pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
 			PARSE_ERROR(
 					"select * is not supported in current projection context");
 		}
+
+		ProjectionPlan* pProjPlan = new ProjectionPlan(m_pPlan.release());
+		m_pPlan.reset(pProjPlan);
+
 		for (auto& column : columns) {
 			ParseNode node(NodeType::NAME, Operation::NONE, column, 0, nullptr);
 			node.m_sValue = column;
@@ -73,6 +73,10 @@ void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 		}
 		return;
 	}
+
+	ProjectionPlan* pProjPlan = new ProjectionPlan(m_pPlan.release());
+	m_pPlan.reset(pProjPlan);
+
 	for (int i = 0; i < pNode->children(); ++i) {
 		auto pColumn = pNode->getChild(i);
 		std::string_view sAlias;
@@ -309,6 +313,7 @@ void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
 }
 
 ExecutionPlanPtr LevelDBSelectPlanBuilder::build(const ParseNode* pNode) {
+	assert(pNode && pNode->children() == 7);
 	auto pPredicate = pNode->getChild(SQL_SELECT_PREDICATE);
 	if (pPredicate == nullptr) {
 		m_pPlan.reset(new LevelDBScanPlan(m_pTableInfo));

@@ -254,8 +254,12 @@ expr: NAME '(' expr ')' {
 }       
 ;
 
-val_list: expr {$$ = $1;}
-	| expr ',' val_list { $$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  $1, $3);}
+val_list: expr {
+	$$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  { $1 } );
+	}
+	| expr ',' val_list { 
+	$$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  { $1, $3 } );
+	}
 	;
 
 delete_stmt: DELETE FROM table_factor opt_where
@@ -278,7 +282,7 @@ update_asgn_list:NAME COMP_EQ expr
 	| update_asgn_list ',' NAME COMP_EQ expr
 	{
 		ParseNode* pNode = pResult->newParentNode( "AssignValue",@$.first_column, @$.last_column,  {$3, $5 }); 
-		$$ = pResult->newListNode( "AssignValueList",@$.first_column, @$.last_column,  $1, pNode);
+		$$ = pResult->newListNode( "AssignValueList",@$.first_column, @$.last_column, { $1, pNode });
 
 	}
 	;
@@ -327,20 +331,20 @@ opt_col_names: /* empty */{$$ = nullptr;}
 	;
 
 value_list: '(' row_value ')' { 
-		$$ = $2;
+		$$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  { $2 });
 	}
 	| value_list ',' '(' row_value ')' {
-		$$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  $1, $4);
+		$$ = pResult->newListNode( "ValueList",@$.first_column, @$.last_column,  { $1, $4 });
 	}
 
 row_value: expr {$$ = $1;}
 	| row_value ',' expr { 
-	$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, $1, $3);}
+	$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, { $1, $3 });}
 	;
 
 column_list: NAME { $$ = $1;}
 	| column_list ',' NAME {
-		$$ = pResult->newListNode( "ColumnList", @$.first_column, @$.last_column,$1, $3);
+		$$ = pResult->newListNode( "ColumnList", @$.first_column, @$.last_column, { $1, $3 });
 	}
 	;
 
@@ -406,7 +410,7 @@ sort_list: expr opt_asc_desc {
 		}
 	| sort_list ',' expr opt_asc_desc { 
 			auto pChild =  pResult->newParentNode( "SortItem",@$.first_column, @$.last_column, { $3, $4 });
-			$$ = pResult->newListNode( "SortList",@$.first_column, @$.last_column, $1,pChild);
+			$$ = pResult->newListNode( "SortList",@$.first_column, @$.last_column, { $1,pChild });
 		}
 	;
 
@@ -438,7 +442,7 @@ select_expr_list: projection {
 		$$ = $1;
 	}
 	| select_expr_list ',' projection {
-		$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, $1, $3);
+		$$ = pResult->newListNode( "ExprList", @$.first_column, @$.last_column, { $1, $3 });
 	}
 	| '*' {
 		$$ = pResult->newInfoNode( Operation::ALL_COLUMNS,  @$.first_column, @$.last_column);

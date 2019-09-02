@@ -132,9 +132,9 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 			delete pe;
 		} catch (const std::exception &ex) {
 			LOG(ERROR) << "Working thread failed:" << ex.what();
-		} catch (...) {
+		} /*catch (...) {
 			LOG(ERROR) << "Working thread failed:Unknown Reason.";
-		}
+		}*/
 		pInfo->m_bRunning = false;
 	}
 	LOG(WARNING) << "Working thread terminate.";

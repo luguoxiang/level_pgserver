@@ -40,8 +40,10 @@ void WorkThreadInfo::resolve(const std::string_view sql) {
 		if (m_result.m_pResult == nullptr) {
 			throw new ParseException(&m_result);
 		}
+
 		QueryRewritter rewritter(m_result);
 		auto pTree = rewritter.rewrite(m_result.m_pResult);
+		//print();
 		m_pPlan = buildPlan(pTree);
 	}
 }

@@ -116,8 +116,7 @@ public:
 	}
 
 	ParseNode* newListNode(const std::string_view& sName,
-				int firstColumn, int lastColumn, ParseNode* pLeft, ParseNode* pRight) {
-		auto children = {pLeft, pRight};
+				int firstColumn, int lastColumn, std::initializer_list<ParseNode*> children) {
 		ParseNode* pNode = newParseNode(NodeType::LIST,Operation::NONE, getExpr(firstColumn, lastColumn), children);
 		pNode->m_sValue = sName;
 		return pNode;
