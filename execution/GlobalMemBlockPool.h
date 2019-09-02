@@ -8,8 +8,8 @@
 
 class GlobalMemBlockPool{
 public:
-	using MemBlockPtr = std::shared_ptr<std::vector<std::byte>>;
-	using MemBlockPtrIter = std::vector<MemBlockPtr>::const_iterator;
+	using MemBlockPtr = std::unique_ptr<std::vector<std::byte>>;
+	using MemBlockPtrIter = std::vector<MemBlockPtr>::iterator;
 
 	constexpr static size_t BLOCK_SIZE = 512 * 1024;
 	MemBlockPtr alloc();
