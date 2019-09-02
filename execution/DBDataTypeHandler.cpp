@@ -252,7 +252,7 @@ public:
 			if (pValue->m_iValue == PARAM_TEXT_MODE) {
 				break;
 			}
-			[[fallthrough]]
+			[[fallthrough]];
 		default:
 			EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr,
 					", expect string");

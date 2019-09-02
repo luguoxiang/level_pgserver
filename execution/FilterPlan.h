@@ -73,8 +73,8 @@ public:
 		Operation m_op;
 		int m_iLeftIndex;
 		int m_iRightIndex;
-		const ParseNode* m_pLeft;
-		const ParseNode* m_pRight;
+		ExecutionResult m_leftConst;
+		ExecutionResult m_rightConst;
 	};
 
 	bool addPredicate(const ParseNode* pNode, std::set<std::string_view>* pIgnore = nullptr);

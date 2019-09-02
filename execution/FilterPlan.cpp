@@ -16,10 +16,10 @@ bool FilterPlan::evaluate(const PredicateInfo& info) {
 	}
 	assert(type != DBDataType::UNKNOWN);
 	if(info.m_iLeftIndex < 0) {
-		DBDataTypeHandler::getHandler(type)->fromNode(info.m_pLeft, result1);
+		result1 = info.m_leftConst;
 	}
 	if(info.m_iRightIndex < 0) {
-		DBDataTypeHandler::getHandler(type)->fromNode(info.m_pRight, result2);
+		result2 = info.m_rightConst;
 	}
 
 	assert(!result1.isNull());
@@ -93,19 +93,29 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 	PredicateInfo info = {};
 	info.m_sExpr = pPredicate->m_sExpr;
 	info.m_op = op;
-	info.m_pLeft = pPredicate->getChild(0);
-	info.m_pRight = pPredicate->getChild(1);
-	info.m_iLeftIndex = m_pPlan->addProjection(info.m_pLeft);
-	info.m_iRightIndex =  m_pPlan->addProjection(info.m_pRight);
+	auto pLeft = pPredicate->getChild(0);
+	auto pRight = pPredicate->getChild(1);
+	info.m_iLeftIndex = m_pPlan->addProjection(pLeft);
+	info.m_iRightIndex =  m_pPlan->addProjection(pRight);
 
 	if (info.m_iLeftIndex < 0 && info.m_iRightIndex < 0) {
 		PARSE_ERROR("Unrecognized predicate ", info.m_sExpr);
 	}
-	if(info.m_iLeftIndex < 0 && !info.m_pLeft->isConst()) {
-		PARSE_ERROR("Unrecognized predicate ", info.m_sExpr);
+	if(info.m_iLeftIndex < 0) {
+		if(pLeft->isConst()) {
+			auto type = m_pPlan->getResultType(info.m_iRightIndex);
+			DBDataTypeHandler::getHandler(type)->fromNode(pLeft, info.m_leftConst);
+		}else{
+			PARSE_ERROR("Unsupported predicate ", info.m_sExpr);
+		}
 	}
-	if(info.m_iRightIndex < 0 && !info.m_pRight->isConst()) {
-		PARSE_ERROR("Unrecognized predicate ", info.m_sExpr);
+	if(info.m_iRightIndex < 0) {
+		if(pRight->isConst()) {
+			auto type = m_pPlan->getResultType(info.m_iLeftIndex);
+			DBDataTypeHandler::getHandler(type)->fromNode(pRight, info.m_rightConst);
+		}else{
+			PARSE_ERROR("Unsupported predicate ", info.m_sExpr);
+		}
 	}
 
 	andList.push_back(info);
