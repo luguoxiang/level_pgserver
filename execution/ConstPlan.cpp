@@ -11,24 +11,44 @@ void ConstPlan::explain(std::vector<std::string>& rows) {
 
 DBDataType ConstPlan::getResultType(size_t index) {
 	assert(!m_rows.empty());
-	auto pRow = m_rows[0];
-	assert(pRow->children() == m_columns.size());
-	switch (pRow->getChild(index)->m_type) {
-	case NodeType::INT:
-		return DBDataType::INT64;
-	case NodeType::STR:
-		return DBDataType::STRING;
-	case NodeType::BINARY:
-		return DBDataType::BYTES;
-	case NodeType::FLOAT:
-		return DBDataType::DOUBLE;
-	case NodeType::DATE:
-		return pRow->getChild(index)->m_sValue.length() < 12 ?
-				DBDataType::DATE : DBDataType::DATETIME;
-	default:
-		assert(0);
-		return DBDataType::UNKNOWN;
+	NodeType lastType = NodeType::NONE;
+
+	DBDataType result = DBDataType::UNKNOWN;
+
+	for(auto pRow : m_rows) {
+		assert(pRow->children() == m_columns.size());
+		auto pValue = pRow->getChild(index);
+
+		if(pValue->m_type != lastType && lastType != NodeType::NONE) {
+			PARSE_ERROR("value ", pValue->m_sExpr ," at column ", index + 1, " does not match with previous rows:");
+		}
+		lastType = pValue->m_type;
+		switch (lastType) {
+		case NodeType::BOOL:
+			result = DBDataType::INT8;
+			break;
+		case NodeType::INT:
+			result = DBDataType::INT64;
+			break;
+		case NodeType::STR:
+			result = DBDataType::STRING;
+			break;
+		case NodeType::BINARY:
+			result = DBDataType::BYTES;
+			break;
+		case NodeType::FLOAT:
+			result = DBDataType::DOUBLE;
+			break;
+		case NodeType::DATE:
+			result = DBDataType::DATETIME;
+			break;
+		default:
+			assert(0);
+			PARSE_ERROR("Wrong value: ", pValue->m_sExpr);
+		}
 	}
+	return result;
+
 }
 
 void ConstPlan::getResult(size_t index, ExecutionResult& result) {

@@ -16,6 +16,7 @@ enum class NodeType {
 	DATE,
 	FLOAT,
 	BOOL,
+	NONE,
 	PARENT,
 	NAME,
 	OP,
