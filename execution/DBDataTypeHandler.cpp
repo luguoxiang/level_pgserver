@@ -62,14 +62,23 @@ public:
 			value = pValue->m_iValue;
 			break;
 		case NodeType::PARAM:
-			if(pValue->m_iValue == PARAM_TEXT_MODE) {
+			switch(pValue->getOp()) {
+			case Operation::TEXT_PARAM:
 				value = Tools::toInt(pValue->m_sValue);
-			} else {
+				break;
+			case Operation::BINARY_PARAM:
 				value = Tools::binaryToInt(pValue->m_sValue);
+				break;
+			case Operation::UNBOUND_PARAM:
+				EXECUTION_ERROR("parameter unbound");
+				break;
+			default:
+				assert(0);
+				break;
 			}
 			break;
 		default:
-			PARSE_ERROR("wrong const value type");
+			EXECUTION_ERROR("wrong const value type:", pValue->m_sExpr);
 		}
 		checkValue(value);
 		result.setInt(value);
@@ -155,14 +164,23 @@ public:
 			value = Tools::toDouble(pValue->m_sValue);
 			break;
 		case NodeType::PARAM:
-			if(pValue->m_iValue == PARAM_TEXT_MODE) {
+			switch(pValue->getOp()) {
+			case Operation::TEXT_PARAM:
 				value = Tools::toDouble(pValue->m_sValue);
-			} else {
+				break;
+			case Operation::BINARY_PARAM:
 				value = Tools::binaryToDouble(pValue->m_sValue);
+				break;
+			case Operation::UNBOUND_PARAM:
+				EXECUTION_ERROR("parameter unbound");
+				break;
+			default:
+				assert(0);
+				break;
 			}
 			break;
 		default:
-			PARSE_ERROR("wrong const value type ", pValue->m_sExpr);
+			PARSE_ERROR("wrong const value type:", pValue->m_sExpr);
 		}
 		checkValue(value);
 		result.setDouble(value);
@@ -249,8 +267,10 @@ public:
 		case NodeType::BINARY:
 			break;
 		case NodeType::PARAM:
-			if (pValue->m_iValue == PARAM_TEXT_MODE) {
+			if(pValue->getOp() == Operation::TEXT_PARAM) {
 				break;
+			} else if(pValue->getOp() == Operation::UNBOUND_PARAM) {
+				EXECUTION_ERROR("parameter unbound");
 			}
 			[[fallthrough]];
 		default:
@@ -299,18 +319,26 @@ public:
 			result.setInt(pValue->m_iValue);
 			break;
 		case NodeType::PARAM:
-			if(pValue->m_iValue == PARAM_TEXT_MODE) {
+			switch(pValue->getOp()) {
+			case Operation::TEXT_PARAM:
 				if (int64_t iValue = parseTime(pValue->m_sValue); iValue > 0) {
 					result.setInt(iValue);
 				} else {
 					EXECUTION_ERROR("Wrong Time Format:", pValue->m_sValue);
 				}
-			} else {
-				EXECUTION_ERROR("Wrong binary bind param for datetime");
+				break;
+			case Operation::UNBOUND_PARAM:
+				EXECUTION_ERROR("parameter unbound");
+				break;
+			case Operation::BINARY_PARAM:
+				EXECUTION_ERROR("Wrong bind parameter mode for datetime");
+				break;
+			default:
+				break;
 			}
 			break;
 		default:
-			PARSE_ERROR("wrong const value type: ", (int)pValue->m_type);
+			PARSE_ERROR("wrong const value type:", pValue->m_sExpr);
 		}
 	}
 };

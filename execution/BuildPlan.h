@@ -13,9 +13,6 @@ constexpr int SQL_SELECT_LIMIT = 6;
 
 class SelectPlanBuilder {
 public:
-	SelectPlanBuilder(const TableInfo* pTableInfo);
-	SelectPlanBuilder(ExecutionPlan* pSubQuery) : m_pPlan(pSubQuery) {};
-	SelectPlanBuilder() {}
 	ExecutionPlanPtr build(const ParseNode* pNode);
 
 protected:
@@ -24,17 +21,15 @@ protected:
 	void buildPlanForGroupBy(const ParseNode* pNode);
 	void buildPlanForLimit(const ParseNode* pNode);
 	void buildPlanForFilter(const ParseNode* pNode);
+	void buildPlanForReadFile(const TableInfo* pTableInfo);
+	const ParseNode* buildPlanForLevelDB(const TableInfo* pTableInfo, const ParseNode* pPredicate);
+
+	void buildFullScan(const ParseNode* pNode);
+	const ParseNode* buildUnionAll(const TableInfo* pTableInfo, const ParseNode* pPredicate);
+
 	ExecutionPlanPtr m_pPlan;
 };
 
-class LevelDBSelectPlanBuilder : public SelectPlanBuilder {
-public:
-	LevelDBSelectPlanBuilder(const TableInfo* pTableInfo) : m_pTableInfo(pTableInfo) {}
-	ExecutionPlanPtr build(const ParseNode* pNode);
-private:
-	void buildFullScan(const ParseNode* pNode);
-	void buildUnionAll(const ParseNode* pNode);
-	const TableInfo* m_pTableInfo;
-};
+
 
 ExecutionPlanPtr buildPlan(const ParseNode* pNode);

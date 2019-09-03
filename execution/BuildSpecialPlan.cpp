@@ -5,7 +5,9 @@
 #include "execution/ParseTools.h"
 #include "execution/ShowColumns.h"
 #include "execution/BuildPlan.h"
-#include "execution/UnionAllPlan.h"
+
+#include "execution/LevelDBInsertPlan.h"
+#include "execution/ConstPlan.h"
 
 ExecutionPlanPtr buildPlanForDesc(const ParseNode* pNode) {
 	assert(pNode->children() == 1);
@@ -33,55 +35,39 @@ ExecutionPlanPtr buildPlanForDesc(const ParseNode* pNode) {
 }
 
 
-
-
-ExecutionPlanPtr buildPlanForUnionAll(const ParseNode* pNode) {
-	assert(pNode && pNode->children() == 2);
-	ExecutionPlanPtr pLeft = buildPlan(pNode->getChild(0));
-	ExecutionPlanPtr pRight = buildPlan(pNode->getChild(1));
-	assert(pLeft && pRight);
-
-	UnionAllPlan* pPlan = new UnionAllPlan(false);
-	ExecutionPlanPtr pResult(pPlan);
-
-	pPlan->addChildPlan(pLeft.release());
-	pPlan->addChildPlan(pRight.release());
-
-
-	int count = pLeft->getResultColumns();
-	if (count != pRight->getResultColumns()) {
-		PARSE_ERROR(
-				"left sub query's column number is not same with right one's!");
-	}
-	for (int i = 0; i < count; ++i) {
-		DBDataType type1 = pLeft->getResultType(i);
-		DBDataType type2 = pRight->getResultType(i);
-
-		switch (type1) {
-		case DBDataType::INT16:
-		case DBDataType::INT32:
-		case DBDataType::INT64:
-			type1 = DBDataType::INT64;
-			break;
-		default:
-			break;
+ExecutionPlanPtr buildPlanForConst(const ParseNode* pNode) {
+	ConstPlan* pConst = new ConstPlan();
+	ExecutionPlanPtr pResult(pConst);
+	const ParseNode* pLastRow = nullptr;
+	for (size_t i=0;i<pNode->children(); ++i) {
+		auto pRow = pNode->getChild(i);
+		if (pLastRow != nullptr && pLastRow->children() != pRow->children()) {
+			PARSE_ERROR("Values column number does not match: expect ", pLastRow->children(), " but got ", pRow->children());
 		}
-
-		switch (type2) {
-		case DBDataType::INT16:
-		case DBDataType::INT32:
-		case DBDataType::INT64:
-			type2 = DBDataType::INT64;
-			break;
-		default:
-			break;
-		}
-
-		if (type1 != type2) {
-			PARSE_ERROR("sub query column %d's type are not match");
-		}
+		pConst->addRow(pRow);
+		pLastRow = pRow;
 	}
 	return pResult;
 }
 
+
+ExecutionPlanPtr buildPlanForLevelDBInsert(const ParseNode* pNode)
+{
+	assert(pNode && pNode->children() >= 3);
+	const ParseNode* pTable = pNode->getChild(0);
+	const ParseNode* pColumn = pNode->getChild(1);
+	const ParseNode* pValue = pNode->getChild(2);
+
+	if(pColumn != nullptr) {
+		PARSE_ERROR("insert partial columns is not supported");
+	}
+	assert(pTable && pTable->m_type == NodeType::NAME);
+
+	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+	assert(pTableInfo != nullptr);
+
+	auto pValuePlan = buildPlan(pValue);
+
+	return ExecutionPlanPtr(new LevelDBInsertPlan(pTableInfo, pValuePlan.release()));
+}
 

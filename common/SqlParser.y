@@ -134,7 +134,7 @@ extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const st
 
 %type <pNode> column_list row_value
 %type <pNode> delete_stmt
-%type <pNode> get_stmt merge_stmt values_stmt
+%type <pNode> get_stmt values_stmt
 %type <pNode> show_tables_stmt desc_table_stmt workload_stmt
 %type <pNode> table_or_query opt_alias
 
@@ -154,13 +154,7 @@ sql_stmt: stmt ';'
 	}
 	;
 
-merge_stmt: '(' get_stmt ')' UNION ALL '(' get_stmt ')'
-	{
-		$$ = pResult->newPlanNode( "UnionAll", Operation::UNION_ALL, @$.first_column, @$.last_column, { $2, $7 });
-	}
-  ;
 get_stmt: select_stmt {$$ = $1;}
-	| merge_stmt {$$ = $1;}
 	| values_stmt {$$ = $1;}
 	| workload_stmt { $$ = $1;}
 	| show_tables_stmt { $$ = $1;}
@@ -356,15 +350,7 @@ select_stmt: SELECT select_expr_list FROM table_or_query opt_alias
 			yyerror(&@5,pResult,nullptr, "table alias name is not supported");
 			YYERROR;
 		}
-		if(pTable->m_type != NodeType::NAME)
-		{
-			//this is a select statement with subquery
-			$$ = pResult->newPlanNode( "SubQueryStmt", Operation::SELECT_WITH_SUBQUERY, @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10});
-		}
-		else
-		{
-			$$ = pResult->newPlanNode( "SelectStmt", Operation::SELECT, @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10 });
-		}
+		$$ = pResult->newPlanNode( "SelectStmt", Operation::SELECT, @$.first_column, @$.last_column, { pProject, pTable, pPredicate, $7, $8, $9, $10 });
 }
 	;
 

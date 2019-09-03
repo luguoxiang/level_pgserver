@@ -109,7 +109,7 @@ void LevelDBScanPlan::doSetPredicate(const ParseNode* pPredicate) {
 		return;
 	}
 
-	auto op = pPredicate->m_op;
+	auto op = pPredicate->getOp();
 
 	assert(op != Operation::OR);
 

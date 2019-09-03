@@ -2,7 +2,7 @@
 #include "ParseException.h"
 
 bool QueryRewritter::hasOrPredicate(ParseNode* pNode) {
-	if(pNode->m_op == Operation::OR) {
+	if(pNode->getOp() == Operation::OR) {
 		return true;
 	}
 	for (size_t i = 0; i < pNode->children(); ++i) {
@@ -28,7 +28,7 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 		break;
 	}
 	case NodeType::OP:
-		switch (pNode->m_op) {
+		switch (pNode->getOp()) {
 		case Operation::AND:
 			if(!hasOrPredicate(pNode)) {
 				break;
@@ -103,7 +103,7 @@ void QueryRewritter::collectOrOperators(ParseNode* pPredicate,
 	if (pPredicate->m_type != NodeType::OP) {
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
-	switch (pPredicate->m_op) {
+	switch (pPredicate->getOp()) {
 	case Operation::AND: {
 		if(!hasOrPredicate(pPredicate)) {
 			operators.push_back(pPredicate);

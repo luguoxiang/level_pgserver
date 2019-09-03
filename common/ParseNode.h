@@ -15,7 +15,6 @@ enum class NodeType {
 	BINARY,
 	DATE,
 	FLOAT,
-	BOOL,
 	NONE,
 	PARENT,
 	NAME,
@@ -64,13 +63,13 @@ enum class Operation {
  INSERT,
  DELETE,
  EXPLAIN,
- UNION_ALL,
  VALUES,
  SELECT_WITH_SUBQUERY,
-};
 
-constexpr int16_t PARAM_TEXT_MODE = 0;
-constexpr int16_t PARAM_BINARY_MODE = 1;
+ TEXT_PARAM,
+ BINARY_PARAM,
+ UNBOUND_PARAM,
+};
 
 
 
@@ -85,7 +84,6 @@ public:
 	const NodeType m_type;
 	std::string_view m_sValue;
 	int64_t m_iValue = 0;
-	const Operation m_op;
 
 	//string view on ParseResult.m_sSql
 	const std::string_view m_sExpr;
@@ -108,14 +106,40 @@ public:
     	case NodeType::BINARY:
     	case NodeType::DATE:
     	case NodeType::FLOAT:
-    	case NodeType::BOOL:
     	case NodeType::PARAM:
     		return true;
     	default:
     		return false;
     	}
     }
+    bool isTrueConst() const {
+    	switch(m_type) {
+    	case NodeType::INT:
+    		return m_iValue != 0;
+    	default:
+    		return false;
+    	}
+    }
+
+    bool isFalseConst() const {
+    	switch(m_type) {
+    	case NodeType::INT:
+    		return m_iValue == 0;
+    	default:
+    		return false;
+    	}
+    }
+
+    Operation setBindParamMode(Operation op) {
+    	assert(m_type == NodeType::PARAM);
+    	m_op = op;
+    	return m_op;
+    }
+    Operation getOp() const {
+    	return m_op;
+    }
 private:
+	Operation m_op;
     ParseNode** m_children;
     size_t m_iChildNum;
 };

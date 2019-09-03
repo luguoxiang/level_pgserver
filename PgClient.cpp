@@ -107,13 +107,24 @@ void PgClient::handleBind() {
 
 	size_t iExpectNum = m_receiver.getNextShort();
 	if (iExpectNum != iActualNum) {
-		throw new ParseException(ConcateToString(
+		PARSE_ERROR(ConcateToString(
 				"Parameter format number unmatch!, expect ", iExpectNum, ", actual ", iActualNum));
 	}
-	std::vector<uint16_t> types(iActualNum);
+	std::vector<Operation> types(iActualNum);
 	for (size_t i = 0; i < iActualNum; ++i) {
-		types[i] = m_receiver.getNextShort();
-		DLOG(INFO)<< "Bind type:"<<types[i];
+		auto type = m_receiver.getNextShort();
+		DLOG(INFO)<< "Bind type:"<<type;
+		switch(type) {
+		case PARAM_TEXT_MODE:
+			types[i] = Operation::TEXT_PARAM;
+			break;
+		case PARAM_BINARY_MODE:
+			types[i] = Operation::BINARY_PARAM;
+			break;
+		default:
+			IO_ERROR("Unexpected bind parameter mode: ", type);
+			break;
+		}
 	}
 
 
@@ -128,7 +139,7 @@ void PgClient::handleBind() {
 
 	for (int i = 0; i < iActualNum; ++i) {
 		auto pParam = m_pWorker->getBindParam(i);
-		pParam->m_iValue = types[i];
+		pParam->setBindParamMode(types[i]);
 		auto s = m_receiver.getNextStringWithLen();
 		pParam->m_sValue =m_pWorker->allocString(s);
 	}

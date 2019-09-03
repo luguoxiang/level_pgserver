@@ -24,9 +24,6 @@ DBDataType ConstPlan::getResultType(size_t index) {
 		}
 		lastType = pValue->m_type;
 		switch (lastType) {
-		case NodeType::BOOL:
-			result = DBDataType::INT8;
-			break;
 		case NodeType::INT:
 			result = DBDataType::INT64;
 			break;

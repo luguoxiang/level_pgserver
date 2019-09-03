@@ -28,7 +28,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 			PARSE_ERROR("Unsupported sort spec: ", pColumn->m_sExpr);
 		}
 		SortOrder order =
-				(pChild->getChild(1)->m_op == Operation::ASC) ?
+				(pChild->getChild(1)->getOp() == Operation::ASC) ?
 						SortOrder::Ascend : SortOrder::Descend;
 		if (!m_pPlan->ensureSortOrder(i, pColumn->m_sValue, order)) {
 			bAlreadySorted = false;
@@ -47,7 +47,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 		const ParseNode* pChild = pNode->getChild(i);
 		const ParseNode* pColumn = pChild->getChild(0);
 
-		bool bAscend = (pChild->getChild(1)->m_op == Operation::ASC);
+		bool bAscend = (pChild->getChild(1)->getOp() == Operation::ASC);
 		pSort->addSortSpecification(pColumn,
 				bAscend ? SortOrder::Ascend : SortOrder::Descend);
 	}
@@ -55,7 +55,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 
 void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 	if (pNode->m_type == NodeType::INFO
-			&& pNode->m_op == Operation::ALL_COLUMNS) {
+			&& pNode->getOp() == Operation::ALL_COLUMNS) {
 		std::vector<std::string_view> columns;
 		m_pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
@@ -80,7 +80,7 @@ void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 	for (int i = 0; i < pNode->children(); ++i) {
 		auto pColumn = pNode->getChild(i);
 		std::string_view sAlias;
-		if (pColumn->m_type == NodeType::OP && pColumn->m_op == Operation::AS) {
+		if (pColumn->m_type == NodeType::OP && pColumn->getOp() == Operation::AS) {
 			assert(pColumn->children() == 2);
 
 			sAlias = pColumn->getChild(1)->m_sValue;
@@ -173,7 +173,7 @@ void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	pFilter->setPredicate(pNode);
 }
 
-SelectPlanBuilder::SelectPlanBuilder(const TableInfo* pTableInfo) {
+void SelectPlanBuilder::buildPlanForReadFile(const TableInfo* pTableInfo) {
 	ReadFilePlan* pValuePlan = new ReadFilePlan(
 			pTableInfo->getAttribute("path"),
 			pTableInfo->getAttribute("seperator", ","),
@@ -193,7 +193,24 @@ SelectPlanBuilder::SelectPlanBuilder(const TableInfo* pTableInfo) {
 ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 7);
 
-	buildPlanForFilter(pNode->getChild(SQL_SELECT_PREDICATE));
+	const ParseNode* pTable = pNode->getChild(SQL_SELECT_TABLE);
+	assert(pTable);
+
+	const ParseNode* pPredicate = pNode->getChild(SQL_SELECT_PREDICATE);
+	if( pTable->m_type != NodeType::NAME ) {
+		m_pPlan = buildPlan(pTable);
+	}else{
+		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+		if (pTableInfo == nullptr) {
+			PARSE_ERROR("table ", pTable->m_sValue, " not found");
+		}
+		if(pTableInfo->getKeyCount() > 0) {
+			pPredicate = buildPlanForLevelDB(pTableInfo, pPredicate);
+		} else {
+			buildPlanForReadFile(pTableInfo);
+		}
+	}
+	buildPlanForFilter(pPredicate);
 	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
 	buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING));
 	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
@@ -231,8 +248,8 @@ void ScanPlanInfo::build(const ParseNode* pNode, const TableInfo* pTableInfo) {
 }
 
 bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
-	assert(pNode->m_op != Operation::OR);
-	if (pNode->m_op == Operation::AND) {
+	assert(pNode->getOp() != Operation::OR);
+	if (pNode->getOp() == Operation::AND) {
 		for (size_t i = 0; i < pNode->children(); ++i) {
 			if (needFilter(pNode->getChild(i))) {
 				return true;
@@ -244,23 +261,23 @@ bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
 }
 
 
-void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
+const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
 
-	std::vector<ScanPlanInfo> rangeScanList(pNode->children());
-	std::vector<ScanPlanInfo*> rangePtrList(pNode->children());
-	for (size_t i = 0; i < pNode->children(); ++i) {
-		auto pChild = pNode->getChild(i);
+	std::vector<ScanPlanInfo> rangeScanList(pPredicate->children());
+	std::vector<ScanPlanInfo*> rangePtrList(pPredicate->children());
+
+	for (size_t i = 0; i < rangeScanList.size(); ++i) {
+		auto pChild = pPredicate->getChild(i);
 		//should be rewritten
-		assert(pChild->m_op != Operation::OR);
+		assert(pChild->getOp() != Operation::OR);
 
 		auto& scanInfo = rangeScanList[i];
-		scanInfo.build(pChild, m_pTableInfo);
+		scanInfo.build(pChild, pTableInfo);
 
 		if (scanInfo.isFullScan()) {
 			//back to full scan plan
-			m_pPlan.reset(new LevelDBScanPlan(m_pTableInfo));
-			buildPlanForFilter(pNode);
-			return;
+			m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
+			return pPredicate;
 		}
 		rangePtrList[i] = rangeScanList.data() + i;
 	}
@@ -272,7 +289,7 @@ void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
 				return start1.compare(start2) < 0;
 	});
 
-	for (size_t i = 1; i < pNode->children(); ++i) {
+	for (size_t i = 1; i < rangePtrList.size(); ++i) {
 		auto pInfo = rangePtrList[i];
 		auto pLastInfo = rangePtrList[i - 1];
 
@@ -290,40 +307,32 @@ void LevelDBSelectPlanBuilder::buildUnionAll(const ParseNode* pNode) {
 		}
 
 		//key scan ranges have overlap, back to full scan
-		m_pPlan.reset(new LevelDBScanPlan(m_pTableInfo));
-		buildPlanForFilter(pNode);
-		return;
+		m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
+		return pPredicate;
 	}
 	UnionAllPlan* pUnion = new UnionAllPlan(true);
 	m_pPlan.reset(pUnion);
 
-	auto pDBIter = LevelDBHandler::getHandler(m_pTableInfo)->createIterator();
+	auto pDBIter = LevelDBHandler::getHandler(pTableInfo)->createIterator();
 
-	for (size_t i = 0; i < pNode->children(); ++i) {
+	for (size_t i = 0; i < rangePtrList.size(); ++i) {
 		auto pScanInfo = rangePtrList[i];
 		pScanInfo->m_pScan->setLevelDBIterator(pDBIter);
 		pUnion->addChildPlan(pScanInfo->m_pPlan.release());
 	}
+	return nullptr;
 }
 
-ExecutionPlanPtr LevelDBSelectPlanBuilder::build(const ParseNode* pNode) {
-	assert(pNode && pNode->children() == 7);
-	auto pPredicate = pNode->getChild(SQL_SELECT_PREDICATE);
+const ParseNode* SelectPlanBuilder::buildPlanForLevelDB(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
 	if (pPredicate == nullptr) {
-		m_pPlan.reset(new LevelDBScanPlan(m_pTableInfo));
-	} else if (pPredicate->m_op == Operation::OR) {
-		buildUnionAll(pPredicate);
+		m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
+	} else if (pPredicate->getOp() == Operation::OR) {
+		return buildUnionAll(pTableInfo, pPredicate);
 	} else {
 		ScanPlanInfo info;
-		info.build(pPredicate, m_pTableInfo);
+		info.build(pPredicate, pTableInfo);
 		m_pPlan = std::move(info.m_pPlan);
-
 	}
-	buildPlanForGroupBy(pNode->getChild(SQL_SELECT_GROUPBY));
-	buildPlanForFilter(pNode->getChild(SQL_SELECT_HAVING));
-	buildPlanForOrderBy(pNode->getChild(SQL_SELECT_ORDERBY));
-	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
-	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
-	return std::move(m_pPlan);
-
+	return nullptr;
 }
+

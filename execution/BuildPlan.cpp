@@ -16,7 +16,7 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 	if(pNode->m_type != NodeType::PLAN) {
 		PARSE_ERROR("WRONG NODE ", pNode->m_sExpr);
 	}
-	switch(pNode->m_op){
+	switch(pNode->getOp()){
 	case Operation::SHOW_TABLES:
 		return ExecutionPlanPtr(new ShowTables());
 	case Operation::DESC_TABLE:
@@ -25,19 +25,8 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 		return ExecutionPlanPtr(new WorkloadResult());
 
 	case Operation::SELECT: {
-		const ParseNode* pTable = pNode->getChild(SQL_SELECT_TABLE);
-		assert(pTable);
-		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
-		if (pTableInfo == nullptr) {
-			PARSE_ERROR("table ", pTable->m_sValue, " not found");
-		}
-		if(pTableInfo->getKeyCount() > 0) {
-			LevelDBSelectPlanBuilder builder(pTableInfo);
-			return builder.build(pNode);
-		} else {
-			SelectPlanBuilder builder(pTableInfo);
-			return builder.build(pNode);
-		}
+		SelectPlanBuilder builder;
+		return builder.build(pNode);
 	}
 	case Operation::INSERT:
 		return buildPlanForLevelDBInsert(pNode);
@@ -46,18 +35,9 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 		auto pPlan = buildPlan(pNode->getChild(0));
 		return ExecutionPlanPtr(new ExplainPlan(pPlan.release()));
 	}
-	case Operation::UNION_ALL:
-		return buildPlanForUnionAll(pNode);
 	case Operation::VALUES:
 		assert(pNode->children() == 1);
 		return buildPlanForConst(pNode->getChild(0));
-
-	case Operation::SELECT_WITH_SUBQUERY:{
-		const ParseNode* pQuery = pNode->getChild(SQL_SELECT_TABLE);
-		auto pSource = buildPlan(pQuery);
-		SelectPlanBuilder builder(pSource.release());
-		return builder.build(pNode);
-	}
 	default:
 		PARSE_ERROR("not supported: ", pNode->m_sExpr);
 		return nullptr;

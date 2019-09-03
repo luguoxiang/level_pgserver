@@ -3,6 +3,9 @@
 #include "DataSender.h"
 #include "common/ParseNode.h"
 
+constexpr int16_t PARAM_TEXT_MODE = 0;
+constexpr int16_t PARAM_BINARY_MODE = 1;
+
 //https://jdbc.postgresql.org/development/privateapi/constant-values.html
 enum class PgDataType {
 	Bytea = 17,

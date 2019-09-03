@@ -75,7 +75,7 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 		PARSE_ERROR("Unsupported predicate ", pPredicate->m_sExpr);
 	}
 
-	auto op = pPredicate->m_op;
+	auto op = pPredicate->getOp();
 	if (op == Operation::AND) {
 		for (size_t i=0;i<pPredicate->children(); ++i ) {
 			doAddPredicate(andList, pPredicate->getChild(i), pIgnore);
@@ -137,11 +137,11 @@ void FilterPlan::setPredicate(const ParseNode* pNode) {
 	if(pNode == nullptr) {
 		return;
 	}
-	if (pNode->m_op == Operation::OR) {
+	if (pNode->getOp() == Operation::OR) {
 		for (size_t i = 0; i < pNode->children(); ++i) {
 			auto pChild = pNode->getChild(i);
 			//should be rewritten
-			assert(pChild->m_op != Operation::OR);
+			assert(pChild->getOp() != Operation::OR);
 			addPredicate(pChild);
 		}
 	} else {

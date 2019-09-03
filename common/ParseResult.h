@@ -65,16 +65,13 @@ public:
 
 	ParseNode* newSimpleNode(NodeType type,
 			int firstColumn,
-			int lastColumn) {
+			int lastColumn, Operation op = Operation::NONE) {
 		std::initializer_list<ParseNode*> children;
-		return newParseNode(type, Operation::NONE,
+		return newParseNode(type, op,
 				getExpr(firstColumn, lastColumn), children);
 	}
 
-	ParseNode* newSimpleNode(NodeType type, const std::string_view sExpr) {
-		std::initializer_list<ParseNode*> children;
-		return newParseNode(type, Operation::NONE, sExpr, children);
-	}
+
 
 	ParseNode* newFuncNode(const std::string_view& sName, int firstColumn,
 			int lastColumn,
