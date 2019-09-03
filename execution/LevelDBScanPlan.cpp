@@ -38,12 +38,10 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 		if(pColumn->m_iKeyIndex >= 0) {
 			return pColumn->m_iKeyIndex;
 		}
+		assert(pColumn->m_iValueIndex >= 0);
+		m_columnValues.emplace_back(pColumn->m_iValueIndex, ExecutionResult{});
 
-		size_t index = m_columnValues.size();
-		m_columnValues.emplace_back();
-		m_valueTypes.push_back(pColumn->m_type);
-
-		return m_pTable->getKeyCount() + index;
+		return m_pTable->getKeyCount() + m_columnValues.size() -1;
 	}
 	return -1;
 }
@@ -88,7 +86,8 @@ bool LevelDBScanPlan::next() {
 		auto valueRow = m_pDBIter->value(m_valueTypes);
 
 		for(size_t i=0;i<m_columnValues.size();++i) {
-			valueRow.getResult(i, m_columnValues[i]);
+			auto& valueInfo = m_columnValues[i];
+			valueRow.getResult(valueInfo.first, valueInfo.second);
 		};
 	}
 
@@ -164,7 +163,7 @@ void LevelDBScanPlan::getResult(size_t columnIndex, ExecutionResult& result) {
 	if(columnIndex < m_pTable->getKeyCount()) {
 		result = m_keyValues[columnIndex];
 	} else if(columnIndex - m_pTable->getKeyCount() < m_columnValues.size()) {
-		result = m_columnValues[columnIndex - m_pTable->getKeyCount()];
+		result = m_columnValues[columnIndex - m_pTable->getKeyCount()].second;
 	} else {
 		assert(columnIndex == m_pTable->getKeyCount() + m_columnValues.size());
 		result.setStringView(std::string_view(m_currentRow.data(), m_currentRow.size()));

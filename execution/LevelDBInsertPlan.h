@@ -36,5 +36,12 @@ private:
 
 	std::vector<std::byte> m_keyBuffer;
 	std::vector<std::byte> m_valueBuffer;
+
+	std::vector<DBDataType> m_keyTypes;
+	std::vector<DBDataType> m_valueTypes;
+
+	std::vector<ExecutionResult> m_keyResults;
+	std::vector<ExecutionResult> m_valueResults;
+
 	LevelDBBatch m_batch;
 };

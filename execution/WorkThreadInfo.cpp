@@ -4,7 +4,7 @@
 #include "WorkThreadInfo.h"
 #include "common/ParseException.h"
 #include "common/ParseNode.h"
-#include "common/QueryRewritter.h"
+
 #include "execution/ExecutionException.h"
 #include "execution/ParseTools.h"
 #include "execution/BuildPlan.h"
@@ -14,7 +14,7 @@ thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 
 
 WorkThreadInfo::WorkThreadInfo(int fd, int port, int iIndex) :
-		m_iListenFd(fd), m_port(port), m_iIndex(iIndex){
+		m_iListenFd(fd), m_port(port), m_iIndex(iIndex), m_rewritter(m_result){
 
 	m_result = {};
 	if (parseInit(&m_result)) {
@@ -41,8 +41,7 @@ void WorkThreadInfo::resolve(const std::string_view sql) {
 			throw new ParseException(&m_result);
 		}
 
-		QueryRewritter rewritter(m_result);
-		auto pTree = rewritter.rewrite(m_result.m_pResult);
+		auto pTree = m_rewritter.rewrite(m_result.m_pResult);
 		//print();
 		m_pPlan = buildPlan(pTree);
 	}

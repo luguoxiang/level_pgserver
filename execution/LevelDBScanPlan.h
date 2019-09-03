@@ -75,7 +75,8 @@ public:
 	}
 private:
 
-	std::vector<ExecutionResult> m_columnValues;
+	using ValueInfo = std::pair<size_t, ExecutionResult>;
+	std::vector<ValueInfo> m_columnValues;
 	std::vector<ExecutionResult> m_keyValues;
 
 	std::vector<DBDataType> m_keyTypes;

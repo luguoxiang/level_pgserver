@@ -4,7 +4,7 @@
 #include <algorithm>
 #include "ExecutionPlan.h"
 #include "common/ParseResult.h"
-
+#include "common/QueryRewritter.h"
 struct WorkThreadInfo {
 	WorkThreadInfo(int fd, int port, int iIndex);
 
@@ -77,6 +77,7 @@ struct WorkThreadInfo {
 private:
 	ExecutionPlanPtr m_pPlan = nullptr;
 	ParseResult m_result;
+	QueryRewritter m_rewritter;
 	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
 };
 

@@ -7,6 +7,16 @@
 
 LevelDBInsertPlan::LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPlan)
 	: SingleChildPlan(PlanType::Insert, std::move(pPlan)), m_pTable(pTable) {
+	for(size_t i=0;i<m_pTable->getColumnCount();++i) {
+		auto pColumn = m_pTable->getColumn(i);
+		if(pColumn->m_iKeyIndex>= 0) {
+			m_keyTypes.push_back(pColumn->m_type);
+		} else {
+			m_valueTypes.push_back(pColumn->m_type);
+		}
+	}
+	m_keyResults.reserve(m_keyTypes.size());
+	m_valueResults.reserve(m_valueTypes.size());
 }
 
 void LevelDBInsertPlan::begin() {
@@ -25,44 +35,28 @@ bool LevelDBInsertPlan::next() {
 		return false;
 	}
 
-	std::vector<ExecutionResult> keyResults;
-	std::vector<ExecutionResult> valueResults;
-	std::vector<DBDataType> keyTypes;
-	std::vector<DBDataType> valueTypes;
-
-	for(size_t i=0;i<m_pTable->getKeyCount();++i) {
-		auto pColumn = m_pTable->getKeyColumn(i);
-
-		ExecutionResult result;
-		m_pPlan->getResult(pColumn->m_iIndex, result);
-
-		keyResults.push_back(result);
-		keyTypes.push_back(pColumn->m_type);
-	}
-
 	for(size_t i=0;i<m_pTable->getColumnCount();++i) {
 		auto pColumn = m_pTable->getColumn(i);
 		if(pColumn->m_iKeyIndex>= 0) {
-			continue;
+			m_pPlan->getResult(i, m_keyResults[pColumn->m_iKeyIndex]);
+		} else {
+			assert(pColumn->m_iValueIndex >= 0);
+			m_pPlan->getResult(i, m_valueResults[pColumn->m_iValueIndex]);
 		}
-		ExecutionResult result;
-		m_pPlan->getResult(i, result);
-
-		valueResults.push_back(result);
-		valueTypes.push_back(pColumn->m_type);
 	}
 
-	DataRow row(keyTypes);
+	DataRow keyRow(m_keyTypes);
 
-	size_t rowSize = row.computeSize(keyResults);
+	size_t rowSize = keyRow.computeSize(m_keyResults);
 	m_keyBuffer.clear();
 	m_keyBuffer.resize(rowSize);
-	row.copy(keyResults, m_keyBuffer.data());
+	keyRow.copy(m_keyResults, m_keyBuffer.data());
 
-	rowSize = row.computeSize(valueResults);
+	DataRow valueRow(m_valueTypes);
+	rowSize = valueRow.computeSize(m_valueResults);
 	m_valueBuffer.clear();
 	m_valueBuffer.resize(rowSize);
-	row.copy(valueResults, m_valueBuffer.data());
+	valueRow.copy(m_valueResults, m_valueBuffer.data());
 
 	m_batch.insert(m_keyBuffer, m_valueBuffer);
 	++m_iInsertRows;
