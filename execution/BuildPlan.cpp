@@ -9,7 +9,6 @@
 ExecutionPlanPtr buildPlanForLevelDBInsert(const ParseNode* pNode);
 
 ExecutionPlanPtr buildPlanForConst(const ParseNode* pNode);
-ExecutionPlanPtr buildPlanForUnionAll(const ParseNode* pNode);
 ExecutionPlanPtr buildPlanForDesc(const ParseNode* pNode);
 
 ExecutionPlanPtr buildPlan(const ParseNode* pNode) {

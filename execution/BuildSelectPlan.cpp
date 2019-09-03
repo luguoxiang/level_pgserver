@@ -197,6 +197,11 @@ ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	assert(pTable);
 
 	const ParseNode* pPredicate = pNode->getChild(SQL_SELECT_PREDICATE);
+	if(pPredicate != nullptr && pPredicate->isFalseConst()) {
+		m_pPlan.reset(new LeafPlan(PlanType::Other));
+		return std::move(m_pPlan);
+	}
+
 	if( pTable->m_type != NodeType::NAME ) {
 		m_pPlan = buildPlan(pTable);
 	}else{
