@@ -13,20 +13,33 @@ bool QueryRewritter::hasOrPredicate(ParseNode* pNode) {
 	}
 	return false;
 }
+
+ParseNode* QueryRewritter::rewriteList(ParseNode* pNode) {
+	std::vector<ParseNode*> elements;
+	auto sName = pNode->m_sValue;
+	collectElements(pNode, sName, elements);
+	pNode = m_result.newParseNode(NodeType::LIST,
+			Operation::NONE, pNode->m_sExpr, elements);
+	pNode->m_sValue = sName;
+	return pNode;
+}
+
+ParseNode* QueryRewritter::liftOrPredicate(ParseNode* pNode) {
+	std::vector<ParseNode*> operators;
+	collectOrOperators(pNode, operators);
+	assert(operators.size() > 1);
+
+	return m_result.newParseNode(NodeType::OP, Operation::OR, pNode->m_sExpr, operators);
+}
+
 ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 	if(pNode == nullptr) {
 		return nullptr;
 	}
 	switch (pNode->m_type) {
-	case NodeType::LIST: {
-		std::vector<ParseNode*> elements;
-		auto sName = pNode->m_sValue;
-		collectElements(pNode, sName, elements);
-		pNode = m_result.newParseNode(NodeType::LIST,
-				Operation::NONE, pNode->m_sExpr, elements);
-		pNode->m_sValue = sName;
+	case NodeType::LIST:
+		pNode =rewriteList(pNode);
 		break;
-	}
 	case NodeType::OP:
 		switch (pNode->getOp()) {
 		case Operation::AND:
@@ -34,16 +47,9 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 				break;
 			};
 			[[fallthrough]];
-		case Operation::OR: {
-			std::vector<ParseNode*> operators;
-			collectOrOperators(pNode, operators);
-			if (operators.size() == 1) {
-				return operators[0];
-			}
-			pNode = m_result.newParseNode(NodeType::OP, Operation::OR,
-					pNode->m_sExpr, operators);
+		case Operation::OR:
+			pNode = liftOrPredicate(pNode);
 			break;
-		}
 		case Operation::IN:
 			return rewriteInOrNotIN(pNode, true);
 		case Operation::NOT_IN:
@@ -56,6 +62,12 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 	}
 	for (size_t i = 0; i < pNode->children(); ++i) {
 		auto pChild = pNode->getChild(i);
+		if(pNode->getOp() == Operation::AND && pChild->isFalseConst()) {
+			return pChild;
+		}
+		if(pNode->getOp() == Operation::OR && pChild->isTrueConst()) {
+			return pChild;
+		}
 		pNode->setChild(i, rewrite(pChild));
 	}
 	return pNode;
