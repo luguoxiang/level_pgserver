@@ -197,9 +197,13 @@ ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	assert(pTable);
 
 	const ParseNode* pPredicate = pNode->getChild(SQL_SELECT_PREDICATE);
-	if(pPredicate != nullptr && pPredicate->isFalseConst()) {
-		m_pPlan.reset(new LeafPlan(PlanType::Other));
-		return std::move(m_pPlan);
+	if(pPredicate != nullptr) {
+		if(pPredicate->isFalseConst()) {
+			m_pPlan.reset(new EmptyPlan());
+			return std::move(m_pPlan);
+		} else if(pPredicate->isTrueConst()) {
+			pPredicate = nullptr;
+		}
 	}
 
 	if( pTable->m_type != NodeType::NAME ) {
@@ -289,8 +293,8 @@ const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, c
 
 	std::sort(rangePtrList.begin(), rangePtrList.end(),
 			[](ScanPlanInfo* pRange1, ScanPlanInfo* pRange2) {
-				auto& start1 = pRange1->m_pScan->getStartRow();
-				auto& start2 = pRange2->m_pScan->getStartRow();
+				auto start1 = pRange1->m_pScan->getStartRow();
+				auto start2 = pRange2->m_pScan->getStartRow();
 				return start1.compare(start2) < 0;
 	});
 
@@ -298,10 +302,10 @@ const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, c
 		auto pInfo = rangePtrList[i];
 		auto pLastInfo = rangePtrList[i - 1];
 
-		auto& start = pInfo->m_pScan->getStartRow();
+		auto start = pInfo->m_pScan->getStartRow();
 		bool startInclusive = pInfo->m_pScan->startInclusive();
 
-		auto& lastEnd = pLastInfo->m_pScan->getEndRow();
+		auto lastEnd = pLastInfo->m_pScan->getEndRow();
 		bool lastEndInclusive = pLastInfo->m_pScan->endInclusive();
 
 		int n = start.compare(lastEnd);

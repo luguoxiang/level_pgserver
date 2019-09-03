@@ -1,20 +1,12 @@
 #pragma once
-#include <sstream>
 #include <vector>
-#include <set>
 #include "common/ConfigInfo.h"
+#include "common/ParseNode.h"
 #include "execution/BasePlan.h"
 #include "execution/ExecutionBuffer.h"
 #include "execution/LevelDBHandler.h"
-#include "common/ParseNode.h"
+#include "execution/KeySearchRange.h"
 
-struct KeyPredicateInfo {
-	int m_iKeyIndex = -1;
-	const ParseNode* m_pValue = nullptr;;
-	Operation m_op = Operation::NONE;
-	std::string_view m_sExpr;
-	bool m_bResult = false;
-};
 
 class LevelDBScanPlan : public LeafPlan
 {
@@ -58,58 +50,28 @@ public:
 			return m_pTable->getColumn(index)->m_type;
 		}
 	}
-	const DataRow& getStartRow() const {
-		return m_startRow;
+	const DataRow getStartRow() const {
+		assert(m_pSearchRange != nullptr);
+		return m_pSearchRange->getStartRow();
 	}
 
-	const DataRow& getEndRow() const {
-		return m_endRow;
+	const DataRow getEndRow() const {
+		assert(m_pSearchRange != nullptr);
+		return m_pSearchRange->getEndRow();
 	}
 	bool startInclusive() const {
-		return m_bStartInclusive;
+		assert(m_pSearchRange != nullptr);
+		return m_pSearchRange->startInclusive();
 	}
 	bool endInclusive() const {
-		return m_bEndInclusive;
+		assert(m_pSearchRange != nullptr);
+		return m_pSearchRange->endInclusive();
 	}
 
 	void setLevelDBIterator(LevelDBIteratorPtr& pIter) {
 		m_pDBIter = pIter;
 	}
 private:
-	uint64_t getCost();
-
-	std::vector<KeyPredicateInfo> m_predicates;
-	KeyPredicateInfo m_endPredicate;
-	bool isSeekToFirst() {
-		switch(m_predicates[0].m_op){
-		case Operation::NONE:
-		case Operation::COMP_GT:
-		case Operation::COMP_GE:
-			return true;
-		default:
-			return false;
-		}
-	}
-	bool isSeekToLast() {
-		switch(m_predicates[0].m_op){
-		case Operation::NONE:
-		case Operation::COMP_LT:
-		case Operation::COMP_LE:
-			return true;
-		default:
-			return false;
-		}
-	}
-	bool isFullScan() {
-		return m_predicates[0].m_op == Operation::NONE;
-	}
-	DataRow m_startRow;
-	DataRow m_endRow;
-	bool m_bStartInclusive = true;
-	bool m_bEndInclusive = true;
-
-	void doSetPredicate(const ParseNode* pPredicate);
-	void setPredicateInfo(Operation op, const ParseNode* pKey, const ParseNode* pValue, const ParseNode* pPredicate);
 
 	std::vector<bool> m_projection;
 	std::vector<ExecutionResult> m_columnValues;
@@ -121,7 +83,7 @@ private:
 
 	DataRow m_currentRow;
 	size_t m_iRows = 0;
-	std::unique_ptr<ExecutionBuffer> m_pBuffer;
 	LevelDBIteratorPtr m_pDBIter;
+	std::unique_ptr<KeySearchRange> m_pSearchRange;
 
 };

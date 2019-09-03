@@ -4,11 +4,9 @@
 #include <vector>
 #include <set>
 
-constexpr size_t INSERT_BUFFER_SIZE = 1 * 1024 * 1024;
 
 LevelDBInsertPlan::LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPlan)
 	: SingleChildPlan(PlanType::Insert, std::move(pPlan)), m_pTable(pTable) {
-	m_pBuffer = std::make_unique<ExecutionBuffer>(INSERT_BUFFER_SIZE);
 }
 
 void LevelDBInsertPlan::begin() {
@@ -26,8 +24,6 @@ bool LevelDBInsertPlan::next() {
 	if(!hasMore) {
 		return false;
 	}
-
-	m_pBuffer->purge();
 
 	std::vector<ExecutionResult> keyResults;
 	std::vector<ExecutionResult> valueResults;
@@ -56,10 +52,17 @@ bool LevelDBInsertPlan::next() {
 		valueTypes.push_back(pColumn->m_type);
 	}
 
+	DataRow row(keyTypes);
 
-	auto keyRow = m_pBuffer->copyRow(keyResults, keyTypes);
-	auto valueRow = m_pBuffer->copyRow(valueResults, valueTypes);
-	m_batch.insert(keyRow, valueRow);
+	size_t rowSize = row.computeSize(keyResults);
+	m_sKeyBuffer.reserve(rowSize);
+	row.copy(keyResults, (std::byte*)m_sKeyBuffer.data());
+
+	rowSize = row.computeSize(valueResults);
+	m_sValueBuffer.reserve(rowSize);
+	row.copy(valueResults, (std::byte*)m_sValueBuffer.data());
+
+	m_batch.insert(m_sKeyBuffer, m_sValueBuffer);
 	++m_iInsertRows;
 	return true;
 }

@@ -116,5 +116,12 @@ private:
 	std::atomic<bool> m_bCancel = false;
 };
 
+class EmptyPlan : public LeafPlan {
+public:
+	EmptyPlan(): LeafPlan(PlanType::Other) {}
 
+	virtual void explain(std::vector<std::string>& rows) {
+		rows.push_back("NoOperation");
+	}
+};
 

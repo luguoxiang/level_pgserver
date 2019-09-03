@@ -1,3 +1,4 @@
+#include <memory>
 #include "LevelDBScanPlan.h"
 #include "ExecutionException.h"
 #include "execution/ParseTools.h"
@@ -6,212 +7,12 @@
 #include "execution/DataRow.h"
 
 
-void LevelDBScanPlan::setPredicate(const ParseNode* pNode,std::set<std::string_view>& solved) {
-	doSetPredicate(pNode);
-
-	bool keyValid = true;
-	m_bStartInclusive = true;
-	m_bEndInclusive = true;
-
-	for(size_t i=0;i<m_predicates.size();++i) {
-		auto& info =m_predicates[i];
-		if(!keyValid) {
-			info.m_op = Operation::NONE;
-		}
-		switch(m_endPredicate.m_op) {
-		case Operation::COMP_LT:
-		case Operation::COMP_LE:
-			if(i == m_endPredicate.m_iKeyIndex) {
-				if(!keyValid || info.m_op == Operation::COMP_EQ) {
-					m_endPredicate.m_op = Operation::NONE;
-					m_endPredicate.m_iKeyIndex = -1;
-				} else {
-					m_bEndInclusive = (m_endPredicate.m_op == Operation::COMP_LE);
-					keyValid = false;
-					solved.insert(m_endPredicate.m_sExpr);
-				}
-			}
-			break;
-		default://NONE
-			break;
-		}
-		switch(info.m_op) {
-		case Operation::COMP_EQ:
-			solved.insert(info.m_sExpr);
-			break;
-		case Operation::COMP_GT:
-		case Operation::COMP_GE:
-			m_bStartInclusive = (info.m_op == Operation::COMP_GE);
-			keyValid = false;
-			solved.insert(info.m_sExpr);
-			break;
-		case Operation::NONE:
-			keyValid = false;
-			break;
-		default:
-			assert(0);
-		}
-	}
-	size_t keyCount = m_pTable->getKeyCount();
-	std::vector<ExecutionResult> startKeyResults(keyCount);
-	std::vector<ExecutionResult> endKeyResults(keyCount);
-
-	bool nextStartMax = false;
-	for(size_t i=0;i<keyCount;++i) {
-		auto pColumn = m_pTable->getKeyColumn(i);
-
-		auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
-		assert(pHandler);
-		auto& info = m_predicates[i];
-
-		switch(info.m_op) {
-		case Operation::COMP_EQ:
-			pHandler->fromNode(info.m_pValue, startKeyResults[i]);
-			endKeyResults[i] = startKeyResults[i];
-			DLOG(INFO) << "Key search " << info.m_sExpr << ", KeyIndex" << info.m_iKeyIndex;
-			continue;
-		case Operation::COMP_GE:
-			pHandler->fromNode(info.m_pValue, startKeyResults[i]);
-			//key columns has larger index should be set to
-			//minimum value to include all possible keys have same ith key column value
-			nextStartMax = false;
-			DLOG(INFO) << "Key search " << info.m_sExpr<< ", KeyIndex=" << info.m_iKeyIndex;
-			break;
-		case Operation::COMP_GT:
-			pHandler->fromNode(info.m_pValue, startKeyResults[i]);
-			//key columns has larger index should be set to
-			//maximum value to exclude all possible keys have same ith key column value
-			nextStartMax = true;
-			DLOG(INFO) << "Key search " << info.m_sExpr<< ", KeyIndex=" << info.m_iKeyIndex;
-			break;
-		default:
-			if(nextStartMax) {
-				pHandler->setToMax(startKeyResults[i]);
-			} else {
-				pHandler->setToMin(startKeyResults[i]);
-			}
-			break;
-		}
-		if(i == m_endPredicate.m_iKeyIndex) {
-			DLOG(INFO) << "Key search " << m_endPredicate.m_sExpr<< ", KeyIndex" << m_endPredicate.m_iKeyIndex;
-			pHandler->fromNode(m_endPredicate.m_pValue, endKeyResults[i]);
-		} else {
-			pHandler->setToMax(endKeyResults[i]);
-		}
-	}
-	m_startRow = m_pBuffer->copyRow(startKeyResults, m_keyTypes);
-
-	m_endRow = m_pBuffer->copyRow(endKeyResults, m_keyTypes);
-}
-
-void LevelDBScanPlan::doSetPredicate(const ParseNode* pPredicate) {
-	if (pPredicate->m_type != NodeType::OP) {
-		return;
-	}
-
-	auto op = pPredicate->getOp();
-
-	assert(op != Operation::OR);
-
-	Operation reverseOp;
-	switch (op) {
-	case Operation::AND:
-		for(size_t i=0;i<pPredicate->children();++i) {
-			doSetPredicate(pPredicate->getChild(i));
-		}
-		return;
-	case Operation::COMP_EQ:
-		reverseOp = op;
-		break;
-	case Operation::COMP_LE:
-		reverseOp = Operation::COMP_GE;
-		break;
-	case Operation::COMP_LT:
-		reverseOp = Operation::COMP_GT;
-		break;
-	case Operation::COMP_GT:
-		reverseOp = Operation::COMP_LT;
-		break;
-	case Operation::COMP_GE:
-		reverseOp = Operation::COMP_LE;
-		break;
-	default:
-		return;
-	}
-
-	auto pLeft = pPredicate->getChild(0);
-	auto pRight = pPredicate->getChild(1);
-
-	if(pLeft->m_type == NodeType::NAME) {
-		setPredicateInfo(op, pLeft, pRight, pPredicate);
-	} else if (pRight->m_type == NodeType::NAME) {
-		setPredicateInfo(reverseOp, pRight, pLeft, pPredicate);
-	}
-}
-
-void LevelDBScanPlan::setPredicateInfo(Operation op, const ParseNode* pKey, const ParseNode* pValue, const ParseNode* pPredicate) {
-	if(!pValue->isConst()) {
-		return;
-	}
-	auto pKeyColumn = m_pTable->getColumnByName(pKey->m_sValue);
-	if(pKeyColumn->m_iKeyIndex < 0) {
-		return;
-	}
-
-	assert(pKeyColumn->m_iKeyIndex + 1 < m_predicates.size());
-
-	KeyPredicateInfo* pInfo;
-	switch(op) {
-	case Operation::COMP_EQ:
-		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex;
-		break;
-	case Operation::COMP_GT:
-		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex;
-		if(pInfo->m_op == Operation::COMP_EQ) {
-			//= take precedence
-			return;
-		} else {
-			break;
-		}
-	case Operation::COMP_GE:
-		pInfo = m_predicates.data() + pKeyColumn->m_iKeyIndex;
-		if(pInfo->m_op == Operation::COMP_EQ || pInfo->m_op == Operation::COMP_GT) {
-			//= and > take precedence,  since it has smaller scan range
-			return;
-		}
-		break;
-	case Operation::COMP_LE:
-		pInfo = &m_endPredicate;
-		if(pInfo->m_op == Operation::COMP_LT) {
-			//<= can not overwrite <, since it has larger scan range
-			return;
-		}
-		break;
-	case Operation::COMP_LT:
-		pInfo = &m_endPredicate;
-		break;
-	default:
-		assert(0);
-		return;
-	}
-	pInfo->m_iKeyIndex = pKeyColumn->m_iKeyIndex;
-	pInfo->m_pValue = pValue;
-	pInfo->m_op = op;
-	pInfo->m_sExpr = pPredicate->m_sExpr;
-}
-constexpr size_t SCAN_BUFFER_SIZE = 1 * 1024 * 1024;
-
 LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 	: LeafPlan(PlanType::Scan), m_pTable(pTable)
 	, m_columnValues(pTable->getColumnCount())
 	, m_projection(pTable->getColumnCount())
 	, m_currentRow(m_keyTypes)
-	, m_predicates(pTable->getKeyCount() + 1, KeyPredicateInfo{})
-	, m_startRow(m_keyTypes)
-	, m_endRow(m_keyTypes)
 	, m_keyTypes(pTable->getKeyCount()) {
-
-	m_pBuffer = std::make_unique<ExecutionBuffer>(SCAN_BUFFER_SIZE);
 
 	for(size_t i = 0;i<pTable->getColumnCount();++i) {
 		auto pColumn = m_pTable->getColumn(i);
@@ -222,6 +23,9 @@ LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 		}
 	}
 
+}
+void LevelDBScanPlan::setPredicate(const ParseNode* pNode, std::set<std::string_view>& solved) {
+	m_pSearchRange = std::make_unique<KeySearchRange>(solved, m_keyTypes,  m_pTable, pNode);
 }
 
 int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
@@ -245,36 +49,38 @@ void LevelDBScanPlan::begin() {
 	if(m_pDBIter == nullptr) {
 		m_pDBIter = LevelDBHandler::getHandler(m_pTable)->createIterator();
 	}
+
+	if(m_pSearchRange == nullptr) {
+		std::set<std::string_view> solved;
+		m_pSearchRange = std::make_unique<KeySearchRange>(solved, m_keyTypes, m_pTable, nullptr);
+	}
+
 	if(m_order ==SortOrder::Descend) {
-		if(isSeekToLast()) {
-			m_pDBIter->last();
-			return;
-		}
-		m_pDBIter->seek(m_endRow);
+		auto endRow = m_pSearchRange->getEndRow();
+		m_pDBIter->seek(endRow);
 		if(!m_pDBIter->valid()) {
 			m_pDBIter->last();
 			return;
 		}
-		if(!m_bEndInclusive) {
+
+		if(!m_pSearchRange->endInclusive()) {
 			for(;m_pDBIter->valid();m_pDBIter->prev()) {
 				m_currentRow = m_pDBIter->key(m_keyTypes);
-				int n = m_currentRow.compare(m_endRow);
+				int n = m_currentRow.compare(endRow);
 				if(n < 0) {
 					return;
 				}
 			}
 		}
 	} else {
-		if(isSeekToFirst()) {
-			m_pDBIter->first();
-			return;
-		}
-		m_pDBIter->seek(m_startRow);
+		auto startRow = m_pSearchRange->getStartRow();
+		m_pDBIter->seek(startRow);
 
-		if(!m_bStartInclusive) {
+		if(!m_pSearchRange->startInclusive()) {
 			for(;m_pDBIter->valid();m_pDBIter->next()) {
 				m_currentRow = m_pDBIter->key(m_keyTypes);
-				int n = m_currentRow.compare(m_startRow);
+
+				int n = m_currentRow.compare(startRow);
 				if(n > 0) {
 					return;
 				}
@@ -290,17 +96,19 @@ bool LevelDBScanPlan::next() {
 	m_currentRow = m_pDBIter->key(m_keyTypes);
 
 	if(m_order ==SortOrder::Descend) {
-		if(!isSeekToFirst()) {
-			int n = m_currentRow.compare(m_startRow);
-			if (n == 0 && !m_bStartInclusive) {
-				return false;
-			} else if(n < 0) {
-				return false;
-			}
+		auto startRow = m_pSearchRange->getStartRow();
+
+		int n = m_currentRow.compare(startRow);
+		if (n == 0 && !m_pSearchRange->startInclusive()) {
+			return false;
+		} else if(n < 0) {
+			return false;
 		}
-	} else if(!isSeekToLast() ) {
-		int n = m_currentRow.compare(m_endRow);
-		if (n == 0 && !m_bEndInclusive) {
+	} else  {
+		auto endRow = m_pSearchRange->getEndRow();
+
+		int n = m_currentRow.compare(endRow);
+		if (n == 0 && !m_pSearchRange->endInclusive()) {
 			return false;
 		} else if(n > 0) {
 			return false;
@@ -345,10 +153,6 @@ void LevelDBScanPlan::end() {
 	m_pDBIter = nullptr;
 }
 
-uint64_t LevelDBScanPlan::getCost() {
-	return LevelDBHandler::getHandler(m_pTable)->getCost(m_startRow, m_endRow);
-}
-
 bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 		SortOrder order) {
 	if ( iSortIndex > m_pTable->getColumnCount()) {
@@ -369,30 +173,31 @@ bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view&
 
 }
 void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
-	std::vector<ExecutionResult> start(m_keyTypes.size());
-	std::vector<ExecutionResult> end(m_keyTypes.size());
-	if(m_startRow.data() == nullptr) {
-		for(size_t i=0;i<m_keyTypes.size();++i) {
-			auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
-			assert(pHandler);
-			pHandler->setToMin(start[i]);
-			pHandler->setToMax(end[i]);
-		}
-		m_startRow = m_pBuffer->copyRow(start, m_keyTypes);
-		m_endRow = m_pBuffer->copyRow(end, m_keyTypes);
-	} else {
-		m_startRow.getResult(start);
-		m_endRow.getResult(end);
+	if(m_pSearchRange == nullptr) {
+		std::set<std::string_view> solved;
+		m_pSearchRange = std::make_unique<KeySearchRange>(solved, m_keyTypes,   m_pTable,nullptr);
 	}
 
+	auto& start = m_pSearchRange->getStartResults();
+	auto& end = m_pSearchRange->getEndResults();
+
 	assert(start.size() == end.size());
-	std::string s = "leveldb:scan  ";
+	std::string s = "leveldb:scan ";
 	s.append(m_pTable->getName());
-	s.append("cost:");
-	s.append(std::to_string(getCost()));
+	s.append(", cost:");
+
+	auto startRow = m_pSearchRange->getStartRow();
+	auto endRow = m_pSearchRange->getEndRow();
+	auto cost = LevelDBHandler::getHandler(m_pTable)->getCost(startRow, endRow);
+
+	s.append(std::to_string(cost));
+
+	if(m_order == SortOrder::Descend) {
+		s.append(", reverse");
+	}
 	rows.push_back(s);
 	s = "  range:";
-	s.append(m_bStartInclusive?"[":"(");
+	s.append(m_pSearchRange->startInclusive()?"[":"(");
 	for(auto& result: start) {
 		s.append(result.toString());
 		s.append("|");
@@ -404,7 +209,7 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
 		s.append("|");
 	}
 	s.erase(s.length() -1, 1);
-	s.append(m_bEndInclusive?"]":")");
+	s.append(m_pSearchRange->endInclusive()?"]":")");
 	rows.push_back(s);
 
 }

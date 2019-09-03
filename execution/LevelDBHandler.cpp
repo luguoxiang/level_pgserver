@@ -43,7 +43,7 @@ LevelDBHandler::LevelDBHandler(const TableInfo* pTable) : m_pTable(pTable), m_co
 	m_pDB.reset(pDB);
 }
 
-void LevelDBBatch::insert(DataRow& key,	DataRow& value) {
+void LevelDBBatch::insert(const std::string& key, const std::string&value) {
 	m_batch.Put(leveldb::Slice(key.data(), key.size()), leveldb::Slice(value.data(), value.size()));
 }
 
@@ -69,7 +69,7 @@ LevelDBIteratorPtr LevelDBHandler::createIterator() {
 	return pIter;
 }
 
-uint64_t LevelDBHandler::getCost(DataRow& start, DataRow& end) {
+uint64_t LevelDBHandler::getCost(const DataRow& start, const DataRow& end) {
 	leveldb::Range ranges[2];
 	ranges[0] = leveldb::Range(leveldb::Slice(start.data(), start.size()), leveldb::Slice(end.data(), end.size()));
 	uint64_t sizes[1];

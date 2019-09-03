@@ -52,7 +52,7 @@ private:
 class LevelDBBatch {
 	friend class LevelDBHandler;
 public:
-	void insert(DataRow& key, DataRow& value);
+	void insert(const std::string& key, const std::string& value);
 private:
 	leveldb::WriteBatch m_batch;
 };
@@ -102,7 +102,7 @@ public:
 	LevelDBIteratorPtr createIterator();
 	static LevelDBHandler* getHandler(const TableInfo* pTable);
 
-	uint64_t getCost(DataRow& start,	DataRow& end);
+	uint64_t getCost(const DataRow& start,	const DataRow& end);
 private:
 	std::unique_ptr<leveldb::DB> m_pDB;
 	const TableInfo* m_pTable;

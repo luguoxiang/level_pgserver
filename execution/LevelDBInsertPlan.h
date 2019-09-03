@@ -3,7 +3,6 @@
 #include <vector>
 #include "common/ConfigInfo.h"
 #include "execution/BasePlan.h"
-#include "execution/ExecutionBuffer.h"
 #include "execution/LevelDBHandler.h"
 
 class LevelDBInsertPlan : public SingleChildPlan
@@ -35,6 +34,7 @@ private:
 
 	size_t m_iInsertRows = 0;
 
-	std::unique_ptr<ExecutionBuffer> m_pBuffer;
+	std::string m_sKeyBuffer;
+	std::string m_sValueBuffer;
 	LevelDBBatch m_batch;
 };

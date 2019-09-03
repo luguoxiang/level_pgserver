@@ -28,10 +28,10 @@ WorkThreadInfo::~WorkThreadInfo() {
 
 void WorkThreadInfo::resolve(const std::string_view sql) {
 	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
-		m_pPlan.reset(new LeafPlan(PlanType::Other));
+		m_pPlan.reset(new EmptyPlan());
 		DLOG(INFO) << sql;
 	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
-		m_pPlan.reset(new LeafPlan(PlanType::Other));
+		m_pPlan.reset(new EmptyPlan());
 		DLOG(INFO) << sql;
 	} else {
 		m_pPlan = nullptr;
