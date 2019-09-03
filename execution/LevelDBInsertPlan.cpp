@@ -55,14 +55,16 @@ bool LevelDBInsertPlan::next() {
 	DataRow row(keyTypes);
 
 	size_t rowSize = row.computeSize(keyResults);
-	m_sKeyBuffer.reserve(rowSize);
-	row.copy(keyResults, (std::byte*)m_sKeyBuffer.data());
+	m_keyBuffer.clear();
+	m_keyBuffer.resize(rowSize);
+	row.copy(keyResults, m_keyBuffer.data());
 
 	rowSize = row.computeSize(valueResults);
-	m_sValueBuffer.reserve(rowSize);
-	row.copy(valueResults, (std::byte*)m_sValueBuffer.data());
+	m_valueBuffer.clear();
+	m_valueBuffer.resize(rowSize);
+	row.copy(valueResults, m_valueBuffer.data());
 
-	m_batch.insert(m_sKeyBuffer, m_sValueBuffer);
+	m_batch.insert(m_keyBuffer, m_valueBuffer);
 	++m_iInsertRows;
 	return true;
 }

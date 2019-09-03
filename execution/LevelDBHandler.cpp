@@ -43,8 +43,8 @@ LevelDBHandler::LevelDBHandler(const TableInfo* pTable) : m_pTable(pTable), m_co
 	m_pDB.reset(pDB);
 }
 
-void LevelDBBatch::insert(const std::string& key, const std::string&value) {
-	m_batch.Put(leveldb::Slice(key.data(), key.size()), leveldb::Slice(value.data(), value.size()));
+void LevelDBBatch::insert(const std::vector<std::byte>& key, const std::vector<std::byte>& value) {
+	m_batch.Put(leveldb::Slice((const char*)key.data(), key.size()), leveldb::Slice((const char*)value.data(), value.size()));
 }
 
 void LevelDBHandler::commit(LevelDBBatch& batch) {

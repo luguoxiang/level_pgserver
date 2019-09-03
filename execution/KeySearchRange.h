@@ -17,10 +17,10 @@ public:
 	KeySearchRange& operator =(const KeySearchRange&) = delete;
 
 	const DataRow getStartRow() const {
-		return DataRow((const std::byte*)m_sStartRow.data(), m_keyTypes, m_sStartRow.size());
+		return DataRow(m_sStartRow.data(), m_keyTypes, m_sStartRow.size());
 	}
 	const DataRow getEndRow() const {
-		return DataRow((const std::byte*)m_sEndRow.data(), m_keyTypes, m_sEndRow.size());
+		return DataRow(m_sEndRow.data(), m_keyTypes, m_sEndRow.size());
 	}
 
 	const std::vector<ExecutionResult>& getStartResults() {return m_startKeyResults;}
@@ -47,8 +47,8 @@ private:
 	KeyPredicateInfo m_endPredicate;
 	std::set<std::string_view>& m_solved;
 
-	std::string m_sStartRow;
-	std::string m_sEndRow;
+	std::vector<std::byte> m_sStartRow;
+	std::vector<std::byte> m_sEndRow;
 
 	bool m_bStartInclusive = true;
 	bool m_bEndInclusive = true;

@@ -34,7 +34,7 @@ private:
 
 	size_t m_iInsertRows = 0;
 
-	std::string m_sKeyBuffer;
-	std::string m_sValueBuffer;
+	std::vector<std::byte> m_keyBuffer;
+	std::vector<std::byte> m_valueBuffer;
 	LevelDBBatch m_batch;
 };

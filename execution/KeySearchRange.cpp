@@ -111,13 +111,15 @@ KeySearchRange::KeySearchRange(std::set<std::string_view>& solved,
 	DataRow row(keyTypes);
 
 	size_t rowSize = row.computeSize(m_startKeyResults);
-	m_sStartRow.reserve(rowSize);
-	row.copy(m_startKeyResults, (std::byte*)m_sStartRow.data());
+	m_sStartRow.clear();
+	m_sStartRow.resize(rowSize);
+	row.copy(m_startKeyResults, m_sStartRow.data());
 
 	rowSize = row.computeSize(m_endKeyResults);
-	m_sEndRow.reserve(rowSize);
+	m_sEndRow.clear();
+	m_sEndRow.resize(rowSize);
 
-	row.copy(m_endKeyResults,(std::byte*) m_sEndRow.data());
+	row.copy(m_endKeyResults, m_sEndRow.data());
 }
 
 void KeySearchRange::doSetPredicate(const ParseNode* pPredicate) {

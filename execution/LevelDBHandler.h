@@ -52,7 +52,7 @@ private:
 class LevelDBBatch {
 	friend class LevelDBHandler;
 public:
-	void insert(const std::string& key, const std::string& value);
+	void insert(const std::vector<std::byte>& key, const std::vector<std::byte>& value);
 private:
 	leveldb::WriteBatch m_batch;
 };
