@@ -9,8 +9,7 @@
 
 LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 	: LeafPlan(PlanType::Scan), m_pTable(pTable)
-	, m_columnValues(pTable->getColumnCount())
-	, m_projection(pTable->getColumnCount())
+	, m_keyValues(pTable->getKeyCount())
 	, m_currentRow(m_keyTypes)
 	, m_keyTypes(pTable->getKeyCount()) {
 
@@ -25,20 +24,26 @@ LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 
 }
 void LevelDBScanPlan::setPredicate(const ParseNode* pNode, std::set<std::string_view>& solved) {
-	m_pSearchRange = std::make_unique<KeySearchRange>(solved, m_keyTypes,  m_pTable, pNode);
+	m_pSearchRange = std::make_unique<KeySearchRange>(m_keyTypes,  m_pTable, pNode, &solved);
 }
 
 int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 	if(Tools::isRowKeyNode(pNode)) {
-		return m_columnValues.size();
+		return m_columnValues.size() + m_pTable->getKeyCount();
 	} else if(pNode->m_type == NodeType::NAME) {
 		auto pColumn = m_pTable->getColumnByName(pNode->m_sValue);
 		if(pColumn == nullptr ) {
 			PARSE_ERROR("Unknown column: ", pNode->m_sValue);
 		}
+		if(pColumn->m_iKeyIndex >= 0) {
+			return pColumn->m_iKeyIndex;
+		}
 
-		m_projection[pColumn->m_iIndex] = true;
-		return pColumn->m_iIndex;
+		size_t index = m_columnValues.size();
+		m_columnValues.emplace_back();
+		m_valueTypes.push_back(pColumn->m_type);
+
+		return m_pTable->getKeyCount() + index;
 	}
 	return -1;
 }
@@ -51,41 +56,13 @@ void LevelDBScanPlan::begin() {
 	}
 
 	if(m_pSearchRange == nullptr) {
-		std::set<std::string_view> solved;
-		m_pSearchRange = std::make_unique<KeySearchRange>(solved, m_keyTypes, m_pTable, nullptr);
+		m_pSearchRange = std::make_unique<KeySearchRange>(m_keyTypes, m_pTable, nullptr, nullptr);
 	}
 
 	if(m_order ==SortOrder::Descend) {
-		auto endRow = m_pSearchRange->getEndRow();
-		m_pDBIter->seek(endRow);
-		if(!m_pDBIter->valid()) {
-			m_pDBIter->last();
-			return;
-		}
-
-		if(!m_pSearchRange->endInclusive()) {
-			for(;m_pDBIter->valid();m_pDBIter->prev()) {
-				m_currentRow = m_pDBIter->key(m_keyTypes);
-				int n = m_currentRow.compare(endRow);
-				if(n < 0) {
-					return;
-				}
-			}
-		}
+		m_pSearchRange->seekStartReversed(m_pDBIter);
 	} else {
-		auto startRow = m_pSearchRange->getStartRow();
-		m_pDBIter->seek(startRow);
-
-		if(!m_pSearchRange->startInclusive()) {
-			for(;m_pDBIter->valid();m_pDBIter->next()) {
-				m_currentRow = m_pDBIter->key(m_keyTypes);
-
-				int n = m_currentRow.compare(startRow);
-				if(n > 0) {
-					return;
-				}
-			}
-		}
+		m_pSearchRange->seekStart(m_pDBIter);
 	}
 
 }
@@ -95,54 +72,24 @@ bool LevelDBScanPlan::next() {
 	}
 	m_currentRow = m_pDBIter->key(m_keyTypes);
 
+	for(size_t i = 0;i<m_keyValues.size();++i) {
+		m_currentRow.getResult(i, m_keyValues[i]);
+	}
+
 	if(m_order ==SortOrder::Descend) {
-		auto startRow = m_pSearchRange->getStartRow();
-
-		int n = m_currentRow.compare(startRow);
-		if (n == 0 && !m_pSearchRange->startInclusive()) {
-			return false;
-		} else if(n < 0) {
+		if(m_pSearchRange->exceedEndReversed(m_keyValues)) {
 			return false;
 		}
-	} else  {
-		auto endRow = m_pSearchRange->getEndRow();
-
-		int n = m_currentRow.compare(endRow);
-		if (n == 0 && !m_pSearchRange->endInclusive()) {
+	} else if(m_pSearchRange->exceedEnd(m_keyValues)) {
 			return false;
-		} else if(n > 0) {
-			return false;
-		}
 	}
 
-	bool needValue = false;
-
-	for(size_t i = 0;i<m_projection.size();++i) {
-		if(!m_projection[i]){
-			continue;
-		}
-		auto pColumn = m_pTable->getColumn(i);
-		if(pColumn->m_iKeyIndex >= 0) {
-			m_currentRow.getResult(pColumn->m_iKeyIndex, m_columnValues[i]);
-		} else {
-			needValue =true;
-		}
-
-	}
-	if(needValue) {
-		size_t iValueIndex = 0;
+	if(!m_columnValues.empty()) {
 		auto valueRow = m_pDBIter->value(m_valueTypes);
-		for(size_t i = 0;i<m_projection.size();++i) {
-			auto pColumn = m_pTable->getColumn(i);
-			if(pColumn->m_iKeyIndex >= 0) {
-				continue;
-			} else {
-				++iValueIndex;
-			}
-			if(m_projection[i]) {
-				valueRow.getResult(iValueIndex - 1, m_columnValues[i]);
-			}
-		}
+
+		for(size_t i=0;i<m_columnValues.size();++i) {
+			valueRow.getResult(i, m_columnValues[i]);
+		};
 	}
 
 	m_pDBIter->next();
@@ -174,8 +121,7 @@ bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view&
 }
 void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
 	if(m_pSearchRange == nullptr) {
-		std::set<std::string_view> solved;
-		m_pSearchRange = std::make_unique<KeySearchRange>(solved, m_keyTypes,   m_pTable,nullptr);
+		m_pSearchRange = std::make_unique<KeySearchRange>(m_keyTypes, m_pTable,nullptr, nullptr);
 	}
 
 	auto& start = m_pSearchRange->getStartResults();
@@ -215,10 +161,12 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
 }
 
 void LevelDBScanPlan::getResult(size_t columnIndex, ExecutionResult& result) {
-	if(m_columnValues.size() == columnIndex) {
+	if(columnIndex < m_pTable->getKeyCount()) {
+		result = m_keyValues[columnIndex];
+	} else if(columnIndex - m_pTable->getKeyCount() < m_columnValues.size()) {
+		result = m_columnValues[columnIndex - m_pTable->getKeyCount()];
+	} else {
+		assert(columnIndex == m_pTable->getKeyCount() + m_columnValues.size());
 		result.setStringView(std::string_view(m_currentRow.data(), m_currentRow.size()));
-	}else {
-		assert(columnIndex < m_columnValues.size());
-		result = m_columnValues[columnIndex];
 	}
 }

@@ -190,6 +190,115 @@ void SelectPlanBuilder::buildPlanForReadFile(const TableInfo* pTableInfo) {
 	}
 }
 
+struct ScanPlanInfo {
+	ScanPlanInfo(const ParseNode* pNode, const TableInfo* pTableInfo);
+	KeySearchRange* m_pRange;
+	LevelDBScanPlan* m_pScan;
+	ExecutionPlanPtr m_pPlan;
+	std::set<std::string_view> m_solved;
+
+	bool needFilter(const ParseNode* pNode);
+	bool isFullScan() {
+		return m_solved.empty();
+	}
+};
+
+ScanPlanInfo::ScanPlanInfo(const ParseNode* pNode, const TableInfo* pTableInfo) {
+	m_pScan = new LevelDBScanPlan(pTableInfo);
+	m_pPlan.reset(m_pScan);
+
+	m_pScan->setPredicate(pNode, m_solved);
+
+	m_pRange = m_pScan->getKeySearchRange();
+	assert(m_pRange);
+	if (needFilter(pNode)) {
+		auto pFilter = new FilterPlan(m_pPlan.release());
+		m_pPlan.reset(pFilter);
+
+		auto hasFilter = pFilter->addPredicate(pNode, &m_solved);
+		assert(hasFilter);
+	}
+
+}
+
+bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
+	assert(pNode->getOp() != Operation::OR);
+	if (pNode->getOp() == Operation::AND) {
+		for (size_t i = 0; i < pNode->children(); ++i) {
+			if (needFilter(pNode->getChild(i))) {
+				return true;
+			}
+		}
+		return false;
+	}
+	return m_solved.find(pNode->m_sExpr) == m_solved.end();
+}
+
+
+const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
+
+	std::vector<ScanPlanInfo> rangeScanList;
+	std::vector<ScanPlanInfo*> rangePtrList(pPredicate->children());
+	rangeScanList.reserve(pPredicate->children());
+
+	for (size_t i = 0; i < rangeScanList.size(); ++i) {
+		auto pChild = pPredicate->getChild(i);
+		//should be rewritten
+		assert(pChild->getOp() != Operation::OR);
+
+		rangeScanList.emplace_back(pChild, pTableInfo);
+
+		if (rangeScanList[i].isFullScan()) {
+			//back to full scan plan
+			m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
+			return pPredicate;
+		}
+		rangePtrList[i] = rangeScanList.data() + i;
+	}
+
+	std::sort(rangePtrList.begin(), rangePtrList.end(),
+			[](ScanPlanInfo* pInfo1, ScanPlanInfo* pInfo2) {
+				return pInfo1->m_pRange->compareStart(pInfo2->m_pRange) < 0;
+	});
+
+	for (size_t i = 1; i < rangePtrList.size(); ++i) {
+		auto pInfo = rangePtrList[i];
+		auto pLastInfo = rangePtrList[i - 1];
+
+		if(pInfo->m_pRange->startAfterEnd(pLastInfo->m_pRange)) {
+			continue;
+		}
+
+		//key scan ranges have overlap, back to full scan
+		m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
+		return pPredicate;
+	}
+	UnionAllPlan* pUnion = new UnionAllPlan(true);
+	m_pPlan.reset(pUnion);
+
+	auto pDBIter = LevelDBHandler::getHandler(pTableInfo)->createIterator();
+
+	for (size_t i = 0; i < rangePtrList.size(); ++i) {
+		auto pScanInfo = rangePtrList[i];
+		pScanInfo->m_pScan->setLevelDBIterator(pDBIter);
+		pUnion->addChildPlan(pScanInfo->m_pPlan.release());
+	}
+	return nullptr;
+}
+
+const ParseNode* SelectPlanBuilder::buildPlanForLevelDB(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
+	if (pPredicate == nullptr) {
+		m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
+	} else if (pPredicate->getOp() == Operation::OR) {
+		return buildUnionAll(pTableInfo, pPredicate);
+	} else {
+		ScanPlanInfo info(pPredicate, pTableInfo);
+		m_pPlan = std::move(info.m_pPlan);
+	}
+	return nullptr;
+}
+
+
 ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 7);
 
@@ -226,122 +335,5 @@ ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	buildPlanForLimit(pNode->getChild(SQL_SELECT_LIMIT));
 	buildPlanForProjection(pNode->getChild(SQL_SELECT_PROJECT));
 	return std::move(m_pPlan);
-}
-
-struct ScanPlanInfo {
-	void build(const ParseNode* pNode, const TableInfo* pTableInfo);
-	LevelDBScanPlan* m_pScan = nullptr;
-	ExecutionPlanPtr m_pPlan;
-	std::set<std::string_view> m_solved;
-
-	bool needFilter(const ParseNode* pNode);
-	bool isFullScan() {
-		return m_solved.empty();
-	}
-};
-
-void ScanPlanInfo::build(const ParseNode* pNode, const TableInfo* pTableInfo) {
-	m_pScan = new LevelDBScanPlan(pTableInfo);
-	m_pPlan.reset(m_pScan);
-
-	m_pScan->setPredicate(pNode, m_solved);
-
-	if (needFilter(pNode)) {
-		auto pFilter = new FilterPlan(m_pPlan.release());
-		m_pPlan.reset(pFilter);
-
-		auto hasFilter = pFilter->addPredicate(pNode, &m_solved);
-		assert(hasFilter);
-	}
-
-}
-
-bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
-	assert(pNode->getOp() != Operation::OR);
-	if (pNode->getOp() == Operation::AND) {
-		for (size_t i = 0; i < pNode->children(); ++i) {
-			if (needFilter(pNode->getChild(i))) {
-				return true;
-			}
-		}
-		return false;
-	}
-	return m_solved.find(pNode->m_sExpr) == m_solved.end();
-}
-
-
-const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
-
-	std::vector<ScanPlanInfo> rangeScanList(pPredicate->children());
-	std::vector<ScanPlanInfo*> rangePtrList(pPredicate->children());
-
-	for (size_t i = 0; i < rangeScanList.size(); ++i) {
-		auto pChild = pPredicate->getChild(i);
-		//should be rewritten
-		assert(pChild->getOp() != Operation::OR);
-
-		auto& scanInfo = rangeScanList[i];
-		scanInfo.build(pChild, pTableInfo);
-
-		if (scanInfo.isFullScan()) {
-			//back to full scan plan
-			m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
-			return pPredicate;
-		}
-		rangePtrList[i] = rangeScanList.data() + i;
-	}
-
-	std::sort(rangePtrList.begin(), rangePtrList.end(),
-			[](ScanPlanInfo* pRange1, ScanPlanInfo* pRange2) {
-				auto start1 = pRange1->m_pScan->getStartRow();
-				auto start2 = pRange2->m_pScan->getStartRow();
-				return start1.compare(start2) < 0;
-	});
-
-	for (size_t i = 1; i < rangePtrList.size(); ++i) {
-		auto pInfo = rangePtrList[i];
-		auto pLastInfo = rangePtrList[i - 1];
-
-		auto start = pInfo->m_pScan->getStartRow();
-		bool startInclusive = pInfo->m_pScan->startInclusive();
-
-		auto lastEnd = pLastInfo->m_pScan->getEndRow();
-		bool lastEndInclusive = pLastInfo->m_pScan->endInclusive();
-
-		int n = start.compare(lastEnd);
-		if (n > 0) {
-			continue;
-		} else if(n == 0 && (!lastEndInclusive || !startInclusive)) {
-			continue;
-		}
-
-		//key scan ranges have overlap, back to full scan
-		m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
-		return pPredicate;
-	}
-	UnionAllPlan* pUnion = new UnionAllPlan(true);
-	m_pPlan.reset(pUnion);
-
-	auto pDBIter = LevelDBHandler::getHandler(pTableInfo)->createIterator();
-
-	for (size_t i = 0; i < rangePtrList.size(); ++i) {
-		auto pScanInfo = rangePtrList[i];
-		pScanInfo->m_pScan->setLevelDBIterator(pDBIter);
-		pUnion->addChildPlan(pScanInfo->m_pPlan.release());
-	}
-	return nullptr;
-}
-
-const ParseNode* SelectPlanBuilder::buildPlanForLevelDB(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
-	if (pPredicate == nullptr) {
-		m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
-	} else if (pPredicate->getOp() == Operation::OR) {
-		return buildUnionAll(pTableInfo, pPredicate);
-	} else {
-		ScanPlanInfo info;
-		info.build(pPredicate, pTableInfo);
-		m_pPlan = std::move(info.m_pPlan);
-	}
-	return nullptr;
 }
 

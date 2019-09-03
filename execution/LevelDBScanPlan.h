@@ -68,13 +68,15 @@ public:
 		return m_pSearchRange->endInclusive();
 	}
 
+	KeySearchRange* getKeySearchRange() {return m_pSearchRange.get();}
+
 	void setLevelDBIterator(LevelDBIteratorPtr& pIter) {
 		m_pDBIter = pIter;
 	}
 private:
 
-	std::vector<bool> m_projection;
 	std::vector<ExecutionResult> m_columnValues;
+	std::vector<ExecutionResult> m_keyValues;
 
 	std::vector<DBDataType> m_keyTypes;
 	std::vector<DBDataType> m_valueTypes;

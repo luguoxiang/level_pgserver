@@ -2,12 +2,11 @@
 #include "execution/DBDataTypeHandler.h"
 #include <glog/logging.h>
 
-KeySearchRange::KeySearchRange(std::set<std::string_view>& solved,
-		std::vector<DBDataType>& keyTypes,
+KeySearchRange::KeySearchRange(std::vector<DBDataType>& keyTypes,
 		const TableInfo* pTable,
-		const ParseNode* pNode)
-	: m_solved(solved)
-	, m_pTable(pTable)
+		const ParseNode* pNode,
+		std::set<std::string_view>* pSolved)
+	: m_pTable(pTable)
 	, m_keyTypes(keyTypes)
 	, m_startKeyResults(keyTypes.size())
 	, m_endKeyResults(keyTypes.size())
@@ -32,7 +31,10 @@ KeySearchRange::KeySearchRange(std::set<std::string_view>& solved,
 				} else {
 					m_bEndInclusive = (m_endPredicate.m_op == Operation::COMP_LE);
 					keyValid = false;
-					m_solved.insert(m_endPredicate.m_sExpr);
+					if(pSolved != nullptr) {
+						pSolved->insert(m_endPredicate.m_sExpr);
+					}
+					m_bSeekToLast = false;
 				}
 			}
 			break;
@@ -41,13 +43,20 @@ KeySearchRange::KeySearchRange(std::set<std::string_view>& solved,
 		}
 		switch(info.m_op) {
 		case Operation::COMP_EQ:
-			m_solved.insert(info.m_sExpr);
+			if(pSolved != nullptr) {
+				pSolved->insert(info.m_sExpr);
+			}
+			m_bSeekToFirst = false;
+			m_bSeekToLast = false;
 			break;
 		case Operation::COMP_GT:
 		case Operation::COMP_GE:
 			m_bStartInclusive = (info.m_op == Operation::COMP_GE);
 			keyValid = false;
-			m_solved.insert(info.m_sExpr);
+			if(pSolved != nullptr) {
+				pSolved->insert(info.m_sExpr);
+			}
+			m_bSeekToFirst = false;
 			break;
 		case Operation::NONE:
 			keyValid = false;
@@ -214,4 +223,131 @@ void KeySearchRange::setPredicateInfo(Operation op, const ParseNode* pKey, const
 	pInfo->m_pValue = pValue;
 	pInfo->m_op = op;
 	pInfo->m_sExpr = pPredicate->m_sExpr;
+}
+
+void KeySearchRange::seekStart(LevelDBIteratorPtr& pDBIter){
+	if(m_bSeekToFirst) {
+		pDBIter->first();
+		return;
+	}
+	auto startRow = getStartRow();
+	pDBIter->seek(startRow);
+
+	if(!m_bStartInclusive) {
+		for(;pDBIter->valid();pDBIter->next()) {
+			auto currentRow = pDBIter->key(m_keyTypes);
+
+			int n = currentRow.compare(startRow);
+			if(n > 0) {
+				return;
+			}
+		}
+	}
+}
+void KeySearchRange::seekStartReversed(LevelDBIteratorPtr& pDBIter){
+	if(m_bSeekToLast) {
+		pDBIter->last();
+		return;
+	}
+	auto endRow = getEndRow();
+	pDBIter->seek(endRow);
+	if(!pDBIter->valid()) {
+		pDBIter->last();
+		return;
+	}
+	if(!m_bEndInclusive) {
+		for(;pDBIter->valid();pDBIter->prev()) {
+			auto currentRow = pDBIter->key(m_keyTypes);
+			int n = currentRow.compare(endRow);
+			if(n < 0) {
+				return;
+			}
+		}
+	}
+}
+
+bool KeySearchRange::exceedEnd(const std::vector<ExecutionResult>& keyValues) {
+	if(m_bSeekToLast) {
+		return false;
+	}
+	int n = 0;
+	for (size_t i = 0; i < m_keyTypes.size(); ++i) {
+		auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
+		assert(pHandler);
+
+		n = pHandler->compare(keyValues[i], m_endKeyResults[i]);
+		if (n != 0) {
+			break;
+		}
+	}
+
+	if (n == 0 && !m_bEndInclusive) {
+		return true;
+	} else if(n > 0) {
+		return true;
+	}
+	return false;
+}
+bool KeySearchRange::exceedEndReversed(const std::vector<ExecutionResult>& keyValues) {
+	if(m_bSeekToFirst) {
+		return false;
+	}
+	int n = 0;
+	for (size_t i = 0; i < m_keyTypes.size(); ++i) {
+		auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
+		assert(pHandler);
+
+		n = pHandler->compare(keyValues[i], m_startKeyResults[i]);
+		if (n != 0) {
+			break;
+		}
+	}
+	if (n == 0 && !m_bStartInclusive) {
+		return true;
+	} else if(n < 0) {
+		return true;
+	}
+	return false;
+}
+
+int KeySearchRange::compareStart(KeySearchRange* pRange) {
+	if(m_bSeekToFirst) {
+		if(pRange->m_bSeekToFirst) {
+			return 0;
+		} else {
+			return -1;
+		}
+	} else if(pRange->m_bSeekToFirst) {
+		return 1;
+	}
+	int n = 0;
+	for (size_t i = 0; i < m_keyTypes.size(); ++i) {
+		auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
+		assert(pHandler);
+
+		n = pHandler->compare(m_startKeyResults[i], pRange->m_startKeyResults[i]);
+		if (n != 0) {
+			break;
+		}
+	}
+	return n;
+}
+
+bool KeySearchRange::startAfterEnd(KeySearchRange* pRange) {
+	if(m_bSeekToFirst || pRange->m_bSeekToLast) {
+		return false;
+	}
+	for (size_t i = 0; i < m_keyTypes.size(); ++i) {
+		auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
+		assert(pHandler);
+
+		int n = pHandler->compare(m_startKeyResults[i], pRange->m_endKeyResults[i]);
+		if (n > 0) {
+			return true;
+		} else if(n <0) {
+			return false;
+		}
+	}
+	//this->m_startKeyResults == pRange->m_endKeyResults
+	return !pRange->m_bEndInclusive || !m_bStartInclusive;
 }
