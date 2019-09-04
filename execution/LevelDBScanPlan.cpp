@@ -41,7 +41,7 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 		assert(pColumn->m_iValueIndex >= 0);
 		m_columnValues.emplace_back(pColumn->m_iValueIndex, ExecutionResult{});
 
-		return m_pTable->getKeyCount() + m_columnValues.size() -1;
+		return m_pTable->getKeyCount() + pColumn->m_iValueIndex;
 	}
 	return -1;
 }

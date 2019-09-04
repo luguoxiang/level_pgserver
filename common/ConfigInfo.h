@@ -124,10 +124,10 @@ public:
 	void computeValueIndex() {
 		size_t iValueIndex = 0;
 		for(auto& pColumn : m_columns) {
-				if(pColumn->m_iKeyIndex >= 0) {
-					continue;
-				}
-				pColumn->m_iValueIndex = iValueIndex++;
+			if(pColumn->m_iKeyIndex >= 0) {
+				continue;
+			}
+			pColumn->m_iValueIndex = iValueIndex++;
 		}
 	}
 	void getDBColumns(const ParseNode* pColumn, std::vector<const DBColumnInfo*>& columns) const;

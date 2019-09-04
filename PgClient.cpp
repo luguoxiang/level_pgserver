@@ -343,11 +343,69 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 	m_sender.prepare('D');
 	m_sender.addShort(columnNum); //field number
 	for (size_t i = 0; i < columnNum; ++i) {
-		DBDataType type = pPlan->getResultType(i);
-
-		ExecutionResult result;
 		try {
+			DBDataType type = pPlan->getResultType(i);
+
+			ExecutionResult result;
+
 			pPlan->getResult(i, result);
+
+
+			if (result.isNull()) {
+				m_sender.addInt(-1);
+				continue;
+			}
+
+			switch (type) {
+			case DBDataType::INT8:
+			case DBDataType::INT32:
+			case DBDataType::INT64:
+			case DBDataType::INT16:
+				m_sender.addIntAsString(result.getInt());
+				break;
+			case DBDataType::BYTES: {
+				std::ostringstream os;
+				os << "0x" ;
+				for (auto& c: result.getString()) {
+					os<< std::hex<< (int)c ;
+				}
+				m_sender.addString(os.str());
+				break;
+			}
+			case DBDataType::STRING:
+				m_sender.addString(result.getString());
+				break;
+			case DBDataType::DATE: {
+				time_t time = result.getInt();
+				struct tm* pToday = gmtime(&time);
+				if (pToday == nullptr) {
+					LOG(ERROR) << "Failed to get localtime "<< (int ) time;
+					m_sender.addInt(0);
+				} else {
+					m_sender.addDateAsString(pToday);
+				}
+				break;
+			}
+			case DBDataType::DATETIME: {
+				time_t time = result.getInt();
+				struct tm* pToday = gmtime(&time);
+				if (pToday == nullptr) {
+					LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
+					m_sender.addInt(0);
+				} else {
+					m_sender.addDateTimeAsString(pToday);
+				}
+				break;
+			}
+			case DBDataType::FLOAT:
+			case DBDataType::DOUBLE: {
+				m_sender.addDoubleAsString(result.getDouble());
+				break;
+			}
+			default:
+				assert(0);
+				break;
+			}; //switch
 		} catch (...) {
 			for (; i < columnNum; ++i)
 				m_sender.addInt(-1);
@@ -355,62 +413,6 @@ void PgClient::sendRow(ExecutionPlan* pPlan) {
 			m_sender.flush();
 			throw;
 		}
-
-		if (result.isNull()) {
-			m_sender.addInt(-1);
-			continue;
-		}
-
-		switch (type) {
-		case DBDataType::INT8:
-		case DBDataType::INT32:
-		case DBDataType::INT64:
-		case DBDataType::INT16:
-			m_sender.addIntAsString(result.getInt());
-			break;
-		case DBDataType::BYTES: {
-			std::ostringstream os;
-			os << "0x" ;
-			for (auto& c: result.getString()) {
-				os<< std::hex<< (int)c ;
-			}
-			m_sender.addString(os.str());
-			break;
-		}
-		case DBDataType::STRING:
-			m_sender.addString(result.getString());
-			break;
-		case DBDataType::DATE: {
-			time_t time = result.getInt();
-			struct tm* pToday = gmtime(&time);
-			if (pToday == nullptr) {
-				LOG(ERROR) << "Failed to get localtime "<< (int ) time;
-				m_sender.addInt(0);
-			} else {
-				m_sender.addDateAsString(pToday);
-			}
-			break;
-		}
-		case DBDataType::DATETIME: {
-			time_t time = result.getInt();
-			struct tm* pToday = gmtime(&time);
-			if (pToday == nullptr) {
-				LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
-				m_sender.addInt(0);
-			} else {
-				m_sender.addDateTimeAsString(pToday);
-			}
-			break;
-		}
-		case DBDataType::FLOAT:
-		case DBDataType::DOUBLE: {
-			m_sender.addDoubleAsString(result.getDouble());
-			break;
-		}
-		default:
-			assert(0);
-			break;
-		}; //switch
 	} //for
 
 	m_sender.commit();
