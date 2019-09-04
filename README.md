@@ -1,4 +1,4 @@
-# cvs2pgserver
+# level_pgserver
 ## Install
 ```
 brew install flex bison (Mac)
