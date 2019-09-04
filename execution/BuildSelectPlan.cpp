@@ -4,6 +4,7 @@
 #include "common/ParseException.h"
 #include "common/ParseTools.h"
 
+#include "execution/LevelDBDeletePlan.h"
 #include "execution/BuildPlan.h"
 #include "execution/SortPlan.h"
 #include "execution/LimitPlan.h"
@@ -14,7 +15,7 @@
 #include "execution/LevelDBScanPlan.h"
 #include "execution/UnionAllPlan.h"
 
-void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
+void LevelDBPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
 
@@ -55,7 +56,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 	}
 }
 
-void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
+void LevelDBPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 	if (pNode->m_type == NodeType::INFO
 			&& pNode->getOp() == Operation::ALL_COLUMNS) {
 		std::vector<std::string_view> columns;
@@ -107,7 +108,7 @@ void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 	}
 }
 
-void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
+void LevelDBPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
 
@@ -145,7 +146,7 @@ void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
 	}
 }
 
-void SelectPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
+void LevelDBPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
 	if (pNode == nullptr) {
 		return;
 	}
@@ -165,7 +166,7 @@ void SelectPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
-void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
+void LevelDBPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
 
@@ -175,7 +176,7 @@ void SelectPlanBuilder::buildPlanForFilter(const ParseNode* pNode) {
 	pFilter->setPredicate(pNode);
 }
 
-void SelectPlanBuilder::buildPlanForReadFile(const TableInfo* pTableInfo) {
+void LevelDBPlanBuilder::buildPlanForReadFile(const TableInfo* pTableInfo) {
 	ReadFilePlan* pValuePlan = new ReadFilePlan(
 			pTableInfo->getAttribute("path"),
 			pTableInfo->getAttribute("seperator", ","),
@@ -237,7 +238,7 @@ bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
 }
 
 
-const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
+const ParseNode* LevelDBPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
 
 	std::vector<ScanPlanInfo> rangeScanList;
 	std::vector<ScanPlanInfo*> rangePtrList(pPredicate->children());
@@ -288,7 +289,7 @@ const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, c
 	return nullptr;
 }
 
-const ParseNode* SelectPlanBuilder::buildPlanForLevelDB(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
+const ParseNode* LevelDBPlanBuilder::buildPlanForLevelDB(const TableInfo* pTableInfo, const ParseNode* pPredicate) {
 	if (pPredicate == nullptr) {
 		m_pPlan.reset(new LevelDBScanPlan(pTableInfo));
 	} else if (pPredicate->getOp() == Operation::OR) {
@@ -299,9 +300,39 @@ const ParseNode* SelectPlanBuilder::buildPlanForLevelDB(const TableInfo* pTableI
 	}
 	return nullptr;
 }
+ExecutionPlanPtr LevelDBPlanBuilder::buildDeletePlan(const ParseNode* pNode) {
+	assert(pNode && pNode->children() == 2);
 
+	const ParseNode* pTable = pNode->getChild(0);
+	assert(pTable);
 
-ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
+	const ParseNode* pPredicate = pNode->getChild(1);
+	if(pPredicate != nullptr) {
+		if(pPredicate->isFalseConst()) {
+			m_pPlan.reset(new EmptyPlan());
+			return std::move(m_pPlan);
+		} else if(pPredicate->isTrueConst()) {
+			pPredicate = nullptr;
+		}
+	}
+
+	assert( pTable->m_type == NodeType::NAME );
+
+	auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->getString());
+	if (pTableInfo == nullptr) {
+		PARSE_ERROR("table ", pTable->getString(), " not found");
+	}
+	if(pTableInfo->getKeyCount() > 0) {
+		pPredicate = buildPlanForLevelDB(pTableInfo, pPredicate);
+		buildPlanForFilter(pPredicate);
+	} else {
+		PARSE_ERROR("DELETE is not supported for table ", pTable->getString());
+	}
+
+	return ExecutionPlanPtr(new LevelDBDeletePlan(pTableInfo, m_pPlan.release()));
+}
+
+ExecutionPlanPtr LevelDBPlanBuilder::buildSelectPlan(const ParseNode* pNode) {
 	assert(pNode && pNode->children() == 7);
 
 	const ParseNode* pTable = pNode->getChild(SQL_SELECT_TABLE);

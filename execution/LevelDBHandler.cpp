@@ -47,6 +47,10 @@ void LevelDBBatch::insert(const std::vector<std::byte>& key, const std::vector<s
 	m_batch.Put(leveldb::Slice((const char*)key.data(), key.size()), leveldb::Slice((const char*)value.data(), value.size()));
 }
 
+void LevelDBBatch::remove(const std::string_view key) {
+	m_batch.Delete(leveldb::Slice((const char*)key.data(), key.size()));
+}
+
 void LevelDBHandler::commit(LevelDBBatch& batch) {
 	leveldb::Status status = m_pDB->Write(leveldb::WriteOptions(), &batch.m_batch);
 	if (!status.ok()) {

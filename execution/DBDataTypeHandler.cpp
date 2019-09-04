@@ -160,6 +160,7 @@ public:
 		if(len == 0) {
 			return 0;
 		}else {
+			assert(pszValue[len] == '\0');
 			errno = 0;
 			double value = strtod (pszValue,nullptr);
 			if (errno != 0) {
@@ -328,12 +329,20 @@ class DatetimeDBDataTypeHandler: public IntDBDataTypeHandler<int64_t> {
 public:
 	DatetimeDBDataTypeHandler(const std::string& name) : IntDBDataTypeHandler<int64_t>(name) {};
 
-	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
-		if (int64_t iValue = parseTime(pszValue); iValue > 0) {
-			result.setInt(iValue);
-		} else {
-			EXECUTION_ERROR("Wrong Time Format:", pszValue);
+	int64_t timeToInt(const char* pszValue, size_t len) {
+		if(len == 0) {
+			return 0;
+		}else {
+			int64_t iValue = parseTime(pszValue);
+			if (iValue <= 0) {
+				EXECUTION_ERROR("Wrong Time Format:", pszValue);
+			}
+			return iValue;
 		}
+	}
+
+	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
+		result.setInt(timeToInt(pszValue, len));
 	}
 
 	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
@@ -345,12 +354,7 @@ public:
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM: {
 				auto sValue = pValue->getString();
-				assert(sValue.data()[sValue.size()] == '\0');
-				if (int64_t iValue = parseTime(sValue.data()); iValue > 0) {
-					result.setInt(iValue);
-				} else {
-					EXECUTION_ERROR("Wrong Time Format:", pValue->getString());
-				}
+				result.setInt(timeToInt(sValue.data(), sValue.size()));
 				break;
 			}
 			case Operation::UNBOUND_PARAM:

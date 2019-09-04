@@ -53,6 +53,7 @@ class LevelDBBatch {
 	friend class LevelDBHandler;
 public:
 	void insert(const std::vector<std::byte>& key, const std::vector<std::byte>& value);
+	void remove(const std::string_view key);
 private:
 	leveldb::WriteBatch m_batch;
 };

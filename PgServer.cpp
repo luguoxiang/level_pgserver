@@ -4,7 +4,6 @@
 
 #include <unistd.h>
 #include <netinet/tcp.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <glog/logging.h>

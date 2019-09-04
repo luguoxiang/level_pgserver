@@ -11,10 +11,10 @@ constexpr int SQL_SELECT_HAVING = 4;
 constexpr int SQL_SELECT_ORDERBY = 5;
 constexpr int SQL_SELECT_LIMIT = 6;
 
-class SelectPlanBuilder {
+class LevelDBPlanBuilder {
 public:
-	ExecutionPlanPtr build(const ParseNode* pNode);
-
+	ExecutionPlanPtr buildSelectPlan(const ParseNode* pNode);
+	ExecutionPlanPtr buildDeletePlan(const ParseNode* pNode);
 protected:
 	void buildPlanForOrderBy(const ParseNode* pNode);
 	void buildPlanForProjection(const ParseNode* pNode);

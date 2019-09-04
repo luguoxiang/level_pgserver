@@ -6,7 +6,7 @@
 
 
 LevelDBInsertPlan::LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPlan)
-	: SingleChildPlan(PlanType::Insert, std::move(pPlan)), m_pTable(pTable) {
+	: SingleChildPlan(PlanType::Insert, pPlan), m_pTable(pTable) {
 	for(size_t i=0;i<m_pTable->getColumnCount();++i) {
 		auto pColumn = m_pTable->getColumn(i);
 		if(pColumn->m_iKeyIndex>= 0) {
@@ -30,8 +30,7 @@ void LevelDBInsertPlan::begin() {
 	m_pPlan->begin();
 }
 bool LevelDBInsertPlan::next() {
-	bool hasMore = m_pPlan->next();
-	if(!hasMore) {
+	if(!m_pPlan->next()) {
 		return false;
 	}
 

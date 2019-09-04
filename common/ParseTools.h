@@ -2,6 +2,8 @@
 
 #include <string>
 #include <exception>
+#include <netinet/in.h>
+
 #include "common/ParseNode.h"
 #include "common/ParseException.h"
 
@@ -50,10 +52,10 @@ inline double binaryToDouble(std::string_view sValue) {
 }
 
 
-
+constexpr const char* ROWKEY = "_rowkey";
 
 inline bool isRowKeyNode(const ParseNode* pNode) {
-	return pNode->m_type == NodeType::NAME && pNode->getString() == "_rowkey";
+	return pNode->m_type == NodeType::NAME && pNode->getString() == ROWKEY;
 }
 
 

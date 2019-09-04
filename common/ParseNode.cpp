@@ -66,14 +66,13 @@ int64_t parseTime(const char* pszTime) {
 	int iMinute = 0;
 	int iSecond = 0;
 
-	struct tm time;
+	struct tm time = {};
 	int ret = sscanf(pszTime, "%4d-%2d-%2d %2d:%2d:%2d",
 			&iYear, &iMonth, &iDay, &iHour, &iMinute, &iSecond);
 	if (ret != 3 && ret != 6) {
 		return 0;
 	}
 
-	memset(&time, 0, sizeof(struct tm));
 	time.tm_year = iYear - 1900;
 	time.tm_mon = iMonth - 1;
 	time.tm_mday = iDay;

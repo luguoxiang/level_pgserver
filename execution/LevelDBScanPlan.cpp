@@ -11,6 +11,7 @@ LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 	: LeafPlan(PlanType::Scan), m_pTable(pTable)
 	, m_keyValues(pTable->getKeyCount())
 	, m_currentKey(m_keyTypes)
+	, m_columnValues(pTable->getColumnCount() - pTable->getKeyCount())
 	, m_keyTypes(pTable->getKeyCount()) {
 
 	for(size_t i = 0;i<pTable->getColumnCount();++i) {
@@ -39,7 +40,8 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 			return pColumn->m_iKeyIndex;
 		}
 		assert(pColumn->m_iValueIndex >= 0);
-		m_columnValues.emplace_back(pColumn->m_iValueIndex, ExecutionResult{});
+		m_bProjectValue = true;
+		m_columnValues[pColumn->m_iValueIndex].first = true;
 
 		return m_pTable->getKeyCount() + pColumn->m_iValueIndex;
 	}
@@ -82,12 +84,14 @@ bool LevelDBScanPlan::next() {
 			return false;
 	}
 
-	if(!m_columnValues.empty()) {
+	if(m_bProjectValue) {
 		auto valueRow = m_pDBIter->value(m_valueTypes);
 
 		for(size_t i=0;i<m_columnValues.size();++i) {
 			auto& valueInfo = m_columnValues[i];
-			valueRow.getResult(valueInfo.first, valueInfo.second);
+			if(valueInfo.first) {
+				valueRow.getResult(i, valueInfo.second);
+			}
 		};
 	}
 	if(m_order ==SortOrder::Descend) {

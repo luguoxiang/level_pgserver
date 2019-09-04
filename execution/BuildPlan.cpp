@@ -24,8 +24,12 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 		return ExecutionPlanPtr(new WorkloadResult());
 
 	case Operation::SELECT: {
-		SelectPlanBuilder builder;
-		return builder.build(pNode);
+		LevelDBPlanBuilder builder;
+		return builder.buildSelectPlan(pNode);
+	}
+	case Operation::DELETE: {
+		LevelDBPlanBuilder builder;
+		return builder.buildDeletePlan(pNode);
 	}
 	case Operation::INSERT:
 		return buildPlanForLevelDBInsert(pNode);

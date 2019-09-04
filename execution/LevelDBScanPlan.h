@@ -75,8 +75,10 @@ public:
 	}
 private:
 
-	using ValueInfo = std::pair<size_t, ExecutionResult>;
+	using ValueInfo = std::pair<bool, ExecutionResult>;
 	std::vector<ValueInfo> m_columnValues;
+	bool m_bProjectValue = false;
+
 	std::vector<ExecutionResult> m_keyValues;
 
 	std::vector<DBDataType> m_keyTypes;
