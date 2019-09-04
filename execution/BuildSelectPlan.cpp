@@ -241,7 +241,7 @@ const ParseNode* SelectPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, c
 	std::vector<ScanPlanInfo*> rangePtrList(pPredicate->children());
 	rangeScanList.reserve(pPredicate->children());
 
-	for (size_t i = 0; i < rangeScanList.size(); ++i) {
+	for (size_t i = 0; i < pPredicate->children(); ++i) {
 		auto pChild = pPredicate->getChild(i);
 		//should be rewritten
 		assert(pChild->getOp() != Operation::OR);

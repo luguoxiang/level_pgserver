@@ -68,7 +68,7 @@ KeySearchRange::KeySearchRange(std::vector<DBDataType>& keyTypes,
 
 
 	bool nextStartMax = false;
-	bool nextEndMax = false;
+	bool nextEndMax = true;
 	for(size_t i=0;i<keyTypes.size();++i) {
 		auto pColumn = pTable->getKeyColumn(i);
 
