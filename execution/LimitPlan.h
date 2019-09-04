@@ -10,9 +10,13 @@ public:
 	LimitPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Limit, pPlan) {}
 
 
-	virtual void explain(std::vector<std::string>& rows) override {
-		SingleChildPlan::explain(rows);
-		rows.push_back(ConcateToString("Limit ", m_iLimit, ",", m_iOffset));
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override {
+		std::ostringstream os;
+		os << std::string(depth, '\t');
+		os << "Limit "<< m_iLimit<< ","<< m_iOffset;
+		rows.push_back(os.str());
+
+		SingleChildPlan::explain(rows, depth);
 	}
 
 	virtual void begin() override{

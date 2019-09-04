@@ -13,8 +13,11 @@ public:
 		LeafPlan(PlanType::Other), m_pEntry(pEntry) {
 	}
 
-	virtual void explain(std::vector<std::string>& rows) override {
-		rows.push_back("ShowColumns");
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override {
+		std::ostringstream os;
+		os << std::string(depth, '\t');
+		os << "ShowColumns";
+		rows.push_back(os.str());
 	}
 
 	virtual void begin() override;
@@ -38,6 +41,6 @@ public:
 
 	virtual int addProjection(const ParseNode* pNode)override;
 private:
-	size_t m_iIndex;
+	size_t m_iIndex = 0;
 	const TableInfo* m_pEntry;
 };

@@ -10,11 +10,13 @@ class LevelDBInsertPlan : public SingleChildPlan
 public:
 	LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPlan);
 
-	virtual void explain(std::vector<std::string>& rows)override {
-		SingleChildPlan::explain(rows);
+	virtual void explain(std::vector<std::string>& rows, size_t depth)override {
 		std::ostringstream os;
+		os << std::string(depth, '\t');
 		os << "leveldb:insert " << m_pTable->getName();
 		rows.push_back(os.str());
+
+		SingleChildPlan::explain(rows, depth);
 	}
 
 	virtual std::string getInfoString() override {

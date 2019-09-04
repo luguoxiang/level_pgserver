@@ -125,7 +125,7 @@ bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view&
 	return m_order == order;
 
 }
-void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
+void LevelDBScanPlan::explain(std::vector<std::string>& rows, size_t depth) {
 	if(m_pSearchRange == nullptr) {
 		m_pSearchRange = std::make_unique<KeySearchRange>(m_keyTypes, m_pTable,nullptr, nullptr);
 	}
@@ -134,7 +134,9 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
 	auto& end = m_pSearchRange->getEndResults();
 
 	assert(start.size() == end.size());
-	std::string s = "leveldb:scan ";
+
+	std::string s(depth, '\t');
+	s.append("leveldb:scan ");
 	s.append(m_pTable->getName());
 	s.append(", cost:");
 
@@ -148,8 +150,8 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
 		s.append(", reverse");
 	}
 	rows.push_back(s);
-	s = "  range:";
-	s.append(m_pSearchRange->startInclusive()?"[":"(");
+	s = std::string(depth + 1, '\t');
+	s.append(m_pSearchRange->startInclusive()?"range [":"range (");
 	for(auto& result: start) {
 		s.append(result.toString());
 		s.append("|");
@@ -163,6 +165,7 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows) {
 	s.erase(s.length() -1, 1);
 	s.append(m_pSearchRange->endInclusive()?"]":")");
 	rows.push_back(s);
+
 
 }
 

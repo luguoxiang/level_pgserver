@@ -14,37 +14,42 @@ public:
 	SortPlan(ExecutionPlan* pPlan);
 	virtual ~SortPlan() {}
 
-	virtual void explain(std::vector<std::string>& rows)override {
-		m_pPlan->explain(rows);
+	virtual void explain(std::vector<std::string>& rows, size_t depth)override {
+
+		std::ostringstream os;
+		os << std::string(depth, '\t');
+		os << "Sort(";
+
 		std::string s = "Sort(";
 		for (size_t i = 0; i < m_sort.size(); ++i) {
-			s.append(m_sort[i].m_sColumn);
-			s.append(" ");
+			os << (m_sort[i].m_sColumn);
+			os << (" ");
 			switch (m_sort[i].m_order) {
 			case SortOrder::Ascend:
 			case SortOrder::Any:
-				s.append("ascend");
+				os << ("ascend");
 				break;
 			case SortOrder::Descend:
-				s.append("descend");
+				os << ("descend");
 				break;
 			default:
 				assert(0);
 				break;
 			}
 			if (i == m_sort.size() - 1)
-				s.append(") ");
+				os << (") ");
 			else
-				s.append(", ");
+				os << (", ");
 		}
-		s.append("project:");
+		os << ("project:");
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			s.append(m_proj[i].m_sName);
+			os << (m_proj[i].m_sName);
 			if (i < m_proj.size() - 1)
-				s.append(", ");
+				os << (", ");
 		}
 
-		rows.push_back(s);
+		rows.push_back(os.str());
+		m_pPlan->explain(rows, depth);
 	}
 
 	virtual void begin() override;

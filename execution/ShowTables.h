@@ -11,8 +11,11 @@ public:
 	ShowTables() : LeafPlan(PlanType::Other) {
 	}
 
-	virtual void explain(std::vector<std::string>& rows) override{
-		rows.push_back("ShowTables");
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override{
+		std::ostringstream os;
+		os << std::string(depth, '\t');
+		os << "ShowTables";
+		rows.push_back(os.str());
 	}
 
 	virtual std::string getInfoString() override;
@@ -53,6 +56,6 @@ public:
 		return -1;
 	}
 private:
-	size_t m_iIndex;
+	size_t m_iIndex = 0;
 	std::vector<TableInfo*> m_tables;
 };

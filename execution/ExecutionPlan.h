@@ -46,7 +46,7 @@ public:
 		return m_type;
 	}
 
-	virtual void explain(std::vector<std::string>& rows) = 0;
+	virtual void explain(std::vector<std::string>& rows, size_t depth) = 0;
 
 	/*
 	 * To execute this plan, client must use following pattern

@@ -14,7 +14,7 @@ void ExplainPlan::getResult(size_t index, ExecutionResult& result) {
 
 void ExplainPlan::begin() {
 	m_rows.clear();
-	m_pPlan->explain(m_rows);
+	m_pPlan->explain(m_rows, 0);
 	m_iCurrentRow = 0;
 }
 

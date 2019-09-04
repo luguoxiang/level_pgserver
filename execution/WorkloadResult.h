@@ -12,8 +12,11 @@ public:
 		LeafPlan(PlanType::Other) {
 	}
 
-	virtual void explain(std::vector<std::string>& rows) override{
-		rows.push_back("Workload");
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override{
+		std::ostringstream os;
+		os << std::string(depth, '\t');
+		os << "Workload";
+		rows.push_back(os.str());
 	}
 
 	virtual std::string getInfoString() override;

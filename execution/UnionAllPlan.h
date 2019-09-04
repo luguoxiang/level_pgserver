@@ -23,11 +23,14 @@ public:
 		m_plans.push_back(pPlan);
 	}
 
-	virtual void explain(std::vector<std::string>& rows) override {
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override {
+		std::ostringstream os;
+		os << std::string(depth, '\t');
+		os << "UnionAll";
+		rows.push_back(os.str());
 		for (auto& pPlan : m_plans) {
-			pPlan->explain(rows);
+			pPlan->explain(rows, 1 + depth);
 		}
-		rows.push_back("Union All");
 	}
 
 	virtual void begin() override;

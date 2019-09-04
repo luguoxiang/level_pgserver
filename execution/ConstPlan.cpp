@@ -2,8 +2,9 @@
 #include "execution/ConstPlan.h"
 #include "DBDataTypeHandler.h"
 
-void ConstPlan::explain(std::vector<std::string>& rows) {
+void ConstPlan::explain(std::vector<std::string>& rows, size_t depth) {
 	std::stringstream ss;
+	ss<<std::string(depth, '\t');
 	ss << "Const " << m_rows.size() << " rows, " << m_columns.size()
 			<< " columns";
 	rows.push_back(ss.str());

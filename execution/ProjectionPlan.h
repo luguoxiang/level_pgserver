@@ -14,14 +14,18 @@ public:
 	ProjectionPlan(ExecutionPlan*pPlan) :
 		SingleChildPlan(PlanType::Projection, pPlan){}
 
-	virtual void explain(std::vector<std::string>& rows) override{
-		SingleChildPlan::explain(rows);
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override{
+
+		std::ostringstream os;
+		os << std::string(depth, '\t');
+		os << "Projection ";
+
 		std::string s = "Projection ";
 		for (size_t i = 0; i < m_proj.size(); ++i) {
-			s.append(m_proj[i].m_sName);
-			s.append(", ");
+			os << m_proj[i].m_sName<< ", ";
 		}
-		rows.push_back(s);
+		rows.push_back(os.str());
+		SingleChildPlan::explain(rows, depth);
 	}
 
 	bool project(const ParseNode* pNode, const std::string_view& sName);

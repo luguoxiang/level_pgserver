@@ -10,9 +10,9 @@ GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
 }
 
 
-void GroupByPlan::explain(std::vector<std::string>& rows) {
-	SingleChildPlan::explain(rows);
-	std::string s = "GroupBy(";
+void GroupByPlan::explain(std::vector<std::string>& rows, size_t depth) {
+	std::string s(depth, '\t');
+	s+="GroupBy(";
 	for (size_t i = 0; i < m_groupby.size(); ++i) {
 		s += m_pPlan->getProjectionName(m_groupby[i]);
 		if (i + 1 < m_groupby.size()) {
@@ -28,6 +28,8 @@ void GroupByPlan::explain(std::vector<std::string>& rows) {
 	}
 
 	rows.push_back(s);
+
+	SingleChildPlan::explain(rows, depth);
 }
 
 void GroupByPlan::begin() {

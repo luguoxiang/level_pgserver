@@ -28,7 +28,7 @@ public:
 	}
 
 
-	virtual void explain(std::vector<std::string>& rows) override;
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override;
 
 	virtual void begin() override;
 

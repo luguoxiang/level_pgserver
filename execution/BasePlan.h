@@ -11,8 +11,8 @@ public:
 
 	virtual ~SingleChildPlan() {}
 
-	virtual void explain(std::vector<std::string>& rows) override {
-		m_pPlan->explain(rows);
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override {
+		m_pPlan->explain(rows, depth + 1);
 	}
 
 	virtual void begin() override {
@@ -71,7 +71,7 @@ public:
 	LeafPlan(PlanType type);
 	virtual ~LeafPlan() {};
 
-	virtual void explain(std::vector<std::string>& rows) {}
+	virtual void explain(std::vector<std::string>& rows, size_t depth) {}
 
 	virtual void begin() {}
 	virtual bool next();

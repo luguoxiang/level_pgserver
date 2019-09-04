@@ -2,10 +2,11 @@
 #include "execution/ExecutionException.h"
 #include "execution/DBDataTypeHandler.h"
 
-void ReadFilePlan::explain(std::vector<std::string>& rows) {
-	rows.push_back(
-			ConcateToString("ReadFile ", m_sPath, ", separator ",
-					m_separator));
+void ReadFilePlan::explain(std::vector<std::string>& rows, size_t depth) {
+	std::ostringstream os;
+	os << std::string(depth, '\t');
+	os << "ReadFile "<< m_sPath<< ", separator"<< m_separator;
+	rows.push_back(os.str());
 }
 
 int ReadFilePlan::addProjection(const ParseNode* pNode) {

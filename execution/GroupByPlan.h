@@ -20,7 +20,7 @@ public:
 		ExecutionResult m_value;
 	};
 
-	virtual void explain(std::vector<std::string>& rows) override;
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override;
 
 	virtual std::string getInfoString()override {
 		return ConcateToString("SELECT ", m_iRows);
