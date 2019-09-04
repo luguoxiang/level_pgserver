@@ -1,8 +1,7 @@
 #pragma once
 
-#include "ParseTools.h"
 #include "ExecutionPlan.h"
-
+#include "common/ParseException.h"
 #include <vector>
 #include <string>
 #include <map>

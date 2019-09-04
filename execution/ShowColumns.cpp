@@ -1,6 +1,6 @@
 #include "ShowColumns.h"
 #include "common/MetaConfig.h"
-#include "execution/ParseTools.h"
+#include "common/ParseTools.h"
 #include <sstream>
 #include <array>
 namespace {
@@ -24,7 +24,7 @@ int ShowColumns::addProjection(const ParseNode* pNode) {
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < Columns.size(); ++i) {
-		if (Tools::case_equals(Columns[i], pNode->m_sValue)) {
+		if (Tools::case_equals(Columns[i], pNode->getString())) {
 			return i;
 		}
 	}

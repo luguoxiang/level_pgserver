@@ -1,7 +1,6 @@
 #pragma once
 
 #include "execution/GroupByPlan.h"
-#include "execution/ParseTools.h"
 #include <vector>
 #include <map>
 class ProjectionPlan: public SingleChildPlan {
@@ -34,7 +33,7 @@ public:
 	}
 
 	virtual int addProjection(const ParseNode* pNode)override{
-		auto iter = m_map.find(pNode->m_sValue);
+		auto iter = m_map.find(pNode->getString());
 		if (iter == m_map.end())
 			return -1;
 		return iter->second;

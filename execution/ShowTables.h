@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <vector>
 #include <pthread.h>
-#include "execution/ParseTools.h"
+#include "common/ParseTools.h"
 #include "execution/BasePlan.h"
 #include "execution/WorkThreadInfo.h"
 
@@ -46,9 +46,9 @@ public:
 		assert(pNode);
 		if (pNode->m_type != NodeType::NAME)
 			return -1;
-		if (Tools::case_equals(pNode->m_sValue, "TableName") )
+		if (Tools::case_equals(pNode->getString(), "TableName") )
 			return 0;
-		if (Tools::case_equals(pNode->m_sValue, "Info") )
+		if (Tools::case_equals(pNode->getString(), "Info") )
 			return 1;
 		return -1;
 	}

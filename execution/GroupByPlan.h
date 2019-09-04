@@ -1,7 +1,6 @@
 #pragma once
 
 #include "execution/BasePlan.h"
-#include "execution/ParseTools.h"
 #include "common/ParseException.h"
 
 #include <sstream>

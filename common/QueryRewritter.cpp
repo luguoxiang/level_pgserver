@@ -34,7 +34,7 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 void QueryRewritter::collectElements(ParseNode* pNode,
 		const std::string_view sName, std::vector<ParseNode*>& elements) {
 	assert(pNode);
-	if (pNode->m_type == NodeType::LIST && pNode->m_sValue == sName) {
+	if (pNode->m_type == NodeType::LIST && pNode->getString() == sName) {
 		for (size_t i = 0; i < pNode->children(); ++i) {
 			collectElements(pNode->getChild(i), sName, elements);
 		}
@@ -48,12 +48,12 @@ ParseNode* QueryRewritter::rewriteList(ParseNode* pParent) {
 	assert(pParent->m_type == NodeType::LIST);
 
 	std::vector<ParseNode*> elements;
-	auto sName = pParent->m_sValue;
+	auto sName = pParent->getString();
 	collectElements(pParent, sName, elements);
 
 	pParent = m_result.newParseNode(NodeType::LIST,
 			Operation::NONE, pParent->m_sExpr, elements);
-	pParent->m_sValue = sName;
+	pParent->setString(sName);
 	return pParent;
 }
 

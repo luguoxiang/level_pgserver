@@ -1,5 +1,4 @@
 #include "execution/ProjectionPlan.h"
-#include "execution/ParseTools.h"
 #include "common/ParseException.h"
 
 bool ProjectionPlan::project(const ParseNode* pNode, const std::string_view& sName) {

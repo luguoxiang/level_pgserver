@@ -2,7 +2,6 @@
 #include "common/MetaConfig.h"
 #include "common/ParseException.h"
 
-#include "execution/ParseTools.h"
 #include "execution/ShowColumns.h"
 #include "execution/BuildPlan.h"
 
@@ -23,12 +22,12 @@ ExecutionPlanPtr buildPlanForDesc(const ParseNode* pNode) {
 		assert(pDB->m_type == NodeType::NAME);
 		assert(pTable->m_type == NodeType::NAME);
 
-		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+		pEntry = MetaConfig::getInstance().getTableInfo(pTable->getString());
 	} else {
-		pEntry = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+		pEntry = MetaConfig::getInstance().getTableInfo(pTable->getString());
 	}
 	if (pEntry == nullptr) {
-		PARSE_ERROR("Undefined table ", pTable->m_sValue);
+		PARSE_ERROR("Undefined table ", pTable->getString());
 	}
 
 	return ExecutionPlanPtr(new ShowColumns(pEntry));
@@ -63,7 +62,7 @@ ExecutionPlanPtr buildPlanForLevelDBInsert(const ParseNode* pNode)
 	}
 	assert(pTable && pTable->m_type == NodeType::NAME);
 
-	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->getString());
 	assert(pTableInfo != nullptr);
 
 	auto pValuePlan = buildPlan(pValue);

@@ -1,7 +1,7 @@
 #include <memory>
 #include "LevelDBScanPlan.h"
 #include "ExecutionException.h"
-#include "execution/ParseTools.h"
+#include "common/ParseTools.h"
 #include "execution/DBDataTypeHandler.h"
 #include "execution/LevelDBHandler.h"
 #include "execution/DataRow.h"
@@ -31,9 +31,9 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 	if(Tools::isRowKeyNode(pNode)) {
 		return m_columnValues.size() + m_pTable->getKeyCount();
 	} else if(pNode->m_type == NodeType::NAME) {
-		auto pColumn = m_pTable->getColumnByName(pNode->m_sValue);
+		auto pColumn = m_pTable->getColumnByName(pNode->getString());
 		if(pColumn == nullptr ) {
-			PARSE_ERROR("Unknown column: ", pNode->m_sValue);
+			PARSE_ERROR("Unknown column: ", pNode->getString());
 		}
 		if(pColumn->m_iKeyIndex >= 0) {
 			return pColumn->m_iKeyIndex;

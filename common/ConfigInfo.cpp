@@ -76,9 +76,9 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 			if (p == nullptr || p->m_type != NodeType::NAME) {
 				PARSE_ERROR("Unsupported select expression:" , p->m_sExpr);
 			}
-			const DBColumnInfo* pColumnInfo = getColumnByName(p->m_sValue);
+			const DBColumnInfo* pColumnInfo = getColumnByName(p->getString());
 			if (pColumnInfo == 0) {
-				PARSE_ERROR("Table ", m_name, " does not have column named ", p->m_sValue);
+				PARSE_ERROR("Table ", m_name, " does not have column named ", p->getString());
 			}
 			columns.push_back(pColumnInfo);
 		}

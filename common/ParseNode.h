@@ -6,6 +6,7 @@
 #include <cassert>
 #include <stdlib.h>
 #include <string>
+#include <variant>
 #include <initializer_list>
 
 
@@ -82,8 +83,6 @@ public:
 			ParseNode** children);
 
 	const NodeType m_type;
-	std::string_view m_sValue;
-	int64_t m_iValue = 0;
 
 	//string view on ParseResult.m_sSql
 	const std::string_view m_sExpr;
@@ -115,7 +114,7 @@ public:
     bool isTrueConst() const {
     	switch(m_type) {
     	case NodeType::INT:
-    		return m_iValue != 0;
+    		return getInt() != 0;
     	default:
     		return false;
     	}
@@ -124,7 +123,7 @@ public:
     bool isFalseConst() const {
     	switch(m_type) {
     	case NodeType::INT:
-    		return m_iValue == 0;
+    		return getInt() == 0;
     	default:
     		return false;
     	}
@@ -138,7 +137,18 @@ public:
     Operation getOp() const {
     	return m_op;
     }
+
+    void setInt(int64_t value) {m_value = value;}
+    int64_t getInt() const {return std::get<int64_t>(m_value);}
+
+    void setDouble(double value) {m_value = value;}
+    double getDouble() const {return std::get<double>(m_value);}
+
+    void setString(const std::string_view value) {m_value = value;}
+    const std::string_view getString() const {return std::get<std::string_view>(m_value);}
 private:
+    std::variant<int64_t, double, std::string_view> m_value;
+
 	Operation m_op;
     ParseNode** m_children;
     size_t m_iChildNum;

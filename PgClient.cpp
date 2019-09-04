@@ -12,7 +12,6 @@
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
 #include "execution/ExecutionException.h"
-#include "execution/ParseTools.h"
 
 namespace {
 constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
@@ -141,7 +140,7 @@ void PgClient::handleBind() {
 		auto pParam = m_pWorker->getBindParam(i);
 		pParam->setBindParamMode(types[i]);
 		auto s = m_receiver.getNextStringWithLen();
-		pParam->m_sValue =m_pWorker->allocString(s);
+		pParam->setString(m_pWorker->allocString(s));
 	}
 
 

@@ -1,5 +1,5 @@
 #include "DBDataTypeHandler.h"
-#include "ParseTools.h"
+#include "common/ParseTools.h"
 #include <limits>
 
 std::map<DBDataType, std::unique_ptr<DBDataTypeHandler>> DBDataTypeHandler::m_typeHandlers;
@@ -59,15 +59,15 @@ public:
 		int64_t value = 0;
 		switch (pValue->m_type) {
 		case NodeType::INT:
-			value = pValue->m_iValue;
+			value = pValue->getInt();
 			break;
 		case NodeType::PARAM:
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM:
-				value = Tools::toInt(pValue->m_sValue);
+				value = Tools::toInt(pValue->getString());
 				break;
 			case Operation::BINARY_PARAM:
-				value = Tools::binaryToInt(pValue->m_sValue);
+				value = Tools::binaryToInt(pValue->getString());
 				break;
 			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
@@ -158,18 +158,18 @@ public:
 		double value = 0;
 		switch (pValue->m_type) {
 		case NodeType::INT:
-			value = pValue->m_iValue;
+			value = pValue->getInt();
 			break;
 		case NodeType::FLOAT:
-			value = Tools::toDouble(pValue->m_sValue);
+			value = pValue->getDouble();
 			break;
 		case NodeType::PARAM:
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM:
-				value = Tools::toDouble(pValue->m_sValue);
+				value = Tools::toDouble(pValue->getString());
 				break;
 			case Operation::BINARY_PARAM:
-				value = Tools::binaryToDouble(pValue->m_sValue);
+				value = Tools::binaryToDouble(pValue->getString());
 				break;
 			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
@@ -277,7 +277,7 @@ public:
 			EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr,
 					", expect string");
 		}
-		result.setStringView(pValue->m_sValue);
+		result.setStringView(pValue->getString());
 
 	}
 	void div(ExecutionResult& result, size_t value) override {
@@ -316,15 +316,15 @@ public:
 	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
 		switch (pValue->m_type) {
 		case NodeType::DATE:
-			result.setInt(pValue->m_iValue);
+			result.setInt(pValue->getInt());
 			break;
 		case NodeType::PARAM:
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM:
-				if (int64_t iValue = parseTime(pValue->m_sValue); iValue > 0) {
+				if (int64_t iValue = parseTime(pValue->getString()); iValue > 0) {
 					result.setInt(iValue);
 				} else {
-					EXECUTION_ERROR("Wrong Time Format:", pValue->m_sValue);
+					EXECUTION_ERROR("Wrong Time Format:", pValue->getString());
 				}
 				break;
 			case Operation::UNBOUND_PARAM:

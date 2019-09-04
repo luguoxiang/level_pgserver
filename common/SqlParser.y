@@ -188,12 +188,12 @@ expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column,
 		if($2->m_type == NodeType::INT)
 		{
 			$$ = pResult->newSimpleNode(NodeType::INT,@$.first_column, @$.last_column);
-			$$->m_iValue = - $$->m_iValue;
+			$$->setInt(- $$->getInt());
 		}
 		else if($2->m_type == NodeType::FLOAT) 
 		{
 			$$ = pResult->newSimpleNode( NodeType::FLOAT, @$.first_column, @$.last_column);
-			$$->m_sValue = $$->m_sExpr;
+			$$->setString($$->m_sExpr);
 		}
 		else
 		{
@@ -210,13 +210,14 @@ expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column,
 	| expr COMP_GT expr {$$ = pResult->newExprNode( Operation::COMP_GT, @$.first_column, @$.last_column, { $1, $3});}
 	| expr COMP_NE expr {$$ = pResult->newExprNode( Operation::COMP_NE, @$.first_column, @$.last_column, { $1, $3});}
 	| expr LIKE STRING {
-		auto len =  $3->m_sValue.length();
-		if($3->m_sValue[0] != '%' || $3->m_sValue[len - 1] != '%')
+		auto sValue =  $3->getString();
+		auto len =  sValue.length();
+		if(sValue[0] != '%' || sValue[len - 1] != '%')
 		{
-			yyerror(&@3,pResult, nullptr, ConcateToString("missing %% for like ", $3->m_sValue));
+			yyerror(&@3,pResult, nullptr, ConcateToString("missing %% for like ", sValue));
 			YYERROR;
 		}
-		$3->m_sValue =  $3->m_sValue.substr(1, len -2);
+		$3->setString(sValue.substr(1, len -2));
 		$$ = pResult->newExprNode( Operation::LIKE, @$.first_column, @$.last_column, { $1, $3});
 	}
 	| expr ANDOP expr {$$ = pResult->newExprNode( Operation::AND, @$.first_column, @$.last_column, { $1, $3});}
@@ -242,7 +243,7 @@ expr: expr IN '(' val_list ')' {
 	;
 	
 expr: NAME '(' expr ')' {
-        $$ = pResult->newFuncNode($1->m_sValue, @$.first_column, @$.last_column, { $3 });
+        $$ = pResult->newFuncNode($1->getString(), @$.first_column, @$.last_column, { $3 });
 }       
 ;
 

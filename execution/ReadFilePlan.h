@@ -2,7 +2,6 @@
 
 #include "common/ParseException.h"
 #include "execution/BasePlan.h"
-#include "execution/ParseTools.h"
 #include <sstream>
 #include <fstream>
 #include <atomic>

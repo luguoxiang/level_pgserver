@@ -2,6 +2,8 @@
 
 #include "common/MetaConfig.h"
 #include "common/ParseException.h"
+#include "common/ParseTools.h"
+
 #include "execution/BuildPlan.h"
 #include "execution/SortPlan.h"
 #include "execution/LimitPlan.h"
@@ -30,7 +32,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 		SortOrder order =
 				(pChild->getChild(1)->getOp() == Operation::ASC) ?
 						SortOrder::Ascend : SortOrder::Descend;
-		if (!m_pPlan->ensureSortOrder(i, pColumn->m_sValue, order)) {
+		if (!m_pPlan->ensureSortOrder(i, pColumn->getString(), order)) {
 			bAlreadySorted = false;
 			break;
 		}
@@ -68,7 +70,7 @@ void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 
 		for (auto& column : columns) {
 			ParseNode node(NodeType::NAME, Operation::NONE, column, 0, nullptr);
-			node.m_sValue = column;
+			node.setString(column);
 			pProjPlan->project(&node, column);
 		}
 		return;
@@ -83,7 +85,7 @@ void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 		if (pColumn->m_type == NodeType::OP && pColumn->getOp() == Operation::AS) {
 			assert(pColumn->children() == 2);
 
-			sAlias = pColumn->getChild(1)->m_sValue;
+			sAlias = pColumn->getChild(1)->getString();
 
 			pColumn = pColumn->getChild(0);
 		}
@@ -118,7 +120,7 @@ void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
 			PARSE_ERROR("Wrong group by clause!");
 		}
 
-		if (!m_pPlan->ensureSortOrder(i, pChild->m_sValue, SortOrder::Any)) {
+		if (!m_pPlan->ensureSortOrder(i, pChild->getString(), SortOrder::Any)) {
 			bNeedSort = true;
 		}
 	}
@@ -158,8 +160,8 @@ void SelectPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
 
 	assert(pCount->m_type == NodeType::INT);
 	assert(pOffset->m_type == NodeType::INT);
-	int64_t iOffset = pOffset->m_iValue;
-	int64_t iCount = pCount->m_iValue;
+	int64_t iOffset = pOffset->getInt();
+	int64_t iCount = pCount->getInt();
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
@@ -318,9 +320,9 @@ ExecutionPlanPtr SelectPlanBuilder::build(const ParseNode* pNode) {
 	if( pTable->m_type != NodeType::NAME ) {
 		m_pPlan = buildPlan(pTable);
 	}else{
-		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->m_sValue);
+		auto pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->getString());
 		if (pTableInfo == nullptr) {
-			PARSE_ERROR("table ", pTable->m_sValue, " not found");
+			PARSE_ERROR("table ", pTable->getString(), " not found");
 		}
 		if(pTableInfo->getKeyCount() > 0) {
 			pPredicate = buildPlanForLevelDB(pTableInfo, pPredicate);

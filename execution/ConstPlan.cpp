@@ -63,7 +63,7 @@ int ConstPlan::addProjection(const ParseNode* pNode) {
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < m_columns.size(); ++i) {
-		if (m_columns[i] == pNode->m_sValue) {
+		if (m_columns[i] == pNode->getString()) {
 			return i;
 		}
 	}

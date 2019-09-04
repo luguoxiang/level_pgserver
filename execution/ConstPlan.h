@@ -3,7 +3,6 @@
 #include <sstream>
 #include "common/ParseException.h"
 #include "execution/BasePlan.h"
-#include "execution/ParseTools.h"
 
 class ConstPlan: public LeafPlan {
 public:

@@ -118,7 +118,7 @@ int GroupByPlan::addProjection(const ParseNode* pNode) {
 		if(int i = m_pPlan->addProjection(pNode); i >= 0 ) {
 			AggrFunc func;
 			func.m_func = FuncType::FIRST;
-			func.m_sName = pNode->m_sValue;
+			func.m_sName = pNode->getString();
 			func.m_iIndex = i;
 			m_proj.push_back(func);
 			return m_proj.size() - 1;
@@ -127,7 +127,7 @@ int GroupByPlan::addProjection(const ParseNode* pNode) {
 		}
 
 	} else if (pNode->m_type == NodeType::FUNC) {
-		if(auto iter = m_typeMap.find(pNode->m_sValue); iter != m_typeMap.end()) {
+		if(auto iter = m_typeMap.find(pNode->getString()); iter != m_typeMap.end()) {
 			AggrFunc func;
 			func.m_func = iter->second;
 			assert(pNode->children() == 1);

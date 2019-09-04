@@ -4,9 +4,9 @@
 #include "WorkThreadInfo.h"
 #include "common/ParseException.h"
 #include "common/ParseNode.h"
+#include "common/ParseTools.h"
 
 #include "execution/ExecutionException.h"
-#include "execution/ParseTools.h"
 #include "execution/BuildPlan.h"
 #include "execution/BasePlan.h"
 

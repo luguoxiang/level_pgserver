@@ -3,9 +3,7 @@
 #include <string>
 #include <exception>
 #include "common/ParseNode.h"
-#include "execution/WorkThreadInfo.h"
-#include "execution/ExecutionPlan.h"
-#include "execution/ExecutionException.h"
+#include "common/ParseException.h"
 
 namespace Tools {
 inline bool case_equals(const std::string_view a, const std::string_view b)
@@ -23,9 +21,9 @@ inline int64_t toInt(const std::string_view s)
 		std::string ss(s.data(), s.length());
 		return std::stoi(ss);
 	} catch(std::invalid_argument& e) {
-		EXECUTION_ERROR("Invalid integer value: ", s);
+		PARSE_ERROR("Invalid integer value: ", s);
 	} catch (std::out_of_range& e) {
-		EXECUTION_ERROR("Value out of range: ", s);
+		PARSE_ERROR("Value out of range: ", s);
 	}
 	return 0;
 }
@@ -42,7 +40,7 @@ inline int64_t binaryToInt(std::string_view sValue) {
 		return (static_cast<int64_t>(hiword) << 32) | loword;
 	}
 	default:
-		EXECUTION_ERROR("Wrong bind data length ", sValue.length());
+		PARSE_ERROR("Wrong bind data length ", sValue.length());
 		return 0;
 	}
 }
@@ -53,9 +51,9 @@ inline double toDouble(const std::string_view s)
 		std::string ss(s.data(), s.length());
 		return std::stod(ss);
 	} catch(std::invalid_argument& e) {
-		EXECUTION_ERROR("Invalid float value: ", s);
+		PARSE_ERROR("Invalid float value: ", s);
 	} catch (std::out_of_range& e) {
-		EXECUTION_ERROR("Value out of range: ", s);
+		PARSE_ERROR("Value out of range: ", s);
 	}
 	return 0;
 }
@@ -71,7 +69,7 @@ inline double binaryToDouble(std::string_view sValue) {
 		int64_t data = (static_cast<int64_t>(hiword) << 32) | loword;
 	    return *reinterpret_cast<double *>(&data);}
 	default:
-		EXECUTION_ERROR("Wrong bind data length ", sValue.length());
+		PARSE_ERROR("Wrong bind data length ", sValue.length());
 		return 0;
 	}
 }
@@ -80,41 +78,7 @@ inline double binaryToDouble(std::string_view sValue) {
 
 
 inline bool isRowKeyNode(const ParseNode* pNode) {
-	return pNode->m_type == NodeType::NAME && pNode->m_sValue == "_rowkey";
-}
-
-
-
-inline std::string escapeString(const char* pszSrc) {
-
-	std::string s;
-	s.append("'");
-	for (int64_t i = 0;; ++i) {
-		char c = pszSrc[i];
-		if (c == '\0') {
-			break;
-		}
-		switch (c) {
-		case '\'':
-			s.append("\\'");
-			break;
-		case '\n':
-			s.append("\\n");
-			break;
-		case '\t':
-			s.append("\\t");
-			break;
-		case '\r':
-			s.append("\\r");
-			break;
-		default:
-			s += c;
-			break;
-		}
-	}
-	s.append("'");
-
-	return s;
+	return pNode->m_type == NodeType::NAME && pNode->getString() == "_rowkey";
 }
 
 

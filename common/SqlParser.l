@@ -91,14 +91,16 @@ USING {return USING;}
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
-	try {
-		pNode->m_iValue = std::stol(yytext);
-		return INTNUM;
-	} catch (const std::exception& e) {
-		yyerror(yylloc, pResult, nullptr, e.what());
+	
+	errno = 0;
+	int64_t value = strtol (yytext,nullptr,10);
+	if (errno != 0) { 
+		yyerror(yylloc, pResult, nullptr, strerror(errno));
 		return ERROR;
 	}
-	
+	pNode->setInt(value);
+	return INTNUM;
+
 }
 [0-9]+"."[0-9]* | 
 "."[0-9]+ |
@@ -108,7 +110,15 @@ USING {return USING;}
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
-	pNode->m_sValue = pNode->m_sExpr;
+	
+	errno = 0;
+	double value = strtod (yytext,nullptr);
+	if (errno != 0) { 
+		yyerror(yylloc, pResult, nullptr, strerror(errno));
+		return ERROR;
+	}
+	pNode->setDouble(value);
+	
 	return APPROXNUM;
 }
 
@@ -149,7 +159,7 @@ USING {return USING;}
 		pValue[resultSize++] = c;
 	}
 
-	pNode->m_sValue = std::string_view(pValue, resultSize);
+	pNode->setString(std::string_view(pValue, resultSize));
 	return STRING;
 }
 
@@ -177,7 +187,7 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 		unsigned char a = strtol(szBuf,0, 16);
 		pValue[resultSize++] = (char)a;
 	}
-	pNode->m_sValue = std::string_view(pValue, resultSize);
+	pNode->setString(std::string_view(pValue, resultSize));
 
 	return BINARY;
 }
@@ -186,13 +196,13 @@ D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE,yylloc->first_column, yylloc->last_column);
 
-	pNode->m_iValue = parseTime(yytext + 2);
-	if(pNode->m_iValue == 0)
+	auto iValue = parseTime(yytext + 2);
+	if(iValue == 0)
 	{
 		yyerror(yylloc, pResult ,nullptr, ConcateToString("Wrong date: ", yytext));
 		return ERROR;
 	}
-	
+	pNode->setInt(iValue);
 	yylval->pNode = pNode;
 	return DATE_VALUE;
 }
@@ -200,13 +210,13 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE, yylloc->first_column, yylloc->last_column);
 
-	pNode->m_iValue = parseTime(yytext + 2);
-	if(pNode->m_iValue == 0)
+	auto iValue = parseTime(yytext + 2);
+	if(iValue == 0)
 	{
 		yyerror(yylloc, pResult, nullptr, ConcateToString("Wrong date: ", yytext));
 		return ERROR;
 	}
-
+	pNode->setInt(iValue);
 	yylval->pNode = pNode;
 	return DATE_VALUE;
 }
@@ -227,7 +237,7 @@ D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 [A-Za-z_][A_Za-z0-9_]* {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::NAME, yylloc->first_column, yylloc->last_column);
-	pNode->m_sValue = pNode->m_sExpr;
+	pNode->setString(pNode->m_sExpr);
 	yylval->pNode = pNode;
 	return NAME;
 }
@@ -242,7 +252,6 @@ $[0-9]+ {
 		yyerror(yylloc, pResult,nullptr,ConcateToString( "Illegal prepared statement param: ", yytext));
 		return ERROR;
 	}
-	pNode->m_iValue = index;
 	pResult->m_bindParamNodes.push_back(pNode);
 	return PARAM;
 }

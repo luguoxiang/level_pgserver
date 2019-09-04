@@ -178,7 +178,7 @@ void KeySearchRange::doSetPredicate(const ParseNode* pPredicate) {
 }
 
 void KeySearchRange::setPredicateInfo(Operation op, const ParseNode* pKey, const ParseNode* pValue, const ParseNode* pPredicate) {
-	auto pKeyColumn = m_pTable->getColumnByName(pKey->m_sValue);
+	auto pKeyColumn = m_pTable->getColumnByName(pKey->getString());
 	if(pKeyColumn->m_iKeyIndex < 0) {
 		return;
 	}

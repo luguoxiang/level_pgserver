@@ -1,5 +1,4 @@
 #include "ExecutionResult.h"
-#include "ParseTools.h"
 #include "DBDataTypeHandler.h"
 
 void ExecutionResult::div(size_t value, DBDataType type) {

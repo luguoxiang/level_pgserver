@@ -1,6 +1,5 @@
 #pragma once
 
-#include "execution/ParseTools.h"
 #include "execution/BasePlan.h"
 
 #include <vector>

@@ -15,8 +15,8 @@ LevelDBInsertPlan::LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPl
 			m_valueTypes.push_back(pColumn->m_type);
 		}
 	}
-	m_keyResults.reserve(m_keyTypes.size());
-	m_valueResults.reserve(m_valueTypes.size());
+	m_keyResults.resize(m_keyTypes.size());
+	m_valueResults.resize(m_valueTypes.size());
 }
 
 void LevelDBInsertPlan::begin() {

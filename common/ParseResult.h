@@ -5,8 +5,6 @@
 
 
 
-
-
 class ParseResult {
 public:
 	ParseResult();
@@ -77,7 +75,7 @@ public:
 			int lastColumn,
 			std::initializer_list<ParseNode*> children) {
 		ParseNode* pNode = newParseNode(NodeType::FUNC,Operation::NONE, getExpr(firstColumn, lastColumn), children);
-		pNode->m_sValue = sName;
+		pNode->setString(sName);
 		return pNode;
 	}
 
@@ -100,7 +98,7 @@ public:
 			int firstColumn, int lastColumn,
 			std::initializer_list<ParseNode*> children) {
 		ParseNode* pNode = newParseNode(NodeType::PARENT,Operation::NONE, getExpr(firstColumn, lastColumn), children);
-		pNode->m_sValue = sName;
+		pNode->setString(sName);
 		return pNode;
 	}
 
@@ -108,14 +106,14 @@ public:
 				int firstColumn, int lastColumn,
 			std::initializer_list<ParseNode*> children) {
 		ParseNode* pNode = newParseNode(NodeType::PLAN,op, getExpr(firstColumn, lastColumn), children);
-		pNode->m_sValue = sName;
+		pNode->setString(sName);
 		return pNode;
 	}
 
 	ParseNode* newListNode(const std::string_view& sName,
 				int firstColumn, int lastColumn, std::initializer_list<ParseNode*> children) {
 		ParseNode* pNode = newParseNode(NodeType::LIST,Operation::NONE, getExpr(firstColumn, lastColumn), children);
-		pNode->m_sValue = sName;
+		pNode->setString(sName);
 		return pNode;
 	}
 

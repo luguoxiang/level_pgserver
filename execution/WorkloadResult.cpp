@@ -1,6 +1,8 @@
-#include "WorkloadResult.h"
-#include "execution/ParseTools.h"
 #include <sstream>
+
+#include "WorkloadResult.h"
+#include "common/ParseTools.h"
+
 namespace {
 std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session", "ObExec",
 		"BiggestExec", "SessionTime", "SqlCount" };
@@ -17,7 +19,7 @@ int WorkloadResult::addProjection(const ParseNode* pNode) {
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < WorkloadColumns.size(); ++i) {
-		if (Tools::case_equals(WorkloadColumns[i], pNode->m_sValue)) {
+		if (Tools::case_equals(WorkloadColumns[i], pNode->getString())) {
 			return i;
 		}
 	}
