@@ -14,7 +14,7 @@ public:
 	virtual size_t getSize(const ExecutionResult& result) = 0;
 	virtual size_t getSize(const std::byte* pData) = 0;
 
-	virtual void fromString(std::string_view s, ExecutionResult& result) = 0;
+	virtual void fromString(const char* pszValue, size_t len, ExecutionResult& result) = 0;
 	virtual void fromNode(const ParseNode* pValue,  ExecutionResult& result) = 0;
 
 	virtual void setToMin(ExecutionResult& result) = 0;

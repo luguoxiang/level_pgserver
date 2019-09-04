@@ -140,7 +140,7 @@ void PgClient::handleBind() {
 		auto pParam = m_pWorker->getBindParam(i);
 		pParam->setBindParamMode(types[i]);
 		auto s = m_receiver.getNextStringWithLen();
-		pParam->setString(m_pWorker->allocString(s));
+		pParam->setString(m_pWorker->allocString(s, true));
 	}
 
 

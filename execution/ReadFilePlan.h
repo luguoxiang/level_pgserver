@@ -73,7 +73,7 @@ public:
 	}
 
 private:
-	void setToken(size_t index, std::string_view token);
+	void setToken(size_t index, const char* pszToken, size_t len);
 	std::vector<const DBColumnInfo*> m_columns;
 	std::vector<ExecutionResult> m_result;
 	int64_t m_iRowCount = 0;

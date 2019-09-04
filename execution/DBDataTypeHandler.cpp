@@ -45,13 +45,24 @@ public:
 		*reinterpret_cast<Type*>(pData) = value;
 	}
 
-	void fromString(std::string_view s, ExecutionResult& result) override{
-		if(s.length() == 0) {
-			result.setInt(0);
+	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
+		auto value = stringToInt(pszValue, len);
+		checkValue(value);
+		result.setInt(value);
+	}
+
+	int64_t stringToInt(const char* pszValue, size_t len) {
+		if(len == 0) {
+			return 0;
 		}else {
-			int64_t value = Tools::toInt(s);
+			assert(pszValue[len] == '\0');
+			errno = 0;
+			int64_t value = strtol (pszValue,nullptr,10);
+			if (errno != 0) {
+				PARSE_ERROR(strerror(errno));
+			}
 			checkValue(value);
-			result.setInt(value);
+			return value;
 		}
 	}
 
@@ -61,13 +72,14 @@ public:
 		case NodeType::INT:
 			value = pValue->getInt();
 			break;
-		case NodeType::PARAM:
+		case NodeType::PARAM: {
+			auto sValue = pValue->getString();
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM:
-				value = Tools::toInt(pValue->getString());
+				value = stringToInt(sValue.data(), sValue.size());
 				break;
 			case Operation::BINARY_PARAM:
-				value = Tools::binaryToInt(pValue->getString());
+				value = Tools::binaryToInt(sValue);
 				break;
 			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
@@ -77,6 +89,7 @@ public:
 				break;
 			}
 			break;
+		}
 		default:
 			EXECUTION_ERROR("wrong const value type:", pValue->m_sExpr);
 		}
@@ -143,17 +156,23 @@ public:
 		checkValue(value);
 		*reinterpret_cast<Type*>(pData) = value;
 	}
-
-	void fromString(std::string_view s, ExecutionResult& result) override{
-		if(s.length() == 0) {
-			result.setDouble(0);
+	double stringToDouble(const char* pszValue, size_t len) {
+		if(len == 0) {
+			return 0;
 		}else {
-			double value = Tools::toDouble(s);
-			checkValue(value);
-			result.setDouble(value);
+			errno = 0;
+			double value = strtod (pszValue,nullptr);
+			if (errno != 0) {
+				PARSE_ERROR(strerror(errno));
+			}
+			return value;
 		}
 	}
-
+	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
+		auto value = stringToDouble(pszValue, len);
+		checkValue(value);
+		result.setDouble(value);
+	}
 	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
 		double value = 0;
 		switch (pValue->m_type) {
@@ -163,13 +182,14 @@ public:
 		case NodeType::FLOAT:
 			value = pValue->getDouble();
 			break;
-		case NodeType::PARAM:
+		case NodeType::PARAM: {
+			auto sValue = pValue->getString();
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM:
-				value = Tools::toDouble(pValue->getString());
+				value = stringToDouble(sValue.data(), sValue.size());
 				break;
 			case Operation::BINARY_PARAM:
-				value = Tools::binaryToDouble(pValue->getString());
+				value = Tools::binaryToDouble(sValue);
 				break;
 			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
@@ -179,6 +199,7 @@ public:
 				break;
 			}
 			break;
+		}
 		default:
 			PARSE_ERROR("wrong const value type:", pValue->m_sExpr);
 		}
@@ -258,8 +279,9 @@ public:
 		auto pSrc = reinterpret_cast<const std::byte*>(s.data());
 		std::copy(pSrc, pSrc + size, pData);
 	}
-	void fromString(std::string_view s, ExecutionResult& result) override{
-		result.setStringView(s);
+
+	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
+		result.setStringView(std::string_view(pszValue, len));
 	}
 	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
 		switch (pValue->m_type) {
@@ -305,11 +327,12 @@ public:
 class DatetimeDBDataTypeHandler: public IntDBDataTypeHandler<int64_t> {
 public:
 	DatetimeDBDataTypeHandler(const std::string& name) : IntDBDataTypeHandler<int64_t>(name) {};
-	void fromString(std::string_view s, ExecutionResult& result) override{
-		if (int64_t iValue = parseTime(s); iValue > 0) {
+
+	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
+		if (int64_t iValue = parseTime(pszValue); iValue > 0) {
 			result.setInt(iValue);
 		} else {
-			EXECUTION_ERROR("Wrong Time Format:", s);
+			EXECUTION_ERROR("Wrong Time Format:", pszValue);
 		}
 	}
 
@@ -320,13 +343,16 @@ public:
 			break;
 		case NodeType::PARAM:
 			switch(pValue->getOp()) {
-			case Operation::TEXT_PARAM:
-				if (int64_t iValue = parseTime(pValue->getString()); iValue > 0) {
+			case Operation::TEXT_PARAM: {
+				auto sValue = pValue->getString();
+				assert(sValue.data()[sValue.size()] == '\0');
+				if (int64_t iValue = parseTime(sValue.data()); iValue > 0) {
 					result.setInt(iValue);
 				} else {
 					EXECUTION_ERROR("Wrong Time Format:", pValue->getString());
 				}
 				break;
+			}
 			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
 				break;

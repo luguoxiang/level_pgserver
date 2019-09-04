@@ -159,7 +159,7 @@ inline bool IS_DIGIT(char c) {
 	return c >='0' && c<='9';
 }
 
-int64_t parseTime(std::string_view sTime);
+int64_t parseTime(const char* pszTime);
 
 void printTree(const ParseNode* pRoot, int level);
 

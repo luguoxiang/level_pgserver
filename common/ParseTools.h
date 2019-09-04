@@ -15,18 +15,6 @@ inline bool case_equals(const std::string_view a, const std::string_view b)
                       });
 }
 
-inline int64_t toInt(const std::string_view s)
-{
-	try{
-		std::string ss(s.data(), s.length());
-		return std::stoi(ss);
-	} catch(std::invalid_argument& e) {
-		PARSE_ERROR("Invalid integer value: ", s);
-	} catch (std::out_of_range& e) {
-		PARSE_ERROR("Value out of range: ", s);
-	}
-	return 0;
-}
 
 inline int64_t binaryToInt(std::string_view sValue) {
 	switch(sValue.length()) {
@@ -43,19 +31,6 @@ inline int64_t binaryToInt(std::string_view sValue) {
 		PARSE_ERROR("Wrong bind data length ", sValue.length());
 		return 0;
 	}
-}
-
-inline double toDouble(const std::string_view s)
-{
-	try{
-		std::string ss(s.data(), s.length());
-		return std::stod(ss);
-	} catch(std::invalid_argument& e) {
-		PARSE_ERROR("Invalid float value: ", s);
-	} catch (std::out_of_range& e) {
-		PARSE_ERROR("Value out of range: ", s);
-	}
-	return 0;
 }
 
 inline double binaryToDouble(std::string_view sValue) {

@@ -39,18 +39,18 @@ namespace {
 	};
 }
 
-void ReadFilePlan::setToken(size_t index, std::string_view token) {
+void ReadFilePlan::setToken(size_t index, const char* pszToken, size_t len) {
 	if(index >= m_columns.size()) {
 		return;
 	}
 	auto pColumn = m_columns[index];
 	if(pColumn->m_type == DBDataType::STRING
 			&& pColumn->m_iLen > 0
-			&& token.length() > pColumn->m_iLen)  {
+			&& len > pColumn->m_iLen)  {
 		EXECUTION_ERROR("Column ", pColumn->m_name, " value exceed defined length ", pColumn->m_iLen);
 	}
 
-	DBDataTypeHandler::getHandler(pColumn->m_type)->fromString(token, m_result[index]);
+	DBDataTypeHandler::getHandler(pColumn->m_type)->fromString(pszToken, len, m_result[index]);
 }
 
 bool ReadFilePlan::next() {
@@ -58,21 +58,22 @@ bool ReadFilePlan::next() {
 	if (!std::getline(*m_pFile, m_line)) {
 		return false;
 	}
-	std::string_view line = m_line;
+	char* pszStart = m_line.data();
 
 	auto state = ParseState::OutOfQuote;
 	size_t targetIndex = 0;
 	size_t beginToken = 0;
 	size_t tokenIndex = 0;
-	for(size_t i=0;i<line.length() && tokenIndex < m_columns.size();++i) {
-		char c = line[i];
+	for(size_t i=0; pszStart[i] != '\0' && tokenIndex < m_columns.size();++i) {
+		const char c = pszStart[i];
 		switch(state){
 		case ParseState::OutOfQuote:
 			if(c == '"') {
 				state = ParseState::BeginQuote;
 				continue;
 			} else if(c == m_separator) {
-				setToken(tokenIndex++, std::string_view{line.data() + beginToken, targetIndex - beginToken});
+				pszStart[targetIndex] = '\0';
+				setToken(tokenIndex++, pszStart + beginToken, targetIndex - beginToken);
 				beginToken = targetIndex;
 				continue;
 			}
@@ -95,12 +96,13 @@ bool ReadFilePlan::next() {
 			break;
 		}
 
-		m_line[targetIndex++] = line[i];
+		m_line[targetIndex++] = c;
 	}
-	setToken(tokenIndex++, std::string_view{line.data() + beginToken, targetIndex - beginToken});
+	pszStart[targetIndex] = '\0';
+	setToken(tokenIndex++, pszStart + beginToken, targetIndex - beginToken);
 
 	for (; tokenIndex < m_columns.size(); ++tokenIndex ) {
-		setToken(tokenIndex, std::string_view());
+		setToken(tokenIndex, "", 0);
 	}
 	++m_iRowCount;
 	return true;
