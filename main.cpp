@@ -3,10 +3,9 @@
 #include <glog/logging.h>
 
 #include "PgServer.h"
-#include "IOException.h"
+#include "Exception.h"
 #include "common/MetaConfig.h"
 #include "execution/DBDataTypeHandler.h"
-#include "execution/ExecutionResult.h"
 #include "config.h"
 
 int main(int argc, char** argv) {
