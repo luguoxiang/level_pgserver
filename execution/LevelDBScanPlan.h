@@ -84,7 +84,7 @@ private:
 	const TableInfo* m_pTable;
 	SortOrder m_order = SortOrder::Any;
 
-	DataRow m_currentRow;
+	DataRow m_currentKey;
 	size_t m_iRows = 0;
 	LevelDBIteratorPtr m_pDBIter;
 	std::unique_ptr<KeySearchRange> m_pSearchRange;

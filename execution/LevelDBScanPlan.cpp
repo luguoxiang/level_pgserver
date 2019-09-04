@@ -10,7 +10,7 @@
 LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 	: LeafPlan(PlanType::Scan), m_pTable(pTable)
 	, m_keyValues(pTable->getKeyCount())
-	, m_currentRow(m_keyTypes)
+	, m_currentKey(m_keyTypes)
 	, m_keyTypes(pTable->getKeyCount()) {
 
 	for(size_t i = 0;i<pTable->getColumnCount();++i) {
@@ -68,10 +68,10 @@ bool LevelDBScanPlan::next() {
 	if(!m_pDBIter->valid()) {
 		return false;
 	}
-	m_currentRow = m_pDBIter->key(m_keyTypes);
+	m_currentKey = m_pDBIter->key(m_keyTypes);
 
 	for(size_t i = 0;i<m_keyValues.size();++i) {
-		m_currentRow.getResult(i, m_keyValues[i]);
+		m_currentKey.getResult(i, m_keyValues[i]);
 	}
 
 	if(m_order ==SortOrder::Descend) {
@@ -90,8 +90,11 @@ bool LevelDBScanPlan::next() {
 			valueRow.getResult(valueInfo.first, valueInfo.second);
 		};
 	}
-
-	m_pDBIter->next();
+	if(m_order ==SortOrder::Descend) {
+		m_pDBIter->prev();
+	}else {
+		m_pDBIter->next();
+	}
 	++m_iRows;
 	return true;
 }
@@ -166,6 +169,6 @@ void LevelDBScanPlan::getResult(size_t columnIndex, ExecutionResult& result) {
 		result = m_columnValues[columnIndex - m_pTable->getKeyCount()].second;
 	} else {
 		assert(columnIndex == m_pTable->getKeyCount() + m_columnValues.size());
-		result.setStringView(std::string_view(m_currentRow.data(), m_currentRow.size()));
+		result.setStringView(std::string_view(m_currentKey.data(), m_currentKey.size()));
 	}
 }

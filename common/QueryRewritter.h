@@ -8,9 +8,8 @@ public:
 	QueryRewritter(ParseResult& result):m_result(result) {}
 	ParseNode* rewrite(ParseNode* pNode);
 private:
+	ParseNode* rewriteOp(ParseNode* pNode, bool& hasOr);
 	ParseNode* rewriteList(ParseNode* pNode);
-	ParseNode* rewriteAnd(ParseNode* pNode);
-	ParseNode* rewriteSimpleExpr(ParseNode* pNode);
 	ParseNode* liftOrPredicate(ParseNode* pNode);
 	bool hasOrPredicate(ParseNode* pNode);
 	ParseNode* rewriteInOrNotIN(ParseNode* pNode, bool in);

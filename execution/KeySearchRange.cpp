@@ -255,13 +255,15 @@ void KeySearchRange::seekStartReversed(LevelDBIteratorPtr& pDBIter){
 		pDBIter->last();
 		return;
 	}
-	if(!m_bEndInclusive) {
-		for(;pDBIter->valid();pDBIter->prev()) {
-			auto currentRow = pDBIter->key(m_keyTypes);
-			int n = currentRow.compare(endRow);
-			if(n < 0) {
-				return;
-			}
+	//cursor may behind endRow
+	for(;pDBIter->valid();pDBIter->prev()) {
+		auto currentRow = pDBIter->key(m_keyTypes);
+		int n = currentRow.compare(endRow);
+		if(n == 0 && m_bEndInclusive) {
+			return;
+		}
+		if(n < 0) {
+			return;
 		}
 	}
 }
