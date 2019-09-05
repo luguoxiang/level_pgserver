@@ -14,7 +14,7 @@ thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 
 
 WorkThreadInfo::WorkThreadInfo(int iIndex) : m_iIndex(iIndex), m_rewritter(m_result){
-
+	m_bTerminate.store(false);
 	m_result = {};
 	if (parseInit(&m_result)) {
 		PARSE_ERROR("Failed to init parser!");
@@ -34,7 +34,7 @@ void WorkThreadInfo::cancel(bool planOnly) {
 	LOG(INFO) << "Cancel worker" << m_iIndex;
 	m_bTerminate.store(true);
 
-	if(planOnly) {
+	if(!planOnly) {
 		::shutdown(m_iAcceptFd, SHUT_RDWR);
 	}
 }

@@ -22,6 +22,7 @@ constexpr int MAX_CONNECTION=1000;
 
 PgServer::PgServer() :
 		m_port(MetaConfig::getInstance().getPort()) {
+	m_bTerminate.store(false);
 	LOG(INFO) << "Start server on port "<< m_port;
 }
 
