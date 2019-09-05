@@ -121,15 +121,8 @@ public:
 		return iter != m_attr.end();
 	}
 
-	void computeValueIndex() {
-		size_t iValueIndex = 0;
-		for(auto& pColumn : m_columns) {
-			if(pColumn->m_iKeyIndex >= 0) {
-				continue;
-			}
-			pColumn->m_iValueIndex = iValueIndex++;
-		}
-	}
+	void evaluate();
+
 	void getDBColumns(const ParseNode* pColumn, std::vector<const DBColumnInfo*>& columns) const;
 private:
 	std::vector<std::unique_ptr<DBColumnInfo>> m_columns;

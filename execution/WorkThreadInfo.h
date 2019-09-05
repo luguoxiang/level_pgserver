@@ -24,7 +24,7 @@ struct WorkThreadInfo {
 		m_pWorkThreadInfo = pInfo;
 	}
 
-	int m_iAcceptFd = 0;
+
 	int m_port;
 
 	bool m_bRunning = false;
@@ -73,7 +73,13 @@ struct WorkThreadInfo {
 	ExecutionPlan* getPlan() {
 		return m_pPlan.get();
 	}
+	void setAcceptFd(int fd);
+
+	int getAcceptFd() {
+		return m_iAcceptFd;
+	}
 private:
+	int m_iAcceptFd = 0;
 	ExecutionPlanPtr m_pPlan = nullptr;
 	ParseResult m_result;
 	QueryRewritter m_rewritter;

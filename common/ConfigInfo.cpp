@@ -85,3 +85,19 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 
 	}
 }
+
+void TableInfo::evaluate() {
+	size_t iValueIndex = 0;
+	for(auto& pColumn : m_columns) {
+		if(pColumn->m_iKeyIndex >= 0) {
+			continue;
+		}
+		pColumn->m_iValueIndex = iValueIndex++;
+	}
+
+	std::string defPath = "";
+	auto path = getAttribute("path", defPath);
+	if(path.empty()) {
+		CONFIG_ERROR("Table ", m_name, " does not define path attribute before keys");
+	}
+}

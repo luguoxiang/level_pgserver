@@ -34,11 +34,11 @@ constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
 }
 
 PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bTerminate) :
-		m_receiver(pInfo->m_iAcceptFd),
-		m_sender(pInfo->m_iAcceptFd),
+		m_receiver(pInfo->getAcceptFd()),
+		m_sender(pInfo->getAcceptFd()),
 		m_pWorker(pInfo),
 		m_bTerminate(bTerminate){
-	assert(pInfo->m_iAcceptFd >= 0);
+	assert(pInfo->getAcceptFd() >= 0);
 
 	memset(m_handler, 0, sizeof(m_handler));
 
@@ -52,9 +52,6 @@ PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bTerminate) :
 	m_handler['E'] = &PgClient::handleExecute;
 }
 
-PgClient::~PgClient() {
-	::close(m_pWorker->m_iAcceptFd);
-}
 
 void PgClient::handleSync() {
 	DLOG(INFO) << "sync";

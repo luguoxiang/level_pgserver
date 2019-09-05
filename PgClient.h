@@ -12,7 +12,6 @@ class Exception;
 class PgClient {
 public:
 	PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bTerminate);
-	~PgClient();
 
 	void run();
 

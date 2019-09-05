@@ -96,7 +96,7 @@ void MetaConfig::load(const std::string& sPath) {
 							start = keyMatchs.suffix().first;
 							pCurrentTable->addKeyColumn(sName);
 						}
-						pCurrentTable->computeValueIndex();
+						pCurrentTable->evaluate();
 					} else {
 						DLOG(INFO) <<"add attribute "<< sKey << " = " << sValue;
 						pCurrentTable->addAttribute(sKey, sValue);

@@ -31,6 +31,10 @@ void WorkThreadInfo::clearPlan() {
 	m_pPlan = nullptr;
 }
 
+void WorkThreadInfo::setAcceptFd(int fd) {
+	std::lock_guard < std::mutex > lock(m_mutex);
+	m_iAcceptFd = fd;
+}
 void WorkThreadInfo::cancel() {
 	std::lock_guard < std::mutex > lock(m_mutex);
 
@@ -39,6 +43,7 @@ void WorkThreadInfo::cancel() {
 		LOG(INFO)<< "cancel running execution plan ...";
 		pPlan->cancel();
 	}
+	::close(m_iAcceptFd);
 }
 void WorkThreadInfo::resolve() {
 	std::lock_guard < std::mutex > lock(m_mutex);

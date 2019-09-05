@@ -113,7 +113,7 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 
 	while (!m_bTerminate.load()) {
 		try {
-			pInfo->m_iAcceptFd = acceptSocket();
+			pInfo->setAcceptFd(acceptSocket());
 		} catch (IOException* pe) {
 			LOG(ERROR) << "Working thread failed:" << pe->what();
 			delete pe;
@@ -134,7 +134,7 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 			LOG(ERROR) << "Working thread failed:Unknown Reason.";
 		}
 		pInfo->m_bRunning = false;
-		::close(pInfo->m_iAcceptFd);
+		::close(pInfo->getAcceptFd());
 	}
 	LOG(WARNING) << "Working thread terminate.";
 }
