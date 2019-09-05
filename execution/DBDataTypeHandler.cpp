@@ -73,13 +73,14 @@ public:
 			value = pValue->getInt();
 			break;
 		case NodeType::PARAM: {
-			auto sValue = pValue->getString();
 			switch(pValue->getOp()) {
-			case Operation::TEXT_PARAM:
+			case Operation::TEXT_PARAM:{
+				auto sValue = pValue->getString();
 				value = stringToInt(sValue.data(), sValue.size());
 				break;
+			}
 			case Operation::BINARY_PARAM:
-				value = Tools::binaryToInt(sValue);
+				value = Tools::binaryToInt(pValue->getString());
 				break;
 			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
@@ -184,13 +185,14 @@ public:
 			value = pValue->getDouble();
 			break;
 		case NodeType::PARAM: {
-			auto sValue = pValue->getString();
 			switch(pValue->getOp()) {
-			case Operation::TEXT_PARAM:
+			case Operation::TEXT_PARAM: {
+				auto sValue = pValue->getString();
 				value = stringToDouble(sValue.data(), sValue.size());
 				break;
+			}
 			case Operation::BINARY_PARAM:
-				value = Tools::binaryToDouble(sValue);
+				value = Tools::binaryToDouble(pValue->getString());
 				break;
 			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
@@ -290,12 +292,17 @@ public:
 		case NodeType::BINARY:
 			break;
 		case NodeType::PARAM:
-			if(pValue->getOp() == Operation::TEXT_PARAM) {
+			switch(pValue->getOp()) {
+			case Operation::TEXT_PARAM:
 				break;
-			} else if(pValue->getOp() == Operation::UNBOUND_PARAM) {
+			case Operation::UNBOUND_PARAM:
 				EXECUTION_ERROR("parameter unbound");
+				break;
+			default:
+				EXECUTION_ERROR("wrong bind param mode");
+				break;
 			}
-			[[fallthrough]];
+			break;
 		default:
 			EXECUTION_ERROR("Wrong data type for ", pValue->m_sExpr,
 					", expect string");

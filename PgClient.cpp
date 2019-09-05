@@ -33,9 +33,11 @@ constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
 
 }
 
-PgClient::PgClient(WorkThreadInfo* pInfo) :
-		m_receiver(pInfo->m_iAcceptFd), m_sender(pInfo->m_iAcceptFd), m_pWorker(
-				pInfo), m_iSendTime(0){
+PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bTerminate) :
+		m_receiver(pInfo->m_iAcceptFd),
+		m_sender(pInfo->m_iAcceptFd),
+		m_pWorker(pInfo),
+		m_bTerminate(bTerminate){
 	assert(pInfo->m_iAcceptFd >= 0);
 
 	memset(m_handler, 0, sizeof(m_handler));
@@ -67,7 +69,9 @@ void PgClient::handleQuery() {
 	auto sql = m_receiver.getNextString();
 
 	DLOG(INFO) << "Q:"<< sql;
-	createPlan(sql);
+	m_pWorker->parse(sql);
+
+	m_pWorker->resolve();
 
 	describeColumn();
 	handleExecute();
@@ -79,7 +83,7 @@ void PgClient::handleParse() {
 
 	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< sql;
 
-	createPlan(sql);
+	m_pWorker->parse(sql);
 
 	size_t iParamNum = m_receiver.getNextShort();
 	size_t iActualNum =m_pWorker->getBindParamNumber();
@@ -94,9 +98,6 @@ void PgClient::handleParse() {
 }
 
 void PgClient::handleBind() {
-	if (m_pWorker->getPlan() == nullptr)
-		return;
-
 	auto portal = m_receiver.getNextString();
 	auto stmt = m_receiver.getNextString();
 
@@ -132,8 +133,6 @@ void PgClient::handleBind() {
 		PARSE_ERROR("Parameter number unmatch!, expect ", iExpectNum , ", actual " , iActualNum);
 	}
 
-	//discard allocated string for bind param
-	m_pWorker->restoreParseBuffer();
 	m_pWorker->markParseBuffer();
 
 	for (int i = 0; i < iActualNum; ++i) {
@@ -143,9 +142,10 @@ void PgClient::handleBind() {
 		pParam->setString(m_pWorker->allocString(s, true));
 	}
 
-
 	m_sender.prepare('2');
 	m_sender.commit();
+
+	m_pWorker->resolve();
 }
 
 void PgClient::handleDescribe() {
@@ -161,7 +161,7 @@ void PgClient::handleDescribe() {
 void PgClient::handleExecute() {
 	auto pPlan = m_pWorker->getPlan();
 	if (pPlan == nullptr) {
-		return;
+		PARSE_ERROR("No statement!");
 	}
 	size_t columnNum = pPlan->getResultColumns();
 
@@ -183,6 +183,9 @@ void PgClient::handleExecute() {
 	m_sender.addStringZeroEnd(sInfo); //data len
 	m_sender.commit();
 	m_pWorker->clearPlan();
+
+	//discard allocated string for bind param
+	m_pWorker->restoreParseBuffer();
 }
 
 void PgClient::handleException(Exception* pe) {
@@ -202,7 +205,6 @@ void PgClient::handleException(Exception* pe) {
 	delete pe;
 
 	m_sender.commit();
-	m_pWorker->clearPlan();
 	m_pWorker->clearPlan();
 }
 
@@ -244,12 +246,13 @@ void PgClient::run() {
 			< std::chrono::microseconds > (end - start).count();
 #endif
 
-	while (true) {
+	while (!m_bTerminate.load()) {
 		char qtype = m_receiver.readMessage();
 		if (qtype == 'X') {
 			DLOG(INFO)<< "Client Terminate!";
 			break;
 		}
+
 #ifndef NO_TIMEING
 		start = std::chrono::steady_clock::now();
 #endif
@@ -263,7 +266,6 @@ void PgClient::run() {
 		} catch (Exception* pe) {
 			handleException(pe);
 		}
-		m_pWorker->clearPlan();
 		if (qtype == 'Q')
 			handleSync();
 
@@ -276,21 +278,20 @@ void PgClient::run() {
 	} //while
 }
 
-void PgClient::createPlan(const std::string_view sql) {
-	m_pWorker->resolve(sql);
-	if (m_pWorker->getPlan() == nullptr) {
-		PARSE_ERROR("No statement!");
-	}
-}
 
 void PgClient::describeColumn() {
 
+
 	auto pPlan = m_pWorker->getPlan();
-	assert(pPlan != nullptr);
+	if (pPlan == nullptr) {
+		PARSE_ERROR("No statement!");
+	}
 
 	size_t columnNum = pPlan->getResultColumns();
-	if (columnNum == 0)
+	if (columnNum == 0) {
+		DLOG(INFO) << "No columns";
 		return;
+	}
 
 	m_sender.prepare('T');
 	m_sender.addShort(columnNum);

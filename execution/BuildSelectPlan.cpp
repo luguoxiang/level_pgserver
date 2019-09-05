@@ -57,8 +57,10 @@ void LevelDBPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 }
 
 void LevelDBPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
+
 	if (pNode->m_type == NodeType::INFO
 			&& pNode->getOp() == Operation::ALL_COLUMNS) {
+
 		std::vector<std::string_view> columns;
 		m_pPlan->getAllColumns(columns);
 		if (columns.size() == 0) {
@@ -72,6 +74,7 @@ void LevelDBPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 		for (auto& column : columns) {
 			ParseNode node(NodeType::NAME, Operation::NONE, column, 0, nullptr);
 			node.setString(column);
+
 			pProjPlan->project(&node, column);
 		}
 		return;

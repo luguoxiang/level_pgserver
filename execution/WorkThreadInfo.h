@@ -5,8 +5,10 @@
 #include "ExecutionPlan.h"
 #include "common/ParseResult.h"
 #include "common/QueryRewritter.h"
+
+#include <mutex>
 struct WorkThreadInfo {
-	WorkThreadInfo(int fd, int port, int iIndex);
+	WorkThreadInfo(int port, int iIndex);
 
 	~WorkThreadInfo();
 
@@ -22,7 +24,6 @@ struct WorkThreadInfo {
 		m_pWorkThreadInfo = pInfo;
 	}
 
-	int m_iListenFd;
 	int m_iAcceptFd = 0;
 	int m_port;
 
@@ -36,16 +37,13 @@ struct WorkThreadInfo {
 	int m_iSqlCount = 0;
 
 
-	//throws ParseException
-	void resolve(const std::string_view sql);
+	void parse(const std::string_view sql);
+
+	void resolve();
 
 	void print();
 
-	void cancel() {
-		if (m_pPlan != nullptr){
-			m_pPlan->cancel();
-		}
-	}
+	void cancel();
 
 	size_t getBindParamNumber() {
 		return m_result.m_bindParamNodes.size();
@@ -70,9 +68,7 @@ struct WorkThreadInfo {
 	void markParseBuffer() {m_result.mark(); }
 	void restoreParseBuffer() {m_result.restore(); }
 
-	void clearPlan() {
-		m_pPlan = nullptr;
-	}
+	void clearPlan();
 
 	ExecutionPlan* getPlan() {
 		return m_pPlan.get();
@@ -82,14 +78,19 @@ private:
 	ParseResult m_result;
 	QueryRewritter m_rewritter;
 	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
+
+	std::mutex m_mutex;
 };
 
 
 
 class WorkerManager {
 public:
-	static WorkerManager& getInstance();
 
+	static WorkerManager& getInstance() {
+		static WorkerManager manager;
+		return manager;
+	}
 
 	size_t getWorkerCount() {
 		return m_workers.size();
@@ -102,6 +103,12 @@ public:
 
 	void addWorker(WorkThreadInfo* pWorker) {
 		m_workers.emplace_back(pWorker);
+	}
+
+	void cancel() {
+		for(auto& pWorker : m_workers) {
+			pWorker->cancel();
+		}
 	}
 
 private:

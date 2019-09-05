@@ -3,7 +3,7 @@
 #include <glog/logging.h>
 
 #include "PgServer.h"
-#include "Exception.h"
+#include "common/Exception.h"
 #include "common/MetaConfig.h"
 #include "execution/DBDataTypeHandler.h"
 #include "config.h"
@@ -19,8 +19,7 @@ int main(int argc, char** argv) {
 
 	try {
 		MetaConfig::getInstance().load("meta.conf");
-		PgServer server(MetaConfig::getInstance().getPort());
-		server.run();
+		PgServer::getInstance().run();
 	} catch (Exception* pe) {
 		LOG(ERROR)<< "start server failed:" << pe->what();
 		delete pe;

@@ -18,11 +18,11 @@
 
 
 
-#define MAX_CONNECTION 1000
+constexpr int MAX_CONNECTION=1000;
 
-PgServer::PgServer(int port) :
-		m_port(port), m_iFd(-1) {
-	LOG(INFO) << "Start server on port "<< port;
+PgServer::PgServer() :
+		m_port(MetaConfig::getInstance().getPort()) {
+	LOG(INFO) << "Start server on port "<< m_port;
 }
 
 PgServer::~PgServer() {
@@ -31,12 +31,12 @@ PgServer::~PgServer() {
 	}
 }
 
-int PgServer::acceptSocket(int fd, int maxConnection) {
+int PgServer::acceptSocket() {
 	struct sockaddr_storage addr;
 	socklen_t addrlen = sizeof(addr);
 	struct sockaddr* pAddr = (struct sockaddr*) &addr;
 
-	int acceptSock = ::accept(fd, pAddr, &addrlen);
+	int acceptSock = ::accept(m_iFd, pAddr, &addrlen);
 
 	if (acceptSock < 0) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -111,37 +111,43 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 	WorkThreadInfo::setThreadInfo(pInfo);
 	LOG(INFO) << "Working thread is listening on " << pInfo->m_port;
 
-	while (true) {
+	while (!m_bTerminate.load()) {
 		try {
-			pInfo->m_iAcceptFd = acceptSocket(pInfo->m_iListenFd,
-			MAX_CONNECTION);
+			pInfo->m_iAcceptFd = acceptSocket();
 		} catch (IOException* pe) {
 			LOG(ERROR) << "Working thread failed:" << pe->what();
 			delete pe;
-			exit(0);
+			break;
 		}
 		pInfo->m_bRunning = true;
 		++pInfo->m_iSessions;
 
 		try {
-			PgClient client(pInfo);
+			PgClient client(pInfo, m_bTerminate);
 			client.run();
 		} catch (Exception* pe) {
 			LOG(ERROR) << "Working thread failed:" << pe->what();
 			delete pe;
 		} catch (const std::exception &ex) {
 			LOG(ERROR) << "Working thread failed:" << ex.what();
-		} /*catch (...) {
+		} catch (...) {
 			LOG(ERROR) << "Working thread failed:Unknown Reason.";
-		}*/
+		}
 		pInfo->m_bRunning = false;
+		::close(pInfo->m_iAcceptFd);
 	}
 	LOG(WARNING) << "Working thread terminate.";
 }
 
-static void int_handler(int code) {
+void PgServer::terminate() {
+	m_bTerminate.store(true);
+	WorkerManager::getInstance().cancel();
+	::close(m_iFd);
+}
+
+void PgServer::int_handler(int code) {
 	LOG(INFO) << "Receive INT signal!";
-	exit(0);
+	PgServer::getInstance().terminate();
 }
 
 void PgServer::run() {
@@ -158,13 +164,14 @@ void PgServer::run() {
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {
-		WorkThreadInfo* pInfo = new WorkThreadInfo(m_iFd, m_port, i);
-		threads[i] = std::thread(worker_thread, pInfo);
+		WorkThreadInfo* pInfo = new WorkThreadInfo(m_port, i);
+		threads[i] = std::thread(&PgServer::worker_thread, this, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}
 
 	for (auto& th : threads) {
 		th.join();
 	}
+	::close(m_iFd);
 	LOG(INFO) << "Main Server shutdown!";
 }

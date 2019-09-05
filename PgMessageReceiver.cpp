@@ -25,8 +25,10 @@ constexpr ProtocolVersion PG_PROTOCOL_MAJOR(int v) {
 constexpr ProtocolVersion PG_PROTOCOL_MINOR(int v) {
 	return ((v) & 0x0000ffff);
 }
-
+//https://www.postgresql.org/docs/current/protocol-message-formats.html
+//CancelRequest
 constexpr ProtocolVersion CANCEL_REQUEST_CODE = PG_PROTOCOL(1234, 5678);
+//SSLRequest
 constexpr ProtocolVersion NEGOTIATE_SSL_CODE = PG_PROTOCOL(1234, 5679);
 
 }

@@ -1,21 +1,32 @@
 #pragma once
 
+#include <atomic>
 #include "execution/WorkThreadInfo.h"
 
 class PgServer {
 public:
-	PgServer(int sPort);
-	~PgServer();
-	void run();
-private:
-	static void worker_thread(WorkThreadInfo* pArg);
+	static PgServer& getInstance() {
+		static PgServer server;
+		return server;
+	}
 
+	~PgServer();
+
+	void run();
+	void terminate();
+private:
+	PgServer();
+
+	void worker_thread(WorkThreadInfo* pArg);
+
+	static void int_handler(int code);
 	int bindSocket(int port);
 
-	//throw ObCommException
-	static int acceptSocket(int fd, int maxConnection);
+	int acceptSocket();
 
 	const int m_port;
 
-	int m_iFd;
+	int m_iFd = -1;
+
+	std::atomic_bool m_bTerminate;
 };

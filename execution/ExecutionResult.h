@@ -43,21 +43,20 @@ public:
 		}
 	}
 	int64_t getInt() const {
-		try {
+		if (m_result.index() == INT) {
 			return std::get < int64_t > (m_result);
-		} catch (const std::bad_variant_access& e) {
+		} else {
 			EXECUTION_ERROR("wrong DataType expect int, got ", toString());
 		}
 	}
 
 	double getDouble() const {
-		try {
-			if (m_result.index() == INT) {
-				return std::get<int64_t>(m_result);
-			} else {
-				return std::get<double>(m_result);
-			}
-		} catch (const std::bad_variant_access& e) {
+		switch(m_result.index()) {
+		case INT :
+			return std::get<int64_t>(m_result);
+		case DOUBLE:
+			return std::get<double>(m_result);
+		default:
 			EXECUTION_ERROR("wrong DataType expect double, got ", toString());
 		}
 	}
