@@ -43,6 +43,9 @@ public:
 			Operation op,
 			const std::string_view sExpr,
 			Iteratable children) {
+		//Only clear the memory when free ParseNode
+		static_assert(std::is_trivially_destructible<ParseNode>::value);
+
 		size_t iChildNum = children.size();
 		size_t iChildrenAlloc = iChildNum * sizeof(ParseNode*);
 		size_t iTotalAlloc = sizeof(ParseNode) + iChildrenAlloc;

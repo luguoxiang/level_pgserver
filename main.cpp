@@ -11,7 +11,7 @@
 int main(int argc, char** argv) {
 	google::InitGoogleLogging(argv[0]);
 
-	LOG(INFO)<< "csv2pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
+	LOG(INFO)<< "level_pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
 	DBDataTypeHandler::init();
 
 	static_assert(std::numeric_limits<float>::is_iec559);
