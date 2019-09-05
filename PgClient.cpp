@@ -34,9 +34,10 @@ constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
 
 }
 
-PgClient::PgClient(WorkThreadInfo* pInfo) :
+PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate) :
 		m_receiver(pInfo->getAcceptFd()),
 		m_sender(pInfo->getAcceptFd()),
+		m_bGlobalTerminate(bGlobalTerminate),
 		m_pWorker(pInfo){
 	assert(pInfo->getAcceptFd() >= 0);
 
@@ -244,7 +245,7 @@ void PgClient::run() {
 			< std::chrono::microseconds > (end - start).count();
 #endif
 
-	while (!m_pWorker->isCanceled()) {
+	while (!m_bGlobalTerminate.load()) {
 		char qtype = m_receiver.readMessage();
 		if (qtype == 'X') {
 			DLOG(INFO)<< "Client Terminate!";

@@ -52,7 +52,7 @@ void PgMessageReceiver::processStartupPacket() {
 		uint32_t iBackendPID = getNextInt();
 		uint32_t iCancelAuthCode = getNextInt();
 		WorkerManager::getInstance().getWorker(
-				iBackendPID)->cancel();
+				iBackendPID)->cancel(true);
 		IO_ERROR("Cacnel WorkerID=", iBackendPID,", CancelAuthCode=",	iCancelAuthCode);
 	}
 	if (proto == NEGOTIATE_SSL_CODE) {

@@ -123,7 +123,7 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 		++pInfo->m_iSessions;
 
 		try {
-			PgClient client(pInfo);
+			PgClient client(pInfo, m_bTerminate);
 			client.run();
 		} catch (Exception* pe) {
 			LOG(ERROR) << "Working thread failed:" << pe->what();
@@ -140,13 +140,13 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 }
 
 void PgServer::terminate() {
+	LOG(INFO) << "Prepare server shutdown";
 	m_bTerminate.store(true);
-	WorkerManager::getInstance().cancel();
-	::close(m_iFd);
+	WorkerManager::getInstance().cancel(false);
+	::shutdown(m_iFd, SHUT_RDWR);
 }
 
 void PgServer::int_handler(int code) {
-	LOG(INFO) << "Receive INT signal!";
 	PgServer::getInstance().terminate();
 }
 

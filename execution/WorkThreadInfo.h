@@ -37,7 +37,7 @@ struct WorkThreadInfo {
 
 	void print();
 
-	void cancel();
+	void cancel(bool planOnly);
 
 	size_t getBindParamNumber() {
 		return m_result.m_bindParamNodes.size();
@@ -105,9 +105,9 @@ public:
 		m_workers.emplace_back(pWorker);
 	}
 
-	void cancel() {
+	void cancel(bool planOnly) {
 		for(auto& pWorker : m_workers) {
-			pWorker->cancel();
+			pWorker->cancel(planOnly);
 		}
 	}
 

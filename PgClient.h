@@ -11,7 +11,7 @@ class Exception;
 class WorkThreadInfo;
 class PgClient {
 public:
-	PgClient(WorkThreadInfo* pInfo);
+	PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate);
 
 	void run();
 
@@ -39,4 +39,6 @@ private:
 	MessageHandler m_handler[100];
 
 	ExecutionPlanPtr m_pPlan;
+
+	std::atomic_bool& m_bGlobalTerminate;
 };

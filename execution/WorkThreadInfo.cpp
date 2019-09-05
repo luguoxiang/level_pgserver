@@ -30,9 +30,13 @@ WorkThreadInfo::~WorkThreadInfo() {
 void WorkThreadInfo::setAcceptFd(int fd) {
 	m_iAcceptFd = fd;
 }
-void WorkThreadInfo::cancel() {
+void WorkThreadInfo::cancel(bool planOnly) {
+	LOG(INFO) << "Cancel worker" << m_iIndex;
 	m_bTerminate.store(true);
-	::close(m_iAcceptFd);
+
+	if(planOnly) {
+		::shutdown(m_iAcceptFd, SHUT_RDWR);
+	}
 }
 ExecutionPlanPtr WorkThreadInfo::resolve() {
 	if (m_result.m_pResult == nullptr) {
