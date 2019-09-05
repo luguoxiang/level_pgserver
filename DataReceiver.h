@@ -44,5 +44,4 @@ private:
 	size_t m_iMark = 0;
 	int m_nFd;
 	size_t m_iBufLen = 0;
-	bool m_bNetNumber;
 };
