@@ -41,7 +41,7 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 		}
 		assert(pColumn->m_iValueIndex >= 0);
 		m_bProjectValue = true;
-		m_columnValues[pColumn->m_iValueIndex].first = true;
+		m_columnValues[pColumn->m_iValueIndex].emplace();
 
 		return m_pTable->getKeyCount() + pColumn->m_iValueIndex;
 	}
@@ -91,8 +91,8 @@ bool LevelDBScanPlan::next() {
 
 		for(size_t i=0;i<m_columnValues.size();++i) {
 			auto& valueInfo = m_columnValues[i];
-			if(valueInfo.first) {
-				valueRow.getResult(i, valueInfo.second);
+			if(valueInfo) {
+				valueRow.getResult(i, *valueInfo);
 			}
 		};
 	}
@@ -175,7 +175,7 @@ void LevelDBScanPlan::getResult(size_t columnIndex, ExecutionResult& result) {
 	if(columnIndex < m_pTable->getKeyCount()) {
 		result = m_keyValues[columnIndex];
 	} else if(columnIndex - m_pTable->getKeyCount() < m_columnValues.size()) {
-		result = m_columnValues[columnIndex - m_pTable->getKeyCount()].second;
+		result = *m_columnValues[columnIndex - m_pTable->getKeyCount()];
 	} else {
 		assert(columnIndex == m_pTable->getKeyCount() + m_columnValues.size());
 		result.setStringView(std::string_view(m_currentKey.data(), m_currentKey.size()));

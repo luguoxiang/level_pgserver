@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <optional>
 #include "common/ConfigInfo.h"
 #include "common/ParseNode.h"
 #include "execution/BasePlan.h"
@@ -75,7 +76,7 @@ public:
 	}
 private:
 
-	using ValueInfo = std::pair<bool, ExecutionResult>;
+	using ValueInfo = std::optional<ExecutionResult>;
 	std::vector<ValueInfo> m_columnValues;
 	bool m_bProjectValue = false;
 

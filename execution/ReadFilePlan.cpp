@@ -22,13 +22,13 @@ int ReadFilePlan::addProjection(const ParseNode* pNode) {
 }
 
 void ReadFilePlan::begin() {
-	m_pFile.reset(new std::ifstream(m_sPath));
-	if (m_pFile->fail()) {
+	m_file.emplace(m_sPath);
+	if (m_file->fail()) {
 		EXECUTION_ERROR("File ", m_sPath, " does not exists!");
 	}
 	m_result.resize(m_columns.size(), ExecutionResult{});
 	if (m_ignoreFirstLine) {
-		std::getline(*m_pFile, m_line);
+		std::getline(*m_file, m_line);
 	}
 }
 
@@ -55,7 +55,7 @@ void ReadFilePlan::setToken(size_t index, const char* pszToken, size_t len) {
 }
 
 bool ReadFilePlan::next() {
-	if (!std::getline(*m_pFile, m_line)) {
+	if (!std::getline(*m_file, m_line)) {
 		return false;
 	}
 	checkCancellation();
@@ -111,6 +111,6 @@ bool ReadFilePlan::next() {
 }
 
 void ReadFilePlan::end() {
-	m_pFile.reset(nullptr);
+	m_file.reset();
 }
 

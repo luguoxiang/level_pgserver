@@ -5,6 +5,7 @@
 #include <sstream>
 #include <fstream>
 #include <atomic>
+#include <optional>
 
 class ReadFilePlan: public LeafPlan {
 public:
@@ -80,7 +81,7 @@ private:
 	std::string m_sPath;
 	std::string m_line;
 
-	std::unique_ptr<std::ifstream> m_pFile;
+	std::optional<std::ifstream> m_file;
 	char m_separator;
 	bool m_ignoreFirstLine;
 
