@@ -17,35 +17,18 @@ public:
 	KeySearchRange(const KeySearchRange&) = delete;
 	KeySearchRange& operator =(const KeySearchRange&) = delete;
 
-	const DataRow getStartRow() const {
-		return DataRow(m_sStartRow.data(), m_keyTypes, m_sStartRow.size());
-	}
-	const DataRow getEndRow() const {
-		return DataRow(m_sEndRow.data(), m_keyTypes, m_sEndRow.size());
-	}
-
-	const std::vector<ExecutionResult>& getStartResults() {
-		return m_startKeyResults;
-	}
-	const std::vector<ExecutionResult>& getEndResults() {
-		return m_endKeyResults;
-	}
-
-	bool startInclusive() const {
-		return m_bStartInclusive;
-	}
-	bool endInclusive() const {
-		return m_bEndInclusive;
-	}
-
 	void seekStart(LevelDBIteratorPtr& pDBIter);
 	void seekStartReversed(LevelDBIteratorPtr& pDBIter);
 
 	bool exceedEnd(const std::vector<ExecutionResult>& keyValues);
 	bool exceedEndReversed(const std::vector<ExecutionResult>& keyValues);
 
-	int compareStart(KeySearchRange* pRange);
-	bool startAfterEnd(KeySearchRange* pRange);
+	int compareStart(KeySearchRange& range);
+	bool startAfterEnd(KeySearchRange& range);
+
+	std::string toString();
+
+	uint64_t getCost();
 private:
 	struct KeyPredicateInfo {
 		int m_iKeyIndex = -1;

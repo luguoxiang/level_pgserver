@@ -1,5 +1,6 @@
 #include "KeySearchRange.h"
-#include "execution/DBDataTypeHandler.h"
+#include "DBDataTypeHandler.h"
+#include "LevelDBHandler.h"
 #include <glog/logging.h>
 
 KeySearchRange::KeySearchRange(std::vector<DBDataType>& keyTypes,
@@ -230,13 +231,14 @@ void KeySearchRange::seekStart(LevelDBIteratorPtr& pDBIter){
 		pDBIter->first();
 		return;
 	}
-	auto startRow = getStartRow();
-	pDBIter->seek(startRow);
+
+	pDBIter->seek(m_sStartRow);
 
 	if(!m_bStartInclusive) {
 		for(;pDBIter->valid();pDBIter->next()) {
 			auto currentRow = pDBIter->key(m_keyTypes);
 
+			DataRow startRow(m_sStartRow.data(), m_keyTypes, m_sStartRow.size());
 			int n = currentRow.compare(startRow);
 			if(n > 0) {
 				return;
@@ -249,8 +251,8 @@ void KeySearchRange::seekStartReversed(LevelDBIteratorPtr& pDBIter){
 		pDBIter->last();
 		return;
 	}
-	auto endRow = getEndRow();
-	pDBIter->seek(endRow);
+
+	pDBIter->seek(m_sEndRow);
 	if(!pDBIter->valid()) {
 		pDBIter->last();
 		return;
@@ -258,6 +260,8 @@ void KeySearchRange::seekStartReversed(LevelDBIteratorPtr& pDBIter){
 	//cursor may behind endRow
 	for(;pDBIter->valid();pDBIter->prev()) {
 		auto currentRow = pDBIter->key(m_keyTypes);
+
+		DataRow endRow(m_sEndRow.data(), m_keyTypes, m_sEndRow.size());
 		int n = currentRow.compare(endRow);
 		if(n == 0 && m_bEndInclusive) {
 			return;
@@ -312,14 +316,14 @@ bool KeySearchRange::exceedEndReversed(const std::vector<ExecutionResult>& keyVa
 	return false;
 }
 
-int KeySearchRange::compareStart(KeySearchRange* pRange) {
+int KeySearchRange::compareStart(KeySearchRange& range) {
 	if(m_bSeekToFirst) {
-		if(pRange->m_bSeekToFirst) {
+		if(range.m_bSeekToFirst) {
 			return 0;
 		} else {
 			return -1;
 		}
-	} else if(pRange->m_bSeekToFirst) {
+	} else if(range.m_bSeekToFirst) {
 		return 1;
 	}
 	int n = 0;
@@ -327,7 +331,7 @@ int KeySearchRange::compareStart(KeySearchRange* pRange) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
 		assert(pHandler);
 
-		n = pHandler->compare(m_startKeyResults[i], pRange->m_startKeyResults[i]);
+		n = pHandler->compare(m_startKeyResults[i], range.m_startKeyResults[i]);
 		if (n != 0) {
 			break;
 		}
@@ -335,15 +339,15 @@ int KeySearchRange::compareStart(KeySearchRange* pRange) {
 	return n;
 }
 
-bool KeySearchRange::startAfterEnd(KeySearchRange* pRange) {
-	if(m_bSeekToFirst || pRange->m_bSeekToLast) {
+bool KeySearchRange::startAfterEnd(KeySearchRange& range) {
+	if(m_bSeekToFirst || range.m_bSeekToLast) {
 		return false;
 	}
 	for (size_t i = 0; i < m_keyTypes.size(); ++i) {
 		auto pHandler = DBDataTypeHandler::getHandler(m_keyTypes[i]);
 		assert(pHandler);
 
-		int n = pHandler->compare(m_startKeyResults[i], pRange->m_endKeyResults[i]);
+		int n = pHandler->compare(m_startKeyResults[i], range.m_endKeyResults[i]);
 		if (n > 0) {
 			return true;
 		} else if(n <0) {
@@ -351,5 +355,26 @@ bool KeySearchRange::startAfterEnd(KeySearchRange* pRange) {
 		}
 	}
 	//this->m_startKeyResults == pRange->m_endKeyResults
-	return !pRange->m_bEndInclusive || !m_bStartInclusive;
+	return !range.m_bEndInclusive || !m_bStartInclusive;
+}
+
+std::string KeySearchRange::toString() {
+	std::string s(m_bStartInclusive?"range [":"range (");
+		for(auto& result: m_startKeyResults) {
+			s.append(result.toString());
+			s.append("|");
+		}
+		s.erase(s.length() -1, 1);
+		s.append(", ");
+		for(auto& result: m_endKeyResults) {
+			s.append(result.toString());
+			s.append("|");
+		}
+		s.erase(s.length() -1, 1);
+		s.append(m_bEndInclusive?"]":")");
+		return s;
+}
+
+uint64_t KeySearchRange::getCost() {
+	return LevelDBHandler::getHandler(m_pTable)->getCost(m_sStartRow, m_sEndRow);
 }

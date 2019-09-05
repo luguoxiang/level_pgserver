@@ -61,7 +61,7 @@ class LevelDBIterator {
 	friend class LevelDBHandler;
 public:
 	~LevelDBIterator() ;
-	void seek(const DataRow& key);
+	void seek(const std::vector<std::byte>& start);
 	void first() {
 		m_pIter->SeekToFirst();
 	}
@@ -103,7 +103,7 @@ public:
 	LevelDBIteratorPtr createIterator();
 	static LevelDBHandler* getHandler(const TableInfo* pTable);
 
-	uint64_t getCost(const DataRow& start,	const DataRow& end);
+	uint64_t getCost(const std::vector<std::byte>& start, const std::vector<std::byte>& end);
 private:
 	std::unique_ptr<leveldb::DB> m_pDB;
 	const TableInfo* m_pTable;

@@ -25,7 +25,7 @@ LevelDBScanPlan::LevelDBScanPlan(const TableInfo* pTable)
 
 }
 void LevelDBScanPlan::setPredicate(const ParseNode* pNode, std::set<std::string_view>& solved) {
-	m_pSearchRange = std::make_unique<KeySearchRange>(m_keyTypes,  m_pTable, pNode, &solved);
+	m_pSearchRange.emplace(m_keyTypes,  m_pTable, pNode, &solved);
 }
 
 int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
@@ -55,8 +55,8 @@ void LevelDBScanPlan::begin() {
 		m_pDBIter = LevelDBHandler::getHandler(m_pTable)->createIterator();
 	}
 
-	if(m_pSearchRange == nullptr) {
-		m_pSearchRange = std::make_unique<KeySearchRange>(m_keyTypes, m_pTable, nullptr, nullptr);
+	if(!m_pSearchRange) {
+		m_pSearchRange.emplace(m_keyTypes, m_pTable, nullptr, nullptr);
 	}
 
 	if(m_order ==SortOrder::Descend) {
@@ -128,23 +128,16 @@ bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view&
 
 }
 void LevelDBScanPlan::explain(std::vector<std::string>& rows, size_t depth) {
-	if(m_pSearchRange == nullptr) {
-		m_pSearchRange = std::make_unique<KeySearchRange>(m_keyTypes, m_pTable,nullptr, nullptr);
+	if(!m_pSearchRange) {
+		m_pSearchRange.emplace(m_keyTypes, m_pTable,nullptr, nullptr);
 	}
-
-	auto& start = m_pSearchRange->getStartResults();
-	auto& end = m_pSearchRange->getEndResults();
-
-	assert(start.size() == end.size());
 
 	std::string s(depth, '\t');
 	s.append("leveldb:scan ");
 	s.append(m_pTable->getName());
 	s.append(", cost:");
 
-	auto startRow = m_pSearchRange->getStartRow();
-	auto endRow = m_pSearchRange->getEndRow();
-	auto cost = LevelDBHandler::getHandler(m_pTable)->getCost(startRow, endRow);
+	auto cost = m_pSearchRange->getCost();
 
 	s.append(std::to_string(cost));
 
@@ -153,19 +146,7 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows, size_t depth) {
 	}
 	rows.push_back(s);
 	s = std::string(depth + 1, '\t');
-	s.append(m_pSearchRange->startInclusive()?"range [":"range (");
-	for(auto& result: start) {
-		s.append(result.toString());
-		s.append("|");
-	}
-	s.erase(s.length() -1, 1);
-	s.append(", ");
-	for(auto& result: end) {
-		s.append(result.toString());
-		s.append("|");
-	}
-	s.erase(s.length() -1, 1);
-	s.append(m_pSearchRange->endInclusive()?"]":")");
+	s.append(m_pSearchRange->toString());
 	rows.push_back(s);
 
 

@@ -198,7 +198,6 @@ void LevelDBPlanBuilder::buildPlanForReadFile(const TableInfo* pTableInfo) {
 
 struct ScanPlanInfo {
 	ScanPlanInfo(const ParseNode* pNode, const TableInfo* pTableInfo);
-	KeySearchRange* m_pRange;
 	LevelDBScanPlan* m_pScan;
 	ExecutionPlanPtr m_pPlan;
 	std::set<std::string_view> m_solved;
@@ -215,8 +214,6 @@ ScanPlanInfo::ScanPlanInfo(const ParseNode* pNode, const TableInfo* pTableInfo) 
 
 	m_pScan->setPredicate(pNode, m_solved);
 
-	m_pRange = m_pScan->getKeySearchRange();
-	assert(m_pRange);
 	if (needFilter(pNode)) {
 		auto pFilter = new FilterPlan(m_pPlan.release());
 		m_pPlan.reset(pFilter);
@@ -264,14 +261,14 @@ const ParseNode* LevelDBPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, 
 
 	std::sort(rangePtrList.begin(), rangePtrList.end(),
 			[](ScanPlanInfo* pInfo1, ScanPlanInfo* pInfo2) {
-				return pInfo1->m_pRange->compareStart(pInfo2->m_pRange) < 0;
+				return pInfo1->m_pScan->compareStart(pInfo2->m_pScan) < 0;
 	});
 
 	for (size_t i = 1; i < rangePtrList.size(); ++i) {
 		auto pInfo = rangePtrList[i];
 		auto pLastInfo = rangePtrList[i - 1];
 
-		if(pInfo->m_pRange->startAfterEnd(pLastInfo->m_pRange)) {
+		if(pInfo->m_pScan->startAfterEnd(pLastInfo->m_pScan)) {
 			continue;
 		}
 

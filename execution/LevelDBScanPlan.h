@@ -51,33 +51,20 @@ public:
 			return m_pTable->getColumn(index)->m_type;
 		}
 	}
-	const DataRow getStartRow() const {
-		assert(m_pSearchRange != nullptr);
-		return m_pSearchRange->getStartRow();
-	}
-
-	const DataRow getEndRow() const {
-		assert(m_pSearchRange != nullptr);
-		return m_pSearchRange->getEndRow();
-	}
-	bool startInclusive() const {
-		assert(m_pSearchRange != nullptr);
-		return m_pSearchRange->startInclusive();
-	}
-	bool endInclusive() const {
-		assert(m_pSearchRange != nullptr);
-		return m_pSearchRange->endInclusive();
-	}
-
-	KeySearchRange* getKeySearchRange() {return m_pSearchRange.get();}
 
 	void setLevelDBIterator(LevelDBIteratorPtr& pIter) {
 		m_pDBIter = pIter;
 	}
+
+	int compareStart(LevelDBScanPlan* pScan) {
+		return m_pSearchRange->compareStart(*pScan->m_pSearchRange);
+	}
+	bool startAfterEnd(LevelDBScanPlan* pScan) {
+		return m_pSearchRange->startAfterEnd(*pScan->m_pSearchRange);
+	}
 private:
 
-	using ValueInfo = std::optional<ExecutionResult>;
-	std::vector<ValueInfo> m_columnValues;
+	std::vector<std::optional<ExecutionResult>> m_columnValues;
 	bool m_bProjectValue = false;
 
 	std::vector<ExecutionResult> m_keyValues;
@@ -90,6 +77,6 @@ private:
 	DataRow m_currentKey;
 	size_t m_iRows = 0;
 	LevelDBIteratorPtr m_pDBIter;
-	std::unique_ptr<KeySearchRange> m_pSearchRange;
+	std::optional<KeySearchRange> m_pSearchRange;
 
 };

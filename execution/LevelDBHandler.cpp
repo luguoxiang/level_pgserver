@@ -57,8 +57,8 @@ void LevelDBHandler::commit(LevelDBBatch& batch) {
 		EXECUTION_ERROR("Failed to write to leveldb", status.ToString());
 	}
 }
-void LevelDBIterator::seek(const DataRow& key) {
-	m_pIter->Seek(leveldb::Slice(key.data(), key.size()));
+void LevelDBIterator::seek(const std::vector<std::byte>& key) {
+	m_pIter->Seek(leveldb::Slice((const char*)key.data(), key.size()));
 }
 LevelDBIterator::~LevelDBIterator() {
 	m_pIter.reset(nullptr);
@@ -73,9 +73,9 @@ LevelDBIteratorPtr LevelDBHandler::createIterator() {
 	return pIter;
 }
 
-uint64_t LevelDBHandler::getCost(const DataRow& start, const DataRow& end) {
+uint64_t LevelDBHandler::getCost(const std::vector<std::byte>& start, const std::vector<std::byte>& end) {
 	leveldb::Range ranges[2];
-	ranges[0] = leveldb::Range(leveldb::Slice(start.data(), start.size()), leveldb::Slice(end.data(), end.size()));
+	ranges[0] = leveldb::Range(leveldb::Slice((const char*)start.data(), start.size()), leveldb::Slice((const char*)end.data(), end.size()));
 	uint64_t sizes[1];
 	m_pDB->GetApproximateSizes(ranges, 2, sizes);
 	return sizes[0];
