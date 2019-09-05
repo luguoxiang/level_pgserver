@@ -12,6 +12,7 @@
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
 #include "execution/ExecutionException.h"
+#include "execution/WorkThreadInfo.h"
 
 namespace {
 constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
@@ -33,11 +34,10 @@ constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
 
 }
 
-PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bTerminate) :
+PgClient::PgClient(WorkThreadInfo* pInfo) :
 		m_receiver(pInfo->getAcceptFd()),
 		m_sender(pInfo->getAcceptFd()),
-		m_pWorker(pInfo),
-		m_bTerminate(bTerminate){
+		m_pWorker(pInfo){
 	assert(pInfo->getAcceptFd() >= 0);
 
 	memset(m_handler, 0, sizeof(m_handler));
@@ -68,7 +68,7 @@ void PgClient::handleQuery() {
 	DLOG(INFO) << "Q:"<< sql;
 	m_pWorker->parse(sql);
 
-	m_pWorker->resolve();
+	m_pPlan = m_pWorker->resolve();
 
 	describeColumn();
 	handleExecute();
@@ -142,7 +142,7 @@ void PgClient::handleBind() {
 	m_sender.prepare('2');
 	m_sender.commit();
 
-	m_pWorker->resolve();
+	m_pPlan = m_pWorker->resolve();
 }
 
 void PgClient::handleDescribe() {
@@ -156,30 +156,30 @@ void PgClient::handleDescribe() {
 }
 
 void PgClient::handleExecute() {
-	auto pPlan = m_pWorker->getPlan();
-	if (pPlan == nullptr) {
+	if (m_pPlan == nullptr) {
 		PARSE_ERROR("No statement!");
 	}
-	size_t columnNum = pPlan->getResultColumns();
+	size_t columnNum = m_pPlan->getResultColumns();
 
-	pPlan->begin();
+	m_pPlan->begin();
 
-	while (pPlan->next()) {
+	while (m_pPlan->next()) {
 		if (columnNum == 0)
 			continue;
-		sendRow(pPlan);
+		sendRow();
 	} //while
 	m_sender.flush();
 
-	auto sInfo = pPlan->getInfoString();
+	auto sInfo = m_pPlan->getInfoString();
 
-	pPlan->end();
+	m_pPlan->end();
 	DLOG(INFO)<< "Execute result:" << sInfo;
 
 	m_sender.prepare('C');
 	m_sender.addStringZeroEnd(sInfo); //data len
 	m_sender.commit();
-	m_pWorker->clearPlan();
+
+	m_pPlan = nullptr;
 
 	//discard allocated string for bind param
 	m_pWorker->restoreParseBuffer();
@@ -202,7 +202,8 @@ void PgClient::handleException(Exception* pe) {
 	delete pe;
 
 	m_sender.commit();
-	m_pWorker->clearPlan();
+
+	m_pPlan = nullptr;
 }
 
 void PgClient::run() {
@@ -231,7 +232,7 @@ void PgClient::run() {
 	m_sender.commit();
 
 	m_sender.prepare('K');
-	m_sender.addInt(m_pWorker->m_iIndex);
+	m_sender.addInt(m_pWorker->getIndex());
 	m_sender.addInt(0); //cancel key
 	m_sender.commit();
 
@@ -243,7 +244,7 @@ void PgClient::run() {
 			< std::chrono::microseconds > (end - start).count();
 #endif
 
-	while (!m_bTerminate.load()) {
+	while (!m_pWorker->isCanceled()) {
 		char qtype = m_receiver.readMessage();
 		if (qtype == 'X') {
 			DLOG(INFO)<< "Client Terminate!";
@@ -278,13 +279,11 @@ void PgClient::run() {
 
 void PgClient::describeColumn() {
 
-
-	auto pPlan = m_pWorker->getPlan();
-	if (pPlan == nullptr) {
+	if (m_pPlan == nullptr) {
 		PARSE_ERROR("No statement!");
 	}
 
-	size_t columnNum = pPlan->getResultColumns();
+	size_t columnNum = m_pPlan->getResultColumns();
 	if (columnNum == 0) {
 		DLOG(INFO) << "No columns";
 		return;
@@ -294,9 +293,9 @@ void PgClient::describeColumn() {
 	m_sender.addShort(columnNum);
 
 	for (size_t i = 0; i < columnNum; ++i) {
-		auto sName = pPlan->getProjectionName(i);
+		auto sName = m_pPlan->getProjectionName(i);
 
-		switch (pPlan->getResultType(i)) {
+		switch (m_pPlan->getResultType(i)) {
 		case DBDataType::BYTES:
 			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1, false);
 			break;
@@ -335,18 +334,18 @@ void PgClient::describeColumn() {
 	m_sender.flush();
 }
 
-void PgClient::sendRow(ExecutionPlan* pPlan) {
-	size_t columnNum = pPlan->getResultColumns();
+void PgClient::sendRow() {
+	size_t columnNum = m_pPlan->getResultColumns();
 	assert(columnNum > 0);
 	m_sender.prepare('D');
 	m_sender.addShort(columnNum); //field number
 	for (size_t i = 0; i < columnNum; ++i) {
 		try {
-			DBDataType type = pPlan->getResultType(i);
+			DBDataType type = m_pPlan->getResultType(i);
 
 			ExecutionResult result;
 
-			pPlan->getResult(i, result);
+			m_pPlan->getResult(i, result);
 
 
 			if (result.isNull()) {

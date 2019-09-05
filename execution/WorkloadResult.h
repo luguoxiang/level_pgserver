@@ -4,7 +4,6 @@
 #include <vector>
 #include <pthread.h>
 #include "BasePlan.h"
-#include "WorkThreadInfo.h"
 
 class WorkloadResult: public LeafPlan {
 public:
@@ -28,9 +27,7 @@ public:
 
 	virtual bool next()override;
 
-	virtual int getResultColumns()override {
-		return 7;
-	}
+	virtual int getResultColumns()override;
 
 	virtual void getResult(size_t index, ExecutionResult& result)override;
 

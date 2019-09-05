@@ -13,6 +13,7 @@ void ShowTables::begin() {
 
 bool ShowTables::next() {
 	++m_iIndex;
+	checkCancellation();
 	return m_iIndex <= m_tables.size();
 }
 

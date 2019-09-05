@@ -2,10 +2,10 @@
 
 #include "WorkloadResult.h"
 #include "common/ParseTools.h"
+#include "WorkThreadInfo.h"
 
 namespace {
-std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session", "ObExec",
-		"BiggestExec", "SessionTime", "SqlCount" };
+std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session",  "SessionTime", "SqlCount" };
 }
 
 void WorkloadResult::getAllColumns(std::vector<std::string_view>& columns) {
@@ -13,7 +13,9 @@ void WorkloadResult::getAllColumns(std::vector<std::string_view>& columns) {
 		columns.push_back(column);
 	}
 }
-
+int WorkloadResult::getResultColumns() {
+	return WorkloadColumns.size();
+}
 int WorkloadResult::addProjection(const ParseNode* pNode) {
 	assert(pNode);
 	if (pNode->m_type != NodeType::NAME)
@@ -53,7 +55,7 @@ void WorkloadResult::getResult(size_t index, ExecutionResult& result) {
 
 	switch (index) {
 	case 0: {
-		result.setInt(pWorker->m_iIndex);
+		result.setInt(pWorker->getIndex());
 		break;
 	}
 	case 1:
@@ -63,16 +65,10 @@ void WorkloadResult::getResult(size_t index, ExecutionResult& result) {
 		result.setInt(pWorker->m_iSessions);
 		break;
 	case 3:
-		result.setInt(pWorker->m_iExecScanTime / 1000);
-		break;
-	case 4:
-		result.setInt(pWorker->m_iBiggestExec / 1000);
-		break;
-	case 5:
 		result.setInt(pWorker->m_iClientTime / 1000);
 		break;
-	case 6:
-		result.setInt(pWorker->m_iSqlCount);
+	case 4:
+		result.setInt(pWorker->getSqlCount());
 		break;
 	default:
 		assert(0);

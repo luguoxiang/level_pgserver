@@ -7,9 +7,3 @@ LeafPlan::LeafPlan(PlanType type) : ExecutionPlan(type){
 
 }
 
-bool LeafPlan::next() {
-	if (m_bCancel) {
-		EXECUTION_ERROR("canceled");
-	}
-	return false;
-}

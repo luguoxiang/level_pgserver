@@ -17,6 +17,7 @@ public:
 	}
 
 	virtual bool next()override {
+		checkCancellation();
 		return m_iCurrent++ < m_rows.size();
 	}
 

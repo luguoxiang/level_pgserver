@@ -13,8 +13,7 @@
 thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 
 
-WorkThreadInfo::WorkThreadInfo(int port, int iIndex) :
-		m_port(port), m_iIndex(iIndex), m_rewritter(m_result){
+WorkThreadInfo::WorkThreadInfo(int iIndex) : m_iIndex(iIndex), m_rewritter(m_result){
 
 	m_result = {};
 	if (parseInit(&m_result)) {
@@ -26,31 +25,20 @@ WorkThreadInfo::~WorkThreadInfo() {
 	parseTerminate(&m_result);
 }
 
-void WorkThreadInfo::clearPlan() {
-	std::lock_guard < std::mutex > lock(m_mutex);
-	m_pPlan = nullptr;
-}
+
 
 void WorkThreadInfo::setAcceptFd(int fd) {
-	std::lock_guard < std::mutex > lock(m_mutex);
 	m_iAcceptFd = fd;
 }
 void WorkThreadInfo::cancel() {
-	std::lock_guard < std::mutex > lock(m_mutex);
-
-	auto pPlan = m_pPlan.get();
-	if (pPlan != nullptr){
-		LOG(INFO)<< "cancel running execution plan ...";
-		pPlan->cancel();
-	}
+	m_bTerminate.store(true);
 	::close(m_iAcceptFd);
 }
-void WorkThreadInfo::resolve() {
-	std::lock_guard < std::mutex > lock(m_mutex);
+ExecutionPlanPtr WorkThreadInfo::resolve() {
 	if (m_result.m_pResult == nullptr) {
-		m_pPlan.reset(new EmptyPlan());
+		return ExecutionPlanPtr(new EmptyPlan());
 	} else {
-		m_pPlan = buildPlan(m_result.m_pResult);
+		return buildPlan(m_result.m_pResult);
 	}
 }
 void WorkThreadInfo::parse(const std::string_view sql) {
@@ -59,7 +47,7 @@ void WorkThreadInfo::parse(const std::string_view sql) {
 	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
 		m_result.m_pResult = nullptr;
 	} else {
-		m_pPlan = nullptr;
+		++m_iSqlCount;
 		parseSql(&m_result, sql);
 
 		m_result.m_pResult = m_rewritter.rewrite(m_result.m_pResult);

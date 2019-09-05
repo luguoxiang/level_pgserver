@@ -70,6 +70,8 @@ bool LevelDBScanPlan::next() {
 	if(!m_pDBIter->valid()) {
 		return false;
 	}
+	checkCancellation();
+
 	m_currentKey = m_pDBIter->key(m_keyTypes);
 
 	for(size_t i = 0;i<m_keyValues.size();++i) {

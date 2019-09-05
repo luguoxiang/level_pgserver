@@ -8,17 +8,16 @@
 #include "execution/WorkloadResult.h"
 
 class Exception;
-
+class WorkThreadInfo;
 class PgClient {
 public:
-	PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bTerminate);
+	PgClient(WorkThreadInfo* pInfo);
 
 	void run();
 
-	using MessageHandler = void (PgClient::*)();
 private:
 	void describeColumn();
-	void sendRow(ExecutionPlan* pPlan);
+	void sendRow();
 
 	void handleException(Exception* pe);
 	void handleSync();
@@ -28,12 +27,16 @@ private:
 	void handleDescribe();
 	void handleExecute();
 
-	std::atomic_bool& m_bTerminate;
 	PgMessageReceiver m_receiver;
 	PgMessageSender m_sender;
 
 	WorkThreadInfo* m_pWorker;
 
 	uint64_t m_iSendTime = 0;
+
+	using MessageHandler = void (PgClient::*)();
+
 	MessageHandler m_handler[100];
+
+	ExecutionPlanPtr m_pPlan;
 };

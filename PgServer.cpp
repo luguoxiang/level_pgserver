@@ -109,7 +109,7 @@ int PgServer::bindSocket(int port) {
 
 void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 	WorkThreadInfo::setThreadInfo(pInfo);
-	LOG(INFO) << "Working thread is listening on " << pInfo->m_port;
+	LOG(INFO) << "Working thread is listening on " << m_port;
 
 	while (!m_bTerminate.load()) {
 		try {
@@ -123,7 +123,7 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 		++pInfo->m_iSessions;
 
 		try {
-			PgClient client(pInfo, m_bTerminate);
+			PgClient client(pInfo);
 			client.run();
 		} catch (Exception* pe) {
 			LOG(ERROR) << "Working thread failed:" << pe->what();
@@ -164,7 +164,7 @@ void PgServer::run() {
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {
-		WorkThreadInfo* pInfo = new WorkThreadInfo(m_port, i);
+		WorkThreadInfo* pInfo = new WorkThreadInfo(i);
 		threads[i] = std::thread(&PgServer::worker_thread, this, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}

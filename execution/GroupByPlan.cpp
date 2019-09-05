@@ -69,6 +69,7 @@ bool GroupByPlan::next() {
 		m_bHasMore = m_pPlan->next();
 		if (!m_bHasMore)
 			break;
+		checkCancellation();
 		for (size_t i = 0; i < m_last.size(); ++i) {
 			ExecutionResult result;
 			m_pPlan->getResult(m_groupby[i], result);

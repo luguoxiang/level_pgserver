@@ -55,10 +55,10 @@ void ReadFilePlan::setToken(size_t index, const char* pszToken, size_t len) {
 }
 
 bool ReadFilePlan::next() {
-	LeafPlan::next();
 	if (!std::getline(*m_pFile, m_line)) {
 		return false;
 	}
+	checkCancellation();
 	char* pszStart = m_line.data();
 
 	auto state = ParseState::OutOfQuote;

@@ -68,6 +68,7 @@ void SortPlan::end() {
 }
 
 bool SortPlan::next() {
+	checkCancellation();
 	if (m_iCurrent >= m_rows.size())
 		return false;
 	++m_iCurrent;

@@ -25,10 +25,6 @@ public:
 		m_pPlan->end();
 	}
 
-	virtual void cancel() override {
-		m_pPlan->cancel();
-	}
-
 	virtual int getResultColumns()override {
 		return m_pPlan->getResultColumns();
 	}
@@ -74,12 +70,8 @@ public:
 	virtual void explain(std::vector<std::string>& rows, size_t depth) {}
 
 	virtual void begin() {}
-	virtual bool next();
+	virtual bool next() {return true;}
 	virtual void end() {}
-
-	virtual void cancel() {
-		m_bCancel = true;
-	}
 
 	virtual int getResultColumns() {return 0;}
 
@@ -110,10 +102,6 @@ public:
 	virtual void getResult(size_t index, ExecutionResult& result) {
 
 	}
-
-private:
-	//may be set by another thread
-	std::atomic<bool> m_bCancel = false;
 };
 
 class EmptyPlan : public LeafPlan {

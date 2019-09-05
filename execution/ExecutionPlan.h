@@ -63,10 +63,6 @@ public:
 	virtual void begin() = 0;
 	virtual bool next() = 0;
 	virtual void end() = 0;
-
-	//should call children plan's cancel which make leaf plan throw cancel exception
-	virtual void cancel() = 0;
-
 	/*
 	 * number of projection column
 	 */
@@ -112,6 +108,7 @@ public:
 	 */
 	virtual void getResult(size_t index, ExecutionResult& result) = 0;
 
+	void checkCancellation();
 private:
 	PlanType m_type;
 };

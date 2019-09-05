@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include "common/ParseTools.h"
 #include "execution/BasePlan.h"
-#include "execution/WorkThreadInfo.h"
 
 class ShowTables: public LeafPlan {
 public:

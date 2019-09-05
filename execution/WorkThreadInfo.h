@@ -2,13 +2,13 @@
 #include <vector>
 #include <thread>
 #include <algorithm>
+#include <atomic>
 #include "ExecutionPlan.h"
 #include "common/ParseResult.h"
 #include "common/QueryRewritter.h"
 
-#include <mutex>
 struct WorkThreadInfo {
-	WorkThreadInfo(int port, int iIndex);
+	WorkThreadInfo(int iIndex);
 
 	~WorkThreadInfo();
 
@@ -23,23 +23,17 @@ struct WorkThreadInfo {
 	static void setThreadInfo(WorkThreadInfo* pInfo) {
 		m_pWorkThreadInfo = pInfo;
 	}
-
-
-	int m_port;
+	static bool isCanceled() {
+		return m_pWorkThreadInfo->m_bTerminate.load();
+	}
 
 	bool m_bRunning = false;
 	uint64_t m_iClientTime = 0;
-	int m_iIndex;
 	int m_iSessions = 0;
-
-	uint64_t m_iExecScanTime = 0;
-	uint64_t m_iBiggestExec = 0;
-	int m_iSqlCount = 0;
-
 
 	void parse(const std::string_view sql);
 
-	void resolve();
+	ExecutionPlanPtr resolve();
 
 	void print();
 
@@ -68,24 +62,24 @@ struct WorkThreadInfo {
 	void markParseBuffer() {m_result.mark(); }
 	void restoreParseBuffer() {m_result.restore(); }
 
-	void clearPlan();
-
-	ExecutionPlan* getPlan() {
-		return m_pPlan.get();
-	}
 	void setAcceptFd(int fd);
 
 	int getAcceptFd() {
 		return m_iAcceptFd;
 	}
+	int getIndex() {return m_iIndex;}
+	int getSqlCount() {return m_iSqlCount;}
 private:
+	int m_iIndex;
+	int m_iSqlCount = 0;
+
 	int m_iAcceptFd = 0;
-	ExecutionPlanPtr m_pPlan = nullptr;
 	ParseResult m_result;
 	QueryRewritter m_rewritter;
 	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
 
-	std::mutex m_mutex;
+
+	std::atomic_bool m_bTerminate;
 };
 
 

@@ -89,12 +89,6 @@ public:
 	virtual void getResult(size_t columnIndex, ExecutionResult& result)
 			override;
 
-	virtual void cancel() override {
-		for (auto& pPlan : m_plans) {
-			pPlan->cancel();
-		}
-	}
-
 	virtual bool ensureSortOrder(size_t iSortIndex,
 			const std::string_view& sColumn, SortOrder order) override {
 		if(!m_hasOrder) {
