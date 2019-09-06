@@ -70,7 +70,7 @@ public:
 	virtual void explain(std::vector<std::string>& rows, size_t depth) {}
 
 	virtual void begin() {}
-	virtual bool next() {return true;}
+	virtual bool next() {return false;}
 	virtual void end() {}
 
 	virtual int getResultColumns() {return 0;}

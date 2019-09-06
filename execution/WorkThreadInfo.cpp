@@ -45,6 +45,12 @@ void WorkThreadInfo::parse(const std::string_view sql) {
 		m_result.m_pResult = nullptr;
 	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
 		m_result.m_pResult = nullptr;
+	} else if (strncasecmp("BEGIN", sql.data(), 5) == 0) {
+		LOG(WARNING) << "Transaction is not supported";
+		m_result.m_pResult = nullptr;
+	} else if (strncasecmp("COMMIT", sql.data(), 6) == 0) {
+		LOG(WARNING) << "Transaction is not supported";
+		m_result.m_pResult = nullptr;
 	} else {
 		++m_iSqlCount;
 		parseSql(&m_result, sql);
