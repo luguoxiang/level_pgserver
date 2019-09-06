@@ -54,6 +54,9 @@ class LevelDBBatch {
 public:
 	void insert(const std::vector<std::byte>& key, const std::vector<std::byte>& value);
 	void remove(const std::string_view key);
+	void clear() {
+		m_batch.Clear();
+	}
 private:
 	leveldb::WriteBatch m_batch;
 };

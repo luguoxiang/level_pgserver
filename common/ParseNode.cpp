@@ -56,34 +56,17 @@ ParseNode::ParseNode(NodeType type,
 }
 
 
-
-
-int64_t parseTime(const char* pszTime) {
-	int iYear = 0;
-	int iMonth = 0;
-	int iDay = 0;
-	int iHour = 0;
-	int iMinute = 0;
-	int iSecond = 0;
-
-	struct tm time = {};
-	int ret = sscanf(pszTime, "%4d-%2d-%2d %2d:%2d:%2d",
-			&iYear, &iMonth, &iDay, &iHour, &iMinute, &iSecond);
-	if (ret != 3 && ret != 6) {
-		return 0;
+int64_t parseTime(std::string_view sTime) {
+	std::tm time = {};
+	std::stringstream ss;
+	ss << sTime;
+	if (sTime.length() < 12) {
+		ss >> std::get_time(&time, "%Y-%m-%d");
+	} else {
+		ss >> std::get_time(&time, "%Y-%m-%d %H:%M:%S");
 	}
-
-	time.tm_year = iYear - 1900;
-	time.tm_mon = iMonth - 1;
-	time.tm_mday = iDay;
-	time.tm_hour = iHour;
-	time.tm_min = iMinute;
-	time.tm_sec = iSecond;
-
 	time_t iRetTime = timegm(&time);
-	if (iYear - 1900 != time.tm_year
-			|| iMonth - 1 != time.tm_mon
-			|| iDay != time.tm_mday) {
+	if (iRetTime == -1) {
 		return 0;
 	}
 	return iRetTime; // unit is seconds

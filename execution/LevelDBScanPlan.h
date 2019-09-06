@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <optional>
+#include <absl/strings/str_cat.h>
+
 #include "common/ConfigInfo.h"
 #include "common/ParseNode.h"
 #include "execution/BasePlan.h"
@@ -18,7 +20,7 @@ public:
 	virtual void explain(std::vector<std::string>& rows, size_t depth)override;
 
 	virtual std::string getInfoString() override {
-		return ConcateToString("SELECT ", m_iRows);
+		return absl::StrCat("SELECT ", m_iRows);
 	}
 
 	virtual int getResultColumns() override	{

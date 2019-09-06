@@ -6,8 +6,9 @@
 #include <cassert>
 #include <stdlib.h>
 #include <string>
-#include <variant>
 #include <initializer_list>
+#include <absl/strings/numbers.h>
+
 #include "ParseException.h"
 
 enum class NodeType {
@@ -111,7 +112,7 @@ public:
 	bool isTrueConst() const {
 		switch (m_type) {
 		case NodeType::INT:
-			return getInt() != 0;
+			return m_sValue != "0";
 		default:
 			return false;
 		}
@@ -120,7 +121,7 @@ public:
 	bool isFalseConst() const {
 		switch (m_type) {
 		case NodeType::INT:
-			return getInt() == 0;
+			return m_sValue == "0";
 		default:
 			return false;
 		}
@@ -135,43 +136,24 @@ public:
 		return m_op;
 	}
 
-	void setInt(int64_t value) {
-		m_value = value;
-	}
+
 	int64_t getInt() const {
-		try {
-			return std::get < int64_t > (m_value);
-		} catch (const std::bad_variant_access& e) {
-			PARSE_ERROR("expect int, actual ", m_sExpr);
-			return 0;
+		int64_t value;
+		if(!absl::SimpleAtoi(m_sValue, &value)) {
+			PARSE_ERROR("Could not convert to int:", m_sValue);
 		}
+		return value;
 	}
 
-	void setDouble(double value) {
-		m_value = value;
-	}
-	double getDouble() const {
-		try {
-			return std::get<double>(m_value);
-		} catch (const std::bad_variant_access& e) {
-			PARSE_ERROR("expect double, actual ", m_sExpr);
-			return 0;
-		}
-	}
 
 	void setString(const std::string_view value) {
-		m_value = value;
+		m_sValue = value;
 	}
 	const std::string_view getString() const {
-		try {
-			return std::get < std::string_view > (m_value);
-		} catch (const std::bad_variant_access& e) {
-			PARSE_ERROR("expect string, actual ", m_sExpr);
-			return 0;
-		}
+		return m_sValue;
 	}
 private:
-	std::variant<int64_t, double, std::string_view> m_value;
+	std::string_view m_sValue;
 
 	Operation m_op;
 	ParseNode** m_children;
@@ -182,7 +164,7 @@ inline bool IS_DIGIT(char c) {
 	return c >= '0' && c <= '9';
 }
 
-int64_t parseTime(const char* pszTime);
+int64_t parseTime(std::string_view sTime);
 
 void printTree(const ParseNode* pRoot, int level);
 

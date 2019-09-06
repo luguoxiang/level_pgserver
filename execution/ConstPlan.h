@@ -1,6 +1,8 @@
 #pragma once
 
 #include <sstream>
+#include <absl/strings/str_cat.h>
+
 #include "common/ParseException.h"
 #include "execution/BasePlan.h"
 
@@ -35,7 +37,7 @@ public:
 	virtual DBDataType getResultType(size_t index) override;
 
 	virtual std::string getInfoString()  override{
-		return ConcateToString("SELECT ", m_rows.size());
+		return absl::StrCat("SELECT ", m_rows.size());
 	}
 
 	virtual void getResult(size_t index, ExecutionResult& result) override;

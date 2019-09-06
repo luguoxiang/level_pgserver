@@ -4,6 +4,7 @@
 #include "execution/BasePlan.h"
 #include <vector>
 #include <sstream>
+#include <absl/strings/str_cat.h>
 
 class LimitPlan: public SingleChildPlan {
 public:
@@ -26,7 +27,7 @@ public:
 	virtual bool next() override;
 
 	virtual std::string getInfoString() override{
-		return ConcateToString("SELECT ", m_iCurrent - m_iOffset);
+		return absl::StrCat("SELECT ", m_iCurrent - m_iOffset);
 	}
 
 	void setLimit(uint64_t iLimit, uint64_t iOffset) {

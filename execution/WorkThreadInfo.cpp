@@ -1,5 +1,6 @@
 #include <cassert>
 #include <limits>
+#include <absl/strings/match.h>
 
 #include "WorkThreadInfo.h"
 
@@ -41,14 +42,14 @@ void WorkThreadInfo::cancel(bool planOnly) {
 }
 
 void WorkThreadInfo::parse(const std::string_view sql) {
-	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
+	if (absl::StartsWithIgnoreCase(sql, "DEALLOCATE")) {
 		m_result.m_pResult = nullptr;
-	} else if (strncasecmp("SET ", sql.data(), 4) == 0) {
+	} else if (absl::StartsWithIgnoreCase(sql, "SET ")) {
 		m_result.m_pResult = nullptr;
-	} else if (strncasecmp("BEGIN", sql.data(), 5) == 0) {
+	} else if (absl::StartsWithIgnoreCase(sql, "BEGIN")) {
 		LOG(WARNING) << "Transaction is not supported";
 		m_result.m_pResult = nullptr;
-	} else if (strncasecmp("COMMIT", sql.data(), 6) == 0) {
+	} else if (absl::StartsWithIgnoreCase(sql, "COMMIT")) {
 		LOG(WARNING) << "Transaction is not supported";
 		m_result.m_pResult = nullptr;
 	} else {

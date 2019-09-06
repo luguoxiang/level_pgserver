@@ -7,6 +7,7 @@ typedef void* yyscan_t;
 #include "ParseResult.h"
 #include "MetaConfig.h"
 #include <stdint.h>
+#include <absl/strings/str_cat.h>
 }
 
 %union{
@@ -188,7 +189,7 @@ expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column,
 		if($2->m_type == NodeType::INT)
 		{
 			$$ = pResult->newSimpleNode(NodeType::INT,@$.first_column, @$.last_column);
-			$$->setInt(- $$->getInt());
+			$$->setString($$->m_sExpr);
 		}
 		else if($2->m_type == NodeType::FLOAT) 
 		{
@@ -214,7 +215,7 @@ expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column,
 		auto len =  sValue.length();
 		if(sValue[0] != '%' || sValue[len - 1] != '%')
 		{
-			yyerror(&@3,pResult, nullptr, ConcateToString("missing %% for like ", sValue));
+			yyerror(&@3,pResult, nullptr, absl::StrCat("missing ",sValue," for like "));
 			YYERROR;
 		}
 		$3->setString(sValue.substr(1, len -2));

@@ -1,6 +1,8 @@
 #pragma once
 #include <sstream>
 #include <vector>
+#include <absl/strings/str_cat.h>
+
 #include "common/ConfigInfo.h"
 #include "execution/BasePlan.h"
 #include "execution/LevelDBHandler.h"
@@ -19,7 +21,7 @@ public:
 	}
 
 	virtual std::string getInfoString() override {
-		return ConcateToString("DELETE ", m_iDeleteRows);
+		return absl::StrCat("DELETE ", m_iDeleteRows);
 	}
 
 	virtual int getResultColumns() override	{

@@ -3,20 +3,12 @@
 #include <string>
 #include <exception>
 #include <netinet/in.h>
+#include <absl/strings/match.h>
 
 #include "common/ParseNode.h"
 #include "common/ParseException.h"
 
 namespace Tools {
-inline bool case_equals(const std::string_view a, const std::string_view b)
-{
-    return std::equal(a.begin(), a.end(),
-                      b.begin(), b.end(),
-                      [](char a, char b) {
-                          return tolower(a) == tolower(b);
-                      });
-}
-
 
 inline int64_t binaryToInt(std::string_view sValue) {
 	switch(sValue.length()) {
@@ -55,7 +47,8 @@ inline double binaryToDouble(std::string_view sValue) {
 constexpr const char* ROWKEY = "_rowkey";
 
 inline bool isRowKeyNode(const ParseNode* pNode) {
-	return pNode->m_type == NodeType::NAME && pNode->getString() == ROWKEY;
+	return pNode->m_type == NodeType::NAME
+			&& absl::EqualsIgnoreCase(pNode->getString(), ROWKEY);
 }
 
 

@@ -83,7 +83,7 @@ public:
 	}
 
 	virtual std::string getInfoString() override {
-		return ConcateToString("SELECT ", m_iCurrentRow);
+		return absl::StrCat("SELECT ", m_iCurrentRow);
 	}
 
 	virtual void getResult(size_t columnIndex, ExecutionResult& result)

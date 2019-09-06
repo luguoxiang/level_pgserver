@@ -20,9 +20,3 @@ public:
 	Exception& operator =(const Exception&) = delete;
 };
 
-template<typename ...Args>
-inline std::string ConcateToString(Args&&...args) {
-        std::ostringstream os;
-        (os << ... << std::forward<Args>(args));
-        return os.str();
-}

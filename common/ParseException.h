@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Exception.h"
-
+#include <absl/strings/str_cat.h>
 
 class ParseResult;
 class ParseException: public Exception {
@@ -33,7 +33,7 @@ private:
 	int m_iLine = -1;
 };
 
-#define PARSE_ERROR(args...) {auto sError = ConcateToString(args);LOG(ERROR)<<sError;throw new ParseException(sError);}
+#define PARSE_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw new ParseException(sError);}
 
 
 

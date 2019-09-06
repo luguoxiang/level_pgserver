@@ -1,4 +1,5 @@
 #include <sstream>
+#include <absl/strings/match.h>
 
 #include "WorkloadResult.h"
 #include "common/ParseTools.h"
@@ -21,7 +22,7 @@ int WorkloadResult::addProjection(const ParseNode* pNode) {
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < WorkloadColumns.size(); ++i) {
-		if (Tools::case_equals(WorkloadColumns[i], pNode->getString())) {
+		if (absl::EqualsIgnoreCase(WorkloadColumns[i], pNode->getString())) {
 			return i;
 		}
 	}
@@ -29,7 +30,7 @@ int WorkloadResult::addProjection(const ParseNode* pNode) {
 }
 
 std::string WorkloadResult::getInfoString() {
-	return ConcateToString("SELECT ", WorkerManager::getInstance().getWorkerCount());
+	return absl::StrCat("SELECT ", WorkerManager::getInstance().getWorkerCount());
 }
 
 void WorkloadResult::begin() {

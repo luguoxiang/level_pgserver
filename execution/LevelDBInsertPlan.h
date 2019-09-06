@@ -1,6 +1,8 @@
 #pragma once
 #include <sstream>
 #include <vector>
+#include <absl/strings/str_cat.h>
+
 #include "common/ConfigInfo.h"
 #include "execution/BasePlan.h"
 #include "execution/LevelDBHandler.h"
@@ -20,7 +22,7 @@ public:
 	}
 
 	virtual std::string getInfoString() override {
-		return ConcateToString("INSERT 0 ", m_iInsertRows);
+		return absl::StrCat("INSERT 0 ", m_iInsertRows);
 	}
 
 	virtual int getResultColumns() override	{

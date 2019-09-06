@@ -4,6 +4,7 @@
 #include "common/ParseException.h"
 
 #include <sstream>
+#include <absl/strings/str_cat.h>
 
 enum class FuncType {
 	FIRST, SUM, AVG, COUNT, MAX, MIN
@@ -23,7 +24,7 @@ public:
 	virtual void explain(std::vector<std::string>& rows, size_t depth) override;
 
 	virtual std::string getInfoString()override {
-		return ConcateToString("SELECT ", m_iRows);
+		return absl::StrCat("SELECT ", m_iRows);
 	}
 
 	virtual int getResultColumns() override{

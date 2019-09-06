@@ -6,6 +6,7 @@
 #include "SqlParser.tab.h"
 #include <cassert>
 #include <time.h>
+#include <absl/strings/str_cat.h>
 
 
 extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner, const std::string& msg);
@@ -91,14 +92,7 @@ USING {return USING;}
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
-	
-	errno = 0;
-	int64_t value = strtol (yytext,nullptr,10);
-	if (errno != 0) { 
-		yyerror(yylloc, pResult, nullptr, strerror(errno));
-		return ERROR;
-	}
-	pNode->setInt(value);
+	pNode->setString(pNode->m_sExpr);
 	return INTNUM;
 
 }
@@ -110,15 +104,7 @@ USING {return USING;}
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
-	
-	errno = 0;
-	double value = strtod (yytext,nullptr);
-	if (errno != 0) { 
-		yyerror(yylloc, pResult, nullptr, strerror(errno));
-		return ERROR;
-	}
-	pNode->setDouble(value);
-	
+	pNode->setString(pNode->m_sExpr);
 	return APPROXNUM;
 }
 
@@ -163,9 +149,9 @@ USING {return USING;}
 	return STRING;
 }
 
-'(\\.|[^'\n])*$ {yyerror(yylloc, (ParseResult*)yyextra,nullptr, ConcateToString("Unterminated string ", yytext));}
+'(\\.|[^'\n])*$ {yyerror(yylloc, (ParseResult*)yyextra,nullptr, absl::StrCat("Unterminated string ", yytext));}
 
-\"(\\.|[^"\n])*$ {yyerror(yylloc, (ParseResult*)yyextra, nullptr,ConcateToString("Unterminated string ", yytext));}
+\"(\\.|[^"\n])*$ {yyerror(yylloc, (ParseResult*)yyextra, nullptr,absl::StrCat("Unterminated string ", yytext));}
 
 X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
@@ -195,28 +181,14 @@ X'([0-9A-F]{2})+'|0X([0-9A-F]{2})+ {
 D'[0-9]{4}(-[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE,yylloc->first_column, yylloc->last_column);
-
-	auto iValue = parseTime(yytext + 2);
-	if(iValue == 0)
-	{
-		yyerror(yylloc, pResult ,nullptr, ConcateToString("Wrong date: ", yytext));
-		return ERROR;
-	}
-	pNode->setInt(iValue);
+	pNode->setString(pNode->m_sExpr.substr(2, pNode->m_sExpr.size() - 3));
 	yylval->pNode = pNode;
 	return DATE_VALUE;
 }
 D'[0-9]{4}(-[0-9]{2}){2}[ ][0-9]{2}(:[0-9]{2}){2}' {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE, yylloc->first_column, yylloc->last_column);
-
-	auto iValue = parseTime(yytext + 2);
-	if(iValue == 0)
-	{
-		yyerror(yylloc, pResult, nullptr, ConcateToString("Wrong date: ", yytext));
-		return ERROR;
-	}
-	pNode->setInt(iValue);
+	pNode->setString(pNode->m_sExpr.substr(2, pNode->m_sExpr.size() - 3));
 	yylval->pNode = pNode;
 	return DATE_VALUE;
 }
@@ -249,7 +221,7 @@ $[0-9]+ {
 	int index = strtol(yytext + 1, 0, 10);
 	if (errno != 0 || index <= 0 || index > 64)
 	{
-		yyerror(yylloc, pResult,nullptr,ConcateToString( "Illegal prepared statement param: ", yytext));
+		yyerror(yylloc, pResult,nullptr,absl::StrCat( "Illegal prepared statement param: ", yytext));
 		return ERROR;
 	}
 	pResult->m_bindParamNodes.push_back(pNode);
@@ -261,7 +233,8 @@ $[0-9]+ {
 
 <<EOF>>		{return ';';}
 .		{
-	yyerror(yylloc, (ParseResult*)yyextra,nullptr, ConcateToString("mystery charactor ", *yytext));
+	std::string_view s(yytext, 1);
+	yyerror(yylloc, (ParseResult*)yyextra,nullptr, absl::StrCat("mystery charactor ", s));
 	return ERROR;
 }
 %%

@@ -1,8 +1,11 @@
+#include <sstream>
+#include <vector>
+#include <absl/strings/match.h>
+#include <absl/strings/str_cat.h>
+
 #include "ShowColumns.h"
 #include "common/MetaConfig.h"
-#include "common/ParseTools.h"
-#include <sstream>
-#include <array>
+
 namespace {
 std::vector<const char*> Columns = { "Field", "Type", "KeyPosition", "Precision" };
 }
@@ -24,7 +27,7 @@ int ShowColumns::addProjection(const ParseNode* pNode) {
 	if (pNode->m_type != NodeType::NAME)
 		return -1;
 	for (size_t i = 0; i < Columns.size(); ++i) {
-		if (Tools::case_equals(Columns[i], pNode->getString())) {
+		if (absl::EqualsIgnoreCase(Columns[i], pNode->getString())) {
 			return i;
 		}
 	}
@@ -46,7 +49,7 @@ int ShowColumns::getResultColumns() {
 }
 
 std::string ShowColumns::getInfoString() {
-	return ConcateToString("SELECT ", m_pEntry->getColumnCount());
+	return absl::StrCat("SELECT ", m_pEntry->getColumnCount());
 }
 
 void ShowColumns::begin() {

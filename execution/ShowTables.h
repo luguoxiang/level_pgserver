@@ -44,16 +44,7 @@ public:
 		columns.push_back("Info");
 	}
 
-	virtual int addProjection(const ParseNode* pNode)override {
-		assert(pNode);
-		if (pNode->m_type != NodeType::NAME)
-			return -1;
-		if (Tools::case_equals(pNode->getString(), "TableName") )
-			return 0;
-		if (Tools::case_equals(pNode->getString(), "Info") )
-			return 1;
-		return -1;
-	}
+	virtual int addProjection(const ParseNode* pNode)override;
 private:
 	size_t m_iIndex = 0;
 	std::vector<TableInfo*> m_tables;

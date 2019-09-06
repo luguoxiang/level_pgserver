@@ -2,7 +2,7 @@
 
 
 #include "common/Exception.h"
-
+#include <absl/strings/str_cat.h>
 
 
 class ConfigException: public Exception {
@@ -23,6 +23,6 @@ private:
 	std::string m_sErrMsg;
 };
 
-#define CONFIG_ERROR(args...) {auto sError = ConcateToString(args);LOG(ERROR)<<sError;throw new ConfigException(sError);}
+#define CONFIG_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw new ConfigException(sError);}
 
 

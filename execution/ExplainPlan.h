@@ -7,6 +7,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <absl/strings/str_cat.h>
 
 class ExplainPlan: public SingleChildPlan {
 public:
@@ -36,7 +37,7 @@ public:
 	}
 
 	virtual std::string getInfoString()override {
-		return ConcateToString("EXPLAIN ", m_rows.size());
+		return absl::StrCat("EXPLAIN ", m_rows.size());
 	}
 
 	virtual void getResult(size_t columnIndex, ExecutionResult& result)override;

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <variant>
+#include <absl/strings/str_cat.h>
 
 #include "common/ConfigInfo.h"
 #include "execution/ExecutionException.h"
@@ -93,11 +94,11 @@ private:
 	struct GetString
 	{
 	    std::string operator()(const std::nullptr_t& ) { return "null"; }
-	    std::string operator()(const std::string_view& v) { return ConcateToString("string:", v); }
-		std::string operator()(const std::string& v) { return ConcateToString("string:", v); }
+	    std::string operator()(const std::string_view& v) { return absl::StrCat("string:", v); }
+		std::string operator()(const std::string& v) { return absl::StrCat("string:", v); }
 		std::string operator()(const MaxString& v) { return "string_max"; }
-		std::string operator()(const int64_t& v) { return ConcateToString("int:", v); }
-		std::string operator()(const double& v) { return ConcateToString("double:", v); }
+		std::string operator()(const int64_t& v) { return absl::StrCat("int:", v); }
+		std::string operator()(const double& v) { return absl::StrCat("double:", v); }
 	};
 
 	std::variant<std::nullptr_t, //should set to other value later

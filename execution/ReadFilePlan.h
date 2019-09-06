@@ -6,6 +6,7 @@
 #include <fstream>
 #include <atomic>
 #include <optional>
+#include <absl/strings/str_cat.h>
 
 class ReadFilePlan: public LeafPlan {
 public:
@@ -53,7 +54,7 @@ public:
 	}
 
 	virtual std::string getInfoString() override{
-		return ConcateToString("SELECT ", m_iRowCount);
+		return absl::StrCat("SELECT ", m_iRowCount);
 	}
 
 	virtual void getResult(size_t index, ExecutionResult& result)override {
@@ -74,7 +75,7 @@ public:
 	}
 
 private:
-	void setToken(size_t index, const char* pszToken, size_t len);
+	void setToken(size_t index, std::string_view token);
 	std::vector<const DBColumnInfo*> m_columns;
 	std::vector<ExecutionResult> m_result;
 	int64_t m_iRowCount = 0;

@@ -40,18 +40,18 @@ namespace {
 	};
 }
 
-void ReadFilePlan::setToken(size_t index, const char* pszToken, size_t len) {
+void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	if(index >= m_columns.size()) {
 		return;
 	}
 	auto pColumn = m_columns[index];
 	if(pColumn->m_type == DBDataType::STRING
 			&& pColumn->m_iLen > 0
-			&& len > pColumn->m_iLen)  {
+			&& token.size() > pColumn->m_iLen)  {
 		EXECUTION_ERROR("Column ", pColumn->m_name, " value exceed defined length ", pColumn->m_iLen);
 	}
 
-	DBDataTypeHandler::getHandler(pColumn->m_type)->fromString(pszToken, len, m_result[index]);
+	DBDataTypeHandler::getHandler(pColumn->m_type)->fromString(token, m_result[index]);
 }
 
 bool ReadFilePlan::next() {
@@ -59,22 +59,21 @@ bool ReadFilePlan::next() {
 		return false;
 	}
 	checkCancellation();
-	char* pszStart = m_line.data();
+	std::string_view line = m_line;
 
 	auto state = ParseState::OutOfQuote;
 	size_t targetIndex = 0;
 	size_t beginToken = 0;
 	size_t tokenIndex = 0;
-	for(size_t i=0; pszStart[i] != '\0' && tokenIndex < m_columns.size();++i) {
-		const char c = pszStart[i];
+	for(size_t i=0;i<line.length() && tokenIndex < m_columns.size();++i) {
+		char c = line[i];
 		switch(state){
 		case ParseState::OutOfQuote:
 			if(c == '"') {
 				state = ParseState::BeginQuote;
 				continue;
 			} else if(c == m_separator) {
-				pszStart[targetIndex] = '\0';
-				setToken(tokenIndex++, pszStart + beginToken, targetIndex - beginToken);
+				setToken(tokenIndex++, std::string_view{line.data() + beginToken, targetIndex - beginToken});
 				beginToken = targetIndex;
 				continue;
 			}
@@ -99,11 +98,11 @@ bool ReadFilePlan::next() {
 
 		m_line[targetIndex++] = c;
 	}
-	pszStart[targetIndex] = '\0';
-	setToken(tokenIndex++, pszStart + beginToken, targetIndex - beginToken);
+
+	setToken(tokenIndex++, std::string_view{line.data() + beginToken, targetIndex - beginToken});
 
 	for (; tokenIndex < m_columns.size(); ++tokenIndex ) {
-		setToken(tokenIndex, "", 0);
+		setToken(tokenIndex, "");
 	}
 	++m_iRowCount;
 	return true;

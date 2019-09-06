@@ -1,6 +1,7 @@
 #include "DBDataTypeHandler.h"
 #include "common/ParseTools.h"
 #include <limits>
+#include <absl/strings/numbers.h>
 
 std::map<DBDataType, std::unique_ptr<DBDataTypeHandler>> DBDataTypeHandler::m_typeHandlers;
 
@@ -45,21 +46,18 @@ public:
 		*reinterpret_cast<Type*>(pData) = value;
 	}
 
-	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
-		auto value = stringToInt(pszValue, len);
-		checkValue(value);
+	void fromString(const std::string_view s, ExecutionResult& result) override{
+		auto value = stringToInt(s);
 		result.setInt(value);
 	}
 
-	int64_t stringToInt(const char* pszValue, size_t len) {
-		if(len == 0) {
+	int64_t stringToInt(const std::string_view s) {
+		if(s.empty()) {
 			return 0;
 		}else {
-			assert(pszValue[len] == '\0');
-			errno = 0;
-			int64_t value = strtol (pszValue,nullptr,10);
-			if (errno != 0) {
-				PARSE_ERROR(strerror(errno));
+			int64_t value;
+			if(!absl::SimpleAtoi(s, &value)) {
+				PARSE_ERROR("Could not convert to int:", s);
 			}
 			checkValue(value);
 			return value;
@@ -70,13 +68,12 @@ public:
 		int64_t value = 0;
 		switch (pValue->m_type) {
 		case NodeType::INT:
-			value = pValue->getInt();
+			value = stringToInt(pValue->getString());
 			break;
 		case NodeType::PARAM: {
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM:{
-				auto sValue = pValue->getString();
-				value = stringToInt(sValue.data(), sValue.size());
+				value = stringToInt(pValue->getString());
 				break;
 			}
 			case Operation::BINARY_PARAM:
@@ -157,21 +154,19 @@ public:
 		checkValue(value);
 		*reinterpret_cast<Type*>(pData) = value;
 	}
-	double stringToDouble(const char* pszValue, size_t len) {
-		if(len == 0) {
+	double stringToDouble(const std::string_view s) {
+		if(s.empty()) {
 			return 0;
 		}else {
-			assert(pszValue[len] == '\0');
-			errno = 0;
-			double value = strtod (pszValue,nullptr);
-			if (errno != 0) {
-				PARSE_ERROR(strerror(errno));
+			double value;
+			if (!absl::SimpleAtod(s, &value)) {
+				PARSE_ERROR("Could not convert to double:", s);
 			}
 			return value;
 		}
 	}
-	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
-		auto value = stringToDouble(pszValue, len);
+	void fromString(const std::string_view s, ExecutionResult& result) override{
+		auto value = stringToDouble(s);
 		checkValue(value);
 		result.setDouble(value);
 	}
@@ -179,16 +174,13 @@ public:
 		double value = 0;
 		switch (pValue->m_type) {
 		case NodeType::INT:
-			value = pValue->getInt();
-			break;
 		case NodeType::FLOAT:
-			value = pValue->getDouble();
+			value = stringToDouble(pValue->getString());
 			break;
 		case NodeType::PARAM: {
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM: {
-				auto sValue = pValue->getString();
-				value = stringToDouble(sValue.data(), sValue.size());
+				value = stringToDouble(pValue->getString());
 				break;
 			}
 			case Operation::BINARY_PARAM:
@@ -283,8 +275,8 @@ public:
 		std::copy(pSrc, pSrc + size, pData);
 	}
 
-	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
-		result.setStringView(std::string_view(pszValue, len));
+	void fromString(const std::string_view s, ExecutionResult& result) override{
+		result.setStringView(s);
 	}
 	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
 		switch (pValue->m_type) {
@@ -336,32 +328,32 @@ class DatetimeDBDataTypeHandler: public IntDBDataTypeHandler<int64_t> {
 public:
 	DatetimeDBDataTypeHandler(const std::string& name) : IntDBDataTypeHandler<int64_t>(name) {};
 
-	int64_t timeToInt(const char* pszValue, size_t len) {
-		if(len == 0) {
+	int64_t timeToInt(const std::string_view sTime) {
+		if(sTime.empty()) {
 			return 0;
 		}else {
-			int64_t iValue = parseTime(pszValue);
+			int64_t iValue = parseTime(sTime);
 			if (iValue <= 0) {
-				EXECUTION_ERROR("Wrong Time Format:", pszValue);
+				EXECUTION_ERROR("Wrong Time Format:", sTime);
 			}
 			return iValue;
 		}
 	}
 
-	void fromString(const char* pszValue, size_t len, ExecutionResult& result) override{
-		result.setInt(timeToInt(pszValue, len));
+	void fromString(const std::string_view s, ExecutionResult& result) override{
+		result.setInt(timeToInt(s));
 	}
 
 	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
 		switch (pValue->m_type) {
 		case NodeType::DATE:
-			result.setInt(pValue->getInt());
+			result.setInt(timeToInt(pValue->getString()));
 			break;
 		case NodeType::PARAM:
 			switch(pValue->getOp()) {
 			case Operation::TEXT_PARAM: {
 				auto sValue = pValue->getString();
-				result.setInt(timeToInt(sValue.data(), sValue.size()));
+				result.setInt(timeToInt(sValue));
 				break;
 			}
 			case Operation::UNBOUND_PARAM:

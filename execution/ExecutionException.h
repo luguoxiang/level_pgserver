@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <absl/strings/str_cat.h>
 #include "common/Exception.h"
 
 
@@ -15,6 +15,6 @@ private:
 	std::string m_sErrMsg;
 };
 
-#define EXECUTION_ERROR(args...) {auto sError = ConcateToString(args);LOG(ERROR)<<sError;throw new ExecutionException(sError);}
+#define EXECUTION_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw new ExecutionException(sError);}
 
 

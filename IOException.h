@@ -4,6 +4,8 @@
 #include <string.h>
 #include <netdb.h>
 #include <errno.h>
+#include <absl/strings/str_cat.h>
+
 #include "common/Exception.h"
 
 class IOException: public Exception {
@@ -34,4 +36,4 @@ private:
 	std::string m_sErrMsg;
 };
 
-#define IO_ERROR(args...) {auto sError = ConcateToString(args);LOG(ERROR)<<sError;throw new IOException(sError);}
+#define IO_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw new IOException(sError);}

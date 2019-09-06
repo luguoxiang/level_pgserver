@@ -1,9 +1,11 @@
 #include "ShowTables.h"
 #include "common/MetaConfig.h"
 #include <sstream>
+#include <absl/strings/match.h>
+#include <absl/strings/str_cat.h>
 
 std::string ShowTables::getInfoString() {
-	return ConcateToString("SELECT ", MetaConfig::getInstance().getTableCount());
+	return absl::StrCat("SELECT ", MetaConfig::getInstance().getTableCount());
 }
 
 void ShowTables::begin() {
@@ -30,4 +32,15 @@ void ShowTables::getResult(size_t index, ExecutionResult& result) {
 	} else {
 		assert(0);
 	}
+}
+
+int ShowTables::addProjection(const ParseNode* pNode) {
+	assert(pNode);
+	if (pNode->m_type != NodeType::NAME)
+		return -1;
+	if (absl::EqualsIgnoreCase(pNode->getString(), "TableName") )
+		return 0;
+	if (absl::EqualsIgnoreCase(pNode->getString(), "Info") )
+		return 1;
+	return -1;
 }

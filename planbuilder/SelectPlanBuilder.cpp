@@ -193,7 +193,7 @@ void SelectPlanBuilder::buildPlanForReadFile(const TableInfo* pTableInfo) {
 	ReadFilePlan* pValuePlan = new ReadFilePlan(
 			pTableInfo->getAttribute("path"),
 			pTableInfo->getAttribute("seperator", ","),
-			Tools::case_equals(
+			absl::EqualsIgnoreCase(
 					pTableInfo->getAttribute("ignore_first_line", "false"),
 					"true"));
 

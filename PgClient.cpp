@@ -97,8 +97,7 @@ void PgClient::handleParse() {
 	size_t iActualNum =m_pWorker->getBindParamNumber();
 
 	if (iParamNum != iActualNum) {
-		throw new ParseException(ConcateToString(
-				"Parameter number unmatch!, expect ", iParamNum, ", actual ", iActualNum));
+		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum, ", actual ", iActualNum);
 	}
 
 	m_sender.prepare('1');
@@ -115,8 +114,7 @@ void PgClient::handleBind() {
 
 	size_t iExpectNum = m_receiver.getNextShort();
 	if (iExpectNum != iActualNum) {
-		PARSE_ERROR(ConcateToString(
-				"Parameter format number unmatch!, expect ", iExpectNum, ", actual ", iActualNum));
+		PARSE_ERROR("Parameter format number unmatch!, expect ", iExpectNum, ", actual ", iActualNum);
 	}
 	std::vector<Operation> types(iActualNum);
 	for (size_t i = 0; i < iActualNum; ++i) {
@@ -147,7 +145,7 @@ void PgClient::handleBind() {
 		auto pParam = m_pWorker->getBindParam(i);
 		pParam->setBindParamMode(types[i]);
 		auto s = m_receiver.getNextStringWithLen();
-		pParam->setString(m_pWorker->allocString(s, true));
+		pParam->setString(m_pWorker->allocString(s));
 	}
 
 	m_sender.prepare('2');
@@ -267,7 +265,8 @@ void PgClient::run() {
 #endif
 		MessageHandler handler = m_handler[qtype];
 		if (handler == nullptr) {
-			IO_ERROR("Unable to handler message ", qtype);
+			char s[] = {qtype, '\0' };
+			IO_ERROR("Unable to handler message ", s);
 		}
 
 		try {

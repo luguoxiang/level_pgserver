@@ -49,13 +49,10 @@ struct WorkThreadInfo {
 		return m_result.m_bindParamNodes[i];
 	}
 
-	std::string_view allocString(std::string_view s, bool zeroTerminate) {
+	std::string_view allocString(std::string_view s) {
 		size_t len = s.length();
-		char* alloc = m_result.alloc(zeroTerminate ? len + 1 : len);
+		char* alloc = m_result.alloc(len);
 
-		if(zeroTerminate) {
-			alloc[len] = '\0';
-		}
 		std::copy(s.data(), s.data() + len, alloc);
 		return std::string_view(alloc, len);
 	}

@@ -6,9 +6,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 set (VERSION_MAJOR 1)
 set (VERSION_MINOR 0)
 
+set (CMAKE_CXX_STANDARD 17)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -std=c++17 -fno-rtti -DDISABLE_RTTI")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fno-rtti -DDISABLE_RTTI")
 
 set(BisonOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.tab.cpp)
 set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
@@ -28,6 +30,7 @@ endif()
  
 add_subdirectory(glog)
 add_subdirectory(leveldb)
+add_subdirectory(abseil-cpp)
 
 # configure a header file to pass some of the CMake settings
 # to the source code
@@ -66,11 +69,11 @@ file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
 file(GLOB PLANBUILDER_SOURCES "planbuilder/*.cpp")
 
-include_directories(PUBLIC . glog glog/src leveldb/include)
+include_directories(PUBLIC . glog glog/src leveldb/include abseil-cpp)
  
 add_library( Common STATIC ${COMMON_SOURCES}  ${BisonOutput} ${FlexOutput})
 add_library( Execution STATIC ${EXECUTION_SOURCES})
 add_library( PlanBuilder STATIC ${PLANBUILDER_SOURCES})
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} PlanBuilder Execution Common glog::glog leveldb)
+target_link_libraries( ${APP_EXEC} PlanBuilder Execution Common glog::glog leveldb absl::strings)
