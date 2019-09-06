@@ -16,6 +16,7 @@ public:
 	void run();
 
 private:
+	void resolve();
 	void describeColumn();
 	void sendRow();
 

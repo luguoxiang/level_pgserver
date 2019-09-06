@@ -64,11 +64,13 @@ endif()
 file(GLOB SOURCES "*.cpp" )
 file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
+file(GLOB PLANBUILDER_SOURCES "planbuilder/*.cpp")
 
 include_directories(PUBLIC . glog glog/src leveldb/include)
  
 add_library( Common STATIC ${COMMON_SOURCES}  ${BisonOutput} ${FlexOutput})
 add_library( Execution STATIC ${EXECUTION_SOURCES})
+add_library( PlanBuilder STATIC ${PLANBUILDER_SOURCES})
 
 add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} Execution Common glog::glog leveldb)
+target_link_libraries( ${APP_EXEC} PlanBuilder Execution Common glog::glog leveldb)

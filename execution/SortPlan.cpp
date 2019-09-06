@@ -2,7 +2,6 @@
 #include <cassert>
 #include <algorithm>
 #include <sstream>
-#include "execution/WorkThreadInfo.h"
 
 constexpr size_t SORT_BUFFER_SIZE = 64 * 1024 * 1024;
 

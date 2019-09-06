@@ -3,7 +3,6 @@
 #include <thread>
 #include <algorithm>
 #include <atomic>
-#include "ExecutionPlan.h"
 #include "common/ParseResult.h"
 #include "common/QueryRewritter.h"
 
@@ -33,7 +32,9 @@ struct WorkThreadInfo {
 
 	void parse(const std::string_view sql);
 
-	ExecutionPlanPtr resolve();
+	ParseNode* getParseTree() {
+		return m_result.m_pResult;
+	}
 
 	void print();
 

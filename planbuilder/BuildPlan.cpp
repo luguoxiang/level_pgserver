@@ -1,12 +1,18 @@
+#include "BuildPlan.h"
+#include "LevelDBPlanBuilder.h"
+#include "SelectPlanBuilder.h"
 
 #include "common/MetaConfig.h"
+#include "common/ConfigInfo.h"
 #include "common/ParseException.h"
-
-#include "execution/ShowColumns.h"
-#include "execution/BuildPlan.h"
-
-#include "execution/LevelDBInsertPlan.h"
+#include "execution/WorkloadResult.h"
+#include "execution/ShowTables.h"
+#include "execution/ExplainPlan.h"
 #include "execution/ConstPlan.h"
+#include "execution/ShowColumns.h"
+
+
+namespace {
 
 ExecutionPlanPtr buildPlanForDesc(const ParseNode* pNode) {
 	assert(pNode->children() == 1);
@@ -49,24 +55,43 @@ ExecutionPlanPtr buildPlanForConst(const ParseNode* pNode) {
 	return pResult;
 }
 
-
-ExecutionPlanPtr buildPlanForLevelDBInsert(const ParseNode* pNode)
-{
-	assert(pNode && pNode->children() >= 3);
-	const ParseNode* pTable = pNode->getChild(0);
-	const ParseNode* pColumn = pNode->getChild(1);
-	const ParseNode* pValue = pNode->getChild(2);
-
-	if(pColumn != nullptr) {
-		PARSE_ERROR("insert partial columns is not supported");
-	}
-	assert(pTable && pTable->m_type == NodeType::NAME);
-
-	const TableInfo* pTableInfo = MetaConfig::getInstance().getTableInfo(pTable->getString());
-	assert(pTableInfo != nullptr);
-
-	auto pValuePlan = buildPlan(pValue);
-
-	return ExecutionPlanPtr(new LevelDBInsertPlan(pTableInfo, pValuePlan.release()));
 }
 
+ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
+	if(pNode->m_type != NodeType::PLAN) {
+		PARSE_ERROR("WRONG NODE ", pNode->m_sExpr);
+	}
+	switch(pNode->getOp()){
+	case Operation::SHOW_TABLES:
+		return ExecutionPlanPtr(new ShowTables());
+	case Operation::DESC_TABLE:
+		return buildPlanForDesc(pNode);
+	case Operation::WORKLOAD:
+		return ExecutionPlanPtr(new WorkloadResult());
+
+	case Operation::SELECT: {
+		SelectPlanBuilder builder;
+		return builder.build(pNode);
+	}
+	case Operation::DELETE: {
+		LevelDBPlanBuilder builder;
+		return builder.buildDeletePlan(pNode);
+	}
+	case Operation::INSERT: {
+		LevelDBPlanBuilder builder;
+		return builder.buildInsertPlan(pNode);
+	}
+	case Operation::EXPLAIN:{
+		assert(pNode->children() == 1);
+		auto pPlan = buildPlan(pNode->getChild(0));
+		return ExecutionPlanPtr(new ExplainPlan(pPlan.release()));
+	}
+	case Operation::VALUES:
+		assert(pNode->children() == 1);
+		return buildPlanForConst(pNode->getChild(0));
+	default:
+		PARSE_ERROR("not supported: ", pNode->m_sExpr);
+		return nullptr;
+	}
+
+}

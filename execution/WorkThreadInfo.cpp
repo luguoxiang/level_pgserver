@@ -2,12 +2,12 @@
 #include <limits>
 
 #include "WorkThreadInfo.h"
+
 #include "common/ParseException.h"
 #include "common/ParseNode.h"
 #include "common/ParseTools.h"
 
 #include "execution/ExecutionException.h"
-#include "execution/BuildPlan.h"
 #include "execution/BasePlan.h"
 
 thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
@@ -35,16 +35,11 @@ void WorkThreadInfo::cancel(bool planOnly) {
 	m_bTerminate.store(true);
 
 	if(!planOnly) {
+		::close(m_iAcceptFd);
 		::shutdown(m_iAcceptFd, SHUT_RDWR);
 	}
 }
-ExecutionPlanPtr WorkThreadInfo::resolve() {
-	if (m_result.m_pResult == nullptr) {
-		return ExecutionPlanPtr(new EmptyPlan());
-	} else {
-		return buildPlan(m_result.m_pResult);
-	}
-}
+
 void WorkThreadInfo::parse(const std::string_view sql) {
 	if (strncasecmp("DEALLOCATE", sql.data(), 10) == 0) {
 		m_result.m_pResult = nullptr;

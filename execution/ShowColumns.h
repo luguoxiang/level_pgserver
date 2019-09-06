@@ -5,7 +5,6 @@
 #include <pthread.h>
 #include "common/ConfigInfo.h"
 #include "execution/BasePlan.h"
-#include "execution/WorkThreadInfo.h"
 
 class ShowColumns: public LeafPlan {
 public:

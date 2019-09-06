@@ -14,6 +14,8 @@
 #include "execution/ExecutionException.h"
 #include "execution/WorkThreadInfo.h"
 
+#include "planbuilder/BuildPlan.h"
+
 namespace {
 constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
 constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
@@ -53,6 +55,14 @@ PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate) :
 	m_handler['E'] = &PgClient::handleExecute;
 }
 
+void PgClient::resolve() {
+	auto pTree = m_pWorker->getParseTree();
+	if (pTree == nullptr) {
+		m_pPlan.reset(new EmptyPlan());
+	} else {
+		m_pPlan = buildPlan(pTree);
+	}
+}
 
 void PgClient::handleSync() {
 	DLOG(INFO) << "sync";
@@ -69,7 +79,7 @@ void PgClient::handleQuery() {
 	DLOG(INFO) << "Q:"<< sql;
 	m_pWorker->parse(sql);
 
-	m_pPlan = m_pWorker->resolve();
+	resolve();
 
 	describeColumn();
 	handleExecute();
@@ -143,7 +153,7 @@ void PgClient::handleBind() {
 	m_sender.prepare('2');
 	m_sender.commit();
 
-	m_pPlan = m_pWorker->resolve();
+	resolve();
 }
 
 void PgClient::handleDescribe() {
