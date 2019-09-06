@@ -71,7 +71,7 @@ public:
 
 	void addColumn(const MetaConfig* pConfig, const std::string& sValue);
 
-	void addKeyColumn(const std::string& name);
+	void addKeyColumn(const std::string_view name);
 
 	size_t getColumnCount() const {
 		return m_columns.size();

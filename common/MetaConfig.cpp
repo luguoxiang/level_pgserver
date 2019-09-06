@@ -1,5 +1,6 @@
 #include "MetaConfig.h"
 #include "common/ConfigException.h"
+#include <absl/strings/str_split.h>
 #include <fstream>
 #include <string>
 #include <regex>
@@ -44,7 +45,6 @@ void MetaConfig::load(const std::string& sPath) {
 		TableInfo* pCurrentTable = nullptr;
 
 		std::regex attributeRegex(R"(([^=\s]+)\s*=\s*([^=]+)\s*)");
-		std::regex keyRegex(R"([^\s=,]+)");
 
 		while (std::getline(infile, line)) {
 			if (size_t pos = line.find("#"); pos != std::string::npos) {
@@ -89,13 +89,11 @@ void MetaConfig::load(const std::string& sPath) {
 					} else if (sKey == "column") {
 						pCurrentTable->addColumn(this, sValue);
 					} else if (sKey == "key") {
-						std::smatch keyMatchs;
-						auto start = sValue.cbegin();
-						while (std::regex_search(start, sValue.cend(), keyMatchs, keyRegex)) {
-							std::string sName = keyMatchs[0];
-							start = keyMatchs.suffix().first;
+						std::vector<std::string_view> keys = absl::StrSplit(sValue, ",");
+						for(auto sName : keys) {
 							pCurrentTable->addKeyColumn(sName);
 						}
+
 						pCurrentTable->evaluate();
 					} else {
 						DLOG(INFO) <<"add attribute "<< sKey << " = " << sValue;

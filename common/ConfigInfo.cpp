@@ -44,7 +44,7 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 
 }
 
-void TableInfo::addKeyColumn(const std::string& name) {
+void TableInfo::addKeyColumn(const std::string_view name) {
 	if(auto iter = m_columnMap.find(name);  iter != m_columnMap.end()) {
 		DBColumnInfo* pColumn = iter->second;
 		if (pColumn->m_type == DBDataType::DOUBLE) {
@@ -53,9 +53,9 @@ void TableInfo::addKeyColumn(const std::string& name) {
 		}
 		pColumn->m_iKeyIndex = m_keys.size();
 		m_keys.push_back(pColumn);
-		DLOG(INFO)<<"add key " << pColumn->m_name << ", index="<< pColumn->m_iKeyIndex;
+		DLOG(INFO)<<"add key '" << pColumn->m_name << "', index="<< pColumn->m_iKeyIndex;
 	} else{
-		 CONFIG_ERROR("Undefined key column ", name);
+		 CONFIG_ERROR("Undefined key column '", name, "'");
 	}
 
 
