@@ -18,7 +18,13 @@ int main(int argc, char** argv) {
 	static_assert(std::numeric_limits<double>::is_iec559);
 
 	try {
-		MetaConfig::getInstance().load("meta.conf");
+		const char* pszConfigPath = "meta.conf";
+		if(argc > 1) {
+			pszConfigPath = argv[1];
+			LOG(INFO) << "config: "<<pszConfigPath;
+		}
+		MetaConfig::getInstance().load(pszConfigPath);
+
 		PgServer::getInstance().run();
 	} catch (Exception* pe) {
 		LOG(ERROR)<< "start server failed:" << pe->what();
