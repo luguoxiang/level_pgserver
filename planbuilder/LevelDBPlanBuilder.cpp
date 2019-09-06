@@ -15,29 +15,45 @@
 
 namespace {
 
-struct ScanPlanInfo {
+class ScanPlanInfo {
+public:
 	ScanPlanInfo(const ParseNode* pNode, const TableInfo* pTableInfo);
 	LevelDBScanPlan* m_pScan;
 	ExecutionPlanPtr m_pPlan;
-	std::set<std::string_view> m_solved;
 
 	bool needFilter(const ParseNode* pNode);
 	bool isFullScan() {
 		return m_solved.empty();
 	}
+private:
+	std::set<std::string_view> m_solved;
 };
 
-ScanPlanInfo::ScanPlanInfo(const ParseNode* pNode, const TableInfo* pTableInfo) {
+ScanPlanInfo::ScanPlanInfo(const ParseNode* pPredicate, const TableInfo* pTableInfo) {
 	m_pScan = new LevelDBScanPlan(pTableInfo);
 	m_pPlan.reset(m_pScan);
 
-	m_pScan->setPredicate(pNode, m_solved);
+	if(pPredicate  == nullptr) {
+		return;
+	}
+	assert(pPredicate->m_type == NodeType::OP);
 
-	if (needFilter(pNode)) {
+	if(pPredicate->getOp() == Operation::OR) {
+		auto pFilter = new FilterPlan(m_pPlan.release());
+		m_pPlan.reset(pFilter);
+		for(size_t i=0;i<pPredicate->children();++i) {
+			pFilter->addPredicate(pPredicate->getChild(i), nullptr);
+		}
+		return;
+	}
+
+	m_pScan->setPredicate(pPredicate, m_solved);
+
+	if (needFilter(pPredicate)) {
 		auto pFilter = new FilterPlan(m_pPlan.release());
 		m_pPlan.reset(pFilter);
 
-		auto hasFilter = pFilter->addPredicate(pNode, &m_solved);
+		auto hasFilter = pFilter->addPredicate(pPredicate, &m_solved);
 		assert(hasFilter);
 	}
 
