@@ -149,6 +149,18 @@ void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
 	}
 }
 
+namespace {
+	int64_t nodeValueToInt(const ParseNode* pNode) {
+		assert(pNode->m_type == NodeType::INT);
+		int64_t iValue;
+		auto sValue = pNode->getString();
+		if(!absl::SimpleAtoi(sValue, &iValue)) {
+			PARSE_ERROR("Could not convert to int:", sValue);
+		}
+		return iValue;
+	}
+}
+
 void SelectPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
 	if (pNode == nullptr) {
 		return;
@@ -162,10 +174,8 @@ void SelectPlanBuilder::buildPlanForLimit(const ParseNode* pNode) {
 	const ParseNode* pCount = pNode->getChild(0);
 	const ParseNode* pOffset = pNode->getChild(1);
 
-	assert(pCount->m_type == NodeType::INT);
-	assert(pOffset->m_type == NodeType::INT);
-	int64_t iOffset = pOffset->getInt();
-	int64_t iCount = pCount->getInt();
+	int64_t iOffset = nodeValueToInt(pOffset);
+	int64_t iCount = nodeValueToInt(pCount);
 	pLimitPlan->setLimit(iCount, iOffset);
 }
 
