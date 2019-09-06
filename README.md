@@ -6,7 +6,7 @@ sudo apt-get install flex bison (Linux)
 git submodule update --init
 cmake .
 make
-GLOG_logtostderr=1  bin/csv2pgserver 
+GLOG_logtostderr=1  bin/level_pgserver 
 ```
 
 ## Download PostgreSQL client
