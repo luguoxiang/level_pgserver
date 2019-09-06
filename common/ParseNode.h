@@ -137,15 +137,6 @@ public:
 	}
 
 
-	int64_t getInt() const {
-		int64_t value;
-		if(!absl::SimpleAtoi(m_sValue, &value)) {
-			PARSE_ERROR("Could not convert to int:", m_sValue);
-		}
-		return value;
-	}
-
-
 	void setString(const std::string_view value) {
 		m_sValue = value;
 	}
