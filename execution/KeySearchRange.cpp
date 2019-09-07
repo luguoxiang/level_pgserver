@@ -144,9 +144,9 @@ void KeySearchRange::doSetPredicate(const ParseNode* pPredicate) {
 	Operation reverseOp;
 	switch (op) {
 	case Operation::AND:
-		for(size_t i=0;i<pPredicate->children();++i) {
-			doSetPredicate(pPredicate->getChild(i));
-		}
+		pPredicate->forEachChild([this](size_t index, auto pChild) {
+			doSetPredicate(pChild);
+		});
 		return;
 	case Operation::COMP_EQ:
 		reverseOp = op;

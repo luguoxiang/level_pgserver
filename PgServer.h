@@ -19,7 +19,6 @@ private:
 
 	void worker_thread(WorkThreadInfo* pArg);
 
-	static void int_handler(int code);
 	int bindSocket(int port);
 
 	int acceptSocket();

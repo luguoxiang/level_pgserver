@@ -41,9 +41,10 @@ ScanPlanInfo::ScanPlanInfo(const ParseNode* pPredicate, const TableInfo* pTableI
 	if(pPredicate->getOp() == Operation::OR) {
 		auto pFilter = new FilterPlan(m_pPlan.release());
 		m_pPlan.reset(pFilter);
-		for(size_t i=0;i<pPredicate->children();++i) {
-			pFilter->addPredicate(pPredicate->getChild(i), nullptr);
-		}
+
+		pPredicate->forEachChild([pFilter](size_t index, auto pChild) {
+			pFilter->addPredicate(pChild, nullptr);
+		});
 		return;
 	}
 
@@ -117,11 +118,11 @@ ExecutionPlanPtr LevelDBPlanBuilder::buildUnionAll(const TableInfo* pTableInfo, 
 
 	auto pDBIter = LevelDBHandler::getHandler(pTableInfo)->createIterator();
 
-	for (size_t i = 0; i < rangePtrList.size(); ++i) {
-		auto pScanInfo = rangePtrList[i];
+	for(auto pScanInfo:rangePtrList) {
 		pScanInfo->m_pScan->setLevelDBIterator(pDBIter);
 		pUnion->addChildPlan(pScanInfo->m_pPlan.release());
 	}
+
 	return std::move(pPlan);
 }
 

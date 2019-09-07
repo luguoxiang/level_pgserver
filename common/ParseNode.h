@@ -8,7 +8,7 @@
 #include <string>
 #include <initializer_list>
 #include <absl/strings/numbers.h>
-
+#include <functional>
 #include "ParseException.h"
 
 enum class NodeType {
@@ -143,6 +143,13 @@ public:
 	const std::string_view getString() const {
 		return m_sValue;
 	}
+
+	void forEachChild(std::function<void (size_t index, const ParseNode*)> fn) const {
+		for(size_t i=0 ;i<m_iChildNum ;++i) {
+			fn(i, m_children[i]);
+		}
+	}
+
 private:
 	std::string_view m_sValue;
 

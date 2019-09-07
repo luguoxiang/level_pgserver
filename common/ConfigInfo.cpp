@@ -74,7 +74,7 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 		for(size_t i=0;i<pColumn->children();++i) {
 			auto p = pColumn->getChild(i);
 			if (p == nullptr || p->m_type != NodeType::NAME) {
-				PARSE_ERROR("Unsupported select expression:" , p->m_sExpr);
+				PARSE_ERROR("Unsupported select expression:" , pColumn->m_sExpr);
 			}
 			const DBColumnInfo* pColumnInfo = getColumnByName(p->getString());
 			if (pColumnInfo == 0) {

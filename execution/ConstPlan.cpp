@@ -73,9 +73,9 @@ int ConstPlan::addProjection(const ParseNode* pNode) {
 
 void ConstPlan::addRow(const ParseNode* pRow) {
 	if (m_rows.empty()) {
-		for (size_t i = 0; i < pRow->children(); ++i) {
-			m_columns.push_back(std::to_string(i+1));
-		}
+		pRow->forEachChild([this](size_t index, auto pChild) {
+			m_columns.push_back(absl::StrCat("c", index+1));
+		});
 	}
 	assert(pRow->children() == m_columns.size());
 	m_rows.push_back(pRow);

@@ -148,12 +148,11 @@ void PgServer::terminate() {
 	::shutdown(m_iFd, SHUT_RDWR);
 }
 
-void PgServer::int_handler(int code) {
-	PgServer::getInstance().terminate();
-}
 
 void PgServer::run() {
-	std::signal(SIGINT, int_handler);
+	std::signal(SIGINT, [] (int code) {
+		PgServer::getInstance().terminate();
+	});
 
 	m_iFd = bindSocket(m_port);
 

@@ -37,10 +37,10 @@ void printTree(const ParseNode* pRoot, int level) {
 		std::cout << pRoot->m_sExpr << std::endl;
 		break;
 	}
-	for (size_t i = 0; i < pRoot->children(); ++i) {
-		auto pChild = pRoot->getChild(i);
+	pRoot->forEachChild([level](size_t index, auto pChild) {
 		printTree(pChild, level + 1);
-	}
+	});
+
 }
 
 ParseNode::ParseNode(NodeType type,

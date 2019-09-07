@@ -138,12 +138,12 @@ void FilterPlan::setPredicate(const ParseNode* pNode) {
 		return;
 	}
 	if (pNode->getOp() == Operation::OR) {
-		for (size_t i = 0; i < pNode->children(); ++i) {
-			auto pChild = pNode->getChild(i);
+		pNode->forEachChild([this](size_t index, auto pChild) {
 			//should be rewritten
 			assert(pChild->getOp() != Operation::OR);
 			addPredicate(pChild);
-		}
+		});
+
 	} else {
 		addPredicate(pNode);
 	}

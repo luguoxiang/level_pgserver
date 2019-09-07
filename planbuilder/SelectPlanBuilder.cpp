@@ -20,8 +20,8 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 
 	assert(pNode->children() > 0);
 	bool bAlreadySorted = true;
-	for (size_t i = 0; i < pNode->children(); ++i) {
-		const ParseNode* pChild = pNode->getChild(i);
+
+	pNode->forEachChild([pPlan = m_pPlan.get(), &bAlreadySorted](size_t index, auto pChild) {
 		assert(pChild);
 
 		assert(pChild->children() == 2);
@@ -32,11 +32,9 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 		SortOrder order =
 				(pChild->getChild(1)->getOp() == Operation::ASC) ?
 						SortOrder::Ascend : SortOrder::Descend;
-		if (!m_pPlan->ensureSortOrder(i, pColumn->getString(), order)) {
-			bAlreadySorted = false;
-			break;
-		}
-	}
+		bAlreadySorted= bAlreadySorted && pPlan->ensureSortOrder(index, pColumn->getString(), order);
+	});
+
 	if (bAlreadySorted) {
 		return;
 	}
@@ -45,14 +43,15 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 	m_pPlan.reset(pSort);
 
 	assert(pNode->children() > 0);
-	for (size_t i = 0; i < pNode->children(); ++i) {
-		const ParseNode* pChild = pNode->getChild(i);
+
+	pNode->forEachChild([pSort](size_t index, auto pChild) {
 		const ParseNode* pColumn = pChild->getChild(0);
 
 		bool bAscend = (pChild->getChild(1)->getOp() == Operation::ASC);
 		pSort->addSortSpecification(pColumn,
 				bAscend ? SortOrder::Ascend : SortOrder::Descend);
-	}
+	});
+
 }
 
 void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
@@ -83,8 +82,7 @@ void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 	ProjectionPlan* pProjPlan = new ProjectionPlan(m_pPlan.release());
 	m_pPlan.reset(pProjPlan);
 
-	for (int i = 0; i < pNode->children(); ++i) {
-		auto pColumn = pNode->getChild(i);
+	pNode->forEachChild([pProjPlan](size_t index, auto pColumn) {
 		std::string_view sAlias;
 		if (pColumn->m_type == NodeType::OP && pColumn->getOp() == Operation::AS) {
 			assert(pColumn->children() == 2);
@@ -104,11 +102,11 @@ void SelectPlanBuilder::buildPlanForProjection(const ParseNode* pNode) {
 
 			if (!pProjPlan->addGroupBy()
 					|| !pProjPlan->project(pColumn, sAlias)) {
-				PARSE_ERROR("Unrecognized column ", pNode->m_sExpr);
+				PARSE_ERROR("Unrecognized column ", pColumn->m_sExpr);
 			}
-
 		}
-	}
+	});
+
 }
 
 void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
@@ -116,37 +114,29 @@ void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
 		return;
 
 	bool bNeedSort = false;
-	for (size_t i = 0; i < pNode->children(); ++i) {
-		const ParseNode* pChild = pNode->getChild(i);
+
+	pNode->forEachChild([pPlan=m_pPlan.get(), &bNeedSort](size_t index, auto pChild) {
 		assert(pChild);
 
 		if (pChild->m_type != NodeType::NAME) {
 			PARSE_ERROR("Wrong group by clause!");
 		}
-
-		if (!m_pPlan->ensureSortOrder(i, pChild->getString(), SortOrder::Any)) {
-			bNeedSort = true;
-		}
-	}
+		bNeedSort = bNeedSort || !pPlan->ensureSortOrder(index, pChild->getString(), SortOrder::Any);
+	});
 
 	if (bNeedSort) {
 		auto pSort = new SortPlan(m_pPlan.release());
 		m_pPlan.reset(pSort);
-		for (size_t i = 0; i < pNode->children(); ++i) {
-			auto pChild = pNode->getChild(i);
-			assert(pChild);
-
+		pNode->forEachChild([pSort](size_t index, auto pChild) {
 			pSort->addSortSpecification(pChild, SortOrder::Any);
-		}
+		});
 	}
 	auto pGroupBy = new GroupByPlan(m_pPlan.release());
 	m_pPlan.reset(pGroupBy);
-	for (size_t i = 0; i < pNode->children(); ++i) {
-		auto pChild = pNode->getChild(i);
-		assert(pChild);
 
+	pNode->forEachChild([pGroupBy](size_t index, auto pChild) {
 		pGroupBy->addGroupByColumn(pChild);
-	}
+	});
 }
 
 namespace {

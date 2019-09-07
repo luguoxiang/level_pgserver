@@ -44,6 +44,7 @@ ExecutionPlanPtr buildPlanForConst(const ParseNode* pNode) {
 	ConstPlan* pConst = new ConstPlan();
 	ExecutionPlanPtr pResult(pConst);
 	const ParseNode* pLastRow = nullptr;
+
 	for (size_t i=0;i<pNode->children(); ++i) {
 		auto pRow = pNode->getChild(i);
 		if (pLastRow != nullptr && pLastRow->children() != pRow->children()) {
