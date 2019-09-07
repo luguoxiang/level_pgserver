@@ -120,22 +120,18 @@ ParseNode* QueryRewritter::rewriteInOrNotIN(ParseNode* pNode, bool in) {
 			pNode->m_sExpr, expressions);
 }
 
-bool QueryRewritter::hasOrPredicate(ParseNode* pNode) {
+bool QueryRewritter::hasOrPredicate(const ParseNode* pNode) {
 	if(pNode->getOp() == Operation::OR) {
 		return true;
 	}
 	if(pNode->getOp() == Operation::IN) {
 		assert(pNode->children() == 2);
-		pNode = pNode->getChild(1);
-
 		return true;
 	}
-	for (size_t i = 0; i < pNode->children(); ++i) {
-		auto pChild = pNode->getChild(i);
-		if(hasOrPredicate(pChild)) {
-			return true;
-		}
-	}
+	return pNode->anyChildOf([this](size_t index, auto pChild) {
+		return hasOrPredicate(pChild);
+	});
+
 	return false;
 }
 

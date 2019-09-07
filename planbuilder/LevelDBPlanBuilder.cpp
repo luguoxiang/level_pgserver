@@ -63,12 +63,9 @@ ScanPlanInfo::ScanPlanInfo(const ParseNode* pPredicate, const TableInfo* pTableI
 bool ScanPlanInfo::needFilter(const ParseNode* pNode) {
 	assert(pNode->getOp() != Operation::OR);
 	if (pNode->getOp() == Operation::AND) {
-		for (size_t i = 0; i < pNode->children(); ++i) {
-			if (needFilter(pNode->getChild(i))) {
-				return true;
-			}
-		}
-		return false;
+		return pNode->anyChildOf([this](size_t index, auto pChild) {
+			return needFilter(pChild);
+		});
 	}
 	return m_solved.find(pNode->m_sExpr) == m_solved.end();
 }

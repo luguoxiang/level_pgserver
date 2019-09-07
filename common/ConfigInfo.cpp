@@ -71,18 +71,17 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 		}
 	} else {
 		assert(pColumn->children() > 0);
-		for(size_t i=0;i<pColumn->children();++i) {
-			auto p = pColumn->getChild(i);
-			if (p == nullptr || p->m_type != NodeType::NAME) {
-				PARSE_ERROR("Unsupported select expression:" , pColumn->m_sExpr);
+		pColumn->forEachChild([this, &columns](size_t index, auto p) {
+			assert(p);
+			if (p->m_type != NodeType::NAME) {
+				PARSE_ERROR("Unsupported select expression:" , p->m_sExpr);
 			}
 			const DBColumnInfo* pColumnInfo = getColumnByName(p->getString());
 			if (pColumnInfo == 0) {
 				PARSE_ERROR("Table ", m_name, " does not have column named ", p->getString());
 			}
 			columns.push_back(pColumnInfo);
-		}
-
+		});
 	}
 }
 

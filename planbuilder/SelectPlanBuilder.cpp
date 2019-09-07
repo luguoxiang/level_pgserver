@@ -19,9 +19,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 		return;
 
 	assert(pNode->children() > 0);
-	bool bAlreadySorted = true;
-
-	pNode->forEachChild([pPlan = m_pPlan.get(), &bAlreadySorted](size_t index, auto pChild) {
+	bool bAlreadySorted = pNode->allChildOf([pPlan = m_pPlan.get()](size_t index, auto pChild) {
 		assert(pChild);
 
 		assert(pChild->children() == 2);
@@ -32,7 +30,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 		SortOrder order =
 				(pChild->getChild(1)->getOp() == Operation::ASC) ?
 						SortOrder::Ascend : SortOrder::Descend;
-		bAlreadySorted= bAlreadySorted && pPlan->ensureSortOrder(index, pColumn->getString(), order);
+		return pPlan->ensureSortOrder(index, pColumn->getString(), order);
 	});
 
 	if (bAlreadySorted) {
@@ -45,6 +43,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 	assert(pNode->children() > 0);
 
 	pNode->forEachChild([pSort](size_t index, auto pChild) {
+		assert(pChild);
 		const ParseNode* pColumn = pChild->getChild(0);
 
 		bool bAscend = (pChild->getChild(1)->getOp() == Operation::ASC);
@@ -113,15 +112,13 @@ void SelectPlanBuilder::buildPlanForGroupBy(const ParseNode* pNode) {
 	if (pNode == nullptr)
 		return;
 
-	bool bNeedSort = false;
-
-	pNode->forEachChild([pPlan=m_pPlan.get(), &bNeedSort](size_t index, auto pChild) {
+	bool bNeedSort = pNode->anyChildOf([pPlan=m_pPlan.get()](size_t index, auto pChild) {
 		assert(pChild);
 
 		if (pChild->m_type != NodeType::NAME) {
 			PARSE_ERROR("Wrong group by clause!");
 		}
-		bNeedSort = bNeedSort || !pPlan->ensureSortOrder(index, pChild->getString(), SortOrder::Any);
+		return !pPlan->ensureSortOrder(index, pChild->getString(), SortOrder::Any);
 	});
 
 	if (bNeedSort) {

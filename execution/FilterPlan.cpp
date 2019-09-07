@@ -77,9 +77,9 @@ void FilterPlan::doAddPredicate(std::vector<PredicateInfo>& andList, const Parse
 
 	auto op = pPredicate->getOp();
 	if (op == Operation::AND) {
-		for (size_t i=0;i<pPredicate->children(); ++i ) {
-			doAddPredicate(andList, pPredicate->getChild(i), pIgnore);
-		}
+		pPredicate->forEachChild([this,&andList, pIgnore](size_t index, auto pChild){
+			doAddPredicate(andList, pChild, pIgnore);
+		});
 		return;
 	}
 	assert(op != Operation::OR);

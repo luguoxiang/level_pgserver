@@ -150,6 +150,23 @@ public:
 		}
 	}
 
+	bool allChildOf(std::function<bool (size_t index, const ParseNode*)> fn) const {
+		for(size_t i=0 ;i<m_iChildNum ;++i) {
+			if(!fn(i, m_children[i])){
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool anyChildOf(std::function<bool (size_t index, const ParseNode*)> fn) const {
+		for(size_t i=0 ;i<m_iChildNum ;++i) {
+			if(fn(i, m_children[i])){
+				return true;
+			}
+		}
+		return false;
+	}
 private:
 	std::string_view m_sValue;
 
