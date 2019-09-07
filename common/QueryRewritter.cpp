@@ -131,8 +131,6 @@ bool QueryRewritter::hasOrPredicate(const ParseNode* pNode) {
 	return pNode->anyChildOf([this](size_t index, auto pChild) {
 		return hasOrPredicate(pChild);
 	});
-
-	return false;
 }
 
 void QueryRewritter::collectOrOperators(ParseNode* pPredicate,
