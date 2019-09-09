@@ -11,7 +11,7 @@ SortPlan::SortPlan(ExecutionPlan* pPlan) :
 }
 
 void SortPlan::begin() {
-	m_pBuffer = std::make_unique<ExecutionBuffer>(SORT_BUFFER_SIZE);
+	m_pBuffer.emplace(SORT_BUFFER_SIZE);
 
 	m_pPlan->begin();
 	for (size_t i = 0; i < m_proj.size(); ++i) {
@@ -63,7 +63,7 @@ void SortPlan::begin() {
 
 void SortPlan::end() {
 	m_rows.clear();
-	m_pBuffer.reset(nullptr);
+	m_pBuffer.reset();
 }
 
 bool SortPlan::next() {

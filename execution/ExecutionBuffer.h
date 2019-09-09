@@ -21,12 +21,6 @@ public:
 
 	DataRow copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types);
 
-	void purge() {
-		m_iUsed = 0;
-		m_iBlockUsed = 0;
-		m_iCurrentBlock = 0;
-	}
-
 	void getResult(DataRow& row, size_t index, ExecutionResult& result);
 	int compare(DataRow& row1, DataRow& row2, size_t index);
 

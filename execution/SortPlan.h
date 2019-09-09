@@ -4,6 +4,7 @@
 #include "execution/BasePlan.h"
 #include "common/ParseException.h"
 
+#include <optional>
 
 class SortPlan: public SingleChildPlan {
 	struct SortProjection {
@@ -94,6 +95,6 @@ private:
 	std::vector<DBDataType> m_types;
 	int m_iCurrent = 0;
 
-	std::unique_ptr<ExecutionBuffer> m_pBuffer;
+	std::optional<ExecutionBuffer> m_pBuffer;
 };
 
