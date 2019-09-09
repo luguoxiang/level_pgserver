@@ -3,8 +3,8 @@
 #include "common/Exception.h"
 #include "execution/BasePlan.h"
 #include <vector>
-#include <sstream>
 #include <absl/strings/str_cat.h>
+#include <absl/strings/substitute.h>
 
 class LimitPlan: public SingleChildPlan {
 public:
@@ -12,10 +12,7 @@ public:
 
 
 	virtual void explain(std::vector<std::string>& rows, size_t depth) override {
-		std::ostringstream os;
-		os << std::string(depth, '\t');
-		os << "Limit "<< m_iLimit<< ","<< m_iOffset;
-		rows.push_back(os.str());
+		rows.push_back(absl::Substitute("$0Limit $1, $2", std::string(depth, '\t'),m_iLimit,m_iOffset));
 
 		SingleChildPlan::explain(rows, depth);
 	}

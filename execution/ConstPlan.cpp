@@ -24,26 +24,8 @@ DBDataType ConstPlan::getResultType(size_t index) {
 			PARSE_ERROR("value ", pValue->m_sExpr ," at column ", index + 1, " does not match with previous rows:");
 		}
 		lastType = pValue->m_type;
-		switch (lastType) {
-		case NodeType::INT:
-			result = DBDataType::INT64;
-			break;
-		case NodeType::STR:
-			result = DBDataType::STRING;
-			break;
-		case NodeType::BINARY:
-			result = DBDataType::BYTES;
-			break;
-		case NodeType::FLOAT:
-			result = DBDataType::DOUBLE;
-			break;
-		case NodeType::DATE:
-			result = DBDataType::DATETIME;
-			break;
-		default:
-			assert(0);
-			PARSE_ERROR("Wrong value: ", pValue->m_sExpr);
-		}
+		result = pValue->getConstResultType();
+		assert(result != DBDataType::UNKNOWN);
 	}
 	return result;
 

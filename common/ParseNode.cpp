@@ -18,15 +18,6 @@ void printTree(const ParseNode* pRoot, int level) {
 	case NodeType::INFO:
 		std::cout << pRoot->m_sExpr << std::endl;
 		break;
-	case NodeType::BINARY: {
-		std::cout << "\\x";
-		auto sValue = pRoot->getString();
-		for (i = 0; i < sValue.size(); ++i) {
-			std::cout << std::hex << sValue[i];
-		}
-		std::cout << std::endl;
-		break;
-	}
 	case NodeType::PARENT:
 	case NodeType::NAME:
 	case NodeType::PLAN:

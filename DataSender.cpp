@@ -82,6 +82,24 @@ void DataSender::addStringZeroEnd(const std::string_view s) {
 	m_buffer[m_iWritten] = '\0';
 	++m_iWritten;
 }
+
+constexpr auto DIGITS = "0123456789ABCDEF";
+
+void DataSender::addBytesString(const std::string_view s) {
+	auto len = 2 + s.length() * 2;
+	addInt(len);
+	check(len);
+	m_buffer[m_iWritten++] = '\\';
+	m_buffer[m_iWritten++] = 'x';
+
+	for (size_t i = 0; i   <  s.length() ; ++i) {
+		uint8_t c = s[i];
+
+		m_buffer[m_iWritten++] = DIGITS[c >> 4];
+		m_buffer[m_iWritten++] = DIGITS[c & 0xf];
+	}
+}
+
 void DataSender::addString(const std::string_view s) {
 	auto len = s.length();
 	addInt(len);

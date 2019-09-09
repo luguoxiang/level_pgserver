@@ -113,20 +113,22 @@ USING {return USING;}
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::STR, yylloc->first_column, yylloc->last_column);
 	yylval->pNode = pNode;
 
-	//remove first and last quote charactors
-	size_t len =  pNode->m_sExpr.length() - 2;
+	//ignore last quote charactors
+	size_t len =  pNode->m_sExpr.length() - 1;
 	char* pValue = pResult->alloc(len);
 
 	size_t resultSize = 0;
-	for (size_t i = 0; i< len ; ++i) {
-		char c = pNode->m_sExpr[i + 1];
+	char szBuf[3];
+	for (size_t i = 1; i< len ; ++i) {
+		char c = pNode->m_sExpr[i];
 		if (c == '\\') {
-			if (i+3 < len && IS_DIGIT(pValue[i + 1]) && IS_DIGIT(pValue[i + 2]) && IS_DIGIT(pValue[i + 3])) {
-					c = (pValue[++i] - '0') * 64;
-					c += (pValue[++i] - '0') * 8;
-					c += pValue[++i] - '0';
+			if (i+3 < len && IS_DIGIT(pNode->m_sExpr[i + 1]) && IS_DIGIT(pNode->m_sExpr[i + 2]) && IS_DIGIT(pNode->m_sExpr[i + 3])) {
+					c = (pNode->m_sExpr[++i] - '0') * 64;
+					c += (pNode->m_sExpr[++i] - '0') * 8;
+					c += pNode->m_sExpr[++i] - '0';
 			} else if (i + 1 < len){
-				c = pValue[++i];
+				c = pNode->m_sExpr[++i];
+
 				switch (c) {
 				case 'n':
 					c = '\n';
@@ -136,6 +138,12 @@ USING {return USING;}
 					break;
 				case 't':
 					c = '\t';
+					break;
+				case 'x':
+					szBuf[0] = pNode->m_sExpr[++i];
+					szBuf[1] = pNode->m_sExpr[++i];
+					szBuf[2] = 0;
+					c= strtol(szBuf,0, 16);
 					break;
 				default:
 					break;

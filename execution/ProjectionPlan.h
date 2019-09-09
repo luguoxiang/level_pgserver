@@ -5,10 +5,10 @@
 #include <map>
 class ProjectionPlan: public SingleChildPlan {
 	struct ProjectionInfo {
-		size_t m_iSubIndex;
+		int m_iSubIndex;
 		std::string_view m_sName;
 		std::string_view m_sRaw;
-		const ParseNode* pNode;
+		const ParseNode* m_pNode;
 	};
 public:
 	ProjectionPlan(ExecutionPlan*pPlan) :
@@ -67,23 +67,15 @@ public:
 		return m_proj[index].m_sName;
 	}
 
-	virtual DBDataType getResultType(size_t index)override {
-		assert(index < m_proj.size());
-		size_t iSubIndex = m_proj[index].m_iSubIndex;
-		return m_pPlan->getResultType(iSubIndex);
-	}
+	virtual DBDataType getResultType(size_t index)override;
 
 
-	virtual void getResult(size_t index, ExecutionResult& result)override {
-		assert(index < m_proj.size());
-		size_t iSubIndex = m_proj[index].m_iSubIndex;
-		return m_pPlan->getResult(iSubIndex, result);
-	}
+	virtual void getResult(size_t index, ExecutionResult& result)override;
 
 	bool addGroupBy() {
 		m_pPlan.reset(new GroupByPlan(m_pPlan.release()));
 		for(auto& proj : m_proj) {
-			proj.m_iSubIndex = m_pPlan->addProjection(proj.pNode);
+			proj.m_iSubIndex = m_pPlan->addProjection(proj.m_pNode);
 			if (proj.m_iSubIndex < 0) {
 				return false;
 			}

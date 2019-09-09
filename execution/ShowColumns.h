@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <vector>
-#include <pthread.h>
+#include <absl/strings/str_cat.h>
 #include "common/ConfigInfo.h"
 #include "execution/BasePlan.h"
 
@@ -13,10 +13,7 @@ public:
 	}
 
 	virtual void explain(std::vector<std::string>& rows, size_t depth) override {
-		std::ostringstream os;
-		os << std::string(depth, '\t');
-		os << "ShowColumns";
-		rows.push_back(os.str());
+		rows.push_back(absl::StrCat(std::string(depth, '\t'), "ShowColumns"));
 	}
 
 	virtual void begin() override;

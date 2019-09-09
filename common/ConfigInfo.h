@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <netdb.h>
-#include "common/ParseNode.h"
+
 #include "common/ConfigException.h"
 enum class DBDataType {
 	UNKNOWN = 0,
@@ -44,6 +44,7 @@ inline std::string_view GetTypeName(DBDataType type) {
 	}
 }
 
+class ParseNode;
 struct DBColumnInfo {
 	DBColumnInfo(const std::string name, DBDataType type)
 		: m_name(name), m_type(type){

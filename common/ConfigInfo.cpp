@@ -2,6 +2,7 @@
 #include "common/ConfigException.h"
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
+#include "common/ParseNode.h"
 #include <memory>
 #include <regex>
 #include <glog/logging.h>

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <vector>
-#include <pthread.h>
+#include <absl/strings/str_cat.h>
 #include "BasePlan.h"
 
 class WorkloadResult: public LeafPlan {
@@ -12,10 +12,7 @@ public:
 	}
 
 	virtual void explain(std::vector<std::string>& rows, size_t depth) override{
-		std::ostringstream os;
-		os << std::string(depth, '\t');
-		os << "Workload";
-		rows.push_back(os.str());
+		rows.push_back(absl::StrCat(std::string(depth, '\t'), "Workload"));
 	}
 
 	virtual std::string getInfoString() override;

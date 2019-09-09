@@ -6,7 +6,7 @@
 #include <string>
 #include <map>
 #include <memory>
-#include <sstream>
+#include <absl/strings/str_cat.h>
 
 class UnionAllPlan: public ExecutionPlan {
 public:
@@ -24,10 +24,7 @@ public:
 	}
 
 	virtual void explain(std::vector<std::string>& rows, size_t depth) override {
-		std::ostringstream os;
-		os << std::string(depth, '\t');
-		os << "UnionAll";
-		rows.push_back(os.str());
+		rows.push_back(absl::StrCat(std::string(depth, '\t'), "UnionAll"));
 		for (auto& pPlan : m_plans) {
 			pPlan->explain(rows, 1 + depth);
 		}

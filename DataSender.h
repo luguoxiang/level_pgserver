@@ -30,6 +30,7 @@ public:
 	void addDateAsString(struct tm* pTime);
 	void addDateTimeAsString(struct tm* pTime);
 
+	void addBytesString(const std::string_view s);
 	void addString(const std::string_view s);
 	void addChar(char c);
 

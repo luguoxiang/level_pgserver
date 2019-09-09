@@ -371,12 +371,7 @@ void PgClient::sendRow() {
 				m_sender.addIntAsString(result.getInt());
 				break;
 			case DBDataType::BYTES: {
-				std::ostringstream os;
-				os << "0x" ;
-				for (auto& c: result.getString()) {
-					os<< std::hex<< (int)c ;
-				}
-				m_sender.addString(os.str());
+				m_sender.addBytesString(result.getString());
 				break;
 			}
 			case DBDataType::STRING:

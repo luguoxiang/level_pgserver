@@ -9,6 +9,8 @@
 #include <initializer_list>
 #include <absl/strings/numbers.h>
 #include <functional>
+
+#include "ConfigInfo.h"
 #include "ParseException.h"
 
 enum class NodeType {
@@ -109,6 +111,24 @@ public:
 			return false;
 		}
 	}
+
+	DBDataType getConstResultType() const{
+		switch (m_type) {
+		case NodeType::INT:
+			return DBDataType::INT64;
+		case NodeType::STR:
+			return DBDataType::STRING;
+		case NodeType::BINARY:
+			return DBDataType::BYTES;
+		case NodeType::FLOAT:
+			return DBDataType::DOUBLE;
+		case NodeType::DATE:
+			return DBDataType::DATETIME;
+		default:
+			return DBDataType::UNKNOWN;
+		}
+	}
+
 	bool isTrueConst() const {
 		switch (m_type) {
 		case NodeType::INT:

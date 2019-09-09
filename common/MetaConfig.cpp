@@ -89,7 +89,7 @@ void MetaConfig::load(const std::string& sPath) {
 					} else if (sKey == "column") {
 						pCurrentTable->addColumn(this, sValue);
 					} else if (sKey == "key") {
-						std::vector<std::string_view> keys = absl::StrSplit(sValue, ",");
+						std::vector<std::string_view> keys = absl::StrSplit(sValue, ",", absl::SkipWhitespace());
 						for(auto sName : keys) {
 							pCurrentTable->addKeyColumn(sName);
 						}

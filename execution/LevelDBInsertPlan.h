@@ -1,6 +1,6 @@
 #pragma once
-#include <sstream>
 #include <vector>
+#include <absl/strings/substitute.h>
 #include <absl/strings/str_cat.h>
 
 #include "common/ConfigInfo.h"
@@ -13,10 +13,7 @@ public:
 	LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPlan);
 
 	virtual void explain(std::vector<std::string>& rows, size_t depth)override {
-		std::ostringstream os;
-		os << std::string(depth, '\t');
-		os << "leveldb:insert " << m_pTable->getName();
-		rows.push_back(os.str());
+		rows.push_back(absl::Substitute("$0leveldb:insert $1", std::string(depth, '\t'), m_pTable->getName() ));
 
 		SingleChildPlan::explain(rows, depth);
 	}
