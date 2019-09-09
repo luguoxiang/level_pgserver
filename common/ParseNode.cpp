@@ -3,7 +3,7 @@
 #include <iostream>
 #include <time.h>
 #include <iomanip>
-
+#include <absl/strings/escaping.h>
 
 void printTree(const ParseNode* pRoot, int level) {
 	int i;
@@ -23,6 +23,10 @@ void printTree(const ParseNode* pRoot, int level) {
 	case NodeType::PLAN:
 	case NodeType::LIST:
 		std::cout << pRoot->getString() << std::endl;
+		break;
+	case NodeType::BINARY:
+	case NodeType::PARAM:
+		std::cout << absl::BytesToHexString(pRoot->getString()) << std::endl;
 		break;
 	default:
 		std::cout << pRoot->m_sExpr << std::endl;

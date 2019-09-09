@@ -26,7 +26,7 @@ public:
 
 	virtual int getResultColumns()override;
 
-	virtual void getResult(size_t index, ExecutionResult& result)override;
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type)override;
 
 	virtual void getAllColumns(std::vector<std::string_view>& columns)override;
 

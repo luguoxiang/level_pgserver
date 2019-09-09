@@ -37,10 +37,10 @@ bool LevelDBInsertPlan::next() {
 	for(size_t i=0;i<m_pTable->getColumnCount();++i) {
 		auto pColumn = m_pTable->getColumn(i);
 		if(pColumn->m_iKeyIndex>= 0) {
-			m_pPlan->getResult(i, m_keyResults[pColumn->m_iKeyIndex]);
+			m_pPlan->getResult(i, m_keyResults[pColumn->m_iKeyIndex], pColumn->m_type);
 		} else {
 			assert(pColumn->m_iValueIndex >= 0);
-			m_pPlan->getResult(i, m_valueResults[pColumn->m_iValueIndex]);
+			m_pPlan->getResult(i, m_valueResults[pColumn->m_iValueIndex], pColumn->m_type);
 		}
 	}
 

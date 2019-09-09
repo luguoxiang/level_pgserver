@@ -22,7 +22,7 @@ void SortPlan::begin() {
 		std::vector<ExecutionResult> results(m_proj.size());
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			int iSubIndex = m_proj[i].m_iSubIndex;
-			m_pPlan->getResult(iSubIndex, results[i]);
+			m_pPlan->getResult(iSubIndex, results[i], m_types[i]);
 			assert(!results[i].isNull());
 		}
 		auto row = m_pBuffer->copyRow(results, m_types);
@@ -74,7 +74,7 @@ bool SortPlan::next() {
 	return true;
 }
 
-void SortPlan::getResult(size_t index, ExecutionResult& result) {
+void SortPlan::getResult(size_t index, ExecutionResult& result, DBDataType type) {
 	assert(m_iCurrent > 0);
 	DataRow row(m_rows[m_iCurrent - 1], m_types, 0);
 	m_pBuffer->getResult(row, index, result);

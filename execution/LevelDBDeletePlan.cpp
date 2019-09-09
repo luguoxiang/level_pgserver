@@ -28,7 +28,7 @@ bool LevelDBDeletePlan::next() {
 		return false;
 	}
 
-	m_pPlan->getResult(m_iRowkeyProjection, m_rowkey);
+	m_pPlan->getResult(m_iRowkeyProjection, m_rowkey, DBDataType::BYTES);
 	m_batch.remove(m_rowkey.getString());
 
 	++m_iDeleteRows;

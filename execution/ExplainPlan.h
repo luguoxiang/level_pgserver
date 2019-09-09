@@ -40,7 +40,7 @@ public:
 		return absl::StrCat("EXPLAIN ", m_rows.size());
 	}
 
-	virtual void getResult(size_t columnIndex, ExecutionResult& result)override;
+	virtual void getResult(size_t columnIndex, ExecutionResult& result, DBDataType type)override;
 
 private:
 	std::vector<std::string> m_rows;

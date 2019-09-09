@@ -83,7 +83,7 @@ public:
 		return absl::StrCat("SELECT ", m_iCurrentRow);
 	}
 
-	virtual void getResult(size_t columnIndex, ExecutionResult& result)
+	virtual void getResult(size_t columnIndex, ExecutionResult& result, DBDataType type)
 			override;
 
 	virtual bool ensureSortOrder(size_t iSortIndex,

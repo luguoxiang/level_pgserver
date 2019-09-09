@@ -5,9 +5,9 @@
 
 
 
-void UnionAllPlan::getResult(size_t index,  ExecutionResult& result) {
+void UnionAllPlan::getResult(size_t index,  ExecutionResult& result, DBDataType type) {
 	if(m_iCurrentIndex < m_plans.size()) {
-		m_plans[m_iCurrentIndex]->getResult(index, result);
+		m_plans[m_iCurrentIndex]->getResult(index, result, type);
 	} else {
 		assert(0);
 	}

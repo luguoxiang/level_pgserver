@@ -106,7 +106,7 @@ public:
 	/*
 	 * return result value into corresponding ExecutionResult's union Value fields
 	 */
-	virtual void getResult(size_t index, ExecutionResult& result) = 0;
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type) = 0;
 
 	void checkCancellation();
 private:

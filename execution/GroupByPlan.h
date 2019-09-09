@@ -50,7 +50,7 @@ public:
 		}
 	}
 
-	virtual void getResult(size_t index, ExecutionResult& result)override {
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type)override {
 		assert(index < m_proj.size());
 		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
@@ -65,8 +65,7 @@ public:
 			break;
 		case FuncType::AVG:
 			result = func.m_value;
-			result.div(m_proj[index].m_iCount,
-					m_pPlan->getResultType(func.m_iIndex));
+			result.div(m_proj[index].m_iCount, type);
 			break;
 		default:
 			assert(0);

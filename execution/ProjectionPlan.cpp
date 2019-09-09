@@ -38,15 +38,13 @@ DBDataType ProjectionPlan::getResultType(size_t index) {
 	return type;
 }
 
-void ProjectionPlan::getResult(size_t index, ExecutionResult& result) {
+void ProjectionPlan::getResult(size_t index, ExecutionResult& result, DBDataType type) {
 	auto& proj = m_proj[index];
 	if( proj.m_iSubIndex < 0) {
-		auto type = proj.m_pNode->getConstResultType();
-		assert(type != DBDataType::UNKNOWN);
 		DBDataTypeHandler::getHandler(type)->fromNode(proj.m_pNode, result);
 		return;
 	}
 	assert(index < m_proj.size());
 	size_t iSubIndex =proj.m_iSubIndex;
-	return m_pPlan->getResult(iSubIndex, result);
+	return m_pPlan->getResult(iSubIndex, result, type);
 }

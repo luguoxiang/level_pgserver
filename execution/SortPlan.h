@@ -70,7 +70,7 @@ public:
 	}
 
 
-	virtual void getResult(size_t index, ExecutionResult& result) override;
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type) override;
 
 	virtual int addProjection(const ParseNode* pNode) override;
 

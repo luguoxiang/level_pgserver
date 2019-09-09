@@ -19,7 +19,7 @@ bool ShowTables::next() {
 	return m_iIndex <= m_tables.size();
 }
 
-void ShowTables::getResult(size_t index, ExecutionResult& result) {
+void ShowTables::getResult(size_t index, ExecutionResult& result, DBDataType type) {
 	TableInfo* pTable = m_tables[m_iIndex - 1];
 	if (index == 0) {
 		result.setStringView(pTable->getName());

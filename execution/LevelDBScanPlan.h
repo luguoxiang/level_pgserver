@@ -38,7 +38,7 @@ public:
 	virtual bool ensureSortOrder(size_t iSortIndex, const std::string_view& sColumn,
 			SortOrder order)override;
 
-	virtual void getResult(size_t columnIndex, ExecutionResult& result)override;
+	virtual void getResult(size_t columnIndex, ExecutionResult& result, DBDataType type)override;
 
 	virtual void getAllColumns(std::vector<std::string_view>& columns)override {
 		for (size_t i=0;i<m_pTable->getColumnCount();++i) {

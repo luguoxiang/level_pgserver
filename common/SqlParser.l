@@ -226,12 +226,6 @@ $[0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::PARAM, yylloc->first_column, yylloc->last_column, Operation::UNBOUND_PARAM);
 	yylval->pNode = pNode;
-	int index = strtol(yytext + 1, 0, 10);
-	if (errno != 0 || index <= 0 || index > 64)
-	{
-		yyerror(yylloc, pResult,nullptr,absl::StrCat( "Illegal prepared statement param: ", yytext));
-		return ERROR;
-	}
 	pResult->m_bindParamNodes.push_back(pNode);
 	return PARAM;
 }

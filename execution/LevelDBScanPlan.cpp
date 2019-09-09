@@ -152,7 +152,7 @@ void LevelDBScanPlan::explain(std::vector<std::string>& rows, size_t depth) {
 
 }
 
-void LevelDBScanPlan::getResult(size_t columnIndex, ExecutionResult& result) {
+void LevelDBScanPlan::getResult(size_t columnIndex, ExecutionResult& result, DBDataType type) {
 	if(columnIndex < m_pTable->getKeyCount()) {
 		result = m_keyValues[columnIndex];
 	} else if(columnIndex - m_pTable->getKeyCount() < m_columnValues.size()) {

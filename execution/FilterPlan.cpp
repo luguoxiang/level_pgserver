@@ -8,11 +8,11 @@ bool FilterPlan::evaluate(const PredicateInfo& info) {
 	DBDataType type = DBDataType::UNKNOWN;
 	if(info.m_iRightIndex >= 0) {
 		type = m_pPlan->getResultType(info.m_iRightIndex);
-		m_pPlan->getResult(info.m_iRightIndex, result2);
+		m_pPlan->getResult(info.m_iRightIndex, result2, type);
 	}
 	if (info.m_iLeftIndex >= 0) {
 		type = m_pPlan->getResultType(info.m_iLeftIndex);
-		m_pPlan->getResult(info.m_iLeftIndex, result1);
+		m_pPlan->getResult(info.m_iLeftIndex, result1, type);
 	}
 	assert(type != DBDataType::UNKNOWN);
 	if(info.m_iLeftIndex < 0) {

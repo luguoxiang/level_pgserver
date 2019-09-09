@@ -61,7 +61,7 @@ bool ShowColumns::next() {
 	return m_iIndex <= m_pEntry->getColumnCount();
 }
 
-void ShowColumns::getResult(size_t index, ExecutionResult& result) {
+void ShowColumns::getResult(size_t index, ExecutionResult& result, DBDataType type) {
 	const DBColumnInfo* pColumn = m_pEntry->getColumn(m_iIndex - 1);
 	assert(pColumn);
 

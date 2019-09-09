@@ -57,8 +57,8 @@ public:
 		return absl::StrCat("SELECT ", m_iCurrent);
 	}
 
-	virtual void getResult(size_t index, ExecutionResult& result) override {
-		m_pPlan->getResult(index, result);
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type) override {
+		m_pPlan->getResult(index, result, type);
 	}
 
 	virtual void getAllColumns(std::vector<std::string_view>& columns) override {

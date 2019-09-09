@@ -81,7 +81,7 @@ KeySearchRange::KeySearchRange(std::vector<DBDataType>& keyTypes,
 		case Operation::COMP_EQ:
 			pHandler->fromNode(info.m_pValue, m_startKeyResults[i]);
 			m_endKeyResults[i] = m_startKeyResults[i];
-			DLOG(INFO) << "Key search " << info.m_sExpr << ", KeyIndex" << info.m_iKeyIndex;
+			DLOG(INFO) << "Key search " << info.m_sExpr << ", KeyIndex=" << info.m_iKeyIndex;
 			continue;
 		case Operation::COMP_GE:
 			pHandler->fromNode(info.m_pValue, m_startKeyResults[i]);

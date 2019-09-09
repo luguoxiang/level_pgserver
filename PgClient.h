@@ -42,4 +42,5 @@ private:
 	ExecutionPlanPtr m_pPlan;
 
 	std::atomic_bool& m_bGlobalTerminate;
+	bool m_bDescribed = false;
 };

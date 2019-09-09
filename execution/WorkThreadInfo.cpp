@@ -60,16 +60,11 @@ void WorkThreadInfo::parse(const std::string_view sql) {
 		if (m_result.m_pResult == nullptr) {
 			throw new ParseException(&m_result);
 		}
-#ifndef NDEBUG
-		print();
-#endif
+
 	}
 }
 
-void WorkThreadInfo::print() {
-	assert(m_result.m_pResult);
-	printTree(m_result.m_pResult, 0);
-}
+
 
 
 

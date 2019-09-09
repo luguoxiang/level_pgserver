@@ -5,7 +5,7 @@
 
 
 
-void ExplainPlan::getResult(size_t index, ExecutionResult& result) {
+void ExplainPlan::getResult(size_t index, ExecutionResult& result, DBDataType type) {
 	assert(m_iCurrentRow <= m_rows.size());
 	assert(m_iCurrentRow > 0);
 	result.setStringView(m_rows[m_iCurrentRow - 1]);

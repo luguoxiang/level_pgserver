@@ -57,7 +57,7 @@ public:
 		return absl::StrCat("SELECT ", m_iRowCount);
 	}
 
-	virtual void getResult(size_t index, ExecutionResult& result)override {
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type)override {
 		result = m_result[index];
 	}
 

@@ -1,4 +1,4 @@
-#include "GroupByPlan.h"
+	#include "GroupByPlan.h"
 
 GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
 	SingleChildPlan(PlanType::GroupBy, pPlan) {
@@ -40,14 +40,16 @@ void GroupByPlan::begin() {
 	m_bHasMore = m_pPlan->next();
 	if (m_bHasMore) {
 		for (size_t i = 0; i < m_groupby.size(); ++i) {
+			DBDataType type = m_pPlan->getResultType(m_groupby[i]);
+			m_type.push_back(type);
+
 			ExecutionResult result;
-			m_pPlan->getResult(m_groupby[i], result);
+			m_pPlan->getResult(m_groupby[i], result, type);
 			//make sure result will be valid after next() call
 			result.cache();
 
-			DBDataType type = m_pPlan->getResultType(m_groupby[i]);
 			m_last.push_back(result);
-			m_type.push_back(type);
+
 		}
 	}
 }
@@ -61,7 +63,8 @@ bool GroupByPlan::next() {
 	for (size_t i = 0; i < m_proj.size(); ++i) {
 		auto& proj = m_proj[i];
 
-		m_pPlan->getResult(proj.m_iIndex, proj.m_value);
+		DBDataType type = m_pPlan->getResultType(proj.m_iIndex);
+		m_pPlan->getResult(proj.m_iIndex, proj.m_value, type);
 		proj.m_value.cache();
 		proj.m_iCount = 1;
 	}
@@ -72,7 +75,7 @@ bool GroupByPlan::next() {
 		checkCancellation();
 		for (size_t i = 0; i < m_last.size(); ++i) {
 			ExecutionResult result;
-			m_pPlan->getResult(m_groupby[i], result);
+			m_pPlan->getResult(m_groupby[i], result, m_type[i]);
 
 			if (result.compare(m_last[i], m_type[i]) != 0) {
 				//make sure result will be valid after next() call
@@ -91,7 +94,7 @@ bool GroupByPlan::next() {
 				}
 				DBDataType type = m_pPlan->getResultType(proj.m_iIndex);
 				ExecutionResult info;
-				m_pPlan->getResult(proj.m_iIndex, info);
+				m_pPlan->getResult(proj.m_iIndex, info, type);
 
 				if (proj.m_func == FuncType::MIN || proj.m_func == FuncType::MAX) {
 					int n = info.compare(proj.m_value, type);

@@ -36,7 +36,6 @@ struct WorkThreadInfo {
 		return m_result.m_pResult;
 	}
 
-	void print();
 
 	void cancel(bool planOnly);
 

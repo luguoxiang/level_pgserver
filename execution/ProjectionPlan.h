@@ -70,7 +70,7 @@ public:
 	virtual DBDataType getResultType(size_t index)override;
 
 
-	virtual void getResult(size_t index, ExecutionResult& result)override;
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type)override;
 
 	bool addGroupBy() {
 		m_pPlan.reset(new GroupByPlan(m_pPlan.release()));

@@ -60,6 +60,9 @@ void PgClient::resolve() {
 	if (pTree == nullptr) {
 		m_pPlan.reset(new EmptyPlan());
 	} else {
+#ifndef NDEBUG
+		printTree(pTree, 0);
+#endif
 		m_pPlan = buildPlan(pTree);
 	}
 }
@@ -152,6 +155,7 @@ void PgClient::handleBind() {
 	m_sender.commit();
 
 	resolve();
+	m_bDescribed = false;
 }
 
 void PgClient::handleDescribe() {
@@ -216,9 +220,8 @@ void PgClient::handleException(Exception* pe) {
 }
 
 void PgClient::run() {
-#ifndef NO_TIMEING
 	auto start = std::chrono::steady_clock::now();
-#endif
+
 	m_receiver.processStartupPacket();
 
 	m_sender.prepare('R');
@@ -246,12 +249,11 @@ void PgClient::run() {
 	m_sender.commit();
 
 	handleSync();
-#ifndef NO_TIMEING
+
 	auto end = std::chrono::steady_clock::now();
 
 	m_pWorker->m_iClientTime += std::chrono::duration_cast
 			< std::chrono::microseconds > (end - start).count();
-#endif
 
 	while (!m_bGlobalTerminate.load()) {
 		char qtype = m_receiver.readMessage();
@@ -260,9 +262,7 @@ void PgClient::run() {
 			break;
 		}
 
-#ifndef NO_TIMEING
 		start = std::chrono::steady_clock::now();
-#endif
 		MessageHandler handler = m_handler[qtype];
 		if (handler == nullptr) {
 			char s[] = {qtype, '\0' };
@@ -277,27 +277,25 @@ void PgClient::run() {
 		if (qtype == 'Q')
 			handleSync();
 
-#ifndef NO_TIMEING
 		auto end = std::chrono::steady_clock::now();
 
 		m_pWorker->m_iClientTime += std::chrono::duration_cast
 				< std::chrono::microseconds > (end - start).count();
-#endif
+
 	} //while
 }
 
 
 void PgClient::describeColumn() {
 
+	m_bDescribed = true;
+	size_t columnNum;
 	if (m_pPlan == nullptr) {
-		PARSE_ERROR("No statement!");
+		columnNum = 0;
+	} else {
+		columnNum = m_pPlan->getResultColumns();
 	}
-
-	size_t columnNum = m_pPlan->getResultColumns();
-	if (columnNum == 0) {
-		DLOG(INFO) << "No columns";
-		return;
-	}
+	DLOG(INFO) <<"columns:"<< columnNum;
 
 	m_sender.prepare('T');
 	m_sender.addShort(columnNum);
@@ -355,59 +353,115 @@ void PgClient::sendRow() {
 
 			ExecutionResult result;
 
-			m_pPlan->getResult(i, result);
+			m_pPlan->getResult(i, result, type);
 
 
 			if (result.isNull()) {
 				m_sender.addInt(-1);
 				continue;
 			}
-
 			switch (type) {
-			case DBDataType::INT8:
-			case DBDataType::INT32:
-			case DBDataType::INT64:
-			case DBDataType::INT16:
-				m_sender.addIntAsString(result.getInt());
-				break;
 			case DBDataType::BYTES: {
 				m_sender.addBytesString(result.getString());
-				break;
+				continue;
 			}
 			case DBDataType::STRING:
 				m_sender.addString(result.getString());
-				break;
-			case DBDataType::DATE: {
-				time_t time = result.getInt();
-				struct tm* pToday = gmtime(&time);
-				if (pToday == nullptr) {
-					LOG(ERROR) << "Failed to get localtime "<< (int ) time;
-					m_sender.addInt(0);
-				} else {
-					m_sender.addDateAsString(pToday);
-				}
-				break;
-			}
-			case DBDataType::DATETIME: {
-				time_t time = result.getInt();
-				struct tm* pToday = gmtime(&time);
-				if (pToday == nullptr) {
-					LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
-					m_sender.addInt(0);
-				} else {
-					m_sender.addDateTimeAsString(pToday);
-				}
-				break;
-			}
-			case DBDataType::FLOAT:
-			case DBDataType::DOUBLE: {
-				m_sender.addDoubleAsString(result.getDouble());
-				break;
-			}
+				continue;
 			default:
-				assert(0);
 				break;
-			}; //switch
+			}
+			if(m_bDescribed) {
+				switch (type) {
+				case DBDataType::INT8:
+				case DBDataType::INT32:
+				case DBDataType::INT64:
+				case DBDataType::INT16:
+					m_sender.addIntAsString(result.getInt());
+					break;
+
+				case DBDataType::DATE: {
+					time_t time = result.getInt();
+					struct tm* pToday = gmtime(&time);
+					if (pToday == nullptr) {
+						LOG(ERROR) << "Failed to get localtime "<< (int ) time;
+						m_sender.addInt(0);
+					} else {
+						m_sender.addDateAsString(pToday);
+					}
+					break;
+				}
+				case DBDataType::DATETIME: {
+					time_t time = result.getInt();
+					struct tm* pToday = gmtime(&time);
+					if (pToday == nullptr) {
+						LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
+						m_sender.addInt(0);
+					} else {
+						m_sender.addDateTimeAsString(pToday);
+					}
+					break;
+				}
+				case DBDataType::FLOAT:
+				case DBDataType::DOUBLE: {
+					m_sender.addDoubleAsString(result.getDouble());
+					break;
+				}
+				default:
+					assert(0);
+					break;
+				}; //switch
+			} else {
+				switch (type) {
+				case DBDataType::INT32:
+					m_sender.addInt(4);
+					m_sender.addInt(result.getInt());
+					break;
+				case DBDataType::INT64:
+					m_sender.addInt(8);
+					m_sender.addInt64(result.getInt());
+					break;
+				case DBDataType::INT8:
+				case DBDataType::INT16:
+					m_sender.addInt(2);
+					m_sender.addShort(result.getInt());
+					break;
+				case DBDataType::DATE: {
+					time_t time = result.getInt();
+					struct tm* pToday = gmtime(&time);
+					if (pToday == nullptr) {
+						LOG(ERROR) << "Failed to get localtime "<< (int ) time;
+						m_sender.addInt(0);
+					} else {
+						m_sender.addDateAsString(pToday);
+					}
+					break;
+				}
+				case DBDataType::DATETIME: {
+					time_t time = result.getInt();
+					struct tm* pToday = gmtime(&time);
+					if (pToday == nullptr) {
+						LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
+						m_sender.addInt(0);
+					} else {
+						m_sender.addDateTimeAsString(pToday);
+					}
+					break;
+				}
+				case DBDataType::FLOAT:
+					m_sender.addInt(4);
+					m_sender.addFloat(result.getDouble());
+					break;
+				case DBDataType::DOUBLE: {
+					m_sender.addInt(8);
+					m_sender.addDouble(result.getDouble());
+					break;
+				}
+				default:
+					assert(0);
+					break;
+				};
+			}
 		} catch (...) {
 			for (; i < columnNum; ++i)
 				m_sender.addInt(-1);

@@ -31,14 +31,14 @@ DBDataType ConstPlan::getResultType(size_t index) {
 
 }
 
-void ConstPlan::getResult(size_t index, ExecutionResult& result) {
+void ConstPlan::getResult(size_t index, ExecutionResult& result, DBDataType type) {
 	assert(m_iCurrent > 0 && m_iCurrent <= m_rows.size());
 	auto pRow = m_rows[m_iCurrent - 1];
 
 	assert(pRow->children() == m_columns.size());
 	auto pValue = pRow->getChild(index);
 
-	DBDataTypeHandler::getHandler(getResultType(index))->fromNode(pValue, result);
+	DBDataTypeHandler::getHandler(type)->fromNode(pValue, result);
 }
 
 int ConstPlan::addProjection(const ParseNode* pNode) {

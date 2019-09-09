@@ -54,8 +54,8 @@ public:
 		return m_pPlan->getInfoString();
 	}
 
-	virtual void getResult(size_t index, ExecutionResult& result) override{
-		return m_pPlan->getResult(index, result);
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type) override{
+		return m_pPlan->getResult(index, result, type);
 	}
 protected:
 	ExecutionPlanPtr m_pPlan;
@@ -99,7 +99,7 @@ public:
 		return "SELECT 0";
 	}
 
-	virtual void getResult(size_t index, ExecutionResult& result) {
+	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type) {
 
 	}
 };
