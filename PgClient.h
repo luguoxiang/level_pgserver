@@ -19,11 +19,9 @@ private:
 	void describeColumn();
 	void sendRow();
 
-	void handleSync();
 	void handleQuery();
 	void handleParse();
 	void handleBind();
-	void handleDescribe();
 	void handleExecute();
 
 	PostgresProtocol m_protocol;
@@ -32,9 +30,7 @@ private:
 
 	uint64_t m_iSendTime = 0;
 
-	using MessageHandler = void (PgClient::*)();
-
-	MessageHandler m_handler[100];
+	std::function<void ()> m_handler[100];
 
 	ExecutionPlanPtr m_pPlan;
 

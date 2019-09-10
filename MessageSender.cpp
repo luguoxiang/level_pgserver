@@ -43,32 +43,32 @@ void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum
 
 		switch (pPlan->getResultType(i)) {
 		case DBDataType::BYTES:
-			addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1);
 			break;
 		case DBDataType::INT8:
 		case DBDataType::INT16:
-			addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2);
 			break;
 		case DBDataType::INT32:
-			addDataTypeMsg(sName, i + 1, PgDataType::Int32, 4, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Int32, 4);
 			break;
 		case DBDataType::INT64:
-			addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8);
 			break;
 		case DBDataType::STRING:
-			addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1);
 			break;
 		case DBDataType::DATETIME:
-			addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1);
 			break;
 		case DBDataType::DATE:
-			addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Date, -1);
 			break;
 		case DBDataType::FLOAT:
-			addDataTypeMsg(sName, i + 1, PgDataType::Float, -1, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Float, -1);
 			break;
 		case DBDataType::DOUBLE:
-			addDataTypeMsg(sName, i + 1, PgDataType::Double, -1, false);
+			addDataTypeMsg(sName, i + 1, PgDataType::Double, -1);
 			break;
 		default:
 			LOG(ERROR) << "Unknown type for " << sName;
@@ -78,7 +78,7 @@ void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum
 	}
 }
 
-void MessageSender::sendData(ExecutionPlan* pPlan, RowDataSender& dataSender) {
+void MessageSender::sendData(ExecutionPlan* pPlan) {
 	size_t columnNum;
 	if (pPlan == nullptr) {
 		columnNum = 0;
@@ -102,42 +102,37 @@ void MessageSender::sendData(ExecutionPlan* pPlan, RowDataSender& dataSender) {
 			}
 
 			switch (type) {
-			case DBDataType::BYTES: {
-				dataSender.addBytes(result.getString());
-				continue;
-			}
+			case DBDataType::BYTES:
+				m_sender.addBytesString(result.getString());
+				break;
 			case DBDataType::STRING:
-				dataSender.addString(result.getString());
-				continue;
+				m_sender.addString(result.getString());
+				break;
 			case DBDataType::INT8:
 			case DBDataType::INT16:
-				dataSender.addInt16(result.getInt());
-				break;
 			case DBDataType::INT32:
-				dataSender.addInt32(result.getInt());
-				break;
 			case DBDataType::INT64:
-				dataSender.addInt64(result.getInt());
+				m_sender.addValueAsString(result.getInt(), "%lld");
 				break;
 			case DBDataType::DATETIME:
 			case DBDataType::DATE: {
 				time_t time = result.getInt();
-				struct tm* pToday = gmtime(&time);
-				if (pToday == nullptr) {
+				struct tm* pTime = gmtime(&time);
+				if (pTime == nullptr) {
 					LOG(ERROR) << "Failed to get localtime "<< (int ) time;
 					m_sender.addInt(-1);
 				} else if(type == DBDataType::DATE){
-					dataSender.addDate(pToday, time);
+					m_sender.addDateTimeAsString(pTime, "%Y-%m-%d", 10);
 				} else {
-					dataSender.addDateTime(pToday, time);
+					m_sender.addDateTimeAsString(pTime, "%Y-%m-%d %H:%M:%S", 19);
 				}
 				break;
 			}
 			case DBDataType::FLOAT:
-				dataSender.addFloat(result.getDouble());
+				m_sender.addFloat(result.getDouble());
 				break;
 			case DBDataType::DOUBLE: {
-				dataSender.addDouble(result.getDouble());
+				m_sender.addValueAsString(result.getDouble(), "%f");
 				break;
 			}
 			default:

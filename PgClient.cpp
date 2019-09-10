@@ -24,14 +24,21 @@ PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate) :
 
 	memset(m_handler, 0, sizeof(m_handler));
 
-	m_handler['S'] = &PgClient::handleSync;
+	m_handler['S'] = [this] () {
+		m_protocol.sendSync();
+	};
 
-	m_handler['Q'] = &PgClient::handleQuery;
+	m_handler['Q'] = std::bind(&PgClient::handleQuery, this);
 
-	m_handler['P'] = &PgClient::handleParse;
-	m_handler['B'] = &PgClient::handleBind;
-	m_handler['D'] = &PgClient::handleDescribe;
-	m_handler['E'] = &PgClient::handleExecute;
+	m_handler['P'] = std::bind(&PgClient::handleParse, this);
+	m_handler['B'] = std::bind(&PgClient::handleBind, this);
+
+	m_handler['D'] = [this] () {
+			m_protocol.readColumnDescribeInfo();
+			describeColumn();
+	};
+
+	m_handler['E'] = std::bind(&PgClient::handleExecute, this);
 }
 
 void PgClient::resolve() {
@@ -46,9 +53,6 @@ void PgClient::resolve() {
 	}
 }
 
-void PgClient::handleSync() {
-	m_protocol.sendSync();
-}
 
 void PgClient::handleQuery() {
 
@@ -61,7 +65,7 @@ void PgClient::handleQuery() {
 	describeColumn();
 	handleExecute();
 
-	m_protocol.sendSync();
+
 }
 
 void PgClient::handleParse() {
@@ -93,12 +97,6 @@ void PgClient::handleBind() {
 	m_bDescribed = false;
 }
 
-void PgClient::handleDescribe() {
-	m_protocol.readColumnDescribeInfo();
-
-	describeColumn();
-
-}
 
 void PgClient::handleExecute() {
 	if (m_pPlan == nullptr) {
@@ -111,7 +109,7 @@ void PgClient::handleExecute() {
 	while (m_pPlan->next()) {
 		if (columnNum == 0)
 			continue;
-		m_protocol.sendData(m_pPlan.get(), !m_bDescribed);
+		m_protocol.sendData(m_pPlan.get());
 	} //while
 	m_protocol.flush();
 
@@ -146,20 +144,23 @@ void PgClient::run() {
 		}
 		DLOG(INFO)<<qtype;
 		start = std::chrono::steady_clock::now();
-		MessageHandler handler = m_handler[qtype];
+		auto handler = m_handler[qtype];
 		if (handler == nullptr) {
 			char s[] = {qtype, '\0' };
 			IO_ERROR("Unable to handler message ", s);
 		}
 
 		try {
-			(this->*handler)();
+			handler();
 		} catch (Exception* pe) {
 			m_protocol.sendException(pe);
 			m_protocol.flush();
 			m_pPlan = nullptr;
 		}
 
+		if(qtype == 'Q') {
+			m_protocol.sendSync();
+		}
 		auto end = std::chrono::steady_clock::now();
 
 		m_pWorker->m_iClientTime += std::chrono::duration_cast

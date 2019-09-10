@@ -21,15 +21,9 @@ public:
 		MessageSender sender(m_sender, cMsgType);
 	}
 
-	void sendData(ExecutionPlan* pPlan, bool binaryMode) {
+	void sendData(ExecutionPlan* pPlan) {
 		MessageSender sender(m_sender, 'D');
-		if(binaryMode) {
-			BinaryModeDataSender dataSender(m_sender);
-			sender.sendData(pPlan, dataSender);
-		} else {
-			TextModeDataSender dataSender(m_sender);
-			sender.sendData(pPlan, dataSender);
-		}
+		sender.sendData(pPlan);
 	}
 
 	void sendColumnDescription(ExecutionPlan* pPlan) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RowDataSender.h"
+#include "DataSender.h"
 #include "execution/ExecutionPlan.h"
 
 constexpr int16_t PARAM_TEXT_MODE = 0;
@@ -14,7 +14,7 @@ public:
 		m_sender.addInt(0); //write back later
 	};
 
-	void sendData(ExecutionPlan* pPlan, RowDataSender& dataSender);
+	void sendData(ExecutionPlan* pPlan);
 
 	void sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum);
 
@@ -32,7 +32,8 @@ private:
 		Int32 = 23,
 		Int64 = 20,
 		Varchar = 1043,
-		DateTime = 1114,
+		Date = 1082,
+		DateTime = 1083,
 		Float = 700,
 		Double = 701,
 	};
@@ -40,15 +41,14 @@ private:
 	void addDataTypeMsg(std::string_view sName,
 			int16_t columnid,
 			PgDataType type,
-			int16_t datalen,
-			bool binary) {
+			int16_t datalen) {
 		m_sender<< sName
 				<< static_cast<int32_t>(0) //oid
 				<< columnid
 				<<static_cast<int32_t>(type)
 				<< datalen
 				<< static_cast<int32_t>(-1) //typemod
-				<< (binary ? PARAM_BINARY_MODE : PARAM_TEXT_MODE);
+				<< PARAM_TEXT_MODE;
 	}
 
 	DataSender& m_sender;
