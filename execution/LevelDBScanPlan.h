@@ -65,7 +65,6 @@ public:
 		return m_pSearchRange->startAfterEnd(*pScan->m_pSearchRange);
 	}
 private:
-
 	std::vector<std::optional<ExecutionResult>> m_columnValues;
 	bool m_bProjectValue = false;
 

@@ -59,14 +59,23 @@ void LevelDBScanPlan::begin() {
 		m_pSearchRange.emplace(m_keyTypes, m_pTable, nullptr, nullptr);
 	}
 
+}
+
+bool LevelDBScanPlan::next() {
 	if(m_order ==SortOrder::Descend) {
-		m_pSearchRange->seekStartReversed(m_pDBIter);
+		if(m_iRows == 0) {
+			m_pSearchRange->seekStartReversed(m_pDBIter);
+		}else {
+			m_pDBIter->prev();
+		}
 	} else {
-		m_pSearchRange->seekStart(m_pDBIter);
+		if(m_iRows == 0) {
+			m_pSearchRange->seekStart(m_pDBIter);
+		}else {
+			m_pDBIter->next();
+		}
 	}
 
-}
-bool LevelDBScanPlan::next() {
 	if(!m_pDBIter->valid()) {
 		return false;
 	}
@@ -96,11 +105,7 @@ bool LevelDBScanPlan::next() {
 			}
 		};
 	}
-	if(m_order ==SortOrder::Descend) {
-		m_pDBIter->prev();
-	}else {
-		m_pDBIter->next();
-	}
+
 	++m_iRows;
 	return true;
 }
