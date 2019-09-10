@@ -23,11 +23,9 @@ void DataSender::addFloat(float value) {
 	m_iWritten += 4;
 }
 void DataSender::addDouble(double value) {
-	uint64_t iValue = static_cast<uint64_t>(value);
-	int32_t low = static_cast<int32_t>(iValue & 0xffffffff);
-	int32_t hight = iValue >> 32;
-	addInt(hight);
-	addInt(low);
+	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
+	addInt(iValue[1]);
+	addInt(iValue[0]);
 }
 
 void DataSender::directSend(const std::string_view s) {
@@ -66,10 +64,9 @@ void DataSender::addInt(int32_t value) {
 }
 
 void DataSender::addInt64(int64_t value) {
-	int32_t low = static_cast<int32_t>(value & 0xffffffff);
-	int32_t hight = value >> 32;
-	addInt(hight);
-	addInt(low);
+	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
+	addInt(iValue[1]);
+	addInt(iValue[0]);
 }
 
 void DataSender::addShort(int16_t value) {
