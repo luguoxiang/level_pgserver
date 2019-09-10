@@ -30,11 +30,17 @@ void DataSender::addDouble(double value) {
 	addInt(low);
 }
 
+void DataSender::directSend(const std::string_view s) {
+	if (write(m_nFd, s.data(), s.size()) != 1)
+			{
+		IO_ERROR("send() failed!");
+	}
+}
 
 
 void DataSender::setInt(size_t iOffset, int32_t value) {
 	if (iOffset + m_iLastPrepare + 4 > m_iWritten) {
-		throw new IOException("write overflow for DataSender!");
+		IO_ERROR("write overflow for DataSender!");
 	}
 	int32_t netval = htonl(value);
 
@@ -123,10 +129,7 @@ void DataSender::addDateTimeAsString(struct tm* pTime) {
 	m_iWritten += iWritten;
 }
 
-void DataSender::addChar(char c) {
-	m_buffer[m_iWritten] = c;
-	++m_iWritten;
-}
+
 
 void DataSender::end() {
 	m_iLastPrepare = m_iWritten;
@@ -142,7 +145,7 @@ void DataSender::flush() {
 	//We could not send data after m_iLastPrepare.
 	uint32_t nWrite = send(m_nFd, m_buffer.data(), m_iLastPrepare, 0);
 	if (nWrite != m_iLastPrepare) {
-		throw new IOException("Could not send data\n");
+		IO_ERROR("Could not send data\n");
 	}
 
 	m_iWritten -= m_iLastPrepare;

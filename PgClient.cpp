@@ -37,8 +37,7 @@ constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
 }
 
 PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate) :
-		m_receiver(pInfo->getAcceptFd()),
-		m_sender(pInfo->getAcceptFd()),
+		m_protocol(pInfo->getAcceptFd(), pInfo->getIndex()),
 		m_bGlobalTerminate(bGlobalTerminate),
 		m_pWorker(pInfo){
 	assert(pInfo->getAcceptFd() >= 0);
@@ -68,101 +67,54 @@ void PgClient::resolve() {
 }
 
 void PgClient::handleSync() {
-	DLOG(INFO) << "sync";
-	m_sender.prepare('Z');
-	m_sender.addChar('I');
-	m_sender.commit();
-	m_sender.flush();
+	m_protocol.sendSync();
 }
 
 void PgClient::handleQuery() {
 
-	auto sql = m_receiver.getNextString();
+	auto sql = m_protocol.readQueryInfo();
 
-	DLOG(INFO) << "Q:"<< sql;
 	m_pWorker->parse(sql);
 
 	resolve();
 
 	describeColumn();
 	handleExecute();
+
+	m_protocol.sendSync();
 }
 
 void PgClient::handleParse() {
-	auto sStmt = m_receiver.getNextString(); //statement name
-	auto sql = m_receiver.getNextString();
-
-	DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< sql;
+	auto [sql, iParamNum] = m_protocol.readParseInfo();
 
 	m_pWorker->parse(sql);
 
-	size_t iParamNum = m_receiver.getNextShort();
-	size_t iActualNum =m_pWorker->getBindParamNumber();
-
-	if (iParamNum != iActualNum) {
-		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum, ", actual ", iActualNum);
+	if (iParamNum != m_pWorker->getBindParamNumber()) {
+		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum, ", actual ", m_pWorker->getBindParamNumber());
 	}
 
-	m_sender.prepare('1');
-	m_sender.commit();
+	m_protocol.sendShortMessage('1');
 }
 
 void PgClient::handleBind() {
-	auto portal = m_receiver.getNextString();
-	auto stmt = m_receiver.getNextString();
-
-	DLOG(INFO)<< "B:portal "<<portal <<" ,stmt "<<stmt;
+	m_pWorker->markParseBuffer();
 
 	size_t iActualNum =m_pWorker->getBindParamNumber();
 
-	size_t iExpectNum = m_receiver.getNextShort();
-	if (iExpectNum != iActualNum) {
-		PARSE_ERROR("Parameter format number unmatch!, expect ", iExpectNum, ", actual ", iActualNum);
-	}
-	std::vector<Operation> types(iActualNum);
-	for (size_t i = 0; i < iActualNum; ++i) {
-		auto type = m_receiver.getNextShort();
-		DLOG(INFO)<< "Bind type:"<<type;
-		switch(type) {
-		case PARAM_TEXT_MODE:
-			types[i] = Operation::TEXT_PARAM;
-			break;
-		case PARAM_BINARY_MODE:
-			types[i] = Operation::BINARY_PARAM;
-			break;
-		default:
-			IO_ERROR("Unexpected bind parameter mode: ", type);
-			break;
-		}
-	}
+	m_protocol.readBindParam(iActualNum, [pWorker = m_pWorker] (size_t index, std::string_view value, bool isBinary) {
+		auto pParam = pWorker->getBindParam(index);
+		pParam->setBindParamMode(isBinary ? Operation::BINARY_PARAM : Operation::TEXT_PARAM);
+		pParam->setString(value);
+	});
 
-
-	iExpectNum = m_receiver.getNextShort();
-	if (iExpectNum != iActualNum) {
-		PARSE_ERROR("Parameter number unmatch!, expect ", iExpectNum , ", actual " , iActualNum);
-	}
-
-	m_pWorker->markParseBuffer();
-
-	for (int i = 0; i < iActualNum; ++i) {
-		auto pParam = m_pWorker->getBindParam(i);
-		pParam->setBindParamMode(types[i]);
-		auto s = m_receiver.getNextStringWithLen();
-		pParam->setString(m_pWorker->allocString(s));
-	}
-
-	m_sender.prepare('2');
-	m_sender.commit();
+	m_protocol.sendShortMessage('2');
 
 	resolve();
 	m_bDescribed = false;
 }
 
 void PgClient::handleDescribe() {
-	int type = m_receiver.getNextByte();
-	auto sName = m_receiver.getNextString();
-
-	DLOG(INFO)<< "D:type "<<type << ",name "<< sName;
+	m_protocol.readColumnDescribeInfo();
 
 	describeColumn();
 
@@ -179,18 +131,16 @@ void PgClient::handleExecute() {
 	while (m_pPlan->next()) {
 		if (columnNum == 0)
 			continue;
-		sendRow();
+		m_protocol.sendData(m_pPlan.get(), !m_bDescribed);
 	} //while
-	m_sender.flush();
+	m_protocol.flush();
 
 	auto sInfo = m_pPlan->getInfoString();
 
 	m_pPlan->end();
 	DLOG(INFO)<< "Execute result:" << sInfo;
 
-	m_sender.prepare('C');
-	m_sender.addStringZeroEnd(sInfo); //data len
-	m_sender.commit();
+	m_protocol.sendShortMessage('C', sInfo);
 
 	m_pPlan = nullptr;
 
@@ -198,57 +148,10 @@ void PgClient::handleExecute() {
 	m_pWorker->restoreParseBuffer();
 }
 
-void PgClient::handleException(Exception* pe) {
-	m_sender.prepare('E');
-	m_sender.addByte(PG_DIAG_SEVERITY);
-	m_sender.addStringZeroEnd("ERROR");
-	m_sender.addByte(PG_DIAG_SQLSTATE);
-	m_sender.addStringZeroEnd("00000");
-	m_sender.addByte(PG_DIAG_MESSAGE_PRIMARY);
-	m_sender.addStringZeroEnd(pe->what());
-
-	if (pe->getLine() >= 0) {
-		m_sender.addByte(PG_DIAG_STATEMENT_POSITION);
-		m_sender.addStringZeroEnd(std::to_string(pe->getStartPos()));
-	}
-	m_sender.addByte('\0');
-	delete pe;
-
-	m_sender.commit();
-
-	m_pPlan = nullptr;
-}
-
 void PgClient::run() {
 	auto start = std::chrono::steady_clock::now();
 
-	m_receiver.processStartupPacket();
-
-	m_sender.prepare('R');
-	m_sender.addInt(AUTH_REQ_OK);
-	m_sender.commit();
-
-	m_sender.prepare('S');
-	m_sender.addStringZeroEnd("server_encoding");
-	m_sender.addStringZeroEnd("UTF8");
-	m_sender.commit();
-
-	m_sender.prepare('S');
-	m_sender.addStringZeroEnd("client_encoding");
-	m_sender.addStringZeroEnd("UTF8");
-	m_sender.commit();
-
-	m_sender.prepare('S');
-	m_sender.addStringZeroEnd("server_version");
-	m_sender.addStringZeroEnd("9.0.4");
-	m_sender.commit();
-
-	m_sender.prepare('K');
-	m_sender.addInt(m_pWorker->getIndex());
-	m_sender.addInt(0); //cancel key
-	m_sender.commit();
-
-	handleSync();
+	m_protocol.startup();
 
 	auto end = std::chrono::steady_clock::now();
 
@@ -256,12 +159,12 @@ void PgClient::run() {
 			< std::chrono::microseconds > (end - start).count();
 
 	while (!m_bGlobalTerminate.load()) {
-		char qtype = m_receiver.readMessage();
+		char qtype = m_protocol.readMessage();
 		if (qtype == 'X') {
 			DLOG(INFO)<< "Client Terminate!";
 			break;
 		}
-
+		DLOG(INFO)<<qtype;
 		start = std::chrono::steady_clock::now();
 		MessageHandler handler = m_handler[qtype];
 		if (handler == nullptr) {
@@ -272,10 +175,10 @@ void PgClient::run() {
 		try {
 			(this->*handler)();
 		} catch (Exception* pe) {
-			handleException(pe);
+			m_protocol.sendException(pe);
+			m_protocol.flush();
+			m_pPlan = nullptr;
 		}
-		if (qtype == 'Q')
-			handleSync();
 
 		auto end = std::chrono::steady_clock::now();
 
@@ -287,189 +190,7 @@ void PgClient::run() {
 
 
 void PgClient::describeColumn() {
-
 	m_bDescribed = true;
-	size_t columnNum;
-	if (m_pPlan == nullptr) {
-		columnNum = 0;
-	} else {
-		columnNum = m_pPlan->getResultColumns();
-	}
-	DLOG(INFO) <<"columns:"<< columnNum;
 
-	m_sender.prepare('T');
-	m_sender.addShort(columnNum);
-
-	for (size_t i = 0; i < columnNum; ++i) {
-		auto sName = m_pPlan->getProjectionName(i);
-
-		switch (m_pPlan->getResultType(i)) {
-		case DBDataType::BYTES:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1, false);
-			break;
-		case DBDataType::INT8:
-		case DBDataType::INT16:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2, false);
-			break;
-		case DBDataType::INT32:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int32, 4, false);
-			break;
-		case DBDataType::INT64:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8, false);
-			break;
-		case DBDataType::STRING:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1, false);
-			break;
-		case DBDataType::DATETIME:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1, false);
-			break;
-		case DBDataType::DATE:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1, false);
-			break;
-		case DBDataType::FLOAT:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Float, -1, false);
-			break;
-		case DBDataType::DOUBLE:
-			m_sender.addDataTypeMsg(sName, i + 1, PgDataType::Double, -1, false);
-			break;
-		default:
-			LOG(ERROR) << "Unknown type for " << sName;
-			assert(0);
-			break;
-		}
-	}
-	m_sender.commit();
-	m_sender.flush();
-}
-
-void PgClient::sendRow() {
-	size_t columnNum = m_pPlan->getResultColumns();
-	assert(columnNum > 0);
-	m_sender.prepare('D');
-	m_sender.addShort(columnNum); //field number
-	for (size_t i = 0; i < columnNum; ++i) {
-		try {
-			DBDataType type = m_pPlan->getResultType(i);
-
-			ExecutionResult result;
-
-			m_pPlan->getResult(i, result, type);
-
-
-			if (result.isNull()) {
-				m_sender.addInt(-1);
-				continue;
-			}
-			switch (type) {
-			case DBDataType::BYTES: {
-				m_sender.addBytesString(result.getString());
-				continue;
-			}
-			case DBDataType::STRING:
-				m_sender.addString(result.getString());
-				continue;
-			default:
-				break;
-			}
-			if(m_bDescribed) {
-				switch (type) {
-				case DBDataType::INT8:
-				case DBDataType::INT32:
-				case DBDataType::INT64:
-				case DBDataType::INT16:
-					m_sender.addIntAsString(result.getInt());
-					break;
-
-				case DBDataType::DATE: {
-					time_t time = result.getInt();
-					struct tm* pToday = gmtime(&time);
-					if (pToday == nullptr) {
-						LOG(ERROR) << "Failed to get localtime "<< (int ) time;
-						m_sender.addInt(0);
-					} else {
-						m_sender.addDateAsString(pToday);
-					}
-					break;
-				}
-				case DBDataType::DATETIME: {
-					time_t time = result.getInt();
-					struct tm* pToday = gmtime(&time);
-					if (pToday == nullptr) {
-						LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
-						m_sender.addInt(0);
-					} else {
-						m_sender.addDateTimeAsString(pToday);
-					}
-					break;
-				}
-				case DBDataType::FLOAT:
-				case DBDataType::DOUBLE: {
-					m_sender.addDoubleAsString(result.getDouble());
-					break;
-				}
-				default:
-					assert(0);
-					break;
-				}; //switch
-			} else {
-				switch (type) {
-				case DBDataType::INT32:
-					m_sender.addInt(4);
-					m_sender.addInt(result.getInt());
-					break;
-				case DBDataType::INT64:
-					m_sender.addInt(8);
-					m_sender.addInt64(result.getInt());
-					break;
-				case DBDataType::INT8:
-				case DBDataType::INT16:
-					m_sender.addInt(2);
-					m_sender.addShort(result.getInt());
-					break;
-				case DBDataType::DATE: {
-					time_t time = result.getInt();
-					struct tm* pToday = gmtime(&time);
-					if (pToday == nullptr) {
-						LOG(ERROR) << "Failed to get localtime "<< (int ) time;
-						m_sender.addInt(0);
-					} else {
-						m_sender.addDateAsString(pToday);
-					}
-					break;
-				}
-				case DBDataType::DATETIME: {
-					time_t time = result.getInt();
-					struct tm* pToday = gmtime(&time);
-					if (pToday == nullptr) {
-						LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
-						m_sender.addInt(0);
-					} else {
-						m_sender.addDateTimeAsString(pToday);
-					}
-					break;
-				}
-				case DBDataType::FLOAT:
-					m_sender.addInt(4);
-					m_sender.addFloat(result.getDouble());
-					break;
-				case DBDataType::DOUBLE: {
-					m_sender.addInt(8);
-					m_sender.addDouble(result.getDouble());
-					break;
-				}
-				default:
-					assert(0);
-					break;
-				};
-			}
-		} catch (...) {
-			for (; i < columnNum; ++i)
-				m_sender.addInt(-1);
-			m_sender.commit();
-			m_sender.flush();
-			throw;
-		}
-	} //for
-
-	m_sender.commit();
+	m_protocol.sendColumnDescription(m_pPlan.get());
 }

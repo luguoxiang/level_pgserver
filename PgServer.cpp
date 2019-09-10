@@ -9,7 +9,6 @@
 #include <glog/logging.h>
 
 #include "common/MetaConfig.h"
-#include "PgMessageSender.h"
 
 #include "PgServer.h"
 #include "PgClient.h"

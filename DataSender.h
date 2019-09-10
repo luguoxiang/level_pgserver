@@ -32,7 +32,7 @@ public:
 
 	void addBytesString(const std::string_view s);
 	void addString(const std::string_view s);
-	void addChar(char c);
+
 
 	void flush();
 
@@ -42,7 +42,28 @@ public:
 	//iOffset should lower or equals than end() - begin()
 	void setInt(size_t iOffset, int32_t value);
 
-protected:
+	void directSend(const std::string_view s);
+
+	DataSender& operator <<(const std::string_view s) {
+		addStringZeroEnd(s);
+		return *this;
+	}
+
+	DataSender& operator <<(int32_t t) {
+		addInt(t);
+		return *this;
+	}
+
+	DataSender& operator <<(int16_t value) {
+		addShort(value);
+		return *this;
+	}
+
+	DataSender& operator <<(int8_t value) {
+		addByte(value);
+		return *this;
+	}
+
 	void begin();
 	void end();
 

@@ -2,8 +2,7 @@
 
 #include <memory>
 #include <atomic>
-#include "PgMessageSender.h"
-#include "PgMessageReceiver.h"
+#include "PostgresProtocol.h"
 
 #include "execution/WorkloadResult.h"
 
@@ -20,7 +19,6 @@ private:
 	void describeColumn();
 	void sendRow();
 
-	void handleException(Exception* pe);
 	void handleSync();
 	void handleQuery();
 	void handleParse();
@@ -28,8 +26,7 @@ private:
 	void handleDescribe();
 	void handleExecute();
 
-	PgMessageReceiver m_receiver;
-	PgMessageSender m_sender;
+	PostgresProtocol m_protocol;
 
 	WorkThreadInfo* m_pWorker;
 
