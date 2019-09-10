@@ -19,16 +19,7 @@ public:
 	void addInt64(int64_t value);
 	void addStringZeroEnd(const std::string_view s);
 
-	void addIntAsString(int64_t value) {
-		addValueAsString(value, "%lld");
-	}
-
-	void addDoubleAsString(double value) {
-		addValueAsString(value, "%f");
-	}
-
-	void addDateAsString(struct tm* pTime);
-	void addDateTimeAsString(struct tm* pTime);
+	void addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len);
 
 	void addBytesString(const std::string_view s);
 	void addString(const std::string_view s);
@@ -67,16 +58,6 @@ public:
 	void begin();
 	void end();
 
-private:
-	void check(uint32_t iSize) {
-		if (m_iWritten + iSize > m_buffer.size()) {
-			flush();
-		}
-		if (m_iWritten + iSize > m_buffer.size()) {
-			IO_ERROR("Send data is too large:written=",m_iWritten, ", total=", m_buffer.size(), ", require=", iSize);
-		}
-	}
-
 	template <typename T>
 	void addValueAsString(T value, const char* pszFormat) {
 		check(4);
@@ -98,6 +79,15 @@ private:
 		}
 	}
 
+private:
+	void check(uint32_t iSize) {
+		if (m_iWritten + iSize > m_buffer.size()) {
+			flush();
+		}
+		if (m_iWritten + iSize > m_buffer.size()) {
+			IO_ERROR("Send data is too large:written=",m_iWritten, ", total=", m_buffer.size(), ", require=", iSize);
+		}
+	}
 
 	int m_nFd;
 	std::string m_buffer;

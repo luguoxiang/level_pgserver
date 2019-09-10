@@ -16,26 +16,6 @@
 
 #include "planbuilder/BuildPlan.h"
 
-namespace {
-constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
-constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
-
-constexpr char PG_DIAG_SEVERITY = 'S';
-constexpr char PG_DIAG_SQLSTATE = 'C';
-constexpr char PG_DIAG_MESSAGE_PRIMARY = 'M';
-constexpr char PG_DIAG_MESSAGE_DETAIL = 'D';
-constexpr char PG_DIAG_MESSAGE_HINT = 'H';
-constexpr char PG_DIAG_STATEMENT_POSITION = 'P';
-constexpr char PG_DIAG_INTERNAL_POSITION = 'p';
-constexpr char PG_DIAG_INTERNAL_QUERY = 'q';
-constexpr char PG_DIAG_CONTEXT = 'W';
-constexpr char PG_DIAG_SOURCE_FILE = 'F';
-constexpr char PG_DIAG_SOURCE_LINE = 'L';
-constexpr char PG_DIAG_SOURCE_FUNCTION = 'R';
-
-
-}
-
 PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate) :
 		m_protocol(pInfo->getAcceptFd(), pInfo->getIndex()),
 		m_bGlobalTerminate(bGlobalTerminate),

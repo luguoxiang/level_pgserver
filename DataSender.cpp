@@ -23,7 +23,7 @@ void DataSender::addFloat(float value) {
 	m_iWritten += 4;
 }
 void DataSender::addDouble(double value) {
-	int64_t iValue = static_cast<int64_t>(value);
+	uint64_t iValue = static_cast<uint64_t>(value);
 	int32_t low = static_cast<int32_t>(iValue & 0xffffffff);
 	int32_t hight = iValue >> 32;
 	addInt(hight);
@@ -114,22 +114,13 @@ void DataSender::addString(const std::string_view s) {
 	m_iWritten += len;
 }
 
-void DataSender::addDateAsString(struct tm* pTime) {
-	addInt(10);
-	check(11);
-	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, "%Y-%m-%d", pTime);
-	assert(iWritten == 10);
+void DataSender::addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len) {
+	addInt(len);
+	check(len+1);
+	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, pszFormat, pTime);
+	assert(iWritten == len);
 	m_iWritten += iWritten;
 }
-void DataSender::addDateTimeAsString(struct tm* pTime) {
-	addInt(19);
-	check(20);
-	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, "%Y-%m-%d %H:%M:%S", pTime);
-	assert(iWritten == 19);
-	m_iWritten += iWritten;
-}
-
-
 
 void DataSender::end() {
 	m_iLastPrepare = m_iWritten;
