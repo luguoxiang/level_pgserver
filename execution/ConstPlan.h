@@ -1,6 +1,5 @@
 #pragma once
 
-#include <sstream>
 #include <absl/strings/str_cat.h>
 
 #include "common/ParseException.h"

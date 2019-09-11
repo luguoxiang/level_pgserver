@@ -33,7 +33,7 @@ private:
 		Int64 = 20,
 		Varchar = 1043,
 		Date = 1082,
-		DateTime = 1083,
+		DateTime = 1114,
 		Float = 700,
 		Double = 701,
 	};

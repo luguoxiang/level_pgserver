@@ -8,7 +8,6 @@
 #include <glog/logging.h>
 
 MetaConfig::MetaConfig() {
-	m_dataTypeMap["int8"] = DBDataType::INT8;
 	m_dataTypeMap["int16"] = DBDataType::INT16;
 	m_dataTypeMap["int32"] = DBDataType::INT32;
 	m_dataTypeMap["int64"] = DBDataType::INT64;

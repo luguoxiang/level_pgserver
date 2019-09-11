@@ -8,7 +8,6 @@
 #include "common/ConfigException.h"
 enum class DBDataType {
 	UNKNOWN = 0,
-	INT8,
 	INT16,
 	INT32,
 	INT64,
@@ -22,8 +21,6 @@ enum class DBDataType {
 
 inline std::string_view GetTypeName(DBDataType type) {
 	switch (type) {
-	case DBDataType::INT8:
-		return "int8";
 	case DBDataType::INT16:
 		return "int16";
 	case DBDataType::INT32:

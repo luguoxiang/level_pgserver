@@ -372,8 +372,6 @@ public:
 	}
 };
 void DBDataTypeHandler::init() {
-	m_typeHandlers[DBDataType::INT8] = std::make_unique<
-			IntDBDataTypeHandler<int8_t>>("int8");
 	m_typeHandlers[DBDataType::INT16] = std::make_unique<
 			IntDBDataTypeHandler<int16_t>>("int16");
 	m_typeHandlers[DBDataType::INT32] = std::make_unique<

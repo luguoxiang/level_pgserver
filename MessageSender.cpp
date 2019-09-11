@@ -45,7 +45,6 @@ void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum
 		case DBDataType::BYTES:
 			addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1);
 			break;
-		case DBDataType::INT8:
 		case DBDataType::INT16:
 			addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2);
 			break;
@@ -108,7 +107,6 @@ void MessageSender::sendData(ExecutionPlan* pPlan) {
 			case DBDataType::STRING:
 				m_sender.addString(result.getString());
 				break;
-			case DBDataType::INT8:
 			case DBDataType::INT16:
 			case DBDataType::INT32:
 			case DBDataType::INT64:
