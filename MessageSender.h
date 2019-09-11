@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include "DataSender.h"
 #include "execution/ExecutionPlan.h"
 
@@ -24,6 +25,7 @@ public:
 		m_sender.setInt(1, m_sender.getWritten() - 1);
 		m_sender.end();
 	}
+	static void init();
 private:
 	//https://jdbc.postgresql.org/development/privateapi/constant-values.html
 	enum class PgDataType {
@@ -50,6 +52,10 @@ private:
 				<< static_cast<int32_t>(-1) //typemod
 				<< PARAM_TEXT_MODE;
 	}
+
+
+	using SendFn = std::function<void (ExecutionResult& result, DataSender& sender)>;
+	static std::map<DBDataType, std::pair<PgDataType,SendFn>> m_typeHandler;
 
 	DataSender& m_sender;
 };

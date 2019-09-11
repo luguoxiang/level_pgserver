@@ -1,5 +1,5 @@
 #include "MessageSender.h"
-
+#include "common/ConfigInfo.h"
 
 namespace {
 
@@ -19,6 +19,59 @@ constexpr int8_t PG_DIAG_SOURCE_FUNCTION = 'R';
 
 }
 
+decltype(MessageSender::m_typeHandler) MessageSender::m_typeHandler;
+
+void MessageSender::init() {
+	m_typeHandler[DBDataType::BYTES] = std::make_pair(PgDataType::Bytea, [](ExecutionResult& result, DataSender& sender) {
+		sender.addBytesString(result.getString());
+	});
+
+	m_typeHandler[DBDataType::INT16] = std::make_pair(PgDataType::Int16, [](ExecutionResult& result, DataSender& sender) {
+		sender.addValueAsString(result.getInt(), "%lld");
+	});
+
+	m_typeHandler[DBDataType::INT32] = std::make_pair(PgDataType::Int32, [](ExecutionResult& result, DataSender& sender) {
+		sender.addValueAsString(result.getInt(), "%lld");
+	});
+
+	m_typeHandler[DBDataType::INT64] = std::make_pair(PgDataType::Int64, [](ExecutionResult& result, DataSender& sender) {
+		sender.addValueAsString(result.getInt(), "%lld");
+	});
+
+	m_typeHandler[DBDataType::STRING] = std::make_pair(PgDataType::Varchar, [](ExecutionResult& result, DataSender& sender) {
+		sender.addString(result.getString());
+	});
+
+	m_typeHandler[DBDataType::FLOAT] = std::make_pair(PgDataType::Float, [](ExecutionResult& result, DataSender& sender) {
+		sender.addValueAsString(result.getDouble(), "%f");
+	});
+
+	m_typeHandler[DBDataType::DOUBLE] = std::make_pair(PgDataType::Double, [](ExecutionResult& result, DataSender& sender) {
+		sender.addValueAsString(result.getDouble(), "%f");
+	});
+
+	m_typeHandler[DBDataType::DATE] = std::make_pair(PgDataType::Date, [](ExecutionResult& result, DataSender& sender) {
+		time_t time = result.getInt();
+		struct tm* pTime = gmtime(&time);
+		if (pTime == nullptr) {
+			LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
+			sender.addInt(-1);
+		} else {
+			sender.addDateTimeAsString(pTime, "%Y-%m-%d", 10);
+		}
+	});
+
+	m_typeHandler[DBDataType::DATETIME] = std::make_pair(PgDataType::DateTime, [](ExecutionResult& result, DataSender& sender) {
+		time_t time = result.getInt();
+		struct tm* pTime = gmtime(&time);
+		if (pTime == nullptr) {
+			LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
+			sender.addInt(-1);
+		} else {
+			sender.addDateTimeAsString(pTime, "%Y-%m-%d %H:%M:%S", 19);
+		}
+	});
+}
 void MessageSender::sendException(Exception* pe) {
 	std::string msg = pe->what();
 
@@ -41,38 +94,11 @@ void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum
 	for (size_t i = 0; i < columnNum; ++i) {
 		auto sName = pPlan->getProjectionName(i);
 
-		switch (pPlan->getResultType(i)) {
-		case DBDataType::BYTES:
-			addDataTypeMsg(sName, i + 1, PgDataType::Bytea, -1);
-			break;
-		case DBDataType::INT16:
-			addDataTypeMsg(sName, i + 1, PgDataType::Int16, 2);
-			break;
-		case DBDataType::INT32:
-			addDataTypeMsg(sName, i + 1, PgDataType::Int32, 4);
-			break;
-		case DBDataType::INT64:
-			addDataTypeMsg(sName, i + 1, PgDataType::Int64, 8);
-			break;
-		case DBDataType::STRING:
-			addDataTypeMsg(sName, i + 1, PgDataType::Varchar, -1);
-			break;
-		case DBDataType::DATETIME:
-			addDataTypeMsg(sName, i + 1, PgDataType::DateTime, -1);
-			break;
-		case DBDataType::DATE:
-			addDataTypeMsg(sName, i + 1, PgDataType::Date, -1);
-			break;
-		case DBDataType::FLOAT:
-			addDataTypeMsg(sName, i + 1, PgDataType::Float, -1);
-			break;
-		case DBDataType::DOUBLE:
-			addDataTypeMsg(sName, i + 1, PgDataType::Double, -1);
-			break;
-		default:
-			LOG(ERROR) << "Unknown type for " << sName;
-			assert(0);
-			break;
+		auto dataType = pPlan->getResultType(i);
+		if(auto iter = m_typeHandler.find(dataType); iter != m_typeHandler.end()) {
+			addDataTypeMsg(sName, i + 1, iter->second.first, -1);
+		} else {
+			IO_ERROR("Unexpected data type:", GetTypeName(dataType));
 		}
 	}
 }
@@ -99,44 +125,11 @@ void MessageSender::sendData(ExecutionPlan* pPlan) {
 				m_sender.addInt(-1);
 				continue;
 			}
-
-			switch (type) {
-			case DBDataType::BYTES:
-				m_sender.addBytesString(result.getString());
-				break;
-			case DBDataType::STRING:
-				m_sender.addString(result.getString());
-				break;
-			case DBDataType::INT16:
-			case DBDataType::INT32:
-			case DBDataType::INT64:
-				m_sender.addValueAsString(result.getInt(), "%lld");
-				break;
-			case DBDataType::DATETIME:
-			case DBDataType::DATE: {
-				time_t time = result.getInt();
-				struct tm* pTime = gmtime(&time);
-				if (pTime == nullptr) {
-					LOG(ERROR) << "Failed to get localtime "<< (int ) time;
-					m_sender.addInt(-1);
-				} else if(type == DBDataType::DATE){
-					m_sender.addDateTimeAsString(pTime, "%Y-%m-%d", 10);
-				} else {
-					m_sender.addDateTimeAsString(pTime, "%Y-%m-%d %H:%M:%S", 19);
-				}
-				break;
+			if(auto iter = m_typeHandler.find(type); iter != m_typeHandler.end()) {
+				std::invoke(iter->second.second, result, m_sender);
+			} else {
+				IO_ERROR("Unexpected data type:", GetTypeName(type));
 			}
-			case DBDataType::FLOAT:
-				m_sender.addFloat(result.getDouble());
-				break;
-			case DBDataType::DOUBLE: {
-				m_sender.addValueAsString(result.getDouble(), "%f");
-				break;
-			}
-			default:
-				assert(0);
-				break;
-			}; //switch
 		} catch (...) {
 			for (; i < columnNum; ++i)
 				m_sender.addInt(-1);

@@ -3,7 +3,7 @@
 #include <limits>
 #include <absl/strings/numbers.h>
 
-std::map<DBDataType, std::unique_ptr<DBDataTypeHandler>> DBDataTypeHandler::m_typeHandlers;
+decltype(DBDataTypeHandler::m_typeHandlers) DBDataTypeHandler::m_typeHandlers;
 
 namespace {
 

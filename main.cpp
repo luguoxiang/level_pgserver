@@ -3,6 +3,7 @@
 #include <glog/logging.h>
 
 #include "PgServer.h"
+#include "MessageSender.h"
 #include "common/Exception.h"
 #include "common/MetaConfig.h"
 #include "execution/DBDataTypeHandler.h"
@@ -13,6 +14,7 @@ int main(int argc, char** argv) {
 
 	LOG(INFO)<< "level_pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
 	DBDataTypeHandler::init();
+	MessageSender::init();
 
 	static_assert(std::numeric_limits<float>::is_iec559);
 	static_assert(std::numeric_limits<double>::is_iec559);
