@@ -33,7 +33,7 @@ public:
 		} else {
 			columnNum = pPlan->getResultColumns();
 		}
-	    if (columnNum == 0) {
+	 	if (columnNum == 0) {
 			DLOG(INFO) << "No columns";
 			return;
 		}
