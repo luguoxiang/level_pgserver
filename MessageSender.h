@@ -29,6 +29,7 @@ public:
 private:
 	//https://jdbc.postgresql.org/development/privateapi/constant-values.html
 	enum class PgDataType {
+		Bool = 16,
 		Bytea = 17,
 		Int16 = 21,
 		Int32 = 23,

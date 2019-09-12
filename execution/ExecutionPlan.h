@@ -4,10 +4,8 @@
 #include <vector>
 #include "common/ParseNode.h"
 #include "common/ConfigInfo.h"
-#include "ExecutionResult.h"
 
-class SqlRunner;
-class ScanColumn;
+class ExecutionResult;
 enum class PlanType {
 		Sort,
 		Projection,

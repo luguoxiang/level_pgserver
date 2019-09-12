@@ -34,9 +34,11 @@ public:
 		}
 		return nullptr;
 	}
-	std::string getName() {
+	std::string_view getName() {
 		return m_name;
 	}
+
+	static std::string_view getTypeName(DBDataType type);
 private:
 	static std::map<DBDataType, std::unique_ptr<DBDataTypeHandler>> m_typeHandlers;
 	const std::string m_name;

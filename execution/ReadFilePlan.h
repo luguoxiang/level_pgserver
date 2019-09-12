@@ -1,7 +1,9 @@
 #pragma once
 
 #include "common/ParseException.h"
-#include "execution/BasePlan.h"
+#include "BasePlan.h"
+#include "ExecutionResult.h"
+
 #include <sstream>
 #include <fstream>
 #include <atomic>

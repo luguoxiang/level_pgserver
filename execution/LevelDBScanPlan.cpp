@@ -32,17 +32,18 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 	if(Tools::isRowKeyNode(pNode)) {
 		return m_columnValues.size() + m_pTable->getKeyCount();
 	} else if(pNode->m_type == NodeType::NAME) {
+
 		auto pColumn = m_pTable->getColumnByName(pNode->getString());
 		if(pColumn == nullptr ) {
 			PARSE_ERROR("Unknown column: ", pNode->getString());
 		}
+
 		if(pColumn->m_iKeyIndex >= 0) {
 			return pColumn->m_iKeyIndex;
 		}
 		assert(pColumn->m_iValueIndex >= 0);
 		m_bProjectValue = true;
 		m_columnValues[pColumn->m_iValueIndex].emplace();
-
 		return m_pTable->getKeyCount() + pColumn->m_iValueIndex;
 	}
 	return -1;

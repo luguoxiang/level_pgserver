@@ -35,7 +35,8 @@ PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate) :
 
 	m_handler['D'] = [this] () {
 			m_protocol.readColumnDescribeInfo();
-			describeColumn();
+			m_protocol.sendColumnDescription(m_pPlan.get());
+			m_protocol.flush();
 	};
 
 	m_handler['E'] = std::bind(&PgClient::handleExecute, this);
@@ -62,7 +63,10 @@ void PgClient::handleQuery() {
 
 	resolve();
 
-	describeColumn();
+	m_protocol.sendColumnDescription(m_pPlan.get());
+
+	m_protocol.flush();
+
 	handleExecute();
 
 
@@ -94,7 +98,6 @@ void PgClient::handleBind() {
 	m_protocol.sendShortMessage('2');
 
 	resolve();
-	m_bDescribed = false;
 }
 
 
@@ -170,8 +173,3 @@ void PgClient::run() {
 }
 
 
-void PgClient::describeColumn() {
-	m_bDescribed = true;
-
-	m_protocol.sendColumnDescription(m_pPlan.get());
-}

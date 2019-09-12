@@ -4,6 +4,7 @@
 #include <absl/strings/str_cat.h>
 
 #include "ShowColumns.h"
+#include "ExecutionResult.h"
 #include "common/MetaConfig.h"
 
 namespace {

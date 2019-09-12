@@ -39,6 +39,7 @@ public:
 		case STRING_VIEW:
 			return std::get < std::string_view > (m_result);
 		default:
+			assert(0);
 			EXECUTION_ERROR("wrong DataType expect string, got ", toString());
 			return "";
 		}

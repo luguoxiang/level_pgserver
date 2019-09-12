@@ -11,6 +11,7 @@
 #include <mutex>
 #include "common/ConfigInfo.h"
 #include "execution/DataRow.h"
+#include "execution/DBDataTypeHandler.h"
 #include "execution/ExecutionResult.h"
 
 class KeyComparator: public leveldb::Comparator {
@@ -20,7 +21,7 @@ public:
 		for (size_t i = 0; i < pTable->getKeyCount(); ++i) {
 			auto pColumn = pTable->getKeyColumn(i);
 			m_keyTypes.push_back(pColumn->m_type);
-			os << GetTypeName(pColumn->m_type);
+			os << DBDataTypeHandler::getTypeName(pColumn->m_type);
 			os << ",";
 		}
 		m_sName = os.str();

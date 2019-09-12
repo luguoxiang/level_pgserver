@@ -1,6 +1,8 @@
 #include "ExplainPlan.h"
 #include "common/ParseException.h"
 #include "ExecutionException.h"
+#include "ExecutionResult.h"
+
 #include <algorithm>
 
 

@@ -12,6 +12,8 @@ namespace Tools {
 
 inline int64_t binaryToInt(std::string_view sValue) {
 	switch(sValue.length()) {
+	case 1:
+		return *sValue.data();
 	case 2:
 		return ntohs(*(int16_t*) sValue.data());
 	case 4:

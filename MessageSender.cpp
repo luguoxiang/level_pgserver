@@ -1,6 +1,6 @@
 #include "MessageSender.h"
 #include "common/ConfigInfo.h"
-
+#include "execution/DBDataTypeHandler.h"
 namespace {
 
 
@@ -24,6 +24,10 @@ decltype(MessageSender::m_typeHandler) MessageSender::m_typeHandler;
 void MessageSender::init() {
 	m_typeHandler[DBDataType::BYTES] = std::make_pair(PgDataType::Bytea, [](ExecutionResult& result, DataSender& sender) {
 		sender.addBytesString(result.getString());
+	});
+
+	m_typeHandler[DBDataType::BOOL] = std::make_pair(PgDataType::Bool, [](ExecutionResult& result, DataSender& sender) {
+		sender.addValueAsString(result.getInt(), "%lld");
 	});
 
 	m_typeHandler[DBDataType::INT16] = std::make_pair(PgDataType::Int16, [](ExecutionResult& result, DataSender& sender) {
@@ -98,7 +102,7 @@ void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum
 		if(auto iter = m_typeHandler.find(dataType); iter != m_typeHandler.end()) {
 			addDataTypeMsg(sName, i + 1, iter->second.first, -1);
 		} else {
-			IO_ERROR("Unexpected data type:", GetTypeName(dataType));
+			IO_ERROR("Unexpected data type:", DBDataTypeHandler::getTypeName(dataType));
 		}
 	}
 }
@@ -120,7 +124,6 @@ void MessageSender::sendData(ExecutionPlan* pPlan) {
 
 			pPlan->getResult(i, result, type);
 
-
 			if (result.isNull()) {
 				m_sender.addInt(-1);
 				continue;
@@ -128,7 +131,7 @@ void MessageSender::sendData(ExecutionPlan* pPlan) {
 			if(auto iter = m_typeHandler.find(type); iter != m_typeHandler.end()) {
 				std::invoke(iter->second.second, result, m_sender);
 			} else {
-				IO_ERROR("Unexpected data type:", GetTypeName(type));
+				IO_ERROR("Unexpected data type:", DBDataTypeHandler::getTypeName(type));
 			}
 		} catch (...) {
 			for (; i < columnNum; ++i)

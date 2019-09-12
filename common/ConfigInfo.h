@@ -17,30 +17,10 @@ enum class DBDataType {
 	FLOAT,
 	DOUBLE,
 	BYTES,
+	BOOL,
 };
 
-inline std::string_view GetTypeName(DBDataType type) {
-	switch (type) {
-	case DBDataType::INT16:
-		return "int16";
-	case DBDataType::INT32:
-		return "int32";
-	case DBDataType::INT64:
-		return "int64";
-	case DBDataType::DATETIME:
-		return "datetime";
-	case DBDataType::DATE:
-		return "date";
-	case DBDataType::FLOAT:
-		return "float";
-	case DBDataType::DOUBLE:
-		return "double";
-	case DBDataType::STRING:
-		return "string";
-	default:
-		return "unknown";
-	}
-}
+
 
 class ParseNode;
 struct DBColumnInfo {
@@ -80,8 +60,20 @@ public:
 		return m_columns[i].get();
 	}
 
+	size_t getKeyCount() const {
+		return m_keys.size();
+	}
+
 	const DBColumnInfo* getKeyColumn(size_t i) const {
 		return m_keys[i];
+	}
+
+	size_t getValueCount() const {
+		return m_values.size();
+	}
+
+	const DBColumnInfo* getValueColumn(size_t i) const {
+		return m_values[i];
 	}
 
 	const DBColumnInfo* getColumnByName(const std::string_view name) const {
@@ -91,9 +83,7 @@ public:
 		return iter->second;
 	}
 
-	size_t getKeyCount() const {
-		return m_keys.size();
-	}
+
 
 	void addAttribute(const std::string& key, const std::string& value) {
 		m_attr[key] = value;
@@ -126,6 +116,7 @@ public:
 private:
 	std::vector<std::unique_ptr<DBColumnInfo>> m_columns;
 	std::vector<DBColumnInfo*> m_keys;
+	std::vector<DBColumnInfo*> m_values;
 
 	//string view on column.m_name
 	std::map<std::string_view, DBColumnInfo*> m_columnMap;

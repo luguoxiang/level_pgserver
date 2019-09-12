@@ -9,7 +9,6 @@ bool ProjectionPlan::project(const ParseNode* pNode, const std::string_view& sNa
 		if (iSubIndex < 0) {
 			return false;
 		}
-
 		info.m_iSubIndex = iSubIndex;
 
 	} else if(pNode->m_type == NodeType::PARAM) {

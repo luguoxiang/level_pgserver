@@ -1,7 +1,10 @@
 #include "DBDataTypeHandler.h"
 #include "common/ParseTools.h"
+#include "common/MetaConfig.h"
+
 #include <limits>
 #include <absl/strings/numbers.h>
+#include <absl/strings/match.h>
 
 decltype(DBDataTypeHandler::m_typeHandlers) DBDataTypeHandler::m_typeHandlers;
 
@@ -11,8 +14,6 @@ template<typename Type>
 class IntDBDataTypeHandler: public DBDataTypeHandler {
 private:
 	void checkValue(int64_t value) {
-		static_assert(std::numeric_limits<Type>::is_signed);
-
 		if (value < std::numeric_limits<Type>::min() ||
 		               value > std::numeric_limits<Type>::max() ){
 			PARSE_ERROR("integer ", value, " exceed data type range");
@@ -116,6 +117,82 @@ public:
 			return 1;
 	}
 
+};
+
+class BoolDBDataTypeHandler: public IntDBDataTypeHandler<bool> {
+
+public:
+	BoolDBDataTypeHandler(const std::string& name) : IntDBDataTypeHandler<bool>(name) {
+		m_valueMap["1"] = true;
+		m_valueMap["true"] = true;
+		m_valueMap["on"] = true;
+		m_valueMap["yes"] = true;
+		m_valueMap["t"] = true;
+		m_valueMap["y"] = true;
+
+		m_valueMap["0"] = false;
+		m_valueMap["false"] = false;
+		m_valueMap["off"] = false;
+		m_valueMap["no"] = false;
+		m_valueMap["f"] = false;
+		m_valueMap["n"] = false;
+	};
+
+	void fromString(const std::string_view s, ExecutionResult& result) override{
+		auto value = stringToBool(s);
+		result.setInt(value);
+	}
+
+	bool stringToBool(std::string_view s) {
+		for(auto& [k,v] : m_valueMap) {
+			if(absl::EqualsIgnoreCase(s, k)) {
+				return v;
+			}
+		}
+
+		EXECUTION_ERROR("unexpected bool value: ", s);
+		return false;
+	}
+
+	void fromNode(const ParseNode* pValue, ExecutionResult& result) override {
+		bool value = 0;
+		switch (pValue->m_type) {
+		case NodeType::INT:
+		case NodeType::STR:
+			value = stringToBool(pValue->getString());
+			break;
+		case NodeType::PARAM: {
+			switch(pValue->getOp()) {
+			case Operation::TEXT_PARAM:{
+				value = stringToBool(pValue->getString());
+				break;
+			}
+			case Operation::BINARY_PARAM:
+				value = Tools::binaryToInt(pValue->getString()) != 0;
+				break;
+			case Operation::UNBOUND_PARAM:
+				EXECUTION_ERROR("parameter unbound");
+				break;
+			default:
+				assert(0);
+				break;
+			}
+			break;
+		}
+		default:
+			EXECUTION_ERROR("wrong const value type:", pValue->m_sExpr);
+		}
+
+		result.setInt(value);
+	}
+	void div(ExecutionResult& result, size_t value) override {
+		EXECUTION_ERROR("div is not supported for bool");
+	}
+	void add(ExecutionResult& result, const ExecutionResult& add) override {
+		EXECUTION_ERROR("add is not supported for bool");
+	}
+private:
+	std::map<std::string_view,bool> m_valueMap;
 };
 
 template<typename Type>
@@ -372,6 +449,8 @@ public:
 	}
 };
 void DBDataTypeHandler::init() {
+	m_typeHandlers[DBDataType::BOOL] = std::make_unique<
+			BoolDBDataTypeHandler>("bool");
 	m_typeHandlers[DBDataType::INT16] = std::make_unique<
 			IntDBDataTypeHandler<int16_t>>("int16");
 	m_typeHandlers[DBDataType::INT32] = std::make_unique<
@@ -389,4 +468,16 @@ void DBDataTypeHandler::init() {
 
 	m_typeHandlers[DBDataType::STRING] = std::make_unique<StringDBDataTypeHandler>("varchar");
 	m_typeHandlers[DBDataType::BYTES] =  std::make_unique<StringDBDataTypeHandler>("bytes");
+
+	for(auto& [k,v]: m_typeHandlers) {
+		MetaConfig::getInstance().addDataType(v->getName(), k);
+	}
+}
+
+std::string_view DBDataTypeHandler::getTypeName(DBDataType type) {
+	if(auto iter = m_typeHandlers.find(type); iter != m_typeHandlers.end()) {
+		return iter->second->getName();
+	} else {
+		return "unknown";
+	}
 }

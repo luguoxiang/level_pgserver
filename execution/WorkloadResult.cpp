@@ -1,9 +1,10 @@
 #include <sstream>
 #include <absl/strings/match.h>
 
-#include "WorkloadResult.h"
 #include "common/ParseTools.h"
+#include "WorkloadResult.h"
 #include "WorkThreadInfo.h"
+#include "ExecutionResult.h"
 
 namespace {
 std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session",  "SessionTime", "SqlCount" };

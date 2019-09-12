@@ -6,11 +6,8 @@
 
 class MetaConfig {
 public:
-	~MetaConfig() {
-		clean();
-	}
+	~MetaConfig() {}
 
-	void clean();
 
 	void load(const std::string& sPath);
 
@@ -72,11 +69,15 @@ public:
 
 	void addTable(TableInfo* pTable);
 
+	void addDataType(std::string_view key, DBDataType value) {
+		m_dataTypeMap[key] = value;
+	}
+
 	MetaConfig(const MetaConfig&) = delete;
 	MetaConfig& operator =(const MetaConfig&) = delete;
 private:
 
-	MetaConfig();
+	MetaConfig() {}
 
 	//string view on TableInfo.m_name
 	std::map<std::string_view, std::unique_ptr<TableInfo>> m_tableMap;

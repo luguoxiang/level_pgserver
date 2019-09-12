@@ -48,9 +48,12 @@ public:
 	virtual DBDataType getResultType(size_t index)override{
 		if(index == m_pTable->getColumnCount()) {
 			return DBDataType::BYTES;
-		} else  {
-			assert(index < m_pTable->getColumnCount());
-			return m_pTable->getColumn(index)->m_type;
+		} else  if(index < m_pTable->getKeyCount()){
+			return m_pTable->getKeyColumn(index)->m_type;
+		} else {
+			index -= m_pTable->getKeyCount();
+			assert(index < m_pTable->getValueCount());
+			return m_pTable->getValueColumn(index)->m_type;
 		}
 	}
 

@@ -40,7 +40,6 @@ public:
 		MessageSender sender(m_sender, 'T');
 
 		sender.sendColumnDescription(pPlan, columnNum);
-		m_sender.flush();
 	}
 
 	void sendException(Exception* pe) {

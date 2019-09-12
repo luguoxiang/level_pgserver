@@ -88,6 +88,21 @@ JOIN {return JOIN;}
 LEFT { return LEFT;}
 USING {return USING;}
 
+TRUE {
+	ParseResult* pResult = (ParseResult*)yyextra;
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
+	yylval->pNode = pNode;
+	pNode->setString("1");
+	return BOOL;
+}
+FALSE {
+	ParseResult* pResult = (ParseResult*)yyextra;
+	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
+	yylval->pNode = pNode;
+	pNode->setString("0");
+	return BOOL;
+}
+
 [0-9]+ {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);

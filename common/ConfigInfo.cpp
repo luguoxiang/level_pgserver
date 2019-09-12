@@ -22,6 +22,7 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 		if (type == DBDataType::UNKNOWN) {
 			CONFIG_ERROR("Unknown datatype ", matches.str(2));
 		}
+
 		DBColumnInfo* pColumn = new DBColumnInfo(matches.str(1), type);
 
 		pColumn->m_iIndex = m_columns.size();
@@ -48,10 +49,6 @@ void TableInfo::addColumn(const MetaConfig* pConfig, const std::string& sValue) 
 void TableInfo::addKeyColumn(const std::string_view name) {
 	if(auto iter = m_columnMap.find(name);  iter != m_columnMap.end()) {
 		DBColumnInfo* pColumn = iter->second;
-		if (pColumn->m_type == DBDataType::DOUBLE) {
-			CONFIG_ERROR(
-					"key column with double type is not supported");
-		}
 		pColumn->m_iKeyIndex = m_keys.size();
 		m_keys.push_back(pColumn);
 		DLOG(INFO)<<"add key '" << pColumn->m_name << "', index="<< pColumn->m_iKeyIndex;
@@ -87,12 +84,13 @@ void TableInfo::getDBColumns(const ParseNode* pColumn,
 }
 
 void TableInfo::evaluate() {
-	size_t iValueIndex = 0;
 	for(auto& pColumn : m_columns) {
 		if(pColumn->m_iKeyIndex >= 0) {
 			continue;
 		}
-		pColumn->m_iValueIndex = iValueIndex++;
+
+		pColumn->m_iValueIndex = m_values.size();
+		m_values.push_back(pColumn.get());
 	}
 
 	std::string defPath = "";

@@ -7,21 +7,6 @@
 #include <cassert>
 #include <glog/logging.h>
 
-MetaConfig::MetaConfig() {
-	m_dataTypeMap["int16"] = DBDataType::INT16;
-	m_dataTypeMap["int32"] = DBDataType::INT32;
-	m_dataTypeMap["int64"] = DBDataType::INT64;
-	m_dataTypeMap["float"] = DBDataType::FLOAT;
-	m_dataTypeMap["double"] = DBDataType::DOUBLE;
-	m_dataTypeMap["varchar"] = DBDataType::STRING;
-	m_dataTypeMap["bytes"] = DBDataType::BYTES;
-	m_dataTypeMap["datetime"] = DBDataType::DATETIME;
-	m_dataTypeMap["date"] = DBDataType::DATE;
-}
-
-void MetaConfig::clean() {
-	m_tableMap.clear();
-}
 
 void MetaConfig::addTable(TableInfo* pTable) {
 	auto name = pTable->getName();
@@ -33,6 +18,7 @@ void MetaConfig::addTable(TableInfo* pTable) {
 }
 
 void MetaConfig::load(const std::string& sPath) {
+	assert(!m_dataTypeMap.empty());
 	try {
 		std::string line;
 
@@ -40,7 +26,9 @@ void MetaConfig::load(const std::string& sPath) {
 		if (infile.fail()) {
 			CONFIG_ERROR("reading config file ", sPath, " failed");
 		}
-		clean();
+
+		m_tableMap.clear();
+
 		TableInfo* pCurrentTable = nullptr;
 
 		std::regex attributeRegex(R"(([^=\s]+)\s*=\s*([^=]+)\s*)");
