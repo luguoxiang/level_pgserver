@@ -4,6 +4,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Calendar;
 
 public class Test {
 
@@ -18,11 +19,11 @@ public class Test {
 			try (PreparedStatement stmt = conn.prepareStatement("insert into test values(?,?,?,?)")) {
 				for (int i = 0; i < 10; ++i) {
 					stmt.setInt(1, i);
-					stmt.setString(2, "test-"+i);
+					stmt.setString(2, "test-" + i);
 					stmt.setDouble(3, i * 1.5);
-					java.util.Date date = new java.util.Date();
-					date.setMonth(i);
-					stmt.setDate(4, new java.sql.Date(date.getTime()));
+					Calendar cal = Calendar.getInstance();
+					cal.set(Calendar.MONTH, i);
+					stmt.setDate(4, new java.sql.Date(cal.getTime().getTime()));
 					stmt.execute();
 				}
 			}
