@@ -162,6 +162,7 @@ void PgClient::run() {
 		}
 
 		if(qtype == 'Q') {
+			// should also sync when handleQuery throws Exception
 			m_protocol.sendSync();
 		}
 		auto end = std::chrono::steady_clock::now();
