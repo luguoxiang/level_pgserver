@@ -145,7 +145,7 @@ void PgClient::run() {
 			DLOG(INFO)<< "Client Terminate!";
 			break;
 		}
-		DLOG(INFO)<<qtype;
+		
 		start = std::chrono::steady_clock::now();
 		auto handler = m_handler[qtype];
 		if (handler == nullptr) {
