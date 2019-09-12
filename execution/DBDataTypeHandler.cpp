@@ -158,6 +158,8 @@ public:
 		bool value = 0;
 		switch (pValue->m_type) {
 		case NodeType::INT:
+			value = (pValue->getString() != "0");
+			break;
 		case NodeType::STR:
 			value = stringToBool(pValue->getString());
 			break;
