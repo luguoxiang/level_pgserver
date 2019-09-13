@@ -11,8 +11,8 @@ class MessageSender {
 public:
 	MessageSender(DataSender& sender, char cMsgType) :m_sender(sender) {
 		m_sender.begin();
-		m_sender.addByte(cMsgType);
-		m_sender.addInt(0); //write back later
+		m_sender<< static_cast<int8_t>(cMsgType);
+		m_sender<< static_cast<int32_t>(0); //write back later
 	};
 
 	void sendData(ExecutionPlan* pPlan);

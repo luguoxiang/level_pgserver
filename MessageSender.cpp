@@ -59,7 +59,7 @@ void MessageSender::init() {
 		struct tm* pTime = gmtime(&time);
 		if (pTime == nullptr) {
 			LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
-			sender.addInt(-1);
+			sender << nullptr;
 		} else {
 			sender.addDateTimeAsString(pTime, "%Y-%m-%d", 10);
 		}
@@ -70,7 +70,7 @@ void MessageSender::init() {
 		struct tm* pTime = gmtime(&time);
 		if (pTime == nullptr) {
 			LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
-			sender.addInt(-1);
+			sender << nullptr;
 		} else {
 			sender.addDateTimeAsString(pTime, "%Y-%m-%d %H:%M:%S", 19);
 		}
@@ -93,7 +93,7 @@ void MessageSender::sendException(Exception* pe) {
 
 void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum) {
 	assert(columnNum > 0);
-	m_sender.addShort(columnNum);
+	m_sender << static_cast<int16_t>(columnNum);
 
 	for (size_t i = 0; i < columnNum; ++i) {
 		auto sName = pPlan->getProjectionName(i);
@@ -108,14 +108,14 @@ void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum
 }
 
 void MessageSender::sendData(ExecutionPlan* pPlan) {
-	size_t columnNum;
+	int16_t columnNum;
 	if (pPlan == nullptr) {
 		columnNum = 0;
 	} else {
 		columnNum = pPlan->getResultColumns();
 	}
 
-	m_sender.addShort(columnNum);
+	m_sender << columnNum;
 	for (size_t i = 0; i < columnNum; ++i) {
 		try {
 			DBDataType type = pPlan->getResultType(i);
@@ -125,7 +125,7 @@ void MessageSender::sendData(ExecutionPlan* pPlan) {
 			pPlan->getResult(i, result, type);
 
 			if (result.isNull()) {
-				m_sender.addInt(-1);
+				m_sender << nullptr;
 				continue;
 			}
 			if(auto iter = m_typeHandler.find(type); iter != m_typeHandler.end()) {
@@ -134,8 +134,9 @@ void MessageSender::sendData(ExecutionPlan* pPlan) {
 				IO_ERROR("Unexpected data type:", DBDataTypeHandler::getTypeName(type));
 			}
 		} catch (...) {
-			for (; i < columnNum; ++i)
-				m_sender.addInt(-1);
+			for (; i < columnNum; ++i) {
+				m_sender << nullptr;
+			}
 			throw;
 		}
 	} //for

@@ -10,20 +10,10 @@ public:
 	DataSender(int fd, uint32_t iSendBuffer);
 	virtual ~DataSender();
 
-	void addFloat(float value);
-	void addDouble(double value);
-
-	void addByte(int8_t value);
-	void addInt(int32_t value);
-	void addShort(int16_t value);
-	void addInt64(int64_t value);
-	void addStringZeroEnd(const std::string_view s);
-
 	void addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len);
 
 	void addBytesString(const std::string_view s);
 	void addString(const std::string_view s);
-
 
 	void flush();
 
@@ -35,25 +25,29 @@ public:
 
 	void directSend(const std::string_view s);
 
+	DataSender& operator <<(nullptr_t) {
+		addInt32(-1);
+		return *this;
+	}
+
 	DataSender& operator <<(const std::string_view s) {
 		addStringZeroEnd(s);
 		return *this;
 	}
 
+	DataSender& operator <<(float value);
+	DataSender& operator <<(double value);
+
+	DataSender& operator <<(int64_t t);
+
 	DataSender& operator <<(int32_t t) {
-		addInt(t);
+		addInt32(t);
 		return *this;
 	}
 
-	DataSender& operator <<(int16_t value) {
-		addShort(value);
-		return *this;
-	}
+	DataSender& operator <<(int16_t value);
 
-	DataSender& operator <<(int8_t value) {
-		addByte(value);
-		return *this;
-	}
+	DataSender& operator <<(int8_t value);
 
 	void begin();
 	void end();
@@ -67,7 +61,7 @@ public:
 			auto iWritten = snprintf(m_buffer.data() + iValueStart, iAvailable, pszFormat, value);
 
 			if (iWritten > 0 && iWritten < iAvailable) {
-				addInt(iWritten);
+				addInt32(iWritten);
 				m_iWritten += iWritten;
 				break;
 			} else if(iWritten > 0) {
@@ -80,6 +74,9 @@ public:
 	}
 
 private:
+	void addStringZeroEnd(const std::string_view s);
+	void addInt32(int32_t value);
+
 	void check(uint32_t iSize) {
 		if (m_iWritten + iSize > m_buffer.size()) {
 			flush();

@@ -14,18 +14,17 @@ DataSender::DataSender(int fd,  uint32_t iSendBuffer) :
 DataSender::~DataSender() {
 }
 
-void DataSender::addFloat(float value) {
+DataSender& DataSender::operator <<(float value) {
 	auto p = reinterpret_cast<int32_t*>(&value);
-	int32_t netval = htonl(*p);
-
-	check(4);
-	m_buffer.replace(m_iWritten, 4, reinterpret_cast<const char*>(&netval), 4);
-	m_iWritten += 4;
+	addInt32(*p);
+	return *this;
 }
-void DataSender::addDouble(double value) {
+
+DataSender& DataSender::operator <<(double value) {
 	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
-	addInt(iValue[1]);
-	addInt(iValue[0]);
+	addInt32(iValue[1]);
+	addInt32(iValue[0]);
+	return *this;
 }
 
 void DataSender::directSend(const std::string_view s) {
@@ -49,13 +48,14 @@ void DataSender::begin() {
 	m_iLastPrepare = m_iWritten;
 }
 
-void DataSender::addByte(int8_t value) {
+DataSender& DataSender::operator <<(int8_t value) {
 	check(1);
 	m_buffer[m_iWritten] = value;
 	++m_iWritten;
+	return *this;
 }
 
-void DataSender::addInt(int32_t value) {
+void DataSender::addInt32(int32_t value) {
 	int32_t netval = htonl(value);
 
 	check(4);
@@ -63,18 +63,20 @@ void DataSender::addInt(int32_t value) {
 	m_iWritten += 4;
 }
 
-void DataSender::addInt64(int64_t value) {
+DataSender& DataSender::operator <<(int64_t value) {
 	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
-	addInt(iValue[1]);
-	addInt(iValue[0]);
+	addInt32(iValue[1]);
+	addInt32(iValue[0]);
+	return *this;
 }
 
-void DataSender::addShort(int16_t value) {
+DataSender& DataSender::operator <<(int16_t value) {
 	int16_t netval = htons(value);
 
 	check(2);
 	m_buffer.replace(m_iWritten, 2, reinterpret_cast<const char*>(&netval), 2);
 	m_iWritten += 2;
+	return *this;
 }
 
 void DataSender::addStringZeroEnd(const std::string_view s) {
@@ -90,7 +92,7 @@ constexpr auto DIGITS = "0123456789ABCDEF";
 
 void DataSender::addBytesString(const std::string_view s) {
 	auto len = 2 + s.length() * 2;
-	addInt(len);
+	addInt32(len);
 	check(len);
 	m_buffer[m_iWritten++] = '\\';
 	m_buffer[m_iWritten++] = 'x';
@@ -105,14 +107,14 @@ void DataSender::addBytesString(const std::string_view s) {
 
 void DataSender::addString(const std::string_view s) {
 	auto len = s.length();
-	addInt(len);
+	addInt32(len);
 	check(len);
 	m_buffer.replace(m_iWritten, len, s.data(), len);
 	m_iWritten += len;
 }
 
 void DataSender::addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len) {
-	addInt(len);
+	addInt32(len);
 	check(len+1);
 	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, pszFormat, pTime);
 	assert(iWritten == len);
