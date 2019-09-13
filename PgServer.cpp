@@ -114,9 +114,8 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 	while (!m_bTerminate.load()) {
 		try {
 			pInfo->setAcceptFd(acceptSocket());
-		} catch (IOException* pe) {
-			LOG(ERROR) << "Working thread failed:" << pe->what();
-			delete pe;
+		} catch (std::exception& e) {
+			LOG(ERROR) << "accept error:" <<e.what();
 			break;
 		}
 		pInfo->m_bRunning = true;
@@ -125,9 +124,6 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 		try {
 			PgClient client(pInfo, m_bTerminate);
 			client.run();
-		} catch (Exception* pe) {
-			LOG(ERROR) << "Working thread failed:" << pe->what();
-			delete pe;
 		} catch (const std::exception &ex) {
 			LOG(ERROR) << "Working thread failed:" << ex.what();
 		} catch (...) {
@@ -143,11 +139,7 @@ void PgServer::terminate() {
 	LOG(INFO) << "Prepare server shutdown";
 	m_bTerminate.store(true);
 	WorkerManager::getInstance().cancel(false);
-#ifdef __linux__
-		::shutdown(m_iFd, SHUT_RDWR);
-#else
-		::close(m_iFd);
-#endif
+	::shutdown(m_iFd, SHUT_RD);
 }
 
 

@@ -4,7 +4,6 @@
 
 #include "PgServer.h"
 #include "MessageSender.h"
-#include "common/Exception.h"
 #include "common/MetaConfig.h"
 #include "execution/DBDataTypeHandler.h"
 #include "config.h"
@@ -28,9 +27,8 @@ int main(int argc, char** argv) {
 		MetaConfig::getInstance().load(pszConfigPath);
 
 		PgServer::getInstance().run();
-	} catch (Exception* pe) {
-		LOG(ERROR)<< "start server failed:" << pe->what();
-		delete pe;
+	} catch (std::exception& e) {
+		LOG(ERROR)<< "start server failed:" << e.what();
 		return 1;
 	}
 	return 0;

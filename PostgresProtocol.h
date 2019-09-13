@@ -42,9 +42,14 @@ public:
 		sender.sendColumnDescription(pPlan, columnNum);
 	}
 
-	void sendException(Exception* pe) {
+	void sendParseException(ParseException& e) {
 		MessageSender sender(m_sender, 'E');
-		sender.sendException(pe);
+		sender.sendParseException(e);
+	}
+
+	void sendException(std::exception e) {
+		MessageSender sender(m_sender, 'E');
+		sender.sendException(e);
 	}
 
 	std::string_view readQueryInfo() {

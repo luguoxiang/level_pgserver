@@ -1,31 +1,25 @@
 #pragma once
 
-#include "Exception.h"
+#include <exception>
 #include <absl/strings/str_cat.h>
 
 class ParseResult;
-class ParseException: public Exception {
+class ParseException: public std::exception {
 public:
 	ParseException(const std::string& msg);
 	ParseException(ParseResult* pResult);
 
-	virtual ~ParseException();
-
-	std::string what() const override{
-		return m_sErrorMsg;
+	const char * what() const throw() override {
+		return m_sErrorMsg.c_str();
 	}
 
-	int getLine() const override{
+	int getLine() const {
 		return m_iLine;
 	}
-	int getStartPos() const override{
+	int getStartPos() const {
 		return m_iStartCol;
 	}
 	void printLocation();
-
-	ParseException(const ParseException& ex) = delete;
-	ParseException& operator =(const ParseException& ex) = delete;
-
 private:
 	std::string m_sErrorMsg;
 	int m_iStartCol = 0;
@@ -33,7 +27,7 @@ private:
 	int m_iLine = -1;
 };
 
-#define PARSE_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw new ParseException(sError);}
+#define PARSE_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw ParseException(sError);}
 
 
 

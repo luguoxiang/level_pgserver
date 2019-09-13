@@ -1,6 +1,5 @@
 #pragma once
 
-#include "common/Exception.h"
 #include "execution/BasePlan.h"
 #include <vector>
 #include <absl/strings/str_cat.h>

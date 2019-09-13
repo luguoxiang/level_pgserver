@@ -1,28 +1,22 @@
 #pragma once
 
-
-#include "common/Exception.h"
+#include <glog/logging.h>
+#include <exception>
 #include <absl/strings/str_cat.h>
 
 
-class ConfigException: public Exception {
+class ConfigException: public std::exception {
 public:
 	ConfigException(const std::string& sMsg);
 
-	virtual ~ConfigException() {
+	const char * what() const throw() override {
+		return m_sErrMsg.c_str();
 	}
-
-	std::string what() const override {
-		return m_sErrMsg;
-	}
-
-	ConfigException& operator=(const ConfigException& ex) = delete;
-	ConfigException(const ConfigException& ex) = delete;
 
 private:
 	std::string m_sErrMsg;
 };
 
-#define CONFIG_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw new ConfigException(sError);}
+#define CONFIG_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw ConfigException(sError);}
 
 

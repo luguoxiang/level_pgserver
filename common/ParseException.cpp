@@ -12,8 +12,6 @@ ParseException::ParseException(ParseResult* pResult) :
 	LOG(ERROR) << m_sErrorMsg;
 }
 
-ParseException::~ParseException() {
-}
 
 void ParseException::printLocation() {
 	if (m_iLine < 0)

@@ -17,7 +17,9 @@ public:
 
 	void sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum);
 
-	void sendException(Exception* pe);
+	void sendParseException(ParseException& e);
+
+	void sendException(std::exception& e);
 
 	~MessageSender() {
 		m_sender.end();

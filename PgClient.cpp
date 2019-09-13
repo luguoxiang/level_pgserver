@@ -155,8 +155,12 @@ void PgClient::run() {
 
 		try {
 			handler();
-		} catch (Exception* pe) {
-			m_protocol.sendException(pe);
+		} catch (ParseException& e) {
+			m_protocol.sendParseException(e);
+			m_protocol.flush();
+			m_pPlan = nullptr;
+		} catch (std::exception& e) {
+			m_protocol.sendException(e);
 			m_protocol.flush();
 			m_pPlan = nullptr;
 		}

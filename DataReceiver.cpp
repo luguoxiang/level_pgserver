@@ -30,7 +30,7 @@ std::string_view DataReceiver::getNextStringWithLen() {
 	int32_t len = ntohl(*(int32_t*) pszCurrent);
 	m_iCurrent += 4;
 	if (len <= 0)
-		throw new IOException("null string is not supported");
+		IO_ERROR("null string is not supported");
 
 	m_iCurrent += len;
 	return std::string_view(pszCurrent + 4, len);
@@ -43,7 +43,7 @@ std::string_view DataReceiver::getNextStringWithShortLen() {
 	int16_t len = ntohs(*(int16_t*) pszCurrent);
 	m_iCurrent += 2;
 	if (len <= 0)
-		throw new IOException("null string is not supported");
+		IO_ERROR("null string is not supported");
 
 	m_iCurrent += len;
 	return std::string_view(pszCurrent + 2, len);
@@ -83,18 +83,18 @@ char DataReceiver::readByte() {
 	int ret = recv(m_nFd, &qtype, 1, 0);
 
 	if (ret != 1) {
-		throw new IOException("read() failed!");
+		IO_ERROR("read() failed!");
 	}
 	return qtype;
 }
 
 size_t DataReceiver::readData() {
 	if (recv(m_nFd, (char*) &m_iBufLen, 4, 0) != 4) {
-		throw new IOException("Unexpect EOF!");
+		IO_ERROR("Unexpect EOF!");
 	}
 	m_iBufLen = ntohl(m_iBufLen);
 	if (m_iBufLen < 4) {
-		throw new IOException("Invalid message length!");
+		IO_ERROR("Invalid message length!");
 	}
 	m_iBufLen -= 4;
 
@@ -105,7 +105,7 @@ size_t DataReceiver::readData() {
 	while (m_iBufLen > readCount) {
 		int count = read(m_nFd, m_buffer.data() + readCount, m_iBufLen - readCount);
 		if (count < 0) {
-			throw new IOException("read() failed!");
+			IO_ERROR("read() failed!");
 		}
 		readCount += count;
 	}

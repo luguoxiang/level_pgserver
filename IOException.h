@@ -4,24 +4,17 @@
 #include <string.h>
 #include <netdb.h>
 #include <errno.h>
+#include <exception>
 #include <absl/strings/str_cat.h>
+#include <glog/logging.h>
 
-#include "common/Exception.h"
-
-class IOException: public Exception {
+class IOException: public std::exception {
 public:
 	IOException(const std::string& sValue);
-	IOException(const std::string& sValue, const std::string& sIP);
 
-	virtual ~IOException() {
+	const char * what() const throw() override {
+		return m_sErrMsg.c_str();
 	}
-
-	std::string what() const override {
-		return m_sErrMsg;
-	}
-
-	IOException& operator=(const IOException& ex) = delete;
-	IOException(const IOException& ex) = delete;
 
 private:
 	void addErrorNo() {
@@ -36,4 +29,4 @@ private:
 	std::string m_sErrMsg;
 };
 
-#define IO_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw new IOException(sError);}
+#define IO_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw IOException(sError);}

@@ -4,5 +4,3 @@ ExecutionException::ExecutionException(const std::string& sMsg) :
 		m_sErrMsg(sMsg) {
 }
 
-ExecutionException::~ExecutionException() {
-}

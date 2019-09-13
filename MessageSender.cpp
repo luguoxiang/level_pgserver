@@ -76,17 +76,26 @@ void MessageSender::init() {
 		}
 	});
 }
-void MessageSender::sendException(Exception* pe) {
-	std::string msg = pe->what();
+
+void MessageSender::sendException(std::exception& e) {
+	std::string msg = e.what();
 
 	m_sender<< PG_DIAG_SEVERITY << "ERROR"
 			<< PG_DIAG_SQLSTATE << "00000"
 			<< PG_DIAG_MESSAGE_PRIMARY << msg;
 
-	if (pe->getLine() >= 0) {
-		std::string pos = std::to_string(pe->getStartPos());
-		m_sender << PG_DIAG_STATEMENT_POSITION << pos;
-	}
+	m_sender << static_cast<int8_t>(0);
+}
+
+void MessageSender::sendParseException(ParseException& e) {
+	std::string msg = e.what();
+
+	m_sender<< PG_DIAG_SEVERITY << "ERROR"
+			<< PG_DIAG_SQLSTATE << "00000"
+			<< PG_DIAG_MESSAGE_PRIMARY << msg;
+
+	std::string pos = std::to_string(e.getStartPos());
+	m_sender << PG_DIAG_STATEMENT_POSITION << pos;
 	m_sender << static_cast<int8_t>(0);
 }
 

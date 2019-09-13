@@ -36,11 +36,7 @@ void WorkThreadInfo::cancel(bool planOnly) {
 	m_bTerminate.store(true);
 
 	if(!planOnly) {
-#ifdef __linux__
-		::shutdown(m_iAcceptFd, SHUT_RDWR);
-#else
-		::close(m_iAcceptFd);
-#endif
+		::shutdown(m_iAcceptFd, SHUT_RD);
 	}
 }
 
@@ -61,7 +57,7 @@ void WorkThreadInfo::parse(const std::string_view sql) {
 
 		m_result.m_pResult = m_rewritter.rewrite(m_result.m_pResult);
 		if (m_result.m_pResult == nullptr) {
-			throw new ParseException(&m_result);
+			throw ParseException(&m_result);
 		}
 
 	}
