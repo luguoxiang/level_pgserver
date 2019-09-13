@@ -27,7 +27,7 @@ void MessageSender::init() {
 	});
 
 	m_typeHandler[DBDataType::BOOL] = std::make_pair(PgDataType::Bool, [](ExecutionResult& result, DataSender& sender) {
-		sender.addValueAsString(result.getInt(), "%lld");
+		sender.addString(result.getInt()?"true":"false");
 	});
 
 	m_typeHandler[DBDataType::INT16] = std::make_pair(PgDataType::Int16, [](ExecutionResult& result, DataSender& sender) {

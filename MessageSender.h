@@ -9,10 +9,8 @@ constexpr int16_t PARAM_BINARY_MODE = 1;
 
 class MessageSender {
 public:
-	MessageSender(DataSender& sender, char cMsgType) :m_sender(sender) {
-		m_sender.begin();
-		m_sender<< static_cast<int8_t>(cMsgType);
-		m_sender<< static_cast<int32_t>(0); //write back later
+	MessageSender(DataSender& sender, int8_t cMsgType) :m_sender(sender) {
+		m_sender.begin(cMsgType);
 	};
 
 	void sendData(ExecutionPlan* pPlan);
@@ -22,7 +20,6 @@ public:
 	void sendException(Exception* pe);
 
 	~MessageSender() {
-		m_sender.setInt(1, m_sender.getWritten() - 1);
 		m_sender.end();
 	}
 	static void init();

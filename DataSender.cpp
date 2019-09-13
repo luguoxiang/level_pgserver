@@ -34,17 +34,18 @@ void DataSender::directSend(const std::string_view s) {
 	}
 }
 
-
-void DataSender::setInt(size_t iOffset, int32_t value) {
-	if (iOffset + m_iLastPrepare + 4 > m_iWritten) {
-		IO_ERROR("write overflow for DataSender!");
-	}
-	int32_t netval = htonl(value);
-
-	m_buffer.replace(m_iLastPrepare + iOffset, 4, reinterpret_cast<const char*>(&netval), 4);
+void DataSender::begin(int8_t cMsgType) {
+	m_iLastPrepare = m_iWritten;
+	*this << cMsgType << static_cast<int32_t>(0); //write back later
 }
 
-void DataSender::begin() {
+void DataSender::end() {
+	if (m_iLastPrepare + 5 > m_iWritten) {
+		IO_ERROR("write overflow for DataSender!");
+	}
+	int32_t netval = htonl(m_iWritten - m_iLastPrepare - 1);
+	m_buffer.replace(m_iLastPrepare + 1, 4, reinterpret_cast<const char*>(&netval), 4);
+
 	m_iLastPrepare = m_iWritten;
 }
 
@@ -121,9 +122,7 @@ void DataSender::addDateTimeAsString(struct tm* pTime, const char* pszFormat, si
 	m_iWritten += iWritten;
 }
 
-void DataSender::end() {
-	m_iLastPrepare = m_iWritten;
-}
+
 
 void DataSender::flush() {
 	if (m_iLastPrepare == 0)

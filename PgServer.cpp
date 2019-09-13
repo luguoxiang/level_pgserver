@@ -143,8 +143,11 @@ void PgServer::terminate() {
 	LOG(INFO) << "Prepare server shutdown";
 	m_bTerminate.store(true);
 	WorkerManager::getInstance().cancel(false);
-	::close(m_iFd);
-	::shutdown(m_iFd, SHUT_RDWR);
+#ifdef __linux__
+		::shutdown(m_iFd, SHUT_RDWR);
+#else
+		::close(m_iFd);
+#endif
 }
 
 

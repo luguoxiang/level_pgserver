@@ -36,8 +36,11 @@ void WorkThreadInfo::cancel(bool planOnly) {
 	m_bTerminate.store(true);
 
 	if(!planOnly) {
-		::close(m_iAcceptFd);
+#ifdef __linux__
 		::shutdown(m_iAcceptFd, SHUT_RDWR);
+#else
+		::close(m_iAcceptFd);
+#endif
 	}
 }
 

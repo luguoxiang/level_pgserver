@@ -17,12 +17,6 @@ public:
 
 	void flush();
 
-	size_t getWritten() {
-		return m_iWritten - m_iLastPrepare;
-	}
-	//iOffset should lower or equals than end() - begin()
-	void setInt(size_t iOffset, int32_t value);
-
 	void directSend(const std::string_view s);
 
 	DataSender& operator <<(nullptr_t) {
@@ -49,7 +43,7 @@ public:
 
 	DataSender& operator <<(int8_t value);
 
-	void begin();
+	void begin(int8_t cMsgType);
 	void end();
 
 	template <typename T>
