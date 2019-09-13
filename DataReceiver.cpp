@@ -98,6 +98,7 @@ size_t DataReceiver::readData() {
 	}
 	m_iBufLen -= 4;
 
+	m_buffer.clear();
 	m_buffer.reserve(m_iBufLen + 1);
 
 	size_t readCount = 0;
