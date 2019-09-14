@@ -15,10 +15,9 @@
 
 #include "WorkloadResult.h"
 
-WorkThreadInfo::WorkThreadInfo(int iIndex, const std::atomic_bool& bGlobalTerminate)
+WorkThreadInfo::WorkThreadInfo(int iIndex)
 		: m_iIndex(iIndex)
-		, m_rewritter(m_result)
-		, m_bGlobalTerminate(bGlobalTerminate){
+		, m_rewritter(m_result){
 	m_bTerminate.store(false);
 	m_result = {};
 	if (parseInit(&m_result)) {
@@ -119,8 +118,9 @@ void WorkThreadInfo::handleParse() {
 
 	parse(sql);
 
-	if (iParamNum != getBindParamNumber()) {
-		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum, ", actual ", m_pWorker->getBindParamNumber());
+	size_t iActualParamNum = m_result.m_bindParamNodes.size();
+	if (iParamNum != iActualParamNum) {
+		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum, ", actual ", iActualParamNum);
 	}
 
 	m_protocol->sendShortMessage('1');
@@ -129,10 +129,10 @@ void WorkThreadInfo::handleParse() {
 void WorkThreadInfo::handleBind() {
 	m_result.mark();
 
-	size_t iActualNum = getBindParamNumber();
+	size_t iActualNum = m_result.m_bindParamNodes.size();
 
 	m_protocol->readBindParam(iActualNum, [this] (size_t index, std::string_view value, bool isBinary) {
-		auto pParam = getBindParam(index);
+		auto pParam =  m_result.m_bindParamNodes[index];
 		pParam->setBindParamMode(isBinary ? Operation::BINARY_PARAM : Operation::TEXT_PARAM);
 		pParam->setString(value);
 	});
@@ -171,7 +171,7 @@ void WorkThreadInfo::handleExecute() {
 	m_result.restore();
 }
 
-void WorkThreadInfo::run(int fd) {
+void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 	m_iAcceptFd = fd;
 
 	m_bRunning = true;
@@ -188,7 +188,7 @@ void WorkThreadInfo::run(int fd) {
 	m_iClientTime += std::chrono::duration_cast
 			< std::chrono::microseconds > (end - start).count();
 
-	while (!m_bGlobalTerminate.load()) {
+	while (!bGlobalTerminate.load()) {
 		char qtype = m_protocol->readMessage();
 		if (qtype == 'X') {
 			DLOG(INFO)<< "Client Terminate!";

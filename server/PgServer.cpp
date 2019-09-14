@@ -119,7 +119,7 @@ void PgServer::worker_thread(WorkThreadInfo* pInfo) {
 		}
 
 		try {
-			pInfo->run(fd);
+			pInfo->run(fd, m_bTerminate);
 		} catch (const std::exception &ex) {
 			LOG(ERROR) << "Working thread failed:" << ex.what();
 		} catch (...) {
@@ -154,7 +154,7 @@ void PgServer::run() {
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {
-		WorkThreadInfo* pInfo = new WorkThreadInfo(i, m_bTerminate);
+		WorkThreadInfo* pInfo = new WorkThreadInfo(i);
 		threads[i] = std::thread(&PgServer::worker_thread, this, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}
