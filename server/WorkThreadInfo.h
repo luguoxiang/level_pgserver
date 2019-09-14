@@ -3,41 +3,44 @@
 #include <thread>
 #include <algorithm>
 #include <atomic>
+#include <optional>
+
 #include "common/ParseResult.h"
 #include "common/QueryRewritter.h"
+#include "PostgresProtocol.h"
 
-struct WorkThreadInfo {
-	WorkThreadInfo(int iIndex);
-
+class WorkThreadInfo {
+public:
+	WorkThreadInfo(int iIndex, const std::atomic_bool& bGlobalTerminate);
 	~WorkThreadInfo();
 
-	static WorkThreadInfo* getThreadInfo() {
-		return m_pWorkThreadInfo;
-	}
+	void cancel(bool planOnly);
 
-	static ParseResult& getParseResult() {
-		return m_pWorkThreadInfo->m_result;
-	}
+	void run(int fd);
 
-	static void setThreadInfo(WorkThreadInfo* pInfo) {
-		m_pWorkThreadInfo = pInfo;
-	}
-	static const std::atomic_bool& getTerminateFlag() {
-		return m_pWorkThreadInfo->m_bTerminate;
-	}
+	int16_t getIndex() {return m_iIndex;}
+	bool isRunning() {return m_bRunning; }
 
+	int64_t getSqlCount() {return m_iSqlCount;}
+	int64_t getClientTime() {return m_iClientTime / 1000;}
+	int64_t getSessions() {return m_iSessions;}
+
+	WorkThreadInfo(const WorkThreadInfo&) = delete;
+	WorkThreadInfo& operator =(const WorkThreadInfo&) = delete;
+private:
 	bool m_bRunning = false;
 	uint64_t m_iClientTime = 0;
-	int m_iSessions = 0;
+	int32_t m_iSessions = 0;
 
 	void parse(const std::string_view sql);
 
-	ParseNode* getParseTree() {
-		return m_result.m_pResult;
+	std::string_view allocString(std::string_view s) {
+		size_t len = s.length();
+		char* alloc = m_result.alloc(len);
+
+		std::copy(s.data(), s.data() + len, alloc);
+		return std::string_view(alloc, len);
 	}
-
-
-	void cancel(bool planOnly);
 
 	size_t getBindParamNumber() {
 		return m_result.m_bindParamNodes.size();
@@ -48,69 +51,35 @@ struct WorkThreadInfo {
 		return m_result.m_bindParamNodes[i];
 	}
 
-	std::string_view allocString(std::string_view s) {
-		size_t len = s.length();
-		char* alloc = m_result.alloc(len);
-
-		std::copy(s.data(), s.data() + len, alloc);
-		return std::string_view(alloc, len);
-	}
-
-	void markParseBuffer() {m_result.mark(); }
-	void restoreParseBuffer() {m_result.restore(); }
-
-	void setAcceptFd(int fd);
-
-	int getAcceptFd() {
-		return m_iAcceptFd;
-	}
-	int getIndex() {return m_iIndex;}
-	int getSqlCount() {return m_iSqlCount;}
-private:
 	int m_iIndex;
 	int m_iSqlCount = 0;
 
 	int m_iAcceptFd = 0;
+
 	ParseResult m_result;
 	QueryRewritter m_rewritter;
-	static thread_local WorkThreadInfo *m_pWorkThreadInfo;
 
+	void resolve();
+	void sendRow();
+
+	void handleQuery();
+	void handleParse();
+	void handleBind();
+	void handleExecute();
+
+	std::optional<PostgresProtocol> m_protocol;
+
+	WorkThreadInfo* m_pWorker;
+
+	uint64_t m_iSendTime = 0;
+
+	std::map<char, std::function<void ()>> m_handler;
+
+	ExecutionPlanPtr m_pPlan;
+
+	const std::atomic_bool& m_bGlobalTerminate;
 
 	std::atomic_bool m_bTerminate;
 };
 
 
-
-class WorkerManager {
-public:
-
-	static WorkerManager& getInstance() {
-		static WorkerManager manager;
-		return manager;
-	}
-
-	size_t getWorkerCount() {
-		return m_workers.size();
-	}
-
-	WorkThreadInfo* getWorker(size_t i) {
-		assert(i < m_workers.size());
-		return m_workers[i].get();
-	}
-
-	void addWorker(WorkThreadInfo* pWorker) {
-		m_workers.emplace_back(pWorker);
-	}
-
-	void cancel(bool planOnly) {
-		for(auto& pWorker : m_workers) {
-			pWorker->cancel(planOnly);
-		}
-	}
-
-private:
-	WorkerManager() {
-	}
-
-	std::vector<std::unique_ptr<WorkThreadInfo>> m_workers;
-};

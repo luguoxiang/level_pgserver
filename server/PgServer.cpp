@@ -12,9 +12,8 @@
 #include "execution/ExecutionException.h"
 
 #include "PgServer.h"
-#include "PgClient.h"
 #include "WorkThreadInfo.h"
-
+#include "WorkerManager.h"
 
 
 constexpr int MAX_CONNECTION=1000;
@@ -108,29 +107,25 @@ int PgServer::bindSocket(int port) {
 }
 
 void PgServer::worker_thread(WorkThreadInfo* pInfo) {
-	WorkThreadInfo::setThreadInfo(pInfo);
 	LOG(INFO) << "Working thread is listening on " << m_port;
 
 	while (!m_bTerminate.load()) {
+		int fd = 0;
 		try {
-			pInfo->setAcceptFd(acceptSocket());
+			fd = acceptSocket();
 		} catch (std::exception& e) {
 			LOG(ERROR) << "accept error:" <<e.what();
 			break;
 		}
-		pInfo->m_bRunning = true;
-		++pInfo->m_iSessions;
 
 		try {
-			PgClient client(pInfo, m_bTerminate);
-			client.run();
+			pInfo->run(fd);
 		} catch (const std::exception &ex) {
 			LOG(ERROR) << "Working thread failed:" << ex.what();
 		} catch (...) {
 			LOG(ERROR) << "Working thread failed:Unknown Reason.";
 		}
-		pInfo->m_bRunning = false;
-		::close(pInfo->getAcceptFd());
+		::close(fd);
 	}
 	LOG(WARNING) << "Working thread terminate.";
 }
@@ -159,7 +154,7 @@ void PgServer::run() {
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {
-		WorkThreadInfo* pInfo = new WorkThreadInfo(i);
+		WorkThreadInfo* pInfo = new WorkThreadInfo(i, m_bTerminate);
 		threads[i] = std::thread(&PgServer::worker_thread, this, pInfo);
 		WorkerManager::getInstance().addWorker(pInfo);
 	}

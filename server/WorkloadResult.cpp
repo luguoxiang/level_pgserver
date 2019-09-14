@@ -6,6 +6,7 @@
 
 #include "WorkloadResult.h"
 #include "WorkThreadInfo.h"
+#include "WorkerManager.h"
 
 namespace {
 std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session",  "SessionTime", "SqlCount" };
@@ -50,7 +51,19 @@ std::string_view WorkloadResult::getProjectionName(size_t index) {
 }
 
 DBDataType WorkloadResult::getResultType(size_t index) {
-	return DBDataType::INT32;
+	switch (index) {
+	case 0:
+		return DBDataType::INT16;
+	case 1:
+		return DBDataType::BOOL;
+	case 2:
+	case 3:
+	case 4:
+		return DBDataType::INT64;
+	default:
+		assert(0);
+		break;
+	};
 }
 
 void WorkloadResult::getResult(size_t index, ExecutionResult& result, DBDataType type) {
@@ -58,18 +71,17 @@ void WorkloadResult::getResult(size_t index, ExecutionResult& result, DBDataType
 			m_iIndex - 1);
 
 	switch (index) {
-	case 0: {
-		result.setInt(pWorker->getIndex());
+	case 0:
+		result.setInt(m_iIndex);
 		break;
-	}
 	case 1:
-		result.setInt(pWorker->m_bRunning);
+		result.setInt(pWorker->isRunning());
 		break;
 	case 2:
-		result.setInt(pWorker->m_iSessions);
+		result.setInt(pWorker->getSessions());
 		break;
 	case 3:
-		result.setInt(pWorker->m_iClientTime / 1000);
+		result.setInt(pWorker->getClientTime());
 		break;
 	case 4:
 		result.setInt(pWorker->getSqlCount());

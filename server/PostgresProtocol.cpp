@@ -1,8 +1,10 @@
 #include "common/MetaConfig.h"
 #include "execution/ExecutionPlan.h"
+
 #include "WorkThreadInfo.h"
 #include "IOException.h"
 #include "PostgresProtocol.h"
+#include "WorkerManager.h"
 
 namespace {
 constexpr size_t MAX_STARTUP_PACKET_LENGTH = 10000;
