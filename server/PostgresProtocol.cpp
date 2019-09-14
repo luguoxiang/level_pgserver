@@ -61,7 +61,7 @@ void PostgresProtocol::startup(int fd) {
 		IO_ERROR("Cacnel WorkerID=", iBackendPID, ", CancelAuthCode=", iCancelAuthCode);
 	}
 	if (proto == NEGOTIATE_SSL_CODE) {
-		if(!m_sender.directSend(fd, "N") ){
+		if(::write(fd, "N", 1) != 1 ){
 			IO_ERROR("Send N for SSL failed");
 		}
 		startup(fd);
@@ -90,7 +90,12 @@ void PostgresProtocol::startup(int fd) {
 
 
 char PostgresProtocol::readMessage(int fd) {
-	char qtype = m_receiver.readByte(fd);
+	char qtype;
+	int ret = ::recv(fd, &qtype, 1, 0);
+
+	if (ret != 1) {
+		IO_ERROR("read() failed!");
+	}
 	if (qtype == EOF || qtype == 'X') {
 		return 'X';
 	}

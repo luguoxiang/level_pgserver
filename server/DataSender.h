@@ -16,8 +16,6 @@ public:
 
 	void flush(int fd);
 
-	bool directSend(int fd, const std::string_view s);
-
 	DataSender& operator <<(nullptr_t) {
 		addInt32(-1);
 		return *this;

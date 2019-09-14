@@ -24,10 +24,6 @@ DataSender& DataSender::operator <<(double value) {
 	return *this;
 }
 
-bool DataSender::directSend(int fd, const std::string_view s) {
-	return write(fd, s.data(), s.size()) == 1;
-}
-
 void DataSender::begin(int8_t cMsgType) {
 	m_bBufferFull = false;
 	m_iLastPrepare = m_iWritten;
@@ -137,7 +133,7 @@ void DataSender::flush(int fd) {
 
 	//Because we must write back package length at m_iLastPrepare.
 	//We could not send data after m_iLastPrepare.
-	uint32_t nWrite = send(fd, m_buffer.data(), m_iLastPrepare, 0);
+	uint32_t nWrite = ::send(fd, m_buffer.data(), m_iLastPrepare, 0);
 	if (nWrite != m_iLastPrepare) {
 		IO_ERROR("Could not send data\n");
 	}

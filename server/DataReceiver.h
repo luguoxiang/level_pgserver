@@ -32,7 +32,6 @@ public:
 	}
 
 	size_t readData(int fd);
-	char readByte(int fd);
 
 private:
 	std::string m_buffer;

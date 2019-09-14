@@ -150,7 +150,7 @@ void PgServer::run() {
 		IO_ERROR("could not listen!");
 	}
 
-	int iWorkerNum = MetaConfig::getInstance().getWorkerNum();;
+	int iWorkerNum = MetaConfig::getInstance().getWorkerNum();
 
 	std::vector < std::thread > threads(iWorkerNum);
 	for (uint32_t i = 0; i < iWorkerNum; ++i) {

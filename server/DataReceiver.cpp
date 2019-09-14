@@ -75,20 +75,8 @@ int32_t DataReceiver::getNextInt() {
 	return iRet;
 }
 
-
-
-char DataReceiver::readByte(int fd) {
-	char qtype;
-	int ret = recv(fd, &qtype, 1, 0);
-
-	if (ret != 1) {
-		IO_ERROR("read() failed!");
-	}
-	return qtype;
-}
-
 size_t DataReceiver::readData(int fd) {
-	if (recv(fd, (char*) &m_iBufLen, 4, 0) != 4) {
+	if (::recv(fd, (char*) &m_iBufLen, 4, 0) != 4) {
 		IO_ERROR("Unexpect EOF!");
 	}
 	m_iBufLen = ntohl(m_iBufLen);
@@ -103,7 +91,7 @@ size_t DataReceiver::readData(int fd) {
 
 	size_t readCount = 0;
 	while (m_iBufLen > readCount) {
-		int count = read(fd, m_buffer.data() + readCount, m_iBufLen - readCount);
+		int count = ::read(fd, m_buffer.data() + readCount, m_iBufLen - readCount);
 		if (count < 0) {
 			IO_ERROR("read() failed!");
 		}
