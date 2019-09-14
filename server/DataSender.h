@@ -7,17 +7,16 @@
 
 class DataSender {
 public:
-	DataSender(int fd, uint32_t iSendBuffer);
-	virtual ~DataSender();
+	DataSender();
 
 	void addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len);
 
 	void addBytesString(const std::string_view s);
 	void addString(const std::string_view s);
 
-	void flush();
+	void flush(int fd);
 
-	void directSend(const std::string_view s);
+	bool directSend(int fd, const std::string_view s);
 
 	DataSender& operator <<(nullptr_t) {
 		addInt32(-1);
@@ -46,42 +45,51 @@ public:
 	void begin(int8_t cMsgType);
 	void end();
 
-	template <typename T>
-	void addValueAsString(T value, const char* pszFormat) {
-		check(4);
-		while(true) {
-			auto iValueStart = m_iWritten + 4;
-			auto iAvailable = m_buffer.size() - iValueStart;
-			auto iWritten = snprintf(m_buffer.data() + iValueStart, iAvailable, pszFormat, value);
+	bool isBufferFull() {
+		return m_bBufferFull;
+	}
 
-			if (iWritten > 0 && iWritten < iAvailable) {
-				addInt32(iWritten);
-				m_iWritten += iWritten;
-				break;
-			} else if(iWritten > 0) {
-				//not enough buffer, required iWritten + 4(length)
-				check(iWritten + 4);
-			} else {
-				assert(0);
-			}
+	void clear() {
+		m_bBufferFull = false;
+		m_iLastPrepare = m_iWritten = 0;
+	}
+	template <typename T>
+	bool addValueAsString(T value, const char* pszFormat) {
+		if(!check(4) ) {
+			return false;
+		}
+		auto iValueStart = m_iWritten + 4;
+		auto iAvailable = m_buffer.size() - iValueStart;
+		auto iWritten = snprintf(m_buffer.data() + iValueStart, iAvailable, pszFormat, value);
+
+		if (iWritten > 0 && iWritten < iAvailable && addInt32(iWritten)) {
+			m_iWritten += iWritten;
+			return true;
+		} else {
+			m_bBufferFull = true;
+			return false;
 		}
 	}
 
 private:
-	void addStringZeroEnd(const std::string_view s);
-	void addInt32(int32_t value);
+	bool addStringZeroEnd(const std::string_view s);
+	bool addInt32(int32_t value);
 
-	void check(uint32_t iSize) {
-		if (m_iWritten + iSize > m_buffer.size()) {
-			flush();
+	bool check(uint32_t iSize) {
+		if(m_bBufferFull) {
+			return false;
 		}
-		if (m_iWritten + iSize > m_buffer.size()) {
-			IO_ERROR("Send data is too large:written=",m_iWritten, ", total=", m_buffer.size(), ", require=", iSize);
+
+		if(m_iWritten + iSize <= m_buffer.size()) {
+			return true;
+		} else{
+			m_bBufferFull = true;
+			return false;
 		}
 	}
 
-	int m_nFd;
 	std::string m_buffer;
 	uint32_t m_iWritten;
 	uint32_t m_iLastPrepare;
+	bool m_bBufferFull = false;
 };

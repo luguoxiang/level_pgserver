@@ -6,12 +6,10 @@
 #include <cassert>
 #include <stdio.h>
 #include "DataSender.h"
+#include "common/MetaConfig.h"
 
-DataSender::DataSender(int fd,  uint32_t iSendBuffer) :
-		m_nFd(fd), m_iWritten(0), m_iLastPrepare(0),  m_buffer(iSendBuffer, ' ') {
-}
-
-DataSender::~DataSender() {
+DataSender::DataSender() :
+		m_iWritten(0), m_iLastPrepare(0),  m_buffer(MetaConfig::getInstance().getNetworkBuffer(), '\0') {
 }
 
 DataSender& DataSender::operator <<(float value) {
@@ -22,27 +20,25 @@ DataSender& DataSender::operator <<(float value) {
 
 DataSender& DataSender::operator <<(double value) {
 	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
-	addInt32(iValue[1]);
-	addInt32(iValue[0]);
+	addInt32(iValue[1]) && addInt32(iValue[0]);
 	return *this;
 }
 
-void DataSender::directSend(const std::string_view s) {
-	if (write(m_nFd, s.data(), s.size()) != 1)
-			{
-		IO_ERROR("send() failed!");
-	}
+bool DataSender::directSend(int fd, const std::string_view s) {
+	return write(fd, s.data(), s.size()) == 1;
 }
 
 void DataSender::begin(int8_t cMsgType) {
+	m_bBufferFull = false;
 	m_iLastPrepare = m_iWritten;
 	*this << cMsgType << static_cast<int32_t>(0); //write back later
 }
 
 void DataSender::end() {
-	if (m_iLastPrepare + 5 > m_iWritten) {
-		IO_ERROR("write overflow for DataSender!");
+	if(m_bBufferFull) {
+		return;
 	}
+	assert (m_iLastPrepare + 5 <= m_iWritten);
 	int32_t netval = htonl(m_iWritten - m_iLastPrepare - 1);
 	m_buffer.replace(m_iLastPrepare + 1, 4, reinterpret_cast<const char*>(&netval), 4);
 
@@ -50,51 +46,60 @@ void DataSender::end() {
 }
 
 DataSender& DataSender::operator <<(int8_t value) {
-	check(1);
+	if(!check(1) ) {
+		return *this;
+	}
 	m_buffer[m_iWritten] = value;
 	++m_iWritten;
 	return *this;
 }
 
-void DataSender::addInt32(int32_t value) {
-	int32_t netval = htonl(value);
+bool DataSender::addInt32(int32_t value) {
+	if(!check(4)) {
+		return false;
+	}
 
-	check(4);
+	int32_t netval = htonl(value);
 	m_buffer.replace(m_iWritten, 4, reinterpret_cast<const char*>(&netval), 4);
 	m_iWritten += 4;
+	return true;
 }
 
 DataSender& DataSender::operator <<(int64_t value) {
 	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
-	addInt32(iValue[1]);
-	addInt32(iValue[0]);
+	addInt32(iValue[1]) && 	addInt32(iValue[0]);
 	return *this;
 }
 
 DataSender& DataSender::operator <<(int16_t value) {
+	if(!check(2)) {
+		return *this;
+	}
 	int16_t netval = htons(value);
-
-	check(2);
 	m_buffer.replace(m_iWritten, 2, reinterpret_cast<const char*>(&netval), 2);
 	m_iWritten += 2;
 	return *this;
 }
 
-void DataSender::addStringZeroEnd(const std::string_view s) {
+bool DataSender::addStringZeroEnd(const std::string_view s) {
 	auto len = s.length();
-	check( len + 1);
+	if(!check( len + 1) ){
+		return false;
+	}
 	m_buffer.replace(m_iWritten, len, s.data(), len);
 	m_iWritten += len;
 	m_buffer[m_iWritten] = '\0';
 	++m_iWritten;
+	return true;
 }
 
 constexpr auto DIGITS = "0123456789ABCDEF";
 
 void DataSender::addBytesString(const std::string_view s) {
 	auto len = 2 + s.length() * 2;
-	addInt32(len);
-	check(len);
+	if(!addInt32(len) || !check(len)) {
+		return;
+	}
 	m_buffer[m_iWritten++] = '\\';
 	m_buffer[m_iWritten++] = 'x';
 
@@ -108,23 +113,23 @@ void DataSender::addBytesString(const std::string_view s) {
 
 void DataSender::addString(const std::string_view s) {
 	auto len = s.length();
-	addInt32(len);
-	check(len);
+	if(!addInt32(len)  || !check(len) ) {
+		return;
+	}
 	m_buffer.replace(m_iWritten, len, s.data(), len);
 	m_iWritten += len;
 }
 
 void DataSender::addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len) {
-	addInt32(len);
-	check(len+1);
+	if(!addInt32(len) || !check(len+1) ) {
+		return;
+	}
 	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, pszFormat, pTime);
 	assert(iWritten == len);
 	m_iWritten += iWritten;
 }
 
-
-
-void DataSender::flush() {
+void DataSender::flush(int fd) {
 	if (m_iLastPrepare == 0)
 		return;
 
@@ -132,13 +137,11 @@ void DataSender::flush() {
 
 	//Because we must write back package length at m_iLastPrepare.
 	//We could not send data after m_iLastPrepare.
-	uint32_t nWrite = send(m_nFd, m_buffer.data(), m_iLastPrepare, 0);
+	uint32_t nWrite = send(fd, m_buffer.data(), m_iLastPrepare, 0);
 	if (nWrite != m_iLastPrepare) {
 		IO_ERROR("Could not send data\n");
 	}
 
-	m_iWritten -= m_iLastPrepare;
-
-	memcpy(m_buffer.data(), m_buffer.data() + m_iLastPrepare, m_iWritten);
-	m_iLastPrepare = 0;
+	//discard uncommitted data
+	m_iWritten = m_iLastPrepare = 0;
 }

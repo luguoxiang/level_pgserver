@@ -4,13 +4,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <netdb.h>
+#include "common/MetaConfig.h"
 
-DataReceiver::DataReceiver(int fd)
-		: m_nFd(fd){
+DataReceiver::DataReceiver()
+:  m_buffer(MetaConfig::getInstance().getNetworkBuffer(), '\0') {
 }
 
-DataReceiver::~DataReceiver() {
-}
 
 std::string_view DataReceiver::getNextString() {
 	assert(m_iCurrent >= 0 && m_iCurrent < m_iBufLen);
@@ -78,9 +77,9 @@ int32_t DataReceiver::getNextInt() {
 
 
 
-char DataReceiver::readByte() {
+char DataReceiver::readByte(int fd) {
 	char qtype;
-	int ret = recv(m_nFd, &qtype, 1, 0);
+	int ret = recv(fd, &qtype, 1, 0);
 
 	if (ret != 1) {
 		IO_ERROR("read() failed!");
@@ -88,8 +87,8 @@ char DataReceiver::readByte() {
 	return qtype;
 }
 
-size_t DataReceiver::readData() {
-	if (recv(m_nFd, (char*) &m_iBufLen, 4, 0) != 4) {
+size_t DataReceiver::readData(int fd) {
+	if (recv(fd, (char*) &m_iBufLen, 4, 0) != 4) {
 		IO_ERROR("Unexpect EOF!");
 	}
 	m_iBufLen = ntohl(m_iBufLen);
@@ -98,12 +97,13 @@ size_t DataReceiver::readData() {
 	}
 	m_iBufLen -= 4;
 
-	m_buffer.clear();
-	m_buffer.reserve(m_iBufLen + 1);
+	if(m_buffer.size() < m_iBufLen + 1) {
+		IO_ERROR("Not enough receive buffer");
+	}
 
 	size_t readCount = 0;
 	while (m_iBufLen > readCount) {
-		int count = read(m_nFd, m_buffer.data() + readCount, m_iBufLen - readCount);
+		int count = read(fd, m_buffer.data() + readCount, m_iBufLen - readCount);
 		if (count < 0) {
 			IO_ERROR("read() failed!");
 		}

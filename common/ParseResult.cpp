@@ -2,7 +2,7 @@
 
 constexpr int PARSE_BUFFER_SIZE = 512 * 1024;
 
-ParseResult::ParseResult() : m_sParseBuffer(PARSE_BUFFER_SIZE, ' ') {
+ParseResult::ParseResult() : m_sParseBuffer(PARSE_BUFFER_SIZE, '\0') {
 }
 
 char* ParseResult::alloc(size_t size)  {

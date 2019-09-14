@@ -17,7 +17,8 @@
 
 WorkThreadInfo::WorkThreadInfo(int iIndex)
 		: m_iIndex(iIndex)
-		, m_rewritter(m_result){
+		, m_rewritter(m_result)
+		, m_protocol(iIndex) {
 	m_bTerminate.store(false);
 	m_result = {};
 	if (parseInit(&m_result)) {
@@ -25,7 +26,7 @@ WorkThreadInfo::WorkThreadInfo(int iIndex)
 	}
 
 	m_handler['S'] = [this] () {
-		m_protocol->sendSync();
+		m_protocol.sendSync(m_iAcceptFd);
 	};
 
 	m_handler['Q'] = std::bind(&WorkThreadInfo::handleQuery, this);
@@ -34,9 +35,9 @@ WorkThreadInfo::WorkThreadInfo(int iIndex)
 	m_handler['B'] = std::bind(&WorkThreadInfo::handleBind, this);
 
 	m_handler['D'] = [this] () {
-			m_protocol->readColumnDescribeInfo();
-			m_protocol->sendColumnDescription(m_pPlan.get());
-			m_protocol->flush();
+			m_protocol.readColumnDescribeInfo();
+			m_protocol.sendColumnDescription(m_pPlan.get());
+			m_protocol.flush(m_iAcceptFd);
 	};
 
 	m_handler['E'] = std::bind(&WorkThreadInfo::handleExecute, this);
@@ -100,21 +101,21 @@ void WorkThreadInfo::resolve() {
 
 void WorkThreadInfo::handleQuery() {
 
-	auto sql = m_protocol->readQueryInfo();
+	auto sql = m_protocol.readQueryInfo();
 
 	parse(sql);
 
 	resolve();
 
-	m_protocol->sendColumnDescription(m_pPlan.get());
+	m_protocol.sendColumnDescription(m_pPlan.get());
 
-	m_protocol->flush();
+	m_protocol.flush(m_iAcceptFd);
 
 	handleExecute();
 }
 
 void WorkThreadInfo::handleParse() {
-	auto [sql, iParamNum] = m_protocol->readParseInfo();
+	auto [sql, iParamNum] = m_protocol.readParseInfo();
 
 	parse(sql);
 
@@ -123,7 +124,7 @@ void WorkThreadInfo::handleParse() {
 		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum, ", actual ", iActualParamNum);
 	}
 
-	m_protocol->sendShortMessage('1');
+	m_protocol.sendShortMessage('1');
 }
 
 void WorkThreadInfo::handleBind() {
@@ -131,13 +132,13 @@ void WorkThreadInfo::handleBind() {
 
 	size_t iActualNum = m_result.m_bindParamNodes.size();
 
-	m_protocol->readBindParam(iActualNum, [this] (size_t index, std::string_view value, bool isBinary) {
+	m_protocol.readBindParam(iActualNum, [this] (size_t index, std::string_view value, bool isBinary) {
 		auto pParam =  m_result.m_bindParamNodes[index];
 		pParam->setBindParamMode(isBinary ? Operation::BINARY_PARAM : Operation::TEXT_PARAM);
 		pParam->setString(value);
 	});
 
-	m_protocol->sendShortMessage('2');
+	m_protocol.sendShortMessage('2');
 
 	resolve();
 }
@@ -154,16 +155,23 @@ void WorkThreadInfo::handleExecute() {
 	while (m_pPlan->next(m_bTerminate)) {
 		if (columnNum == 0)
 			continue;
-		m_protocol->sendData(m_pPlan.get());
+
+		if(!m_protocol.sendData(m_pPlan.get())) {
+			m_protocol.flush(m_iAcceptFd);
+
+			if(!m_protocol.sendData(m_pPlan.get())) {
+				IO_ERROR("data row exceed send buffer length");
+			}
+		}
 	} //while
-	m_protocol->flush();
+	m_protocol.flush(m_iAcceptFd);
 
 	auto sInfo = m_pPlan->getInfoString();
 
 	m_pPlan->end();
 	DLOG(INFO)<< "Execute result:" << sInfo;
 
-	m_protocol->sendShortMessage('C', sInfo);
+	m_protocol.sendShortMessage('C', sInfo);
 
 	m_pPlan = nullptr;
 
@@ -177,11 +185,9 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 	m_bRunning = true;
 	++m_iSessions;
 
-	m_protocol.emplace(fd, m_iIndex);
-
 	auto start = std::chrono::steady_clock::now();
 
-	m_protocol->startup();
+	m_protocol.startup(fd);
 
 	auto end = std::chrono::steady_clock::now();
 
@@ -189,7 +195,7 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 			< std::chrono::microseconds > (end - start).count();
 
 	while (!bGlobalTerminate.load()) {
-		char qtype = m_protocol->readMessage();
+		char qtype = m_protocol.readMessage(fd);
 		if (qtype == 'X') {
 			DLOG(INFO)<< "Client Terminate!";
 			break;
@@ -205,18 +211,20 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 		try {
 			handler();
 		} catch (ParseException& e) {
-			m_protocol->sendParseException(e);
-			m_protocol->flush();
+			m_protocol.clear();
+			m_protocol.sendException(e, e.getStartPos());
+			m_protocol.flush(fd);
 			m_pPlan = nullptr;
 		} catch (std::exception& e) {
-			m_protocol->sendException(e);
-			m_protocol->flush();
+			m_protocol.clear();
+			m_protocol.sendException(e, -1);
+			m_protocol.flush(fd);
 			m_pPlan = nullptr;
 		}
 
 		if(qtype == 'Q') {
 			// should also sync when handleQuery throws Exception
-			m_protocol->sendSync();
+			m_protocol.sendSync(fd);
 		}
 		auto end = std::chrono::steady_clock::now();
 
@@ -224,7 +232,6 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 				< std::chrono::microseconds > (end - start).count();
 
 	} //while
-	m_protocol.reset();
 
 	m_bRunning = false;
 

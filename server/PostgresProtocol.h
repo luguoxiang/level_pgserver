@@ -7,23 +7,30 @@
 
 class PostgresProtocol {
 public:
-	PostgresProtocol(int fd, int32_t iSessionIndex);
-	void startup();
-	char readMessage();
+	PostgresProtocol(int32_t iSessionIndex);
+	void startup(int fd);
+	char readMessage(int fd);
 
 	template<typename ...Args>
 	void sendShortMessage(char cMsgType, Args ...args) {
 		MessageSender sender(m_sender, cMsgType);
 		(m_sender << ... << args);
+		if(m_sender.isBufferFull()) {
+			IO_ERROR("not enough send buffer");
+		}
 	}
 
 	void sendShortMessage(char cMsgType) {
 		MessageSender sender(m_sender, cMsgType);
+		if(m_sender.isBufferFull()) {
+			IO_ERROR("not enough send buffer");
+		}
 	}
 
-	void sendData(ExecutionPlan* pPlan) {
+	bool sendData(ExecutionPlan* pPlan) {
 		MessageSender sender(m_sender, 'D');
 		sender.sendData(pPlan);
+		return !m_sender.isBufferFull();
 	}
 
 	void sendColumnDescription(ExecutionPlan* pPlan) {
@@ -40,16 +47,19 @@ public:
 		MessageSender sender(m_sender, 'T');
 
 		sender.sendColumnDescription(pPlan, columnNum);
+
+		if(m_sender.isBufferFull()) {
+			IO_ERROR("not enough send buffer");
+		}
 	}
 
-	void sendParseException(ParseException& e) {
-		MessageSender sender(m_sender, 'E');
-		sender.sendParseException(e);
-	}
 
-	void sendException(std::exception e) {
+	void sendException(std::exception& e, int startPos) {
 		MessageSender sender(m_sender, 'E');
-		sender.sendException(e);
+		sender.sendException(e, startPos);
+		if(m_sender.isBufferFull()) {
+			IO_ERROR("not enough send buffer");
+		}
 	}
 
 	std::string_view readQueryInfo() {
@@ -76,14 +86,18 @@ public:
 		DLOG(INFO)<< "D:type "<<type << ",name "<< sName;
 	}
 
-	void flush() {
-		m_sender.flush();
+	void flush(int fd) {
+		m_sender.flush(fd);
 	}
 
-	void sendSync() {
+	void clear() {
+		m_sender.clear();
+	}
+
+	void sendSync(int fd) {
 		DLOG(INFO) << "sync";
 		sendShortMessage('Z', static_cast<int8_t>('I'));
-		m_sender.flush();
+		m_sender.flush(fd);
 	}
 
 	using ReadParamFn = void (size_t index, std::string_view value, bool isBinary);

@@ -4,8 +4,7 @@
 
 class DataReceiver {
 public:
-	DataReceiver(int fd);
-	virtual ~DataReceiver();
+	DataReceiver();
 
 	int8_t getNextByte();
 	int16_t getNextShort();
@@ -20,9 +19,6 @@ public:
 		return m_iBufLen;
 	}
 
-	int getFd() {
-		return m_nFd;
-	}
 
 	bool hasData() {
 		return m_iCurrent < m_iBufLen;
@@ -35,13 +31,12 @@ public:
 		m_iCurrent = m_iMark;
 	}
 
-	size_t readData();
-	char readByte();
+	size_t readData(int fd);
+	char readByte(int fd);
 
 private:
 	std::string m_buffer;
 	size_t m_iCurrent = -1;
 	size_t m_iMark = 0;
-	int m_nFd;
 	size_t m_iBufLen = 0;
 };

@@ -39,7 +39,7 @@ private:
 	ParseResult m_result;
 	QueryRewritter m_rewritter;
 
-	std::optional<PostgresProtocol> m_protocol;
+	PostgresProtocol m_protocol;
 
 	std::map<char, std::function<void ()>> m_handler;
 

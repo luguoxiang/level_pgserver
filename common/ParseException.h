@@ -22,8 +22,8 @@ public:
 	void printLocation();
 private:
 	std::string m_sErrorMsg;
-	int m_iStartCol = 0;
-	int m_iEndCol = 0;
+	int m_iStartCol = -1;
+	int m_iEndCol = -1;
 	int m_iLine = -1;
 };
 

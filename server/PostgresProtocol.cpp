@@ -34,15 +34,15 @@ constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
 
 }
 
-PostgresProtocol::PostgresProtocol(int fd, int32_t iSessionIndex)
-: m_sender(fd, MetaConfig::getInstance().getNetworkBuffer())
-, m_receiver(fd)
+PostgresProtocol::PostgresProtocol(int32_t iSessionIndex)
+: m_sender()
+, m_receiver()
 , m_iSessionIndex(iSessionIndex) {
 
 }
 
-void PostgresProtocol::startup() {
-	m_receiver.readData();
+void PostgresProtocol::startup(int fd) {
+	m_receiver.readData(fd);
 
 	size_t iLen = m_receiver.getDataLen();
 	if (iLen < sizeof(ProtocolVersion) || iLen > MAX_STARTUP_PACKET_LENGTH) {
@@ -61,8 +61,10 @@ void PostgresProtocol::startup() {
 		IO_ERROR("Cacnel WorkerID=", iBackendPID, ", CancelAuthCode=", iCancelAuthCode);
 	}
 	if (proto == NEGOTIATE_SSL_CODE) {
-		m_sender.directSend("N");
-		startup();
+		if(!m_sender.directSend(fd, "N") ){
+			IO_ERROR("Send N for SSL failed");
+		}
+		startup(fd);
 		return;
 	}
 	if (PG_PROTOCOL_MAJOR(proto) < 3) {
@@ -83,16 +85,16 @@ void PostgresProtocol::startup() {
 	sendShortMessage('S', "client_encoding", "UTF8");
 	sendShortMessage('S', "server_version", "9.0.4");
 	sendShortMessage('K', m_iSessionIndex, (int32_t)0);
-	sendSync();
+	sendSync(fd);
 }
 
 
-char PostgresProtocol::readMessage() {
-	char qtype = m_receiver.readByte();
+char PostgresProtocol::readMessage(int fd) {
+	char qtype = m_receiver.readByte(fd);
 	if (qtype == EOF || qtype == 'X') {
 		return 'X';
 	}
-	m_receiver.readData();
+	m_receiver.readData(fd);
 
 	return qtype;
 }
