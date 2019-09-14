@@ -108,6 +108,9 @@ void WorkThreadInfo::handleQuery() {
 
 	m_protocol.flush(m_iAcceptFd);
 
+	m_bParsed = false;
+	m_bBinded = false;
+
 	handleExecute();
 }
 
@@ -122,6 +125,7 @@ void WorkThreadInfo::handleParse() {
 				", actual ", iActualParamNum);
 	}
 	m_bParsed = true;
+	m_bBinded = false;
 }
 
 void WorkThreadInfo::handleBind() {
