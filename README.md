@@ -4,8 +4,7 @@
 brew install flex bison (Mac)
 sudo apt-get install flex bison (Linux)
 git submodule update --init
-cmake .
-make
+cmake --build . --target level_pgserver 
 GLOG_logtostderr=1  bin/level_pgserver 
 ```
 

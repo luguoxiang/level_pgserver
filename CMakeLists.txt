@@ -67,13 +67,21 @@ endif()
 file(GLOB SOURCES "*.cpp" )
 file(GLOB COMMON_SOURCES "common/*.cpp" )
 file(GLOB EXECUTION_SOURCES "execution/*.cpp")
+file(GLOB SERVER_SOURCES "server/*.cpp")
 file(GLOB PLANBUILDER_SOURCES "planbuilder/*.cpp")
 
-include_directories(PUBLIC . glog glog/src leveldb/include abseil-cpp)
- 
 add_library( Common STATIC ${COMMON_SOURCES}  ${BisonOutput} ${FlexOutput})
-add_library( Execution STATIC ${EXECUTION_SOURCES})
-add_library( PlanBuilder STATIC ${PLANBUILDER_SOURCES})
+target_include_directories(Common PUBLIC . glog glog/src abseil-cpp)
 
-add_executable(${APP_EXEC} ${SOURCES} )
-target_link_libraries( ${APP_EXEC} PlanBuilder Execution Common glog::glog leveldb absl::strings)
+add_library( Execution STATIC ${EXECUTION_SOURCES})
+target_include_directories(Execution PUBLIC . glog glog/src abseil-cpp leveldb/include)
+
+add_library( PlanBuilder STATIC ${PLANBUILDER_SOURCES})
+target_include_directories(PlanBuilder PUBLIC . glog glog/src abseil-cpp leveldb/include)
+
+add_library( Server STATIC ${SERVER_SOURCES})
+target_include_directories(Server PUBLIC . glog glog/src abseil-cpp)
+
+add_executable(${APP_EXEC} ${SOURCES})
+
+target_link_libraries( ${APP_EXEC} Server PlanBuilder Execution Common glog::glog leveldb absl::strings)

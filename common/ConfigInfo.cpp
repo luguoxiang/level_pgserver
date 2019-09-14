@@ -1,8 +1,8 @@
-#include "common/ConfigInfo.h"
-#include "common/ConfigException.h"
-#include "common/ParseException.h"
-#include "common/MetaConfig.h"
-#include "common/ParseNode.h"
+#include "ConfigInfo.h"
+#include "ConfigException.h"
+#include "ParseException.h"
+#include "MetaConfig.h"
+#include "ParseNode.h"
 #include <memory>
 #include <regex>
 #include <glog/logging.h>

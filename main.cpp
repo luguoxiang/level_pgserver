@@ -2,10 +2,10 @@
 
 #include <glog/logging.h>
 
-#include "PgServer.h"
-#include "MessageSender.h"
 #include "common/MetaConfig.h"
 #include "execution/DBDataTypeHandler.h"
+#include "server/PgServer.h"
+#include "server/MessageSender.h"
 #include "config.h"
 
 int main(int argc, char** argv) {

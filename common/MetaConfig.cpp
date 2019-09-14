@@ -1,5 +1,5 @@
 #include "MetaConfig.h"
-#include "common/ConfigException.h"
+#include "ConfigException.h"
 #include <absl/strings/str_split.h>
 #include <fstream>
 #include <string>
