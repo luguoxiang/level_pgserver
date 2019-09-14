@@ -9,11 +9,11 @@
 #include <glog/logging.h>
 
 #include "common/MetaConfig.h"
+#include "execution/ExecutionException.h"
 
 #include "PgServer.h"
 #include "PgClient.h"
-#include "execution/ExecutionException.h"
-#include "execution/WorkThreadInfo.h"
+#include "WorkThreadInfo.h"
 
 
 

@@ -1,6 +1,6 @@
 #include "common/MetaConfig.h"
 #include "execution/ExecutionPlan.h"
-#include "execution/WorkThreadInfo.h"
+#include "WorkThreadInfo.h"
 #include "IOException.h"
 #include "PostgresProtocol.h"
 

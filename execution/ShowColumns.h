@@ -16,9 +16,9 @@ public:
 		rows.push_back(absl::StrCat(std::string(depth, '\t'), "ShowColumns"));
 	}
 
-	virtual void begin() override;
+	virtual void begin(const std::atomic_bool& bTerminated) override;
 
-	virtual bool next() override;
+	virtual bool next(const std::atomic_bool& bTerminated) override;
 
 	virtual void end() override{
 	}

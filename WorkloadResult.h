@@ -3,7 +3,8 @@
 #include <stdio.h>
 #include <vector>
 #include <absl/strings/str_cat.h>
-#include "BasePlan.h"
+#include "execution/BasePlan.h"
+
 
 class WorkloadResult: public LeafPlan {
 public:
@@ -20,9 +21,9 @@ public:
 	virtual std::string_view getProjectionName(size_t index) override;
 	virtual DBDataType getResultType(size_t index) override;
 
-	virtual void begin()override;
+	virtual void begin(const std::atomic_bool& bTerminated)override;
 
-	virtual bool next()override;
+	virtual bool next(const std::atomic_bool& bTerminated)override;
 
 	virtual int getResultColumns()override;
 

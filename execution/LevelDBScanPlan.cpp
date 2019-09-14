@@ -49,7 +49,7 @@ int LevelDBScanPlan::addProjection(const ParseNode* pNode) {
 	return -1;
 }
 
-void LevelDBScanPlan::begin() {
+void LevelDBScanPlan::begin(const std::atomic_bool& bTerminated) {
 	m_iRows = 0;
 
 	if(m_pDBIter == nullptr) {
@@ -62,7 +62,7 @@ void LevelDBScanPlan::begin() {
 
 }
 
-bool LevelDBScanPlan::next() {
+bool LevelDBScanPlan::next(const std::atomic_bool& bTerminated) {
 	if(m_order ==SortOrder::Descend) {
 		if(m_iRows == 0) {
 			m_pSearchRange->seekStartReversed(m_pDBIter);
@@ -80,7 +80,7 @@ bool LevelDBScanPlan::next() {
 	if(!m_pDBIter->valid()) {
 		return false;
 	}
-	checkCancellation();
+	CheckCancellation(bTerminated);
 
 	m_currentKey = m_pDBIter->key(m_keyTypes);
 

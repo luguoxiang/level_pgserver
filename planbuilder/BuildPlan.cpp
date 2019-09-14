@@ -5,7 +5,6 @@
 #include "common/MetaConfig.h"
 #include "common/ConfigInfo.h"
 #include "common/ParseException.h"
-#include "execution/WorkloadResult.h"
 #include "execution/ShowTables.h"
 #include "execution/ExplainPlan.h"
 #include "execution/ConstPlan.h"
@@ -59,17 +58,12 @@ ExecutionPlanPtr buildPlanForConst(const ParseNode* pNode) {
 }
 
 ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
-	if(pNode->m_type != NodeType::PLAN) {
-		PARSE_ERROR("WRONG NODE ", pNode->m_sExpr);
-	}
+	assert(pNode->m_type == NodeType::PLAN);
 	switch(pNode->getOp()){
 	case Operation::SHOW_TABLES:
 		return ExecutionPlanPtr(new ShowTables());
 	case Operation::DESC_TABLE:
 		return buildPlanForDesc(pNode);
-	case Operation::WORKLOAD:
-		return ExecutionPlanPtr(new WorkloadResult());
-
 	case Operation::SELECT: {
 		SelectPlanBuilder builder;
 		return builder.build(pNode);

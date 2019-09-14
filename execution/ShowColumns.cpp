@@ -53,11 +53,12 @@ std::string ShowColumns::getInfoString() {
 	return absl::StrCat("SELECT ", m_pEntry->getColumnCount());
 }
 
-void ShowColumns::begin() {
+void ShowColumns::begin(const std::atomic_bool& bTerminated) {
 	m_iIndex = 0;
 }
 
-bool ShowColumns::next() {
+bool ShowColumns::next(const std::atomic_bool& bTerminated) {
+	CheckCancellation(bTerminated);
 	++m_iIndex;
 	return m_iIndex <= m_pEntry->getColumnCount();
 }

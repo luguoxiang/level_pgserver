@@ -19,7 +19,7 @@ LevelDBInsertPlan::LevelDBInsertPlan(const TableInfo* pTable, ExecutionPlan* pPl
 	m_valueResults.resize(m_valueTypes.size());
 }
 
-void LevelDBInsertPlan::begin() {
+void LevelDBInsertPlan::begin(const std::atomic_bool& bTerminated) {
 
 	if (m_pPlan->getResultColumns() != m_pTable->getColumnCount()) {
 		EXECUTION_ERROR("the numbers of insert columns and values are not matched");
@@ -27,10 +27,10 @@ void LevelDBInsertPlan::begin() {
 
 	m_iInsertRows = 0;
 
-	m_pPlan->begin();
+	m_pPlan->begin(bTerminated);
 }
-bool LevelDBInsertPlan::next() {
-	if(!m_pPlan->next()) {
+bool LevelDBInsertPlan::next(const std::atomic_bool& bTerminated) {
+	if(!m_pPlan->next(bTerminated)) {
 		return false;
 	}
 

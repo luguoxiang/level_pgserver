@@ -10,7 +10,7 @@ LevelDBDeletePlan::LevelDBDeletePlan(const TableInfo* pTable, ExecutionPlan* pPl
 
 }
 
-void LevelDBDeletePlan::begin() {
+void LevelDBDeletePlan::begin(const std::atomic_bool& bTerminated) {
 
 	std::string_view name(Tools::ROWKEY);
 	ParseNode rowkey(NodeType::NAME, Operation::NONE, name, 0, nullptr);
@@ -21,10 +21,10 @@ void LevelDBDeletePlan::begin() {
 
 	m_iDeleteRows = 0;
 
-	m_pPlan->begin();
+	m_pPlan->begin(bTerminated);
 }
-bool LevelDBDeletePlan::next() {
-	if(!m_pPlan->next()) {
+bool LevelDBDeletePlan::next(const std::atomic_bool& bTerminated) {
+	if(!m_pPlan->next(bTerminated)) {
 		return false;
 	}
 

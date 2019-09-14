@@ -32,11 +32,11 @@ public:
 		SingleChildPlan::explain(rows, depth);
 	}
 
-	virtual void begin()override {
-		SingleChildPlan::begin();
+	virtual void begin(const std::atomic_bool& bTerminated)override {
+		SingleChildPlan::begin(bTerminated);
 		m_iCurrent = 0;
 	}
-	virtual bool next() override;
+	virtual bool next(const std::atomic_bool& bTerminated) override;
 
 
 	/*

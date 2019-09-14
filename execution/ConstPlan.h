@@ -12,13 +12,13 @@ public:
 
 	virtual void explain(std::vector<std::string>& rows, size_t depth)override;
 
-	virtual void begin()override {
+	virtual void begin(const std::atomic_bool& bTerminated)override {
 		assert(!m_rows.empty());
 		m_iCurrent = 0;
 	}
 
-	virtual bool next()override {
-		checkCancellation();
+	virtual bool next(const std::atomic_bool& bTerminated)override {
+		CheckCancellation(bTerminated);
 		return m_iCurrent++ < m_rows.size();
 	}
 

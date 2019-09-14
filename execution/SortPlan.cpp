@@ -10,15 +10,15 @@ SortPlan::SortPlan(ExecutionPlan* pPlan) :
 	assert(m_pPlan);
 }
 
-void SortPlan::begin() {
+void SortPlan::begin(const std::atomic_bool& bTerminated) {
 	m_pBuffer.emplace(SORT_BUFFER_SIZE);
 
-	m_pPlan->begin();
+	m_pPlan->begin(bTerminated);
 	for (size_t i = 0; i < m_proj.size(); ++i) {
 		m_types.push_back(getResultType(i));
 	}
 
-	while (m_pPlan->next()) {
+	while (m_pPlan->next(bTerminated)) {
 		std::vector<ExecutionResult> results(m_proj.size());
 		for (size_t i = 0; i < m_proj.size(); ++i) {
 			int iSubIndex = m_proj[i].m_iSubIndex;
@@ -66,8 +66,8 @@ void SortPlan::end() {
 	m_pBuffer.reset();
 }
 
-bool SortPlan::next() {
-	checkCancellation();
+bool SortPlan::next(const std::atomic_bool& bTerminated) {
+	CheckCancellation(bTerminated);
 	if (m_iCurrent >= m_rows.size())
 		return false;
 	++m_iCurrent;

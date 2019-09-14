@@ -53,8 +53,8 @@ public:
 		m_pPlan->explain(rows, depth);
 	}
 
-	virtual void begin() override;
-	virtual bool next() override;
+	virtual void begin(const std::atomic_bool& bTerminated) override;
+	virtual bool next(const std::atomic_bool& bTerminated) override;
 	virtual void end() override;
 
 	virtual int getResultColumns()override {

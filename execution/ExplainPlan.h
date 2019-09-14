@@ -16,8 +16,8 @@ public:
 	virtual void explain(std::vector<std::string>& rows, size_t depth)override {
 	}
 
-	virtual void begin()override ;
-	virtual bool next()override;
+	virtual void begin(const std::atomic_bool& bTerminated)override ;
+	virtual bool next(const std::atomic_bool& bTerminated)override;
 	virtual void end()override;
 
 	virtual std::string_view getProjectionName(size_t index) override{

@@ -1,7 +1,8 @@
 #pragma once
 
 #include <atomic>
-#include "execution/WorkThreadInfo.h"
+
+class WorkThreadInfo;
 
 class PgServer {
 public:

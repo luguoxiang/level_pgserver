@@ -4,10 +4,9 @@
 #include <atomic>
 #include "PostgresProtocol.h"
 
-#include "execution/WorkloadResult.h"
-
 class Exception;
 class WorkThreadInfo;
+
 class PgClient {
 public:
 	PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate);

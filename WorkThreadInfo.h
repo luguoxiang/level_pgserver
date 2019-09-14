@@ -22,8 +22,8 @@ struct WorkThreadInfo {
 	static void setThreadInfo(WorkThreadInfo* pInfo) {
 		m_pWorkThreadInfo = pInfo;
 	}
-	static bool isCanceled() {
-		return m_pWorkThreadInfo->m_bTerminate.load();
+	static const std::atomic_bool& getTerminateFlag() {
+		return m_pWorkThreadInfo->m_bTerminate;
 	}
 
 	bool m_bRunning = false;

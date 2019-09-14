@@ -87,8 +87,8 @@ public:
 		return m_proj[index].m_sName;
 	}
 
-	virtual void begin() override;
-	virtual bool next() override;
+	virtual void begin(const std::atomic_bool& bTerminated) override;
+	virtual bool next(const std::atomic_bool& bTerminated) override;
 	virtual void end() override;
 
 	void addGroupByColumn(const ParseNode* pNode) {

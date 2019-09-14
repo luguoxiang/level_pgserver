@@ -3,6 +3,7 @@
 #include <memory>
 #include <atomic>
 #include "ExecutionPlan.h"
+#include "ExecutionException.h"
 
 class SingleChildPlan : public ExecutionPlan {
 public:
@@ -15,11 +16,11 @@ public:
 		m_pPlan->explain(rows, depth + 1);
 	}
 
-	virtual void begin() override {
-		m_pPlan->begin();
+	virtual void begin(const std::atomic_bool& bTerminated) override {
+		m_pPlan->begin(bTerminated);
 	}
-	virtual bool next() override {
-		return m_pPlan->next();
+	virtual bool next(const std::atomic_bool& bTerminated) override {
+		return m_pPlan->next(bTerminated);
 	}
 	virtual void end() override {
 		m_pPlan->end();
@@ -69,8 +70,8 @@ public:
 
 	virtual void explain(std::vector<std::string>& rows, size_t depth) {}
 
-	virtual void begin() {}
-	virtual bool next() {return false;}
+	virtual void begin(const std::atomic_bool& bTerminated) {}
+	virtual bool next(const std::atomic_bool& bTerminated) {return false;}
 	virtual void end() {}
 
 	virtual int getResultColumns() {return 0;}
@@ -112,4 +113,10 @@ public:
 		rows.push_back("NoOperation");
 	}
 };
+
+inline void CheckCancellation(const std::atomic_bool& bTerminated) {
+	if(bTerminated.load()) {
+		EXECUTION_ERROR("canceled");
+	}
+}
 

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <atomic>
 #include "common/ParseNode.h"
 #include "common/ConfigInfo.h"
 
@@ -58,8 +59,8 @@ public:
 	 * }
 	 * pPlan->end();
 	 */
-	virtual void begin() = 0;
-	virtual bool next() = 0;
+	virtual void begin(const std::atomic_bool& bTerminated) = 0;
+	virtual bool next(const std::atomic_bool& bTerminated) = 0;
 	virtual void end() = 0;
 	/*
 	 * number of projection column
@@ -106,9 +107,9 @@ public:
 	 */
 	virtual void getResult(size_t index, ExecutionResult& result, DBDataType type) = 0;
 
-	void checkCancellation();
-private:
 	PlanType m_type;
+
+
 };
 
 using ExecutionPlanPtr = std::unique_ptr<ExecutionPlan>;

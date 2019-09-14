@@ -32,12 +32,12 @@ void GroupByPlan::explain(std::vector<std::string>& rows, size_t depth) {
 	SingleChildPlan::explain(rows, depth);
 }
 
-void GroupByPlan::begin() {
+void GroupByPlan::begin(const std::atomic_bool& bTerminated) {
 	m_iRows = 0;
 	m_last.clear();
 	m_type.clear();
-	m_pPlan->begin();
-	m_bHasMore = m_pPlan->next();
+	m_pPlan->begin(bTerminated);
+	m_bHasMore = m_pPlan->next(bTerminated);
 	if (m_bHasMore) {
 		for (size_t i = 0; i < m_groupby.size(); ++i) {
 			DBDataType type = m_pPlan->getResultType(m_groupby[i]);
@@ -54,7 +54,7 @@ void GroupByPlan::begin() {
 	}
 }
 
-bool GroupByPlan::next() {
+bool GroupByPlan::next(const std::atomic_bool& bTerminated) {
 	if (!m_bHasMore)
 		return false;
 
@@ -69,10 +69,10 @@ bool GroupByPlan::next() {
 		proj.m_iCount = 1;
 	}
 	while (sameGroup) {
-		m_bHasMore = m_pPlan->next();
+		m_bHasMore = m_pPlan->next(bTerminated);
 		if (!m_bHasMore)
 			break;
-		checkCancellation();
+
 		for (size_t i = 0; i < m_last.size(); ++i) {
 			ExecutionResult result;
 			m_pPlan->getResult(m_groupby[i], result, m_type[i]);

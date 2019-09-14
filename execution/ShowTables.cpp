@@ -10,14 +10,14 @@ std::string ShowTables::getInfoString() {
 	return absl::StrCat("SELECT ", MetaConfig::getInstance().getTableCount());
 }
 
-void ShowTables::begin() {
+void ShowTables::begin(const std::atomic_bool& bTerminated) {
 	m_iIndex = 0;
 	MetaConfig::getInstance().getTables(m_tables);
 }
 
-bool ShowTables::next() {
+bool ShowTables::next(const std::atomic_bool& bTerminated) {
+	CheckCancellation(bTerminated);
 	++m_iIndex;
-	checkCancellation();
 	return m_iIndex <= m_tables.size();
 }
 

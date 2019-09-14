@@ -51,8 +51,8 @@ bool FilterPlan::evaluate(const PredicateInfo& info) {
 		}
 	}
 }
-bool FilterPlan::next() {
-	while (m_pPlan->next()) {
+bool FilterPlan::next(const std::atomic_bool& bTerminated) {
+	while (m_pPlan->next(bTerminated)) {
 		for (auto& pAnd : m_predicatesInOr) {
 			bool bMatch = true;
 			for (auto& info : *pAnd) {

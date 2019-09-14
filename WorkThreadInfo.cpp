@@ -9,7 +9,6 @@
 #include "common/ParseTools.h"
 
 #include "execution/ExecutionException.h"
-#include "execution/BasePlan.h"
 
 thread_local WorkThreadInfo* WorkThreadInfo::m_pWorkThreadInfo = nullptr;
 

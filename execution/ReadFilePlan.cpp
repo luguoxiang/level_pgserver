@@ -21,7 +21,7 @@ int ReadFilePlan::addProjection(const ParseNode* pNode) {
 	return -1;
 }
 
-void ReadFilePlan::begin() {
+void ReadFilePlan::begin(const std::atomic_bool& bTerminated) {
 	m_file.emplace(m_sPath);
 	if (m_file->fail()) {
 		EXECUTION_ERROR("File ", m_sPath, " does not exists!");
@@ -54,11 +54,11 @@ void ReadFilePlan::setToken(size_t index, std::string_view token) {
 	DBDataTypeHandler::getHandler(pColumn->m_type)->fromString(token, m_result[index]);
 }
 
-bool ReadFilePlan::next() {
+bool ReadFilePlan::next(const std::atomic_bool& bTerminated) {
 	if (!std::getline(*m_file, m_line)) {
 		return false;
 	}
-	checkCancellation();
+	CheckCancellation(bTerminated);
 	std::string_view line = m_line;
 
 	auto state = ParseState::OutOfQuote;

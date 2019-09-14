@@ -13,13 +13,13 @@ void ExplainPlan::getResult(size_t index, ExecutionResult& result, DBDataType ty
 	result.setStringView(m_rows[m_iCurrentRow - 1]);
 }
 
-void ExplainPlan::begin() {
+void ExplainPlan::begin(const std::atomic_bool& bTerminated) {
 	m_rows.clear();
 	m_pPlan->explain(m_rows, 0);
 	m_iCurrentRow = 0;
 }
 
-bool ExplainPlan::next() {
+bool ExplainPlan::next(const std::atomic_bool& bTerminated) {
 	++m_iCurrentRow;
 	return m_iCurrentRow <= m_rows.size();
 }

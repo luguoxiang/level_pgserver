@@ -12,9 +12,10 @@
 #include "common/ParseException.h"
 #include "common/MetaConfig.h"
 #include "execution/ExecutionException.h"
-#include "execution/WorkThreadInfo.h"
-
 #include "planbuilder/BuildPlan.h"
+
+#include "WorkThreadInfo.h"
+#include "WorkloadResult.h"
 
 PgClient::PgClient(WorkThreadInfo* pInfo, std::atomic_bool& bGlobalTerminate) :
 		m_protocol(pInfo->getAcceptFd(), pInfo->getIndex()),
@@ -50,7 +51,14 @@ void PgClient::resolve() {
 #ifndef NDEBUG
 		printTree(pTree, 0);
 #endif
-		m_pPlan = buildPlan(pTree);
+		if(pTree->m_type != NodeType::PLAN) {
+			PARSE_ERROR("WRONG NODE ", pTree->m_sExpr);
+		}
+		if(pTree->getOp() ==  Operation::WORKLOAD) {
+			m_pPlan = ExecutionPlanPtr(new WorkloadResult());
+		} else {
+			m_pPlan = buildPlan(pTree);
+		}
 	}
 }
 
@@ -107,9 +115,10 @@ void PgClient::handleExecute() {
 	}
 	size_t columnNum = m_pPlan->getResultColumns();
 
-	m_pPlan->begin();
+	auto& bTerminate = m_pWorker->getTerminateFlag();
+	m_pPlan->begin(bTerminate);
 
-	while (m_pPlan->next()) {
+	while (m_pPlan->next(bTerminate)) {
 		if (columnNum == 0)
 			continue;
 		m_protocol.sendData(m_pPlan.get());

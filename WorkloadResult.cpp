@@ -2,9 +2,10 @@
 #include <absl/strings/match.h>
 
 #include "common/ParseTools.h"
+#include "execution/ExecutionResult.h"
+
 #include "WorkloadResult.h"
 #include "WorkThreadInfo.h"
-#include "ExecutionResult.h"
 
 namespace {
 std::vector<const char*> WorkloadColumns = { "TID", "Running", "Session",  "SessionTime", "SqlCount" };
@@ -34,11 +35,12 @@ std::string WorkloadResult::getInfoString() {
 	return absl::StrCat("SELECT ", WorkerManager::getInstance().getWorkerCount());
 }
 
-void WorkloadResult::begin() {
+void WorkloadResult::begin(const std::atomic_bool& bTerminated) {
 	m_iIndex = 0;
 }
 
-bool WorkloadResult::next() {
+bool WorkloadResult::next(const std::atomic_bool& bTerminated) {
+	CheckCancellation(bTerminated);
 	++m_iIndex;
 	return m_iIndex <= WorkerManager::getInstance().getWorkerCount();
 }
