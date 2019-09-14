@@ -8,8 +8,8 @@
 #include "DataSender.h"
 #include "common/MetaConfig.h"
 
-DataSender::DataSender() :
-		m_iWritten(0), m_iLastPrepare(0),  m_buffer(MetaConfig::getInstance().getNetworkBuffer(), '\0') {
+DataSender::DataSender(std::string& buffer) :
+		m_iWritten(0), m_iLastPrepare(0),  m_buffer(buffer) {
 }
 
 DataSender& DataSender::operator <<(float value) {
@@ -140,4 +140,5 @@ void DataSender::flush(int fd) {
 
 	//discard uncommitted data
 	m_iWritten = m_iLastPrepare = 0;
+	m_bBufferFull = false;
 }

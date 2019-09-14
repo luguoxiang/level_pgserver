@@ -64,7 +64,8 @@ private:
 	void handleBind();
 	void handleExecute();
 
-
+	bool m_bBinded = false;
+	bool m_bParsed = false;
 };
 
 

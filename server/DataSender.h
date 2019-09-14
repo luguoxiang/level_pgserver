@@ -7,7 +7,7 @@
 
 class DataSender {
 public:
-	DataSender();
+	DataSender(std::string& buffer);
 
 	void addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len);
 
@@ -86,7 +86,7 @@ private:
 		}
 	}
 
-	std::string m_buffer;
+	std::string& m_buffer;
 	uint32_t m_iWritten;
 	uint32_t m_iLastPrepare;
 	bool m_bBufferFull = false;

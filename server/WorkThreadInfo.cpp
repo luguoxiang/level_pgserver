@@ -15,10 +15,8 @@
 
 #include "WorkloadResult.h"
 
-WorkThreadInfo::WorkThreadInfo(int iIndex)
-		: m_iIndex(iIndex)
-		, m_rewritter(m_result)
-		, m_protocol(iIndex) {
+WorkThreadInfo::WorkThreadInfo(int iIndex) :
+		m_iIndex(iIndex), m_rewritter(m_result), m_protocol(iIndex) {
 	m_bTerminate.store(false);
 	m_result = {};
 	if (parseInit(&m_result)) {
@@ -35,9 +33,9 @@ WorkThreadInfo::WorkThreadInfo(int iIndex)
 	m_handler['B'] = std::bind(&WorkThreadInfo::handleBind, this);
 
 	m_handler['D'] = [this] () {
-			m_protocol.readColumnDescribeInfo();
-			m_protocol.sendColumnDescription(m_pPlan.get());
-			m_protocol.flush(m_iAcceptFd);
+		m_protocol.readColumnDescribeInfo();
+		m_protocol.sendColumnDescription(m_pPlan.get());
+		m_protocol.flush(m_iAcceptFd);
 	};
 
 	m_handler['E'] = std::bind(&WorkThreadInfo::handleExecute, this);
@@ -48,7 +46,7 @@ WorkThreadInfo::~WorkThreadInfo() {
 }
 
 void WorkThreadInfo::cancel(bool planOnly) {
-	LOG(INFO) << "Cancel worker" << m_iIndex;
+	LOG(INFO)<< "Cancel worker" << m_iIndex;
 	m_bTerminate.store(true);
 
 	if(!planOnly) {
@@ -62,7 +60,7 @@ void WorkThreadInfo::parse(const std::string_view sql) {
 	} else if (absl::StartsWithIgnoreCase(sql, "SET ")) {
 		m_result.m_pResult = nullptr;
 	} else if (absl::StartsWithIgnoreCase(sql, "BEGIN")) {
-		LOG(WARNING) << "Transaction is not supported";
+		LOG(WARNING)<< "Transaction is not supported";
 		m_result.m_pResult = nullptr;
 	} else if (absl::StartsWithIgnoreCase(sql, "COMMIT")) {
 		LOG(WARNING) << "Transaction is not supported";
@@ -87,17 +85,16 @@ void WorkThreadInfo::resolve() {
 #ifndef NDEBUG
 		printTree(pTree, 0);
 #endif
-		if(pTree->m_type != NodeType::PLAN) {
+		if (pTree->m_type != NodeType::PLAN) {
 			PARSE_ERROR("WRONG NODE ", pTree->m_sExpr);
 		}
-		if(pTree->getOp() ==  Operation::WORKLOAD) {
+		if (pTree->getOp() == Operation::WORKLOAD) {
 			m_pPlan = ExecutionPlanPtr(new WorkloadResult());
 		} else {
 			m_pPlan = buildPlan(pTree);
 		}
 	}
 }
-
 
 void WorkThreadInfo::handleQuery() {
 
@@ -117,14 +114,14 @@ void WorkThreadInfo::handleQuery() {
 void WorkThreadInfo::handleParse() {
 	auto [sql, iParamNum] = m_protocol.readParseInfo();
 
-	parse(sql);
+	parse (sql);
 
 	size_t iActualParamNum = m_result.m_bindParamNodes.size();
 	if (iParamNum != iActualParamNum) {
-		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum, ", actual ", iActualParamNum);
+		PARSE_ERROR("Parameter number unmatch!, expect ", iParamNum,
+				", actual ", iActualParamNum);
 	}
-
-	m_protocol.sendShortMessage('1');
+	m_bParsed = true;
 }
 
 void WorkThreadInfo::handleBind() {
@@ -132,17 +129,16 @@ void WorkThreadInfo::handleBind() {
 
 	size_t iActualNum = m_result.m_bindParamNodes.size();
 
-	m_protocol.readBindParam(iActualNum, [this] (size_t index, std::string_view value, bool isBinary) {
-		auto pParam =  m_result.m_bindParamNodes[index];
-		pParam->setBindParamMode(isBinary ? Operation::BINARY_PARAM : Operation::TEXT_PARAM);
-		pParam->setString(value);
-	});
-
-	m_protocol.sendShortMessage('2');
+	m_protocol.readBindParam(iActualNum,
+			[this] (size_t index, std::string_view value, bool isBinary) {
+				auto pParam = m_result.m_bindParamNodes[index];
+				pParam->setBindParamMode(isBinary ? Operation::BINARY_PARAM : Operation::TEXT_PARAM);
+				pParam->setString(value);
+			});
+	m_bBinded = true;
 
 	resolve();
 }
-
 
 void WorkThreadInfo::handleExecute() {
 	if (m_pPlan == nullptr) {
@@ -156,23 +152,30 @@ void WorkThreadInfo::handleExecute() {
 		if (columnNum == 0)
 			continue;
 
-		if(!m_protocol.sendData(m_pPlan.get())) {
+		if (!m_protocol.sendData(m_pPlan.get())) {
 			m_protocol.flush(m_iAcceptFd);
 
-			if(!m_protocol.sendData(m_pPlan.get())) {
+			if (!m_protocol.sendData(m_pPlan.get())) {
 				IO_ERROR("data row exceed send buffer length");
 			}
 		}
 	} //while
-	m_protocol.flush(m_iAcceptFd);
 
 	auto sInfo = m_pPlan->getInfoString();
 
 	m_pPlan->end();
 	DLOG(INFO)<< "Execute result:" << sInfo;
 
-	m_protocol.sendShortMessage('C', sInfo);
-
+	if (m_bParsed) {
+		m_protocol.sendShortMessage(m_iAcceptFd, '1');
+		m_bParsed = false;
+	}
+	if (m_bBinded) {
+		m_protocol.sendShortMessage(m_iAcceptFd, '2');
+		m_bBinded = false;
+	}
+	m_protocol.sendShortMessage(m_iAcceptFd, 'C', sInfo);
+	m_protocol.flush(m_iAcceptFd);
 	m_pPlan = nullptr;
 
 	//discard allocated string for bind param
@@ -191,8 +194,8 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 
 	auto end = std::chrono::steady_clock::now();
 
-	m_iClientTime += std::chrono::duration_cast
-			< std::chrono::microseconds > (end - start).count();
+	m_iClientTime += std::chrono::duration_cast<std::chrono::microseconds>(
+			end - start).count();
 
 	while (!bGlobalTerminate.load()) {
 		char qtype = m_protocol.readMessage(fd);
@@ -200,6 +203,7 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 			DLOG(INFO)<< "Client Terminate!";
 			break;
 		}
+		LOG(INFO)<<qtype;
 
 		start = std::chrono::steady_clock::now();
 		auto handler = m_handler[qtype];
@@ -222,14 +226,14 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 			m_pPlan = nullptr;
 		}
 
-		if(qtype == 'Q') {
+		if (qtype == 'Q') {
 			// should also sync when handleQuery throws Exception
 			m_protocol.sendSync(fd);
 		}
 		auto end = std::chrono::steady_clock::now();
 
-		m_iClientTime += std::chrono::duration_cast
-				< std::chrono::microseconds > (end - start).count();
+		m_iClientTime += std::chrono::duration_cast<std::chrono::microseconds>(
+				end - start).count();
 
 	} //while
 
@@ -237,10 +241,4 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 
 	m_iAcceptFd = 0;
 }
-
-
-
-
-
-
 

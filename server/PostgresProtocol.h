@@ -20,10 +20,28 @@ public:
 		}
 	}
 
+	template<typename ...Args>
+	void sendShortMessage(int fd, char cMsgType, Args ...args) {
+		MessageSender sender(m_sender, cMsgType);
+		(m_sender << ... << args);
+		if(m_sender.isBufferFull()) {
+			flush(fd);
+			sendShortMessage(cMsgType, args...);
+		}
+	}
+
 	void sendShortMessage(char cMsgType) {
 		MessageSender sender(m_sender, cMsgType);
 		if(m_sender.isBufferFull()) {
 			IO_ERROR("not enough send buffer");
+		}
+	}
+
+	void sendShortMessage(int fd, char cMsgType) {
+		MessageSender sender(m_sender, cMsgType);
+		if(m_sender.isBufferFull()) {
+			flush(fd);
+			sendShortMessage(cMsgType);
 		}
 	}
 
@@ -108,4 +126,5 @@ private:
 	DataSender m_sender;
 	DataReceiver m_receiver;
 	int32_t m_iSessionIndex;
+	std::string m_buffer;
 };

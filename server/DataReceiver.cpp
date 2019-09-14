@@ -6,8 +6,8 @@
 #include <netdb.h>
 #include "common/MetaConfig.h"
 
-DataReceiver::DataReceiver()
-:  m_buffer(MetaConfig::getInstance().getNetworkBuffer(), '\0') {
+DataReceiver::DataReceiver(std::string& buffer)
+:  m_buffer(buffer) {
 }
 
 

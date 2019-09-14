@@ -4,7 +4,7 @@
 
 class DataReceiver {
 public:
-	DataReceiver();
+	DataReceiver(std::string& buffer);
 
 	int8_t getNextByte();
 	int16_t getNextShort();
@@ -34,7 +34,7 @@ public:
 	size_t readData(int fd);
 
 private:
-	std::string m_buffer;
+	std::string& m_buffer;
 	size_t m_iCurrent = -1;
 	size_t m_iMark = 0;
 	size_t m_iBufLen = 0;

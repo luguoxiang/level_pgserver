@@ -35,9 +35,10 @@ constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
 }
 
 PostgresProtocol::PostgresProtocol(int32_t iSessionIndex)
-: m_sender()
-, m_receiver()
-, m_iSessionIndex(iSessionIndex) {
+: m_iSessionIndex(iSessionIndex)
+, m_buffer(MetaConfig::getInstance().getNetworkBuffer(), '\0')
+, m_sender(m_buffer)
+, m_receiver(m_buffer){
 
 }
 
