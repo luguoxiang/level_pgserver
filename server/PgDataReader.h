@@ -2,9 +2,9 @@
 #include <string>
 #include <cassert>
 
-class DataReceiver {
+class PgDataReader {
 public:
-	DataReceiver(std::string& buffer);
+	PgDataReader(std::string_view buffer);
 
 	int8_t getNextByte();
 	int16_t getNextShort();
@@ -15,27 +15,11 @@ public:
 	std::string_view getNextStringWithShortLen();
 	int32_t getNextInt();
 
-	size_t getDataLen() {
-		return m_iBufLen;
-	}
-
-
 	bool hasData() {
-		return m_iCurrent < m_iBufLen;
+		return m_iCurrent < m_buffer.size();
 	}
-
-	void mark() {
-		m_iMark = m_iCurrent;
-	}
-	void restore() {
-		m_iCurrent = m_iMark;
-	}
-
-	size_t readData(int fd);
 
 private:
-	std::string& m_buffer;
-	size_t m_iCurrent = -1;
-	size_t m_iMark = 0;
-	size_t m_iBufLen = 0;
+	std::string_view m_buffer;
+	size_t m_iCurrent = 0;
 };

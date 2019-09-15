@@ -5,9 +5,9 @@
 #include "IOException.h"
 #include "common/ParseNode.h"
 
-class DataSender {
+class PgDataWriter {
 public:
-	DataSender(std::string& buffer);
+	PgDataWriter(std::string& buffer);
 
 	void addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len);
 
@@ -16,29 +16,29 @@ public:
 
 	void flush(int fd);
 
-	DataSender& operator <<(nullptr_t) {
+	PgDataWriter& operator <<(nullptr_t) {
 		addInt32(-1);
 		return *this;
 	}
 
-	DataSender& operator <<(const std::string_view s) {
+	PgDataWriter& operator <<(const std::string_view s) {
 		addStringZeroEnd(s);
 		return *this;
 	}
 
-	DataSender& operator <<(float value);
-	DataSender& operator <<(double value);
+	PgDataWriter& operator <<(float value);
+	PgDataWriter& operator <<(double value);
 
-	DataSender& operator <<(int64_t t);
+	PgDataWriter& operator <<(int64_t t);
 
-	DataSender& operator <<(int32_t t) {
+	PgDataWriter& operator <<(int32_t t) {
 		addInt32(t);
 		return *this;
 	}
 
-	DataSender& operator <<(int16_t value);
+	PgDataWriter& operator <<(int16_t value);
 
-	DataSender& operator <<(int8_t value);
+	PgDataWriter& operator <<(int8_t value);
 
 	void begin(int8_t cMsgType);
 	void end();
@@ -69,6 +69,13 @@ public:
 		}
 	}
 
+	bool empty() {
+		return m_iWritten == 0 && m_iLastPrepare ==0;
+	}
+
+	size_t getLastPrepared() {
+		return m_iLastPrepare;
+	}
 private:
 	bool addStringZeroEnd(const std::string_view s);
 	bool addInt32(int32_t value);
@@ -87,7 +94,7 @@ private:
 	}
 
 	std::string& m_buffer;
-	uint32_t m_iWritten;
-	uint32_t m_iLastPrepare;
+	size_t m_iWritten;
+	size_t m_iLastPrepare;
 	bool m_bBufferFull = false;
 };

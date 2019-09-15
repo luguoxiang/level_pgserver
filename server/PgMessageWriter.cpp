@@ -1,4 +1,4 @@
-#include "MessageSender.h"
+#include "PgMessageWriter.h"
 #include "common/ConfigInfo.h"
 #include "execution/DBDataTypeHandler.h"
 namespace {
@@ -19,42 +19,42 @@ constexpr int8_t PG_DIAG_SOURCE_FUNCTION = 'R';
 
 }
 
-decltype(MessageSender::m_typeHandler) MessageSender::m_typeHandler;
+decltype(PgMessageWriter::m_typeHandler) PgMessageWriter::m_typeHandler;
 
-void MessageSender::init() {
-	m_typeHandler[DBDataType::BYTES] = std::make_pair(PgDataType::Bytea, [](ExecutionResult& result, DataSender& sender) {
+void PgMessageWriter::init() {
+	m_typeHandler[DBDataType::BYTES] = std::make_pair(PgDataType::Bytea, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addBytesString(result.getString());
 	});
 
-	m_typeHandler[DBDataType::BOOL] = std::make_pair(PgDataType::Bool, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::BOOL] = std::make_pair(PgDataType::Bool, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addString(result.getInt()?"true":"false");
 	});
 
-	m_typeHandler[DBDataType::INT16] = std::make_pair(PgDataType::Int16, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::INT16] = std::make_pair(PgDataType::Int16, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addValueAsString(result.getInt(), "%lld");
 	});
 
-	m_typeHandler[DBDataType::INT32] = std::make_pair(PgDataType::Int32, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::INT32] = std::make_pair(PgDataType::Int32, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addValueAsString(result.getInt(), "%lld");
 	});
 
-	m_typeHandler[DBDataType::INT64] = std::make_pair(PgDataType::Int64, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::INT64] = std::make_pair(PgDataType::Int64, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addValueAsString(result.getInt(), "%lld");
 	});
 
-	m_typeHandler[DBDataType::STRING] = std::make_pair(PgDataType::Varchar, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::STRING] = std::make_pair(PgDataType::Varchar, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addString(result.getString());
 	});
 
-	m_typeHandler[DBDataType::FLOAT] = std::make_pair(PgDataType::Float, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::FLOAT] = std::make_pair(PgDataType::Float, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addValueAsString(result.getDouble(), "%f");
 	});
 
-	m_typeHandler[DBDataType::DOUBLE] = std::make_pair(PgDataType::Double, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::DOUBLE] = std::make_pair(PgDataType::Double, [](ExecutionResult& result, PgDataWriter& sender) {
 		sender.addValueAsString(result.getDouble(), "%f");
 	});
 
-	m_typeHandler[DBDataType::DATE] = std::make_pair(PgDataType::Date, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::DATE] = std::make_pair(PgDataType::Date, [](ExecutionResult& result, PgDataWriter& sender) {
 		time_t time = result.getInt();
 		struct tm* pTime = gmtime(&time);
 		if (pTime == nullptr) {
@@ -65,7 +65,7 @@ void MessageSender::init() {
 		}
 	});
 
-	m_typeHandler[DBDataType::DATETIME] = std::make_pair(PgDataType::DateTime, [](ExecutionResult& result, DataSender& sender) {
+	m_typeHandler[DBDataType::DATETIME] = std::make_pair(PgDataType::DateTime, [](ExecutionResult& result, PgDataWriter& sender) {
 		time_t time = result.getInt();
 		struct tm* pTime = gmtime(&time);
 		if (pTime == nullptr) {
@@ -77,7 +77,7 @@ void MessageSender::init() {
 	});
 }
 
-void MessageSender::sendException(std::exception& e, int startPos) {
+void PgMessageWriter::sendException(std::exception& e, int startPos) {
 	std::string msg = e.what();
 
 	m_sender<< PG_DIAG_SEVERITY << "ERROR"
@@ -93,7 +93,7 @@ void MessageSender::sendException(std::exception& e, int startPos) {
 
 
 
-void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum) {
+void PgMessageWriter::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum) {
 	assert(columnNum > 0);
 	m_sender << static_cast<int16_t>(columnNum);
 
@@ -109,7 +109,7 @@ void MessageSender::sendColumnDescription(ExecutionPlan* pPlan, size_t columnNum
 	}
 }
 
-void MessageSender::sendData(ExecutionPlan* pPlan) {
+void PgMessageWriter::sendData(ExecutionPlan* pPlan) {
 	int16_t columnNum;
 	if (pPlan == nullptr) {
 		columnNum = 0;

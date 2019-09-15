@@ -7,7 +7,6 @@
 #include "WorkerManager.h"
 
 namespace {
-constexpr size_t MAX_STARTUP_PACKET_LENGTH = 10000;
 
 /* FE/BE protocol version number */
 using ProtocolVersion=unsigned int;
@@ -37,23 +36,17 @@ constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
 PostgresProtocol::PostgresProtocol(int32_t iSessionIndex)
 : m_iSessionIndex(iSessionIndex)
 , m_buffer(MetaConfig::getInstance().getNetworkBuffer(), '\0')
-, m_sender(m_buffer)
-, m_receiver(m_buffer){
+, m_sender(m_buffer){
 
 }
 
 void PostgresProtocol::startup(int fd) {
-	m_receiver.readData(fd);
+	PgDataReader receiver(readData(fd));
 
-	size_t iLen = m_receiver.getDataLen();
-	if (iLen < sizeof(ProtocolVersion) || iLen > MAX_STARTUP_PACKET_LENGTH) {
-		IO_ERROR("Illegal startup packet length!");
-	}
-
-	ProtocolVersion proto = (ProtocolVersion) m_receiver.getNextInt();
+	ProtocolVersion proto = (ProtocolVersion) receiver.getNextInt();
 	if (proto == CANCEL_REQUEST_CODE) {
-		uint32_t iBackendPID = m_receiver.getNextInt();
-		uint32_t iCancelAuthCode = m_receiver.getNextInt();
+		uint32_t iBackendPID = receiver.getNextInt();
+		uint32_t iCancelAuthCode = receiver.getNextInt();
 
 		auto pWorker = WorkerManager::getInstance().getWorker(iBackendPID);
 		assert(pWorker);
@@ -71,12 +64,12 @@ void PostgresProtocol::startup(int fd) {
 	if (PG_PROTOCOL_MAJOR(proto) < 3) {
 		IO_ERROR("Unsupported protocol!");
 	}
-	while (m_receiver.hasData()) {
+	while (receiver.hasData()) {
 		size_t iLen;
-		auto sName = m_receiver.getNextString();
+		auto sName = receiver.getNextString();
 		if (sName == "")
 			break;
-		auto sValue = m_receiver.getNextString();
+		auto sValue = receiver.getNextString();
 
 		LOG(INFO)<< "option:" << sName <<"="<< sValue;
 	}
@@ -88,36 +81,62 @@ void PostgresProtocol::startup(int fd) {
 	sendShortMessage('K', m_iSessionIndex, (int32_t)0);
 	sendSync(fd);
 }
-
-
-char PostgresProtocol::readMessage(int fd) {
+char PostgresProtocol::readMessageType(int fd) {
 	char qtype;
-	int ret = ::recv(fd, &qtype, 1, 0);
-
-	if (ret != 1) {
+	if(int ret = ::recv(fd, &qtype, 1, 0); ret != 1) {
 		IO_ERROR("read() failed!");
 	}
-	if (qtype == EOF || qtype == 'X') {
+	if (qtype == EOF) {
 		return 'X';
 	}
-	m_receiver.readData(fd);
-
 	return qtype;
 }
 
-void PostgresProtocol::readBindParam(size_t iParamNum, std::function<ReadParamFn> readParamFn) {
-	auto portal = m_receiver.getNextString();
-	auto stmt = m_receiver.getNextString();
+std::string_view PostgresProtocol::readData(int fd) {
+	size_t iLen = 0;
+	if (::recv(fd, (char*) &iLen, 4, 0) != 4) {
+		IO_ERROR("Unexpect EOF!");
+	}
+
+	iLen = ntohl(iLen);
+	if (iLen < 4) {
+		IO_ERROR("Invalid message length!");
+	}
+
+	iLen -= 4;
+
+	assert(m_sender.empty());
+
+	if(m_buffer.size() < iLen + 1) {
+		IO_ERROR("Not enough receive buffer");
+	}
+	size_t readCount = 0;
+	while (iLen > readCount) {
+		int count = ::read(fd, m_buffer.data() + readCount, iLen - readCount);
+		if (count < 0) {
+			IO_ERROR("read() failed!");
+		}
+		readCount += count;
+	}
+
+	return std::string_view(m_buffer.data(), iLen);
+}
+
+void PostgresProtocol::readBindParam(size_t iParamNum, PgDataReader& receiver, std::function<ReadParamFn> readParamFn) {
+	assert(m_sender.empty());
+
+	auto portal = receiver.getNextString();
+	auto stmt = receiver.getNextString();
 
 	DLOG(INFO)<< "B:portal "<<portal <<" ,stmt "<<stmt;
 
-	size_t iExpectNum = m_receiver.getNextShort();
+	size_t iExpectNum = receiver.getNextShort();
 	if (iExpectNum != iParamNum) {
 		PARSE_ERROR("Parameter format number unmatch!, expect ", iExpectNum, ", actual ", iParamNum);
 	}
 	std::vector<bool> isBinary(iParamNum);
 	for (size_t i = 0; i < iParamNum; ++i) {
-		auto type = m_receiver.getNextShort();
+		auto type = receiver.getNextShort();
 		DLOG(INFO)<< "Bind type:"<<type;
 		switch(type) {
 		case PARAM_TEXT_MODE:
@@ -133,12 +152,26 @@ void PostgresProtocol::readBindParam(size_t iParamNum, std::function<ReadParamFn
 	}
 
 
-	iExpectNum = m_receiver.getNextShort();
+	iExpectNum = receiver.getNextShort();
 	if (iExpectNum != iParamNum) {
 		PARSE_ERROR("Parameter number unmatch!, expect ", iExpectNum , ", actual " , iParamNum);
 	}
 
 	for (int i = 0; i < iParamNum; ++i) {
-		readParamFn(i,m_receiver.getNextStringWithLen(), isBinary[i]);
+		readParamFn(i,receiver.getNextStringWithLen(), isBinary[i]);
 	}
+}
+
+void PostgresProtocol::flushSend(int fd) {
+	size_t iLastPrepared = m_sender.getLastPrepared();
+	if(iLastPrepared == 0) {
+		return;
+	}
+	//Because we must write back package length at m_iLastPrepare.
+	//We could not send data after m_iLastPrepare.
+	uint32_t nWrite = ::send(fd, m_buffer.data(), iLastPrepared, 0);
+	if (nWrite != iLastPrepared) {
+		IO_ERROR("Could not send data\n");
+	}
+	m_sender.clear();
 }

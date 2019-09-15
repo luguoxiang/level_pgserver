@@ -1,19 +1,21 @@
 #pragma once
 
-#include "DataSender.h"
-#include "DataReceiver.h"
-#include "MessageSender.h"
+#include "PgDataWriter.h"
+#include "PgDataReader.h"
+#include "PgMessageWriter.h"
 
 
 class PostgresProtocol {
 public:
 	PostgresProtocol(int32_t iSessionIndex);
 	void startup(int fd);
-	char readMessage(int fd);
+
+	char readMessageType(int fd);
+	std::string_view readData(int fd);
 
 	template<typename ...Args>
 	void sendShortMessage(char cMsgType, Args ...args) {
-		MessageSender sender(m_sender, cMsgType);
+		PgMessageWriter sender(m_sender, cMsgType);
 		(m_sender << ... << args);
 		if(m_sender.isBufferFull()) {
 			IO_ERROR("not enough send buffer");
@@ -22,31 +24,31 @@ public:
 
 	template<typename ...Args>
 	void sendShortMessage(int fd, char cMsgType, Args ...args) {
-		MessageSender sender(m_sender, cMsgType);
+		PgMessageWriter sender(m_sender, cMsgType);
 		(m_sender << ... << args);
 		if(m_sender.isBufferFull()) {
-			flush(fd);
+			flushSend(fd);
 			sendShortMessage(cMsgType, args...);
 		}
 	}
 
 	void sendShortMessage(char cMsgType) {
-		MessageSender sender(m_sender, cMsgType);
+		PgMessageWriter sender(m_sender, cMsgType);
 		if(m_sender.isBufferFull()) {
 			IO_ERROR("not enough send buffer");
 		}
 	}
 
 	void sendShortMessage(int fd, char cMsgType) {
-		MessageSender sender(m_sender, cMsgType);
+		PgMessageWriter sender(m_sender, cMsgType);
 		if(m_sender.isBufferFull()) {
-			flush(fd);
+			flushSend(fd);
 			sendShortMessage(cMsgType);
 		}
 	}
 
 	bool sendData(ExecutionPlan* pPlan) {
-		MessageSender sender(m_sender, 'D');
+		PgMessageWriter sender(m_sender, 'D');
 		sender.sendData(pPlan);
 		return !m_sender.isBufferFull();
 	}
@@ -62,7 +64,7 @@ public:
 			DLOG(INFO) << "No columns";
 			return;
 		}
-		MessageSender sender(m_sender, 'T');
+		PgMessageWriter sender(m_sender, 'T');
 
 		sender.sendColumnDescription(pPlan, columnNum);
 
@@ -73,40 +75,44 @@ public:
 
 
 	void sendException(std::exception& e, int startPos) {
-		MessageSender sender(m_sender, 'E');
+		PgMessageWriter sender(m_sender, 'E');
 		sender.sendException(e, startPos);
 		if(m_sender.isBufferFull()) {
 			IO_ERROR("not enough send buffer");
 		}
 	}
 
-	std::string_view readQueryInfo() {
-		auto sql = m_receiver.getNextString();
+	std::string_view readQueryInfo(PgDataReader& receiver) {
+		assert(m_sender.empty());
+
+		auto sql = receiver.getNextString();
 		DLOG(INFO) << "Q:"<< sql;
 		return sql;
 	}
 
-	std::pair<std::string_view, size_t> readParseInfo() {
-		auto sStmt = m_receiver.getNextString(); //statement name
-		auto sql = m_receiver.getNextString();
+	std::pair<std::string_view, size_t> readParseInfo(PgDataReader& receiver) {
+		assert(m_sender.empty());
+
+		auto sStmt = receiver.getNextString(); //statement name
+		auto sql = receiver.getNextString();
 
 		DLOG(INFO)<< "STMT:" <<sStmt<<", SQL:"<< sql;
 
-		size_t iParamNum = m_receiver.getNextShort();
+		size_t iParamNum = receiver.getNextShort();
 
 		return std::make_pair(sql, iParamNum);
 	}
 
-	void readColumnDescribeInfo() {
-		int type = m_receiver.getNextByte();
-		auto sName = m_receiver.getNextString();
+	void readColumnDescribeInfo(PgDataReader& receiver) {
+		assert(m_sender.empty());
+
+		int type = receiver.getNextByte();
+		auto sName = receiver.getNextString();
 
 		DLOG(INFO)<< "D:type "<<type << ",name "<< sName;
 	}
 
-	void flush(int fd) {
-		m_sender.flush(fd);
-	}
+	void flushSend(int fd);
 
 	void clear() {
 		m_sender.clear();
@@ -115,16 +121,15 @@ public:
 	void sendSync(int fd) {
 		DLOG(INFO) << "sync";
 		sendShortMessage('Z', static_cast<int8_t>('I'));
-		m_sender.flush(fd);
+		flushSend(fd);
 	}
 
 	using ReadParamFn = void (size_t index, std::string_view value, bool isBinary);
-	void readBindParam(size_t iParamNum,
+	void readBindParam(size_t iParamNum, PgDataReader& receiver,
 			std::function<ReadParamFn> readParamFn);
 private:
 
-	DataSender m_sender;
-	DataReceiver m_receiver;
+	PgDataWriter m_sender;
 	int32_t m_iSessionIndex;
 	std::string m_buffer;
 };

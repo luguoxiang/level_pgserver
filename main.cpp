@@ -5,7 +5,7 @@
 #include "common/MetaConfig.h"
 #include "execution/DBDataTypeHandler.h"
 #include "server/PgServer.h"
-#include "server/MessageSender.h"
+#include "server/PgMessageWriter.h"
 #include "config.h"
 
 int main(int argc, char** argv) {
@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 
 	LOG(INFO)<< "level_pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
 	DBDataTypeHandler::init();
-	MessageSender::init();
+	PgMessageWriter::init();
 
 	static_assert(std::numeric_limits<float>::is_iec559);
 	static_assert(std::numeric_limits<double>::is_iec559);

@@ -41,7 +41,7 @@ private:
 
 	PostgresProtocol m_protocol;
 
-	std::map<char, std::function<void ()>> m_handler;
+	std::map<char, std::function<void (PgDataReader& receiver)>> m_handler;
 
 	ExecutionPlanPtr m_pPlan;
 
@@ -59,9 +59,9 @@ private:
 	void resolve();
 	void sendRow();
 
-	void handleQuery();
-	void handleParse();
-	void handleBind();
+	void handleQuery(PgDataReader& receiver);
+	void handleParse(PgDataReader& receiver);
+	void handleBind(PgDataReader& receiver);
 	void handleExecute();
 
 	bool m_bBinded = false;

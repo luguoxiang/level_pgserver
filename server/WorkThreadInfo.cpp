@@ -23,22 +23,30 @@ WorkThreadInfo::WorkThreadInfo(int iIndex) :
 		PARSE_ERROR("Failed to init parser!");
 	}
 
-	m_handler['S'] = [this] () {
+	m_handler['S'] = [this] (PgDataReader& receiver) {
 		m_protocol.sendSync(m_iAcceptFd);
 	};
 
-	m_handler['Q'] = std::bind(&WorkThreadInfo::handleQuery, this);
-
-	m_handler['P'] = std::bind(&WorkThreadInfo::handleParse, this);
-	m_handler['B'] = std::bind(&WorkThreadInfo::handleBind, this);
-
-	m_handler['D'] = [this] () {
-		m_protocol.readColumnDescribeInfo();
-		m_protocol.sendColumnDescription(m_pPlan.get());
-		m_protocol.flush(m_iAcceptFd);
+	m_handler['Q'] =  [this] (PgDataReader& receiver) {
+		handleQuery(receiver);
 	};
 
-	m_handler['E'] = std::bind(&WorkThreadInfo::handleExecute, this);
+	m_handler['P'] = [this] (PgDataReader& receiver) {
+		handleParse(receiver);
+	};
+	m_handler['B'] = [this] (PgDataReader& receiver) {
+		handleBind(receiver);
+	};
+
+	m_handler['D'] = [this] (PgDataReader& receiver) {
+		m_protocol.readColumnDescribeInfo(receiver);
+		m_protocol.sendColumnDescription(m_pPlan.get());
+		m_protocol.flushSend(m_iAcceptFd);
+	};
+
+	m_handler['E'] = [this] (PgDataReader& receiver) {
+		handleExecute();
+	};
 }
 
 WorkThreadInfo::~WorkThreadInfo() {
@@ -96,9 +104,9 @@ void WorkThreadInfo::resolve() {
 	}
 }
 
-void WorkThreadInfo::handleQuery() {
+void WorkThreadInfo::handleQuery(PgDataReader& receiver) {
 
-	auto sql = m_protocol.readQueryInfo();
+	auto sql = m_protocol.readQueryInfo(receiver);
 
 	parse(sql);
 
@@ -106,7 +114,7 @@ void WorkThreadInfo::handleQuery() {
 
 	m_protocol.sendColumnDescription(m_pPlan.get());
 
-	m_protocol.flush(m_iAcceptFd);
+	m_protocol.flushSend(m_iAcceptFd);
 
 	m_bParsed = false;
 	m_bBinded = false;
@@ -114,8 +122,8 @@ void WorkThreadInfo::handleQuery() {
 	handleExecute();
 }
 
-void WorkThreadInfo::handleParse() {
-	auto [sql, iParamNum] = m_protocol.readParseInfo();
+void WorkThreadInfo::handleParse(PgDataReader& receiver) {
+	auto [sql, iParamNum] = m_protocol.readParseInfo(receiver);
 
 	parse (sql);
 
@@ -128,12 +136,12 @@ void WorkThreadInfo::handleParse() {
 	m_bBinded = false;
 }
 
-void WorkThreadInfo::handleBind() {
+void WorkThreadInfo::handleBind(PgDataReader& receiver) {
 	m_result.mark();
 
 	size_t iActualNum = m_result.m_bindParamNodes.size();
 
-	m_protocol.readBindParam(iActualNum,
+	m_protocol.readBindParam(iActualNum,receiver,
 			[this] (size_t index, std::string_view value, bool isBinary) {
 				auto pParam = m_result.m_bindParamNodes[index];
 				pParam->setBindParamMode(isBinary ? Operation::BINARY_PARAM : Operation::TEXT_PARAM);
@@ -157,7 +165,7 @@ void WorkThreadInfo::handleExecute() {
 			continue;
 
 		if (!m_protocol.sendData(m_pPlan.get())) {
-			m_protocol.flush(m_iAcceptFd);
+			m_protocol.flushSend(m_iAcceptFd);
 
 			if (!m_protocol.sendData(m_pPlan.get())) {
 				IO_ERROR("data row exceed send buffer length");
@@ -179,7 +187,7 @@ void WorkThreadInfo::handleExecute() {
 		m_bBinded = false;
 	}
 	m_protocol.sendShortMessage(m_iAcceptFd, 'C', sInfo);
-	m_protocol.flush(m_iAcceptFd);
+	m_protocol.flushSend(m_iAcceptFd);
 	m_pPlan = nullptr;
 
 	//discard allocated string for bind param
@@ -202,12 +210,12 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 			end - start).count();
 
 	while (!bGlobalTerminate.load()) {
-		char qtype = m_protocol.readMessage(fd);
+		char qtype = m_protocol.readMessageType(fd);
 		if (qtype == 'X') {
 			DLOG(INFO)<< "Client Terminate!";
 			break;
 		}
-		LOG(INFO)<<qtype;
+		PgDataReader receiver(m_protocol.readData(fd));
 
 		start = std::chrono::steady_clock::now();
 		auto handler = m_handler[qtype];
@@ -215,18 +223,17 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 			DLOG(INFO)<< "Unable to handler message " << qtype;
 			break;
 		}
-
 		try {
-			handler();
+			handler(receiver);
 		} catch (ParseException& e) {
 			m_protocol.clear();
 			m_protocol.sendException(e, e.getStartPos());
-			m_protocol.flush(fd);
+			m_protocol.flushSend(fd);
 			m_pPlan = nullptr;
 		} catch (std::exception& e) {
 			m_protocol.clear();
 			m_protocol.sendException(e, -1);
-			m_protocol.flush(fd);
+			m_protocol.flushSend(fd);
 			m_pPlan = nullptr;
 		}
 
@@ -242,7 +249,5 @@ void WorkThreadInfo::run(int fd, const std::atomic_bool& bGlobalTerminate) {
 	} //while
 
 	m_bRunning = false;
-
-	m_iAcceptFd = 0;
 }
 

@@ -1,15 +1,15 @@
 #pragma once
 
 #include <map>
-#include "DataSender.h"
+#include "PgDataWriter.h"
 #include "execution/ExecutionPlan.h"
 
 constexpr int16_t PARAM_TEXT_MODE = 0;
 constexpr int16_t PARAM_BINARY_MODE = 1;
 
-class MessageSender {
+class PgMessageWriter {
 public:
-	MessageSender(DataSender& sender, int8_t cMsgType) :m_sender(sender) {
+	PgMessageWriter(PgDataWriter& sender, int8_t cMsgType) :m_sender(sender) {
 		m_sender.begin(cMsgType);
 	};
 
@@ -19,7 +19,7 @@ public:
 
 	void sendException(std::exception& e, int startPos);
 
-	~MessageSender() {
+	~PgMessageWriter() {
 		m_sender.end();
 	}
 	static void init();
@@ -52,8 +52,8 @@ private:
 	}
 
 
-	using SendFn = std::function<void (ExecutionResult& result, DataSender& sender)>;
+	using SendFn = std::function<void (ExecutionResult& result, PgDataWriter& sender)>;
 	static std::map<DBDataType, std::pair<PgDataType,SendFn>> m_typeHandler;
 
-	DataSender& m_sender;
+	PgDataWriter& m_sender;
 };

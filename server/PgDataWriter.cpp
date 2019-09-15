@@ -5,32 +5,32 @@
 #include <string.h>
 #include <cassert>
 #include <stdio.h>
-#include "DataSender.h"
+#include "PgDataWriter.h"
 #include "common/MetaConfig.h"
 
-DataSender::DataSender(std::string& buffer) :
+PgDataWriter::PgDataWriter(std::string& buffer) :
 		m_iWritten(0), m_iLastPrepare(0),  m_buffer(buffer) {
 }
 
-DataSender& DataSender::operator <<(float value) {
+PgDataWriter& PgDataWriter::operator <<(float value) {
 	auto p = reinterpret_cast<int32_t*>(&value);
 	addInt32(*p);
 	return *this;
 }
 
-DataSender& DataSender::operator <<(double value) {
+PgDataWriter& PgDataWriter::operator <<(double value) {
 	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
 	addInt32(iValue[1]) && addInt32(iValue[0]);
 	return *this;
 }
 
-void DataSender::begin(int8_t cMsgType) {
+void PgDataWriter::begin(int8_t cMsgType) {
 	m_bBufferFull = false;
 	m_iLastPrepare = m_iWritten;
 	*this << cMsgType << static_cast<int32_t>(0); //write back later
 }
 
-void DataSender::end() {
+void PgDataWriter::end() {
 	if(m_bBufferFull) {
 		return;
 	}
@@ -41,7 +41,7 @@ void DataSender::end() {
 	m_iLastPrepare = m_iWritten;
 }
 
-DataSender& DataSender::operator <<(int8_t value) {
+PgDataWriter& PgDataWriter::operator <<(int8_t value) {
 	if(!check(1) ) {
 		return *this;
 	}
@@ -50,7 +50,7 @@ DataSender& DataSender::operator <<(int8_t value) {
 	return *this;
 }
 
-bool DataSender::addInt32(int32_t value) {
+bool PgDataWriter::addInt32(int32_t value) {
 	if(!check(4)) {
 		return false;
 	}
@@ -61,13 +61,13 @@ bool DataSender::addInt32(int32_t value) {
 	return true;
 }
 
-DataSender& DataSender::operator <<(int64_t value) {
+PgDataWriter& PgDataWriter::operator <<(int64_t value) {
 	int32_t* iValue = reinterpret_cast<int32_t*>(&value);
 	addInt32(iValue[1]) && 	addInt32(iValue[0]);
 	return *this;
 }
 
-DataSender& DataSender::operator <<(int16_t value) {
+PgDataWriter& PgDataWriter::operator <<(int16_t value) {
 	if(!check(2)) {
 		return *this;
 	}
@@ -77,7 +77,7 @@ DataSender& DataSender::operator <<(int16_t value) {
 	return *this;
 }
 
-bool DataSender::addStringZeroEnd(const std::string_view s) {
+bool PgDataWriter::addStringZeroEnd(const std::string_view s) {
 	auto len = s.length();
 	if(!check( len + 1) ){
 		return false;
@@ -91,7 +91,7 @@ bool DataSender::addStringZeroEnd(const std::string_view s) {
 
 constexpr auto DIGITS = "0123456789ABCDEF";
 
-void DataSender::addBytesString(const std::string_view s) {
+void PgDataWriter::addBytesString(const std::string_view s) {
 	auto len = 2 + s.length() * 2;
 	if(!addInt32(len) || !check(len)) {
 		return;
@@ -107,7 +107,7 @@ void DataSender::addBytesString(const std::string_view s) {
 	}
 }
 
-void DataSender::addString(const std::string_view s) {
+void PgDataWriter::addString(const std::string_view s) {
 	auto len = s.length();
 	if(!addInt32(len)  || !check(len) ) {
 		return;
@@ -116,29 +116,11 @@ void DataSender::addString(const std::string_view s) {
 	m_iWritten += len;
 }
 
-void DataSender::addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len) {
+void PgDataWriter::addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len) {
 	if(!addInt32(len) || !check(len+1) ) {
 		return;
 	}
 	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, pszFormat, pTime);
 	assert(iWritten == len);
 	m_iWritten += iWritten;
-}
-
-void DataSender::flush(int fd) {
-	if (m_iLastPrepare == 0)
-		return;
-
-	assert(m_iWritten >= m_iLastPrepare);
-
-	//Because we must write back package length at m_iLastPrepare.
-	//We could not send data after m_iLastPrepare.
-	uint32_t nWrite = ::send(fd, m_buffer.data(), m_iLastPrepare, 0);
-	if (nWrite != m_iLastPrepare) {
-		IO_ERROR("Could not send data\n");
-	}
-
-	//discard uncommitted data
-	m_iWritten = m_iLastPrepare = 0;
-	m_bBufferFull = false;
 }
