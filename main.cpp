@@ -1,11 +1,9 @@
-#include <limits>
-
 #include <glog/logging.h>
 
 #include "common/MetaConfig.h"
 #include "execution/DBDataTypeHandler.h"
 #include "server/PgServer.h"
-#include "server/PgMessageWriter.h"
+#include "server/PostgresProtocol.h"
 #include "config.h"
 
 int main(int argc, char** argv) {
@@ -13,10 +11,7 @@ int main(int argc, char** argv) {
 
 	LOG(INFO)<< "level_pgserver version "<<VERSION_MAJOR<<"."<<VERSION_MINOR<<" started";
 	DBDataTypeHandler::init();
-	PgMessageWriter::init();
-
-	static_assert(std::numeric_limits<float>::is_iec559);
-	static_assert(std::numeric_limits<double>::is_iec559);
+	PostgresProtocol::init();
 
 	try {
 		const char* pszConfigPath = "meta.conf";
@@ -26,7 +21,8 @@ int main(int argc, char** argv) {
 		}
 		MetaConfig::getInstance().load(pszConfigPath);
 
-		PgServer::getInstance().run();
+		PgServer server(MetaConfig::getInstance().getPort());
+		server.run();
 	} catch (std::exception& e) {
 		LOG(ERROR)<< "start server failed:" << e.what();
 		return 1;

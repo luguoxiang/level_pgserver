@@ -2,12 +2,14 @@
 
 #include <string>
 #include <cassert>
+#include <vector>
 #include "IOException.h"
 #include "common/ParseNode.h"
+#include "common/GlobalMemBlockPool.h"
 
 class PgDataWriter {
 public:
-	PgDataWriter(std::string& buffer);
+	PgDataWriter(MemBuffer* pData);
 
 	void addDateTimeAsString(struct tm* pTime, const char* pszFormat, size_t len);
 
@@ -16,7 +18,7 @@ public:
 
 	void flush(int fd);
 
-	PgDataWriter& operator <<(nullptr_t) {
+	PgDataWriter& operator <<(std::nullptr_t) {
 		addInt32(-1);
 		return *this;
 	}
@@ -47,18 +49,16 @@ public:
 		return m_bBufferFull;
 	}
 
-	void clear() {
-		m_bBufferFull = false;
-		m_iLastPrepare = m_iWritten = 0;
-	}
+
 	template <typename T>
 	bool addValueAsString(T value, const char* pszFormat) {
 		if(!check(4) ) {
 			return false;
 		}
 		auto iValueStart = m_iWritten + 4;
-		auto iAvailable = m_buffer.size() - iValueStart;
-		auto iWritten = snprintf(m_buffer.data() + iValueStart, iAvailable, pszFormat, value);
+		auto iAvailable = m_pData->size() - iValueStart;
+		char* pszTarget = reinterpret_cast<char*>(m_pData->data() + iValueStart);
+		auto iWritten = snprintf(pszTarget, iAvailable, pszFormat, value);
 
 		if (iWritten > 0 && iWritten < iAvailable && addInt32(iWritten)) {
 			m_iWritten += iWritten;
@@ -85,7 +85,7 @@ private:
 			return false;
 		}
 
-		if(m_iWritten + iSize <= m_buffer.size()) {
+		if(m_iWritten + iSize <= m_pData->size()) {
 			return true;
 		} else{
 			m_bBufferFull = true;
@@ -93,8 +93,8 @@ private:
 		}
 	}
 
-	std::string& m_buffer;
-	size_t m_iWritten;
-	size_t m_iLastPrepare;
+	MemBuffer* m_pData;
+	size_t m_iWritten = 0;
+	size_t m_iLastPrepare = 0;
 	bool m_bBufferFull = false;
 };

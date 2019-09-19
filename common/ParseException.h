@@ -7,7 +7,7 @@ class ParseResult;
 class ParseException: public std::exception {
 public:
 	ParseException(const std::string& msg);
-	ParseException(ParseResult* pResult);
+	ParseException(ParseResult& pr);
 
 	const char * what() const throw() override {
 		return m_sErrorMsg.c_str();

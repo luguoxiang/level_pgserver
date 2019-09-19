@@ -2,97 +2,29 @@
 
 #include "PgDataWriter.h"
 #include "PgDataReader.h"
-#include "PgMessageWriter.h"
 
+class ExecutionResult;
+class ExecutionPlan;
 
 class PostgresProtocol {
 public:
-	PostgresProtocol(int32_t iSessionIndex);
-	void startup(int fd);
+	enum class StartupAction {
+		SSL, Normal
+	};
 
-	char readMessageType(int fd);
-	std::string_view readData(int fd);
+	static void init();
 
-	template<typename ...Args>
-	void sendShortMessage(char cMsgType, Args ...args) {
-		PgMessageWriter sender(m_sender, cMsgType);
-		(m_sender << ... << args);
-		if(m_sender.isBufferFull()) {
-			IO_ERROR("not enough send buffer");
-		}
-	}
+	StartupAction readStartup(MemBuffer* pBuffer, size_t len);
 
-	template<typename ...Args>
-	void sendShortMessage(int fd, char cMsgType, Args ...args) {
-		PgMessageWriter sender(m_sender, cMsgType);
-		(m_sender << ... << args);
-		if(m_sender.isBufferFull()) {
-			flushSend(fd);
-			sendShortMessage(cMsgType, args...);
-		}
-	}
-
-	void sendShortMessage(char cMsgType) {
-		PgMessageWriter sender(m_sender, cMsgType);
-		if(m_sender.isBufferFull()) {
-			IO_ERROR("not enough send buffer");
-		}
-	}
-
-	void sendShortMessage(int fd, char cMsgType) {
-		PgMessageWriter sender(m_sender, cMsgType);
-		if(m_sender.isBufferFull()) {
-			flushSend(fd);
-			sendShortMessage(cMsgType);
-		}
-	}
-
-	bool sendData(ExecutionPlan* pPlan) {
-		PgMessageWriter sender(m_sender, 'D');
-		sender.sendData(pPlan);
-		return !m_sender.isBufferFull();
-	}
-
-	void sendColumnDescription(ExecutionPlan* pPlan) {
-		size_t columnNum;
-		if (pPlan == nullptr) {
-			columnNum = 0;
-		} else {
-			columnNum = pPlan->getResultColumns();
-		}
-	 	if (columnNum == 0) {
-			DLOG(INFO) << "No columns";
-			return;
-		}
-		PgMessageWriter sender(m_sender, 'T');
-
-		sender.sendColumnDescription(pPlan, columnNum);
-
-		if(m_sender.isBufferFull()) {
-			IO_ERROR("not enough send buffer");
-		}
-	}
-
-
-	void sendException(std::exception& e, int startPos) {
-		PgMessageWriter sender(m_sender, 'E');
-		sender.sendException(e, startPos);
-		if(m_sender.isBufferFull()) {
-			IO_ERROR("not enough send buffer");
-		}
-	}
-
-	std::string_view readQueryInfo(PgDataReader& receiver) {
-		assert(m_sender.empty());
-
+	std::string_view readQueryInfo(MemBuffer* pBuffer, size_t len) {
+		PgDataReader receiver(pBuffer, len);
 		auto sql = receiver.getNextString();
-		DLOG(INFO) << "Q:"<< sql;
+		DLOG(INFO)<< "Q:"<< sql;
 		return sql;
 	}
 
-	std::pair<std::string_view, size_t> readParseInfo(PgDataReader& receiver) {
-		assert(m_sender.empty());
-
+	std::pair<std::string_view, size_t> readParseInfo(MemBuffer* pBuffer, size_t len) {
+		PgDataReader receiver(pBuffer, len);
 		auto sStmt = receiver.getNextString(); //statement name
 		auto sql = receiver.getNextString();
 
@@ -103,8 +35,8 @@ public:
 		return std::make_pair(sql, iParamNum);
 	}
 
-	void readColumnDescribeInfo(PgDataReader& receiver) {
-		assert(m_sender.empty());
+	void readColumnDescribeInfo(MemBuffer* pBuffer, size_t len) {
+		PgDataReader receiver(pBuffer, len);
 
 		int type = receiver.getNextByte();
 		auto sName = receiver.getNextString();
@@ -112,24 +44,48 @@ public:
 		DLOG(INFO)<< "D:type "<<type << ",name "<< sName;
 	}
 
-	void flushSend(int fd);
+	using ParamInfo =std::pair<bool, std::string_view>;
+	void readBindParam(MemBuffer* pBuffer, size_t len, std::vector<ParamInfo>& params);
 
-	void clear() {
-		m_sender.clear();
+	size_t buildStartupResponse(MemBuffer* pBuffer, int32_t iSessionIndex) noexcept;
+
+	size_t buildSync(MemBuffer* pBuffer) noexcept {
+		PgDataWriter writer(pBuffer);
+		writeShortMessage(writer, 'Z', static_cast<int8_t>('I'));
+		assert(!writer.isBufferFull());
+
+		return writer.getLastPrepared();
 	}
 
-	void sendSync(int fd) {
-		DLOG(INFO) << "sync";
-		sendShortMessage('Z', static_cast<int8_t>('I'));
-		flushSend(fd);
-	}
+	size_t buildColumnDescription(MemBuffer* pBuffer, ExecutionPlan* pPlan, size_t columnNum);
 
-	using ReadParamFn = void (size_t index, std::string_view value, bool isBinary);
-	void readBindParam(size_t iParamNum, PgDataReader& receiver,
-			std::function<ReadParamFn> readParamFn);
+	void buildData(PgDataWriter& writer, ExecutionPlan* pPlan, size_t columnNum);
+
+	size_t buildException(MemBuffer* pBuffer, const std::string& msg, int startPos, bool sync) noexcept;
+
+	size_t buildExecutionDone(MemBuffer* pBuffer, bool parsed, bool bind, std::string_view sInfo, bool sync) noexcept;
+
 private:
+	template<typename ...Args>
+	void writeShortMessage(PgDataWriter& writer, char cMsgType, Args ...args) {
+		writer.begin(cMsgType);
+		(writer << ... << args);
+		writer.end();
+	}
+	//https://jdbc.postgresql.org/development/privateapi/constant-values.html
+	enum class PgDataType {
+		Bool = 16,
+		Bytea = 17,
+		Int16 = 21,
+		Int32 = 23,
+		Int64 = 20,
+		Varchar = 1043,
+		Date = 1082,
+		DateTime = 1114,
+		Float = 700,
+		Double = 701,
+	};
+	using WriteFn = std::function<void (ExecutionResult& , PgDataWriter& )>;
+	static std::map<DBDataType, std::pair<PgDataType,WriteFn>> m_typeHandler;
 
-	PgDataWriter m_sender;
-	int32_t m_iSessionIndex;
-	std::string m_buffer;
 };

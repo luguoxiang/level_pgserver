@@ -2,14 +2,15 @@
 
 #include "ParseNode.h"
 #include "ParseException.h"
-
+#include "GlobalMemBlockPool.h"
 
 
 class ParseResult {
 public:
 	ParseResult();
+	~ParseResult();
 
-	std::string m_sSql;
+	std::string_view m_sSql;
 	void* m_scanInfo = nullptr;
 	ParseNode* m_pResult = nullptr;
 	std::string m_sError;
@@ -23,6 +24,10 @@ public:
 
 	void initParse(const std::string_view sql);
 	char* alloc(size_t size);
+
+	void parse(const std::string_view sql);
+
+	std::string_view allocString(std::string_view s, bool zeroEnded);
 
 	std::string_view concate(std::initializer_list<const std::string_view> children) {
 		size_t iLen = 0;
@@ -124,9 +129,9 @@ public:
 	void restore() {m_iCurrent = m_iMark;}
 private:
     std::string_view getExpr(int firstColumn, int lastColumn) {
-    	return std::string_view(m_sSql.c_str() + firstColumn - 1,lastColumn - firstColumn + 1);
+    	return std::string_view(m_sSql.data() + firstColumn - 1,lastColumn - firstColumn + 1);
     }
-	std::string m_sParseBuffer;
+    MemBlockPtr m_pBuffer;
 	size_t m_iCurrent = 0;
 	size_t m_iMark = 0;
 };
@@ -135,6 +140,6 @@ extern int parseInit(ParseResult* p);
 
 extern int parseTerminate(ParseResult* p);
 
-extern void parseSql(ParseResult *p, const std::string_view sql);
+extern void parseSql(ParseResult* p, const std::string_view sql);
 
 

@@ -1,10 +1,10 @@
 #include "common/MetaConfig.h"
-#include "execution/ExecutionPlan.h"
 
-#include "WorkThreadInfo.h"
-#include "IOException.h"
+#include "execution/ExecutionResult.h"
+#include "execution/ExecutionPlan.h"
+#include "execution/DBDataTypeHandler.h"
 #include "PostgresProtocol.h"
-#include "WorkerManager.h"
+#include "SessionManager.h"
 
 namespace {
 
@@ -30,39 +30,278 @@ constexpr ProtocolVersion NEGOTIATE_SSL_CODE = PG_PROTOCOL(1234, 5679);
 constexpr int32_t AUTH_REQ_OK = 0; /* User is authenticated  */
 constexpr int32_t AUTH_REQ_PASSWORD = 3; /* Password */
 
+constexpr int8_t PG_DIAG_SEVERITY = 'S';
+constexpr int8_t PG_DIAG_SQLSTATE = 'C';
+constexpr int8_t PG_DIAG_MESSAGE_PRIMARY = 'M';
+constexpr int8_t PG_DIAG_MESSAGE_DETAIL = 'D';
+constexpr int8_t PG_DIAG_MESSAGE_HINT = 'H';
+constexpr int8_t PG_DIAG_STATEMENT_POSITION = 'P';
+constexpr int8_t PG_DIAG_INTERNAL_POSITION = 'p';
+constexpr int8_t PG_DIAG_INTERNAL_QUERY = 'q';
+constexpr int8_t PG_DIAG_CONTEXT = 'W';
+constexpr int8_t PG_DIAG_SOURCE_FILE = 'F';
+constexpr int8_t PG_DIAG_SOURCE_LINE = 'L';
+constexpr int8_t PG_DIAG_SOURCE_FUNCTION = 'R';
 
+constexpr int16_t PARAM_TEXT_MODE = 0;
+constexpr int16_t PARAM_BINARY_MODE = 1;
 }
 
-PostgresProtocol::PostgresProtocol(int32_t iSessionIndex)
-: m_iSessionIndex(iSessionIndex)
-, m_buffer(MetaConfig::getInstance().getNetworkBuffer(), '\0')
-, m_sender(m_buffer){
+decltype(PostgresProtocol::m_typeHandler) PostgresProtocol::m_typeHandler;
+void PostgresProtocol::init() {
+	m_typeHandler[DBDataType::BYTES] = std::make_pair(PgDataType::Bytea,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addBytesString(result.getString());
+			});
 
+	m_typeHandler[DBDataType::BOOL] = std::make_pair(PgDataType::Bool,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addString(result.getInt()?"true":"false");
+			});
+
+	m_typeHandler[DBDataType::INT16] = std::make_pair(PgDataType::Int16,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addValueAsString(result.getInt(), "%lld");
+			});
+
+	m_typeHandler[DBDataType::INT32] = std::make_pair(PgDataType::Int32,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addValueAsString(result.getInt(), "%lld");
+			});
+
+	m_typeHandler[DBDataType::INT64] = std::make_pair(PgDataType::Int64,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addValueAsString(result.getInt(), "%lld");
+			});
+
+	m_typeHandler[DBDataType::STRING] = std::make_pair(PgDataType::Varchar,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addString(result.getString());
+			});
+
+	m_typeHandler[DBDataType::FLOAT] = std::make_pair(PgDataType::Float,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addValueAsString(result.getDouble(), "%f");
+			});
+
+	m_typeHandler[DBDataType::DOUBLE] = std::make_pair(PgDataType::Double,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				writer.addValueAsString(result.getDouble(), "%f");
+			});
+
+	m_typeHandler[DBDataType::DATE] = std::make_pair(PgDataType::Date,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				time_t time = result.getInt();
+				struct tm* pTime = gmtime(&time);
+				if (pTime == nullptr) {
+					LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
+					writer << nullptr;
+				} else {
+					writer.addDateTimeAsString(pTime, "%Y-%m-%d", 10);
+				}
+			});
+
+	m_typeHandler[DBDataType::DATETIME] = std::make_pair(PgDataType::DateTime,
+			[](ExecutionResult& result, PgDataWriter& writer) {
+				time_t time = result.getInt();
+				struct tm* pTime = gmtime(&time);
+				if (pTime == nullptr) {
+					LOG(ERROR) << "Failed to get gmtime "<< (int ) time;
+					writer << nullptr;
+				} else {
+					writer.addDateTimeAsString(pTime, "%Y-%m-%d %H:%M:%S", 19);
+				}
+			});
 }
 
-void PostgresProtocol::startup(int fd) {
-	PgDataReader receiver(readData(fd));
+size_t PostgresProtocol::buildStartupResponse(std::vector<std::byte>* pBuffer,
+		int32_t iSessionIndex) noexcept {
+	PgDataWriter writer(pBuffer);
+	writeShortMessage(writer, 'R', AUTH_REQ_OK);
+	writeShortMessage(writer, 'S', "server_encoding", "UTF8");
+	writeShortMessage(writer, 'S', "client_encoding", "UTF8");
+	writeShortMessage(writer, 'S', "server_version", "9.0.4");
+	writeShortMessage(writer, 'K', iSessionIndex, (int32_t) 0);
+	//sync
+	writeShortMessage(writer, 'Z', static_cast<int8_t>('I'));
+
+	assert(!writer.isBufferFull());
+
+	return writer.getLastPrepared();
+}
+
+size_t PostgresProtocol::buildException(std::vector<std::byte>* pBuffer,
+		const std::string& msg, int startPos, bool sync) noexcept {
+	PgDataWriter writer(pBuffer);
+
+	writer.begin('E');
+
+	writer << PG_DIAG_SEVERITY << "ERROR" << PG_DIAG_SQLSTATE << "00000"
+			<< PG_DIAG_MESSAGE_PRIMARY << msg;
+
+	if (startPos >= 0) {
+		std::string pos = std::to_string(startPos);
+		writer << PG_DIAG_STATEMENT_POSITION << pos;
+	}
+	writer << static_cast<int8_t>(0);
+	writer.end();
+	if (sync) {
+		writeShortMessage(writer, 'Z', static_cast<int8_t>('I'));
+	}
+	if (writer.isBufferFull()) {
+		return buildException(pBuffer, msg.substr(0, pBuffer->size() - 100),
+				startPos, sync);
+	}
+	return writer.getLastPrepared();
+}
+
+size_t PostgresProtocol::buildColumnDescription(std::vector<std::byte>* pBuffer,
+		ExecutionPlan* pPlan, size_t columnNum) {
+	PgDataWriter writer(pBuffer);
+	writer.begin('T');
+
+	writer << static_cast<int16_t>(columnNum);
+
+	for (size_t i = 0; i < columnNum; ++i) {
+		auto sName = pPlan->getProjectionName(i);
+
+		auto dataType = pPlan->getResultType(i);
+		if (auto iter = m_typeHandler.find(dataType); iter
+				!= m_typeHandler.end()) {
+			writer << sName << static_cast<int32_t>(0) //oid
+					<< static_cast<int16_t>(i + 1) //column id
+					<< static_cast<int32_t>(iter->second.first) //type
+					<< static_cast<int16_t>(-1) //datalen
+					<< static_cast<int32_t>(-1) //typemod
+					<< PARAM_TEXT_MODE;
+		} else {
+			IO_ERROR("Unexpected data type:",
+					DBDataTypeHandler::getTypeName(dataType));
+		}
+	}
+
+	writer.end();
+	if (writer.isBufferFull()) {
+		IO_ERROR("not enough network buffer", -1);
+	}
+	return writer.getLastPrepared();
+}
+
+void PostgresProtocol::buildData(PgDataWriter& writer, ExecutionPlan* pPlan,
+		size_t columnNum) {
+	writer.begin('D');
+	writer << static_cast<int16_t>(columnNum);
+	for (size_t i = 0; i < columnNum; ++i) {
+		try {
+			DBDataType type = pPlan->getResultType(i);
+
+			ExecutionResult result;
+
+			pPlan->getResult(i, result, type);
+
+			if (result.isNull()) {
+				writer << nullptr;
+				continue;
+			}
+			if (auto iter = m_typeHandler.find(type); iter
+					!= m_typeHandler.end()) {
+				std::invoke(iter->second.second, result, writer);
+			} else {
+				IO_ERROR("Unexpected data type:",
+						DBDataTypeHandler::getTypeName(type));
+			}
+		} catch (...) {
+			for (; i < columnNum; ++i) {
+				writer << nullptr;
+			}
+			throw;
+		}
+	} //for
+	writer.end();
+
+}
+size_t PostgresProtocol::buildExecutionDone(std::vector<std::byte>* pBuffer,
+		bool parsed, bool bind, std::string_view sInfo, bool sync) noexcept {
+	PgDataWriter writer(pBuffer);
+
+	if (parsed) {
+		writer.begin('1');
+		writer.end();
+	}
+	if (bind) {
+		writer.begin('2');
+		writer.end();
+	}
+	writeShortMessage(writer, 'C', sInfo);
+	if (sync) {
+		writeShortMessage(writer, 'Z', static_cast<int8_t>('I'));
+	}
+	assert(!writer.isBufferFull());
+	return writer.getLastPrepared();
+}
+
+void PostgresProtocol::readBindParam(MemBuffer* pBuffer, size_t len,
+		std::vector<ParamInfo>& params) {
+	PgDataReader receiver(pBuffer, len);
+
+	auto portal = receiver.getNextString();
+	auto stmt = receiver.getNextString();
+
+	DLOG(INFO)<< "B:portal "<<portal <<" ,stmt "<<stmt;
+
+	size_t iExpectNum = receiver.getNextShort();
+	if (iExpectNum != params.size()) {
+		IO_ERROR("Parameter format number unmatch!, expect ", iExpectNum,
+				", actual ", params.size());
+	}
+
+	for (size_t i = 0; i < iExpectNum; ++i) {
+		auto type = receiver.getNextShort();
+		DLOG(INFO)<< "Bind type:"<<type;
+		switch (type) {
+		case PARAM_TEXT_MODE:
+			params[i].first = false;
+			break;
+		case PARAM_BINARY_MODE:
+			params[i].first = true;
+			break;
+		default:
+			IO_ERROR("Unexpected bind parameter mode: ", type)
+			;
+		}
+	}
+
+	iExpectNum = receiver.getNextShort();
+	if (iExpectNum != params.size()) {
+		IO_ERROR("Parameter number unmatch!, expect ", iExpectNum, ", actual ",
+				params.size());
+	}
+
+	for (int i = 0; i < iExpectNum; ++i) {
+		params[i].second = receiver.getNextStringWithLen();
+	}
+}
+
+
+PostgresProtocol::StartupAction PostgresProtocol::readStartup(
+		MemBuffer* pBuffer, size_t len) {
+	PgDataReader receiver(pBuffer, len);
 
 	ProtocolVersion proto = (ProtocolVersion) receiver.getNextInt();
 	if (proto == CANCEL_REQUEST_CODE) {
 		uint32_t iBackendPID = receiver.getNextInt();
 		uint32_t iCancelAuthCode = receiver.getNextInt();
 
-		auto pWorker = WorkerManager::getInstance().getWorker(iBackendPID);
+		auto pWorker = SessionManager::getInstance().getSession(iBackendPID);
 		assert(pWorker);
-		pWorker->cancel(true);
-
-		IO_ERROR("Cacnel WorkerID=", iBackendPID, ", CancelAuthCode=", iCancelAuthCode);
+		pWorker->cancel();
+		IO_ERROR("Cancel WorkerID=", iBackendPID);
 	}
 	if (proto == NEGOTIATE_SSL_CODE) {
-		if(::write(fd, "N", 1) != 1 ){
-			IO_ERROR("Send N for SSL failed");
-		}
-		startup(fd);
-		return;
+		return StartupAction::SSL;
 	}
 	if (PG_PROTOCOL_MAJOR(proto) < 3) {
-		IO_ERROR("Unsupported protocol!");
+		IO_ERROR("Unsupported pg version:", PG_PROTOCOL_MAJOR(proto));
 	}
 	while (receiver.hasData()) {
 		size_t iLen;
@@ -74,104 +313,6 @@ void PostgresProtocol::startup(int fd) {
 		LOG(INFO)<< "option:" << sName <<"="<< sValue;
 	}
 
-	sendShortMessage('R', AUTH_REQ_OK);
-	sendShortMessage('S', "server_encoding", "UTF8");
-	sendShortMessage('S', "client_encoding", "UTF8");
-	sendShortMessage('S', "server_version", "9.0.4");
-	sendShortMessage('K', m_iSessionIndex, (int32_t)0);
-	sendSync(fd);
-}
-char PostgresProtocol::readMessageType(int fd) {
-	char qtype;
-	if(int ret = ::recv(fd, &qtype, 1, 0); ret != 1) {
-		IO_ERROR("read() failed!");
-	}
-	if (qtype == EOF) {
-		return 'X';
-	}
-	return qtype;
+	return StartupAction::Normal;
 }
 
-std::string_view PostgresProtocol::readData(int fd) {
-	size_t iLen = 0;
-	if (::recv(fd, (char*) &iLen, 4, 0) != 4) {
-		IO_ERROR("Unexpect EOF!");
-	}
-
-	iLen = ntohl(iLen);
-	if (iLen < 4) {
-		IO_ERROR("Invalid message length!");
-	}
-
-	iLen -= 4;
-
-	assert(m_sender.empty());
-
-	if(m_buffer.size() < iLen + 1) {
-		IO_ERROR("Not enough receive buffer");
-	}
-	size_t readCount = 0;
-	while (iLen > readCount) {
-		int count = ::read(fd, m_buffer.data() + readCount, iLen - readCount);
-		if (count < 0) {
-			IO_ERROR("read() failed!");
-		}
-		readCount += count;
-	}
-
-	return std::string_view(m_buffer.data(), iLen);
-}
-
-void PostgresProtocol::readBindParam(size_t iParamNum, PgDataReader& receiver, std::function<ReadParamFn> readParamFn) {
-	assert(m_sender.empty());
-
-	auto portal = receiver.getNextString();
-	auto stmt = receiver.getNextString();
-
-	DLOG(INFO)<< "B:portal "<<portal <<" ,stmt "<<stmt;
-
-	size_t iExpectNum = receiver.getNextShort();
-	if (iExpectNum != iParamNum) {
-		PARSE_ERROR("Parameter format number unmatch!, expect ", iExpectNum, ", actual ", iParamNum);
-	}
-	std::vector<bool> isBinary(iParamNum);
-	for (size_t i = 0; i < iParamNum; ++i) {
-		auto type = receiver.getNextShort();
-		DLOG(INFO)<< "Bind type:"<<type;
-		switch(type) {
-		case PARAM_TEXT_MODE:
-			isBinary[i] = false;
-			break;
-		case PARAM_BINARY_MODE:
-			isBinary[i] = true;
-			break;
-		default:
-			IO_ERROR("Unexpected bind parameter mode: ", type);
-			break;
-		}
-	}
-
-
-	iExpectNum = receiver.getNextShort();
-	if (iExpectNum != iParamNum) {
-		PARSE_ERROR("Parameter number unmatch!, expect ", iExpectNum , ", actual " , iParamNum);
-	}
-
-	for (int i = 0; i < iParamNum; ++i) {
-		readParamFn(i,receiver.getNextStringWithLen(), isBinary[i]);
-	}
-}
-
-void PostgresProtocol::flushSend(int fd) {
-	size_t iLastPrepared = m_sender.getLastPrepared();
-	if(iLastPrepared == 0) {
-		return;
-	}
-	//Because we must write back package length at m_iLastPrepare.
-	//We could not send data after m_iLastPrepare.
-	uint32_t nWrite = ::send(fd, m_buffer.data(), iLastPrepared, 0);
-	if (nWrite != iLastPrepared) {
-		IO_ERROR("Could not send data\n");
-	}
-	m_sender.clear();
-}

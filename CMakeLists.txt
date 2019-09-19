@@ -10,11 +10,9 @@ set (CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/lib)
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fno-rtti -DDISABLE_RTTI")
 
 set(BisonOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.tab.cpp)
 set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
-
 
 set(APP_EXEC level_pgserver)
 option (WITH_GFLAGS "Use gflags" OFF)
@@ -80,8 +78,10 @@ add_library( PlanBuilder STATIC ${PLANBUILDER_SOURCES})
 target_include_directories(PlanBuilder PUBLIC . glog glog/src abseil-cpp leveldb/include)
 
 add_library( Server STATIC ${SERVER_SOURCES})
-target_include_directories(Server PUBLIC . glog glog/src abseil-cpp)
+target_include_directories(Server PUBLIC . glog glog/src abseil-cpp asio-1.12.2/include)
+set_target_properties(Server PROPERTIES COMPILE_FLAGS " -DASIO_STANDALONE")
 
 add_executable(${APP_EXEC} ${SOURCES})
+set_target_properties(${APP_EXEC} PROPERTIES COMPILE_FLAGS "-DASIO_STANDALONE")
 
 target_link_libraries( ${APP_EXEC} Server PlanBuilder Execution Common glog::glog leveldb absl::strings)

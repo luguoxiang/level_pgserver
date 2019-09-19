@@ -10,13 +10,13 @@
 #include "ExecutionResult.h"
 #include "ExecutionException.h"
 #include "common/ConfigInfo.h"
-#include "GlobalMemBlockPool.h"
+#include "common/GlobalMemBlockPool.h"
 class ExecutionBuffer
 {
 public:
 	ExecutionBuffer(size_t size) :  m_iTotal(size) {};
 	~ExecutionBuffer() {
-		GlobalMemBlockPool::getInstance().free(m_bufferBlocks.begin(), m_bufferBlocks.end());
+		GlobalMemBlockPool::getInstance().free(m_bufferBlocks);
 	}
 
 	DataRow copyRow(const std::vector<ExecutionResult>& results, const std::vector<DBDataType>& types);
@@ -35,7 +35,7 @@ public:
 	ExecutionBuffer& operator =(const ExecutionBuffer&) = delete;
 
 private:
-	std::vector<GlobalMemBlockPool::MemBlockPtr> m_bufferBlocks;
+	std::vector<MemBlockPtr> m_bufferBlocks;
 
 	size_t m_iUsed = 0;
 	size_t m_iBlockUsed = 0;

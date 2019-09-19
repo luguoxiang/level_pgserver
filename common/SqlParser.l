@@ -50,7 +50,6 @@ LOAD {return LOAD;}
 WHERE {return WHERE;}
 BY {return BY;}
 DATA {return DATA;}
-WORKLOAD {return WORKLOAD;}
 SHOW {return SHOW;}
 DESC {return DESC;}
 INFILE {return INFILE;}

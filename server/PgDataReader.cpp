@@ -6,8 +6,8 @@
 #include <netdb.h>
 #include "common/MetaConfig.h"
 
-PgDataReader::PgDataReader(std::string_view buffer)
-:  m_buffer(buffer) {
+PgDataReader::PgDataReader(MemBuffer* pBuffer, size_t len)
+:  m_buffer(reinterpret_cast<char*>(pBuffer->data()), len) {
 }
 
 
@@ -28,7 +28,7 @@ std::string_view PgDataReader::getNextStringWithLen() {
 	const char* pszCurrent = m_buffer.data() + m_iCurrent;
 	int32_t len = ntohl(*(int32_t*) pszCurrent);
 	m_iCurrent += 4;
-	if (len <= 0)
+	if (len < 0)
 		IO_ERROR("null string is not supported");
 
 	m_iCurrent += len;
@@ -41,7 +41,7 @@ std::string_view PgDataReader::getNextStringWithShortLen() {
 	const char* pszCurrent = m_buffer.data() + m_iCurrent;
 	int16_t len = ntohs(*(int16_t*) pszCurrent);
 	m_iCurrent += 2;
-	if (len <= 0)
+	if (len < 0)
 		IO_ERROR("null string is not supported");
 
 	m_iCurrent += len;

@@ -12,6 +12,7 @@ enum class PlanType {
 		Projection,
 		GroupBy,
 		Limit,
+		Filter,
 		Const,
 		ReadFile,
 		Insert,

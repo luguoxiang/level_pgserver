@@ -57,7 +57,6 @@ extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const st
 %token SHOW
 %token TABLES
 %token TERMINATED
-%token WORKLOAD
 %token ERROR
 %token ADD
 %token ALL
@@ -136,7 +135,7 @@ extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const st
 %type <pNode> column_list row_value
 %type <pNode> delete_stmt
 %type <pNode> get_stmt values_stmt
-%type <pNode> show_tables_stmt desc_table_stmt workload_stmt
+%type <pNode> show_tables_stmt desc_table_stmt 
 %type <pNode> table_or_query opt_alias
 
 %start sql_stmt
@@ -157,7 +156,6 @@ sql_stmt: stmt ';'
 
 get_stmt: select_stmt {$$ = $1;}
 	| values_stmt {$$ = $1;}
-	| workload_stmt { $$ = $1;}
 	| show_tables_stmt { $$ = $1;}
 	| desc_table_stmt { $$ = $1;}
 	;
@@ -294,11 +292,7 @@ desc_table_stmt:DESC table_factor
 	}
 	; 
 
-workload_stmt:WORKLOAD
-	{
-		$$ = pResult->newPlanNode("Workload",  Operation::WORKLOAD,  @$.first_column, @$.last_column, {});	
-	}
- 	;
+
 
 	
 opt_col_names: /* empty */{$$ = nullptr;}
@@ -453,18 +447,11 @@ int parseTerminate(ParseResult* p)
 void parseSql(ParseResult* p, const std::string_view sql)
 {
 	p->initParse(sql);
-	p->m_pResult = nullptr;
-	p->m_sSql.assign(sql.data(), sql.length());
-	p->m_sError = "";
-	
-	p->m_yycolumn = 1;
-	p->m_yylineno = 1;
 
 	YY_BUFFER_STATE bp;
 
-	bp = yy_scan_string(p->m_sSql.c_str(), p->m_scanInfo);
+	bp = yy_scan_string(p->m_sSql.data(), p->m_scanInfo);
 	yy_switch_to_buffer(bp, p->m_scanInfo);
 	yyparse(p, p->m_scanInfo);
 	yy_delete_buffer(bp, p->m_scanInfo);
-	//printTree(p->m_pResult, 0);
 }

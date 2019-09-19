@@ -8,8 +8,7 @@
 #include "PgDataWriter.h"
 #include "common/MetaConfig.h"
 
-PgDataWriter::PgDataWriter(std::string& buffer) :
-		m_iWritten(0), m_iLastPrepare(0),  m_buffer(buffer) {
+PgDataWriter::PgDataWriter(MemBuffer* pData) : m_pData(pData) {
 }
 
 PgDataWriter& PgDataWriter::operator <<(float value) {
@@ -26,7 +25,6 @@ PgDataWriter& PgDataWriter::operator <<(double value) {
 
 void PgDataWriter::begin(int8_t cMsgType) {
 	m_bBufferFull = false;
-	m_iLastPrepare = m_iWritten;
 	*this << cMsgType << static_cast<int32_t>(0); //write back later
 }
 
@@ -35,8 +33,9 @@ void PgDataWriter::end() {
 		return;
 	}
 	assert (m_iLastPrepare + 5 <= m_iWritten);
-	int32_t netval = htonl(m_iWritten - m_iLastPrepare - 1);
-	m_buffer.replace(m_iLastPrepare + 1, 4, reinterpret_cast<const char*>(&netval), 4);
+
+	int32_t* pTarget = reinterpret_cast<int32_t*>(m_pData->data() + m_iLastPrepare + 1);
+	*pTarget = htonl(m_iWritten - m_iLastPrepare - 1);
 
 	m_iLastPrepare = m_iWritten;
 }
@@ -45,7 +44,8 @@ PgDataWriter& PgDataWriter::operator <<(int8_t value) {
 	if(!check(1) ) {
 		return *this;
 	}
-	m_buffer[m_iWritten] = value;
+	int8_t* pTarget = reinterpret_cast<int8_t*>(m_pData->data() + m_iWritten);
+	*pTarget = value;
 	++m_iWritten;
 	return *this;
 }
@@ -55,8 +55,9 @@ bool PgDataWriter::addInt32(int32_t value) {
 		return false;
 	}
 
-	int32_t netval = htonl(value);
-	m_buffer.replace(m_iWritten, 4, reinterpret_cast<const char*>(&netval), 4);
+	int32_t* pTarget = reinterpret_cast<int32_t*>(m_pData->data() + m_iWritten);
+	*pTarget = htonl(value);
+
 	m_iWritten += 4;
 	return true;
 }
@@ -71,8 +72,9 @@ PgDataWriter& PgDataWriter::operator <<(int16_t value) {
 	if(!check(2)) {
 		return *this;
 	}
-	int16_t netval = htons(value);
-	m_buffer.replace(m_iWritten, 2, reinterpret_cast<const char*>(&netval), 2);
+
+	int16_t* pTarget = reinterpret_cast<int16_t*>(m_pData->data() + m_iWritten);
+	*pTarget =  htons(value);
 	m_iWritten += 2;
 	return *this;
 }
@@ -82,10 +84,12 @@ bool PgDataWriter::addStringZeroEnd(const std::string_view s) {
 	if(!check( len + 1) ){
 		return false;
 	}
-	m_buffer.replace(m_iWritten, len, s.data(), len);
+	char* pTarget = reinterpret_cast<char*>(m_pData->data() + m_iWritten);
+	memcpy(pTarget, s.data(), len);
 	m_iWritten += len;
-	m_buffer[m_iWritten] = '\0';
+	pTarget[len] = '\0';
 	++m_iWritten;
+
 	return true;
 }
 
@@ -96,14 +100,15 @@ void PgDataWriter::addBytesString(const std::string_view s) {
 	if(!addInt32(len) || !check(len)) {
 		return;
 	}
-	m_buffer[m_iWritten++] = '\\';
-	m_buffer[m_iWritten++] = 'x';
+	char* pTarget = reinterpret_cast<char*>(m_pData->data());
+	pTarget[m_iWritten++] = '\\';
+	pTarget[m_iWritten++] = 'x';
 
 	for (size_t i = 0; i   <  s.length() ; ++i) {
 		uint8_t c = s[i];
 
-		m_buffer[m_iWritten++] = DIGITS[c >> 4];
-		m_buffer[m_iWritten++] = DIGITS[c & 0xf];
+		pTarget[m_iWritten++] = DIGITS[c >> 4];
+		pTarget[m_iWritten++] = DIGITS[c & 0xf];
 	}
 }
 
@@ -112,7 +117,8 @@ void PgDataWriter::addString(const std::string_view s) {
 	if(!addInt32(len)  || !check(len) ) {
 		return;
 	}
-	m_buffer.replace(m_iWritten, len, s.data(), len);
+	char* pTarget = reinterpret_cast<char*>(m_pData->data() + m_iWritten);
+	memcpy(pTarget, s.data(), len);
 	m_iWritten += len;
 }
 
@@ -120,7 +126,8 @@ void PgDataWriter::addDateTimeAsString(struct tm* pTime, const char* pszFormat, 
 	if(!addInt32(len) || !check(len+1) ) {
 		return;
 	}
-	auto iWritten = strftime(m_buffer.data() + m_iWritten, m_buffer.size() - m_iWritten, pszFormat, pTime);
+	char* pTarget = reinterpret_cast<char*>(m_pData->data()+ m_iWritten);
+	auto iWritten = strftime(pTarget, m_pData->size() - m_iWritten, pszFormat, pTime);
 	assert(iWritten == len);
 	m_iWritten += iWritten;
 }

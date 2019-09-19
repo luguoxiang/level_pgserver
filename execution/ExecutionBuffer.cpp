@@ -41,7 +41,12 @@ std::byte* ExecutionBuffer::doAlloc(size_t size) {
 	}
 
 	if(m_iCurrentBlock == m_bufferBlocks.size()) {
-		m_bufferBlocks.push_back(GlobalMemBlockPool::getInstance().alloc());
+		auto ptr = GlobalMemBlockPool::getInstance().alloc();
+		if(ptr) {
+			m_bufferBlocks.push_back(std::move(ptr));
+		} else {
+			EXECUTION_ERROR("Not enough execution buffer");
+		}
 	}
 	return m_bufferBlocks[m_iCurrentBlock]->data() + (m_iBlockUsed - size);
 }

@@ -1,15 +1,18 @@
 #pragma once
 #include <string>
 #include <cassert>
+#include <vector>
+#include <cstddef>
+
+#include "common/GlobalMemBlockPool.h"
 
 class PgDataReader {
 public:
-	PgDataReader(std::string_view buffer);
+	PgDataReader(MemBuffer* pBuffer, size_t len);
 
 	int8_t getNextByte();
 	int16_t getNextShort();
 
-	//Warning! The return value will be invalid after next getXX call
 	std::string_view getNextString();
 	std::string_view getNextStringWithLen();
 	std::string_view getNextStringWithShortLen();
