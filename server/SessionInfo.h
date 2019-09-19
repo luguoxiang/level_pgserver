@@ -95,9 +95,9 @@ private:
 
     MemBlockPtr m_pBuffer;
 	char m_qtype = 0;
-	static thread_local std::atomic_uint64_t m_sqlCount;
-	static thread_local std::atomic_uint64_t m_readCount;
-	static thread_local std::atomic_uint64_t m_writeCount;
+	static thread_local uint64_t m_sqlCount;
+	static thread_local uint64_t m_readCount;
+	static thread_local uint64_t m_writeCount;
 };
 
 

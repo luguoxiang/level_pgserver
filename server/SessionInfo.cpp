@@ -13,9 +13,9 @@
 
 #include "planbuilder/BuildPlan.h"
 
-thread_local std::atomic_uint64_t SessionInfo::m_sqlCount;
-thread_local std::atomic_uint64_t SessionInfo::m_readCount;
-thread_local std::atomic_uint64_t SessionInfo::m_writeCount;
+thread_local uint64_t SessionInfo::m_sqlCount;
+thread_local uint64_t SessionInfo::m_readCount;
+thread_local uint64_t SessionInfo::m_writeCount;
 
 SessionInfo::SessionInfo(int iIndex, asio::io_service& ioService)
 	: m_iIndex(iIndex)
