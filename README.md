@@ -70,3 +70,17 @@ user=> explain select * from test where a >= 1;
          leveldb:scan test, cost:260522
                  range [int:1|string:, int:2147483647|string_max]
 ```
+
+## Supported Data type
+* bool
+* int16, int32,int64
+* varchar
+* float, double
+* date, datetime
+
+## Supported SQL
+* insert into [table] values ...
+* insert into [table] (select ...)
+* deletel from [table] [where ...]
+* select [columns] from [table] [where ...] [group by ...] [having ...] [order by ...] [limit count, offset]
+* select [columns] from (select ...) [where ...] [group by ...] [having ...] [order by ...] [limit count, offset]
