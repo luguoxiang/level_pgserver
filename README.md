@@ -83,4 +83,4 @@ user=> explain select * from test where a >= 1;
 * insert into [table] (select ...)
 * deletel from [table] [where ...]
 * select [columns] from [table] [where ...] [group by ...] [having ...] [order by ...] [limit count, offset]
-* select [columns] from (select ...) [where ...] [group by ...] [having ...] [order by ...] [limit offset, count]
+* select [columns] from (select ...) [where ...] [group by ...] [having ...] [order by ...] [limit num offset num]
