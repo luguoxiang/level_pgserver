@@ -57,6 +57,7 @@ public class Test {
 
 				}
 			}
+			System.out.println("Validate done");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -56,8 +56,7 @@ void SortPlan::begin(const std::atomic_bool& bTerminated) {
 				return false; //equals is not less
 			};
 
-	//use stable sort so that first last aggregation function can work
-	std::stable_sort(m_rows.begin(), m_rows.end(), comp);
+	std::sort(m_rows.begin(), m_rows.end(), comp);
 	m_iCurrent = 0;
 }
 
