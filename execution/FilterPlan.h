@@ -14,23 +14,7 @@ public:
 	FilterPlan(ExecutionPlan* pPlan) : SingleChildPlan(PlanType::Filter, pPlan) {}
 
 
-	virtual void explain(std::vector<std::string>& rows, size_t depth)override {
-		rows.push_back("Filter OR");
-
-		assert(!m_predicatesInOr.empty());
-		for (auto& pAnd: m_predicatesInOr) {
-			std::string s(depth + 2, '\t');
-			assert(!pAnd->empty());
-			for(auto& info : *pAnd) {
-				s.append(info.m_sExpr);
-				s.append(" and ");
-			}
-			s.erase (s.end()- 5, s.end());
-			rows.push_back(s);
-		}
-
-		SingleChildPlan::explain(rows, depth);
-	}
+	virtual void explain(std::vector<std::string>& rows, size_t depth) override;
 
 	virtual void begin(const std::atomic_bool& bTerminated)override {
 		SingleChildPlan::begin(bTerminated);

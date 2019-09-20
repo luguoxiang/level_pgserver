@@ -1,4 +1,6 @@
-	#include "GroupByPlan.h"
+#include <absl/strings/str_join.h>
+#include <absl/strings/substitute.h>
+#include "GroupByPlan.h"
 
 GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
 	SingleChildPlan(PlanType::GroupBy, pPlan) {
@@ -11,23 +13,20 @@ GroupByPlan::GroupByPlan(ExecutionPlan* pPlan) :
 
 
 void GroupByPlan::explain(std::vector<std::string>& rows, size_t depth) {
-	std::string s(depth, '\t');
-	s+="GroupBy(";
+	std::vector<std::string_view> groupColumns;
 	for (size_t i = 0; i < m_groupby.size(); ++i) {
-		s += m_pPlan->getProjectionName(m_groupby[i]);
-		if (i + 1 < m_groupby.size()) {
-			s += ",";
-		}
-	}
-	s += ") project:";
-	for (size_t i = 0; i < m_proj.size(); ++i) {
-		s += m_proj[i].m_sName;
-		if (i + 1 < m_proj.size()) {
-			s += ",";
-		}
+		groupColumns.push_back(m_pPlan->getProjectionName(m_groupby[i]));
 	}
 
-	rows.push_back(s);
+	std::vector<std::string_view> projections;
+	for (size_t i = 0; i < m_proj.size(); ++i) {
+		projections.push_back(m_proj[i].m_sName);
+	}
+
+	rows.push_back(absl::Substitute("$0GroupBy($1) Project($2)",
+			std::string(depth, '\t'),
+			absl::StrJoin(groupColumns, ","),
+			absl::StrJoin(projections, ",")));
 
 	SingleChildPlan::explain(rows, depth);
 }

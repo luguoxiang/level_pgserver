@@ -45,6 +45,11 @@ public:
 			columns.push_back(m_pTable->getColumn(i)->m_name);
 		}
 	}
+
+	virtual std::string_view getProjectionName(size_t index) override{
+		return m_pTable->getColumn(index)->m_name;
+	}
+
 	virtual DBDataType getResultType(size_t index)override{
 		if(index == m_pTable->getColumnCount()) {
 			return DBDataType::BYTES;

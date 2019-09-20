@@ -1,9 +1,23 @@
+#include <absl/strings/str_join.h>
 #include "FilterPlan.h"
 #include "DBDataTypeHandler.h"
-
-
 #include "common/ParseException.h"
 
+
+void FilterPlan::explain(std::vector<std::string>& rows, size_t depth) {
+	assert(!m_predicatesInOr.empty());
+	std::vector<std::string> orList;
+	for (auto& pAnd: m_predicatesInOr) {
+		std::vector<std::string_view> andList;
+		for(auto& info : *pAnd) {
+			andList.push_back(info.m_sExpr);
+		}
+		orList.push_back(absl::StrCat("(" , absl::StrJoin(andList, " and "), ")"));
+	}
+	rows.push_back(absl::StrCat(std::string(depth, '\t'),"Filter",  absl::StrJoin(orList, " or ")));
+
+	SingleChildPlan::explain(rows, depth);
+}
 
 bool FilterPlan::evaluate(const PredicateInfo& info) {
 	ExecutionResult result1, result2;
