@@ -40,7 +40,7 @@ testQuery("select * from querytest order by c1,c2,c3,c4,c5")
 
 for i in range(100):
 	predicate = ""
-	op = ["=", ">", "<", ">=", "<="]
+	op = ["=", ">", "<", ">=", "<=", "!="]
 	op2 = ["and", "or"]
 	for i in range(randint(1, 5)):
 		if predicate != "":
