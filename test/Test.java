@@ -17,19 +17,20 @@ public class Test {
 				stmt.execute("delete from test;");
 			}
 			try (PreparedStatement stmt = conn.prepareStatement("insert into test values(?,?,?,?)")) {
-				for (int i = 0; i < 10; ++i) {
+				for (int i = 0; i < 1000; ++i) {
 					stmt.setInt(1, i);
 					stmt.setString(2, "test-" + i);
 					stmt.setDouble(3, i * 1.5);
 					Calendar cal = Calendar.getInstance();
-					cal.set(Calendar.MONTH, i);
+					cal.set(Calendar.MONTH, i % 12);
 					stmt.setDate(4, new java.sql.Date(cal.getTime().getTime()));
 					stmt.execute();
 				}
 			}
 			System.out.println("Insert done");
 			try (PreparedStatement stmt = conn.prepareStatement("select * from test where a=?")) {
-				for (int i = 0; i < 10; ++i) {
+				Calendar inst = Calendar.getInstance();
+				for (int i = 0; i < 1000; ++i) {
 					stmt.setInt(1, i);
 					try (ResultSet rs = stmt.executeQuery()) {
 						while (rs.next()) {
@@ -38,11 +39,19 @@ public class Test {
 							String b = rs.getString("b");
 							float c = rs.getFloat("c");
 							Date d = rs.getDate("d");
-							// Display values
-							System.out.print("a: " + a);
-							System.out.print(", b: " + b);
-							System.out.println(", c: " + c);
-							System.out.println(", d: " + d);
+							if(a != i ) {
+								throw new IllegalStateException(String.format("%d != %d",a , i));
+							}
+							if(!b.equals("test-" + i)) {
+								throw new IllegalStateException(String.format("%s != %s",b , "test-" + i));
+							}
+							if(c!=i * 1.5) {
+								throw new IllegalStateException(String.format("%d != %d",c , i * 1.5));
+							}
+							inst.setTime(d);
+							if(inst.get(Calendar.MONTH) != i % 12) {
+								throw new IllegalStateException(String.format("%d != %d",inst.get(Calendar.MONTH) , i %12));
+							}
 						}
 					}
 
