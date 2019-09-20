@@ -120,6 +120,9 @@ bool LevelDBScanPlan::ensureSortOrder(size_t iSortIndex, const std::string_view&
 		return false;
 	}
 	auto pColumn = m_pTable->getColumnByName(sColumn);
+	if (pColumn == nullptr) {
+		return false;
+	}
 	if(pColumn->m_iKeyIndex != iSortIndex) {
 		return false;
 	}

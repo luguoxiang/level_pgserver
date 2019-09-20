@@ -96,9 +96,9 @@ public:
 		result.setInt(value);
 	}
 	void div(ExecutionResult& result, size_t value) override {
-		auto v = result.getInt();
+		double v = result.getInt();
 		v = v / value;
-		result.setInt(v);
+		result.setDouble(v);
 	}
 	void add(ExecutionResult& result, const ExecutionResult& add) override {
 		int64_t value = result.getInt() + add.getInt();

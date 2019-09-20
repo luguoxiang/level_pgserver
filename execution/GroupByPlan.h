@@ -38,11 +38,12 @@ public:
 		assert(index < m_proj.size());
 		AggrFunc& func = m_proj[index];
 		switch (func.m_func) {
+		case FuncType::AVG:
+			return DBDataType::DOUBLE;
 		case FuncType::FIRST:
 		case FuncType::MIN:
 		case FuncType::MAX:
 		case FuncType::SUM:
-		case FuncType::AVG:
 			return m_pPlan->getResultType(func.m_iIndex);
 		case FuncType::COUNT:
 			return DBDataType::INT64;

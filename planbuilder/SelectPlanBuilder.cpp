@@ -24,9 +24,7 @@ void SelectPlanBuilder::buildPlanForOrderBy(const ParseNode* pNode) {
 
 		assert(pChild->children() == 2);
 		const ParseNode* pColumn = pChild->getChild(0);
-		if (pColumn->m_type != NodeType::NAME) {
-			PARSE_ERROR("Unsupported sort spec: ", pColumn->m_sExpr);
-		}
+
 		SortOrder order =
 				(pChild->getChild(1)->getOp() == Operation::ASC) ?
 						SortOrder::Ascend : SortOrder::Descend;
