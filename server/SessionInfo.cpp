@@ -232,9 +232,6 @@ void SessionInfo::resolve() {
 	if (pTree == nullptr) {
 		m_pPlan.reset(new EmptyPlan());
 	} else {
-#ifndef NDEBUG
-		printTree(pTree, 0);
-#endif
 		if (pTree->m_type != NodeType::PLAN) {
 			PARSE_ERROR("WRONG NODE ", pTree->m_sExpr);
 		}

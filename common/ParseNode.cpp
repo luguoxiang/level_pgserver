@@ -5,37 +5,80 @@
 #include <iomanip>
 #include <absl/strings/escaping.h>
 
-void printTree(const ParseNode* pRoot, int level) {
-	int i;
-	for (i = 0; i < level; ++i)
-		std::cout << "\t";
-	if (pRoot == 0) {
-		std::cout << "NULL" << std::endl;
-		return;
-	}
-	switch (pRoot->m_type) {
-	case NodeType::OP:
-	case NodeType::INFO:
-		std::cout << pRoot->m_sExpr << std::endl;
-		break;
-	case NodeType::PARENT:
-	case NodeType::NAME:
-	case NodeType::PLAN:
-	case NodeType::LIST:
-		std::cout << pRoot->getString() << std::endl;
-		break;
-	case NodeType::BINARY:
-	case NodeType::PARAM:
-		std::cout << absl::BytesToHexString(pRoot->getString()) << std::endl;
-		break;
-	default:
-		std::cout << pRoot->m_sExpr << std::endl;
-		break;
-	}
-	pRoot->forEachChild([level](size_t index, auto pChild) {
-		printTree(pChild, level + 1);
-	});
 
+char const* getOperationName(Operation op) {
+	switch(op) {
+	case Operation::COMP_EQ:
+		return "=";
+	case Operation::COMP_NE:
+		return "!=";
+	case Operation::COMP_LE:
+		return "<=";
+	case Operation::COMP_LT:
+		return "<";
+	case Operation::COMP_GT:
+		return ">";
+	case Operation::COMP_GE:
+		return ">=";
+	case Operation::LIKE:
+		return "like";
+	case Operation::IN:
+		return "in";
+	case Operation::NOT_IN:
+		return "not in";
+	case Operation::MINUS:
+		return "-";
+	case Operation::ADD:
+		return "+";
+	case Operation::SUB:
+		return "-";
+	case Operation::DIV:
+		return "/";
+	case Operation::MUL:
+		return "*";
+	case Operation::MOD:
+		return "%";
+	case Operation::MEMBER:
+		return ".";
+	case Operation::AS:
+		return "as";
+	case Operation::AND:
+		return "and";
+	case Operation::OR:
+		return "or";
+	case Operation::ASC:
+		return "asc";
+	case Operation::DESC:
+		return "desc";
+	case Operation::ALL_COLUMNS:
+		return "*";
+	case Operation::SHOW_TABLES:
+		return "show tables";
+	case Operation::DESC_TABLE:
+		return "desc";
+	case Operation::SELECT:
+		return "select";
+	case Operation::INSERT:
+		return "insert";
+	case Operation::DELETE:
+		return "delete";
+	case Operation::EXPLAIN:
+		return "explain";
+	case Operation::VALUES:
+		return "values";
+	case Operation::SELECT_WITH_SUBQUERY:
+		return "select()";
+	case Operation::TEXT_PARAM:
+		return "text_param";
+	case Operation::BINARY_PARAM:
+		return "binary_param";
+	case Operation::UNBOUND_PARAM:
+		return "unbound_param";
+	case Operation::NONE:
+		return "none";
+	default:
+		return "unknown";
+	}
 }
 
 ParseNode::ParseNode(NodeType type,
@@ -49,7 +92,46 @@ ParseNode::ParseNode(NodeType type,
 				m_children(children), m_op(op) {
 
 }
+void ParseNode::printHead(size_t level) {
+	for (int i = 0; i < level; ++i) {
+		if (i < level - 1 ) {
+			std::cout<< "    ";
+		}else {
+			std::cout << "|-- ";
+		}
+	}
+}
+void ParseNode::print(size_t level) const {
+	printHead(level);
+	switch (m_type) {
+	case NodeType::OP:
+	case NodeType::INFO:
+		std::cout << getOperationName(m_op) << std::endl;
+		break;
+	case NodeType::PARENT:
+	case NodeType::NAME:
+	case NodeType::PLAN:
+	case NodeType::LIST:
+		std::cout << m_sValue << std::endl;
+		break;
+	case NodeType::BINARY:
+	case NodeType::PARAM:
+		std::cout << absl::BytesToHexString(m_sValue) << std::endl;
+		break;
+	default:
+		std::cout << m_sExpr << std::endl;
+		break;
+	}
+	forEachChild([level](size_t index, auto pChild) {
+		if(pChild == nullptr) {
+			printHead(level + 1);
+			std::cout << "null" << std::endl;
+		} else {
+			pChild->print(level + 1);
+		}
+	});
 
+}
 
 int64_t parseTime(std::string_view sTime) {
 	std::tm time = {};

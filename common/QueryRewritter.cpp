@@ -30,8 +30,10 @@ ParseNode* QueryRewritter::rewrite(ParseNode* pNode) {
 ParseNode* QueryRewritter::rewriteOp(ParseNode* pNode, bool& hasOr) {
 	assert(pNode->m_type == NodeType::OP);
 	switch (pNode->getOp()) {
-	case Operation::AND:
 	case Operation::OR:
+		hasOr = true;
+		[[fallthrough]];
+	case Operation::AND:
 		for(size_t i=0;i<pNode->children();++i) {
 			auto pChild = pNode->getChild(i);
 			bool childHasOr = false;

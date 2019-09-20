@@ -62,7 +62,6 @@ enum class Operation {
 
 	SHOW_TABLES,
 	DESC_TABLE,
-	WORKLOAD,
 	SELECT,
 	INSERT,
 	DELETE,
@@ -74,6 +73,7 @@ enum class Operation {
 	BINARY_PARAM,
 	UNBOUND_PARAM,
 };
+
 
 class ParseNode {
 public:
@@ -187,12 +187,16 @@ public:
 		}
 		return false;
 	}
+
+	void print(size_t level) const;
 private:
 	std::string_view m_sValue;
 
 	Operation m_op;
 	ParseNode** m_children;
 	size_t m_iChildNum;
+
+	static void printHead(size_t level);
 };
 
 inline bool IS_DIGIT(char c) {
@@ -201,5 +205,5 @@ inline bool IS_DIGIT(char c) {
 
 int64_t parseTime(std::string_view sTime);
 
-void printTree(const ParseNode* pRoot, int level);
+char const* getOperationName(Operation op);
 
