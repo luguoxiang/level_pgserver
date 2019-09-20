@@ -1,6 +1,6 @@
 # Introduction
 
-LevelPgServer is simple database that support limited SQL. 
+LevelPgServer is a simple database that support a limited set of SQL. 
 
 * Use Postgress communication protocol
 * Using leveldb as storage layer, also support read only table backed by CSV file.
@@ -16,19 +16,7 @@ sudo apt-get install flex bison (Linux)
 git submodule update --init
 cmake -DCMAKE_BUILD_TYPE=Release .
 cmake --build . --target level_pgserver 
-GLOG_logtostderr=1  bin/level_pgserver 
-```
-
-## Define meta.conf file
-```
-[table]
-name=test
-path=testdb #directory holding leveldb data files, can also be a csv file path
-column=a:int32
-column=b:varchar
-column=c:double
-column=d:datetime
-key=a,b #only valid for non-csv table
+GLOG_logtostderr=1  bin/level_pgserver test/meta.conf
 ```
 
 ## Download PostgreSQL client
@@ -69,6 +57,18 @@ user=> explain select * from test where a >= 1;
  Projection a, b, c, d,
          leveldb:scan test, cost:260522
                  range [int:1|string:, int:2147483647|string_max]
+```
+
+## Define table with meta.conf file
+```
+[table]
+name=test
+path=testdb #directory holding leveldb data files, can also be a csv file path
+column=a:int32
+column=b:varchar
+column=c:double
+column=d:datetime
+key=a,b #only valid for non-csv table
 ```
 
 ## Supported Data type
