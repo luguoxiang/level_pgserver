@@ -20,11 +20,11 @@ char const* getOperationName(Operation op) {
 		return ">";
 	case Operation::COMP_GE:
 		return ">=";
-	case Operation::LIKE:
+	case Operation::COMP_LIKE:
 		return "like";
-	case Operation::IN:
+	case Operation::COMP_IN:
 		return "in";
-	case Operation::NOT_IN:
+	case Operation::COMP_NOT_IN:
 		return "not in";
 	case Operation::MINUS:
 		return "-";
@@ -60,8 +60,8 @@ char const* getOperationName(Operation op) {
 		return "select";
 	case Operation::INSERT:
 		return "insert";
-	case Operation::DELETE:
-		return "delete";
+	case Operation::REMOVE:
+		return "remove";
 	case Operation::EXPLAIN:
 		return "explain";
 	case Operation::VALUES:

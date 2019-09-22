@@ -41,7 +41,7 @@ bool FilterPlan::evaluate(const PredicateInfo& info) {
 	assert(!result1.isNull());
 	assert(!result2.isNull());
 
-	if (info.m_op == Operation::LIKE) {
+	if (info.m_op == Operation::COMP_LIKE) {
 		auto pos = result1.getString().find(result2.getString());
 		return pos != std::string::npos;
 	} else {

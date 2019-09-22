@@ -41,11 +41,11 @@ ParseNode* QueryRewritter::rewriteOp(ParseNode* pNode, bool& hasOr) {
 			hasOr = hasOr || childHasOr;
 		}
 		return pNode;
-	case Operation::IN:
+	case Operation::COMP_IN:
 		pNode = rewriteInOrNotIN(pNode, true);
 		hasOr = pNode->getOp() == Operation::OR;
 		break;
-	case Operation::NOT_IN:
+	case Operation::COMP_NOT_IN:
 		pNode = rewriteInOrNotIN(pNode, false);
 		hasOr = pNode->getOp() == Operation::OR;
 		break;
@@ -126,10 +126,7 @@ bool QueryRewritter::hasOrPredicate(const ParseNode* pNode) {
 	if(pNode->getOp() == Operation::OR) {
 		return true;
 	}
-	if(pNode->getOp() == Operation::IN) {
-		assert(pNode->children() == 2);
-		return true;
-	}
+
 	return pNode->anyChildOf([this](size_t index, auto pChild) {
 		return hasOrPredicate(pChild);
 	});

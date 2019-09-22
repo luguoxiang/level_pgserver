@@ -2,8 +2,6 @@
 
 #include <string>
 #include <string.h>
-#include <netdb.h>
-#include <errno.h>
 #include <exception>
 #include <absl/strings/str_cat.h>
 #include <glog/logging.h>
@@ -17,14 +15,6 @@ public:
 	}
 
 private:
-	void addErrorNo() {
-		if (errno == 0)
-			return;
-		m_sErrMsg.append("(");
-		m_sErrMsg.append(strerror(errno));
-		m_sErrMsg.append(")");
-		errno = 0;
-	}
 
 	std::string m_sErrMsg;
 };

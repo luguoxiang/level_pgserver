@@ -4,9 +4,5 @@
 #include <cassert>
 #include <glog/logging.h>
 
-IOException::IOException(const std::string& sValue) {
-	m_sErrMsg.append(sValue);
-	addErrorNo();
-
-	LOG(ERROR)<<m_sErrMsg;
+IOException::IOException(const std::string& sValue) : m_sErrMsg(sValue){
 }

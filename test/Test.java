@@ -25,9 +25,11 @@ public class Test {
 					cal.set(Calendar.MONTH, i % 12);
 					stmt.setDate(4, new java.sql.Date(cal.getTime().getTime()));
 					stmt.execute();
+					if ((i % 100) == 0 ) {
+						System.out.printf("%d done\n", i);
+					}
 				}
 			}
-			System.out.println("Insert done");
 			try (PreparedStatement stmt = conn.prepareStatement("select * from test where a=?")) {
 				Calendar inst = Calendar.getInstance();
 				for (int i = 0; i < 1000; ++i) {
@@ -53,6 +55,9 @@ public class Test {
 								throw new IllegalStateException(String.format("%d != %d",inst.get(Calendar.MONTH) , i %12));
 							}
 						}
+					}
+					if ((i % 100) == 0 ) {
+						System.out.printf("%d done\n", i);
 					}
 
 				}

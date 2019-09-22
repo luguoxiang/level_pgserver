@@ -217,7 +217,7 @@ expr: expr '+' expr {$$ = pResult->newExprNode( Operation::ADD, @$.first_column,
 			YYERROR;
 		}
 		$3->setString(sValue.substr(1, len -2));
-		$$ = pResult->newExprNode( Operation::LIKE, @$.first_column, @$.last_column, { $1, $3});
+		$$ = pResult->newExprNode( Operation::COMP_LIKE, @$.first_column, @$.last_column, { $1, $3});
 	}
 	| expr ANDOP expr {$$ = pResult->newExprNode( Operation::AND, @$.first_column, @$.last_column, { $1, $3});}
 	| expr OR expr {$$ = pResult->newExprNode( Operation::OR, @$.first_column, @$.last_column, { $1, $3});}
@@ -234,10 +234,10 @@ expr: expr IS NULLX {
 	;
 
 expr: expr IN '(' val_list ')' {
-		$$ = pResult->newExprNode( Operation::IN, @$.first_column, @$.last_column, { $1, $4});
+		$$ = pResult->newExprNode( Operation::COMP_IN, @$.first_column, @$.last_column, { $1, $4});
 		}
 	| expr NOT IN '(' val_list ')' { 
-		$$ = pResult->newExprNode( Operation::NOT_IN, @$.first_column, @$.last_column, { $1, $5});
+		$$ = pResult->newExprNode( Operation::COMP_NOT_IN, @$.first_column, @$.last_column, { $1, $5});
 	}
 	;
 	
@@ -257,7 +257,7 @@ val_list: expr {
 delete_stmt: DELETE FROM table_factor opt_where
 	{
 		ParseNode* pTable = $3;
-		$$ = pResult->newPlanNode( "DeleteStmt", Operation::DELETE, @$.first_column, @$.last_column, {pTable, $4 });
+		$$ = pResult->newPlanNode( "DeleteStmt", Operation::REMOVE, @$.first_column, @$.last_column, {pTable, $4 });
 	}
 
 

@@ -1832,7 +1832,7 @@ yyreduce:
 			YYERROR;
 		}
 		(yyvsp[0].pNode)->setString(sValue.substr(1, len -2));
-		(yyval.pNode) = pResult->newExprNode( Operation::LIKE, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});
+		(yyval.pNode) = pResult->newExprNode( Operation::COMP_LIKE, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});
 	}
 #line 1838 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
     break;
@@ -1874,7 +1874,7 @@ yyreduce:
   case 41:
 #line 236 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
     {
-		(yyval.pNode) = pResult->newExprNode( Operation::IN, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-4].pNode), (yyvsp[-1].pNode)});
+		(yyval.pNode) = pResult->newExprNode( Operation::COMP_IN, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-4].pNode), (yyvsp[-1].pNode)});
 		}
 #line 1880 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
     break;
@@ -1882,7 +1882,7 @@ yyreduce:
   case 42:
 #line 239 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
     { 
-		(yyval.pNode) = pResult->newExprNode( Operation::NOT_IN, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-5].pNode), (yyvsp[-1].pNode)});
+		(yyval.pNode) = pResult->newExprNode( Operation::COMP_NOT_IN, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-5].pNode), (yyvsp[-1].pNode)});
 	}
 #line 1888 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
     break;
@@ -1915,7 +1915,7 @@ yyreduce:
 #line 258 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
     {
 		ParseNode* pTable = (yyvsp[-1].pNode);
-		(yyval.pNode) = pResult->newPlanNode( "DeleteStmt", Operation::DELETE, (yyloc).first_column, (yyloc).last_column, {pTable, (yyvsp[0].pNode) });
+		(yyval.pNode) = pResult->newPlanNode( "DeleteStmt", Operation::REMOVE, (yyloc).first_column, (yyloc).last_column, {pTable, (yyvsp[0].pNode) });
 	}
 #line 1921 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
     break;

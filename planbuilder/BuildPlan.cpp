@@ -68,7 +68,7 @@ ExecutionPlanPtr buildPlan(const ParseNode* pNode) {
 		SelectPlanBuilder builder;
 		return builder.build(pNode);
 	}
-	case Operation::DELETE: {
+	case Operation::REMOVE: {
 		LevelDBPlanBuilder builder;
 		return builder.buildDeletePlan(pNode);
 	}
