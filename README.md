@@ -11,8 +11,6 @@ LevelPgServer is a simple database that support a limited set of SQL.
 # Quick start
 ## Install
 ```
-brew install flex bison (Mac)
-sudo apt-get install flex bison (Linux)
 git submodule update --init
 cmake -DCMAKE_BUILD_TYPE=Release .
 cmake --build . --target level_pgserver 

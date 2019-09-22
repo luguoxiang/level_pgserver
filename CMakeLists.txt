@@ -37,7 +37,7 @@ configure_file (
   "${PROJECT_BINARY_DIR}/config.h"
   )
 
-find_package(BISON REQUIRED)
+find_package(BISON)
 if(BISON_FOUND)
     add_custom_command(
       OUTPUT ${BisonOutput}
@@ -48,9 +48,11 @@ if(BISON_FOUND)
       DEPENDS ${CMAKE_SOURCE_DIR}/common/SqlParser.y
       COMMENT "Generating SqlParser.tab.cpp"
     )
+else()
+    set(BisonOutput "SqlParser.tab.cpp")
 endif()
 
-find_package(FLEX 2.6.3 REQUIRED)
+find_package(FLEX 2.6.3)
 if(FLEX_FOUND)
     add_custom_command(
       OUTPUT ${FlexOutput}
@@ -60,6 +62,8 @@ if(FLEX_FOUND)
       DEPENDS ${CMAKE_SOURCE_DIR}/common/SqlParser.l
       COMMENT "Generating SqlParser.lex.cpp"
     )
+else()
+    set(FlexOutput "SqlParser.lex.cpp")
 endif()
 
 file(GLOB SOURCES "*.cpp" )

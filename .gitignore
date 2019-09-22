@@ -29,10 +29,6 @@
 # Executables
 bin
 
-# flex/bison
-common/SqlParser.tab.*
-common/SqlParser.lex.*
-
 #CMake
 *.cmake
 Makefile
