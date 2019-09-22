@@ -1,10 +1,8 @@
 #include "PgDataReader.h"
 #include "IOException.h"
 #include <cassert>
-#include <stdio.h>
-#include <unistd.h>
-#include <netdb.h>
 #include "common/MetaConfig.h"
+#include "common/ParseTools.h"
 
 PgDataReader::PgDataReader(MemBuffer* pBuffer, size_t len)
 :  m_buffer(reinterpret_cast<char*>(pBuffer->data()), len) {

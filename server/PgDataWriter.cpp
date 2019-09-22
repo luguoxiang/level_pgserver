@@ -1,12 +1,7 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <errno.h>
-#include <string.h>
 #include <cassert>
-#include <stdio.h>
 #include "PgDataWriter.h"
 #include "common/MetaConfig.h"
+#include "common/ParseTools.h"
 
 PgDataWriter::PgDataWriter(MemBuffer* pData) : m_pData(pData) {
 }

@@ -10,7 +10,6 @@ set (CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/lib)
-
 set(BisonOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.tab.cpp)
 set(FlexOutput ${CMAKE_SOURCE_DIR}/common/SqlParser.lex.cpp)
 
@@ -20,6 +19,8 @@ option(BUILD_TESTING "glog unit tests" OFF)
 option(LEVELDB_BUILD_TESTS "Build LevelDB's unit tests" OFF)
 option(LEVELDB_BUILD_BENCHMARKS "Build LevelDB's benchmarks" OFF)
 option(LEVELDB_INSTALL "Install LevelDB's header and library" OFF)
+
+add_definitions(-D GLOG_NO_ABBREVIATED_SEVERITIES)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set(FLEX_EXECUTABLE /usr/local/opt/flex/bin/flex)

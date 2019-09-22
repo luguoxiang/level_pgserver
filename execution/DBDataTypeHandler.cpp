@@ -14,8 +14,8 @@ template<typename Type>
 class IntDBDataTypeHandler: public DBDataTypeHandler {
 private:
 	void checkValue(int64_t value) {
-		if (value < std::numeric_limits<Type>::min() ||
-		               value > std::numeric_limits<Type>::max() ){
+		if (value < (std::numeric_limits<Type>::min)() ||
+		               value > (std::numeric_limits<Type>::max)() ){
 			PARSE_ERROR("integer ", value, " exceed data type range");
 		}
 	}
@@ -30,11 +30,11 @@ public:
 	}
 
 	void setToMin(ExecutionResult& result) override {
-		result.setInt(std::numeric_limits<Type>::min());
+		result.setInt((std::numeric_limits<Type>::min)());
 	}
 
 	void setToMax(ExecutionResult& result) override {
-		result.setInt(std::numeric_limits<Type>::max());
+		result.setInt((std::numeric_limits<Type>::max)());
 	}
 
 	void read(const std::byte* pData, ExecutionResult& result) override {
@@ -202,7 +202,7 @@ class FloatDBDataTypeHandler: public DBDataTypeHandler {
 private:
 	void checkValue(double value) {
 		static_assert(! std::numeric_limits<Type>::is_integer );
-		if( (value > 0 ? value  : -value) > std::numeric_limits<Type>::max() ) {
+		if( (value > 0 ? value  : -value) > (std::numeric_limits<Type>::max)() ) {
 			PARSE_ERROR("float ", value, " exceed data type range");
 		}
 	}
@@ -221,7 +221,7 @@ public:
 	}
 
 	void setToMax(ExecutionResult& result) override {
-		result.setDouble(std::numeric_limits<Type>::max());
+		result.setDouble((std::numeric_limits<Type>::max)());
 	}
 
 	void read(const std::byte* pData, ExecutionResult& result) override {
@@ -322,14 +322,14 @@ public:
 
 	virtual size_t getSize(const std::byte* pData) override {
 		size_t len = *(reinterpret_cast<const uint16_t*>(pData)) + sizeof(uint16_t);
-		if(len == std::numeric_limits<uint16_t>::max()) {
+		if(len == (std::numeric_limits<uint16_t>::max)()) {
 			return sizeof(uint16_t);
 		}
 		return len;
 	}
 	void read(const std::byte* pData, ExecutionResult& result) override {
 		size_t len = *(reinterpret_cast<const uint16_t*>(pData));
-		if(len == std::numeric_limits<uint16_t>::max()) {
+		if(len == (std::numeric_limits<uint16_t>::max)()) {
 			result.setMaxString();
 			return;
 		}
@@ -339,12 +339,12 @@ public:
 	}
 	void write(std::byte* pData, const ExecutionResult& result) override {
 		if(result.isMaxString()) {
-			*reinterpret_cast<uint16_t*>(pData) = std::numeric_limits<uint16_t>::max();
+			*reinterpret_cast<uint16_t*>(pData) = (std::numeric_limits<uint16_t>::max)();
 			return;
 		}
 		auto s = result.getString();
 		auto size = s.length();
-		if (size >= std::numeric_limits<uint16_t>::max()) {
+		if (size >= (std::numeric_limits<uint16_t>::max)()) {
 			EXECUTION_ERROR("too large string value");
 		}
 

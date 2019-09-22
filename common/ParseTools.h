@@ -2,7 +2,14 @@
 
 #include <string>
 #include <exception>
+
+#ifdef _WIN32
+#include <windows.h>
+#pragma comment(lib, "wsock32.lib")
+#else
 #include <netinet/in.h>
+#endif
+
 #include <absl/strings/match.h>
 
 #include "common/ParseNode.h"
