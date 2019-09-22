@@ -29,4 +29,4 @@ private:
 	std::string m_sErrMsg;
 };
 
-#define IO_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw IOException(sError);}
+#define IO_ERROR(...) {auto sError = absl::StrCat(__VA_ARGS__);LOG(ERROR)<<sError;throw IOException(sError);}

@@ -27,7 +27,7 @@ private:
 	int m_iLine = -1;
 };
 
-#define PARSE_ERROR(args...) {auto sError = absl::StrCat(args);LOG(ERROR)<<sError;throw ParseException(sError);}
+#define PARSE_ERROR(...) {auto sError = absl::StrCat(__VA_ARGS__);LOG(ERROR)<<sError;throw ParseException(sError);}
 
 
 

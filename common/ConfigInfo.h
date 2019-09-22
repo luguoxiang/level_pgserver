@@ -2,7 +2,6 @@
 #include <map>
 #include <vector>
 #include <string>
-#include <netdb.h>
 #include <memory>
 
 #include "common/ConfigException.h"

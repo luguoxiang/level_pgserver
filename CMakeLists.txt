@@ -49,7 +49,7 @@ if(BISON_FOUND)
       COMMENT "Generating SqlParser.tab.cpp"
     )
 else()
-    set(BisonOutput "SqlParser.tab.cpp")
+    set(BisonOutput "common/SqlParser.tab.cpp")
 endif()
 
 find_package(FLEX 2.6.3)
@@ -63,7 +63,7 @@ if(FLEX_FOUND)
       COMMENT "Generating SqlParser.lex.cpp"
     )
 else()
-    set(FlexOutput "SqlParser.lex.cpp")
+    set(FlexOutput "common/SqlParser.lex.cpp")
 endif()
 
 file(GLOB SOURCES "*.cpp" )
