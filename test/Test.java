@@ -16,12 +16,12 @@ public class Test {
 			try(Statement stmt = conn.createStatement()) {
 				stmt.execute("delete from test;");
 			}
+			Calendar cal = Calendar.getInstance();
 			try (PreparedStatement stmt = conn.prepareStatement("insert into test values(?,?,?,?)")) {
 				for (int i = 0; i < 1000; ++i) {
 					stmt.setInt(1, i);
 					stmt.setString(2, "test-" + i);
 					stmt.setDouble(3, i * 1.5);
-					Calendar cal = Calendar.getInstance();
 					cal.set(Calendar.MONTH, i % 12);
 					stmt.setDate(4, new java.sql.Date(cal.getTime().getTime()));
 					stmt.execute();

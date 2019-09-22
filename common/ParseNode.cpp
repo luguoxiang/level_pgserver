@@ -142,7 +142,11 @@ int64_t parseTime(std::string_view sTime) {
 	} else {
 		ss >> std::get_time(&time, "%Y-%m-%d %H:%M:%S");
 	}
+#ifdef _WIN32
+	time_t iRetTime = _mkgmtime(&time);
+#else
 	time_t iRetTime = timegm(&time);
+#endif
 	if (iRetTime == -1) {
 		return 0;
 	}
