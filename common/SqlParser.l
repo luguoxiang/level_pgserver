@@ -1,7 +1,8 @@
 %option noyywrap nodefault yylineno case-insensitive 
 %option reentrant bison-bridge bison-locations
-%option header-file="common/SqlParser.lex.h"
 %option nounistd
+%option never-interactive
+%option header-file="common/SqlParser.lex.h"
 %{
 #include "ParseResult.h"
 #include "SqlParser.tab.h"

@@ -797,7 +797,7 @@ static const flex_int32_t yy_rule_can_match_eol[95] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 #define YY_NO_UNISTD_H 1
-#line 6 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 7 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 #include "ParseResult.h"
 #include "SqlParser.tab.h"
 #include <cassert>
@@ -1097,7 +1097,7 @@ YY_DECL
 		}
 
 	{
-#line 22 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 23 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 
 #line 1103 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.lex.cpp"
 
@@ -1132,16 +1132,12 @@ yy_match:
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 854 );
+		while ( yy_current_state != 348 );
+		yy_cp = yyg->yy_last_accepting_cpos;
+		yy_current_state = yyg->yy_last_accepting_state;
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
-		if ( yy_act == 0 )
-			{ /* have to back up */
-			yy_cp = yyg->yy_last_accepting_cpos;
-			yy_current_state = yyg->yy_last_accepting_state;
-			yy_act = yy_accept[yy_current_state];
-			}
 
 		YY_DO_BEFORE_ACTION;
 
@@ -1170,199 +1166,199 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 23 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 24 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return ADD;}
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 24 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 25 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return ALL;}
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 25 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 26 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return ANDOP;}
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 26 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 27 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return ANY;}
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 27 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 28 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return AS;}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 28 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 29 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return ASC;}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 29 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 30 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return CHAR;}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 30 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 31 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return CREATE;}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 31 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 32 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return DATABASE;}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 32 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 33 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return DEFAULT;}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 33 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 34 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return DELETE;}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 34 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 35 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return DISTINCT;}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 35 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 36 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return FLOAT;}
 	YY_BREAK
 case 14:
-#line 37 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 38 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 case 15:
 YY_RULE_SETUP
-#line 37 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 38 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return DROP;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 38 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 39 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return EXPLAIN;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 39 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 40 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return FROM;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 40 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 41 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return GROUP;}
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 41 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 42 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return HAVING;}
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 42 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 43 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return IN;}
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 43 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 44 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return INSERT;}
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 44 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 45 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return INTEGER;}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 45 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 46 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return INTEGER;}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 46 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 47 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return INTEGER;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 47 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 48 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return INTO;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 48 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 49 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return LIKE;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 49 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 50 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return LIMIT;}
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 50 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 51 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return LOAD;}
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 51 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 52 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return WHERE;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 52 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 53 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return BY;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 53 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 54 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return DATA;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 54 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 55 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return SHOW;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 55 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 56 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return DESC;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 56 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 57 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return INFILE;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 57 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 58 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return TABLES;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 58 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 59 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return FIELDS;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 59 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 60 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return TERMINATED;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 60 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 61 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return IS;}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 61 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 62 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return NOT;}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 62 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 63 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { 
 		yyerror(yylloc, (ParseResult*)yyextra, nullptr, "NULL is not supported");
 		return ERROR;
@@ -1370,127 +1366,127 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 66 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 67 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return ON;}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 67 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 68 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return OFFSET;}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 68 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 69 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return OR;}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 69 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 70 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return ORDER;}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 70 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 71 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return SELECT;}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 71 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 72 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return SMALLINT;}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 72 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 73 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return SMALLINT;}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 73 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 74 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return TABLE;}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 74 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 75 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return TO;}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 75 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 76 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return UNION;}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 76 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 77 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return UNIQUE;}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 77 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 78 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return UNSIGNED;}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 78 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 79 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return UPDATE;}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 79 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 80 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return SET;}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 80 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 81 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return VALUES;}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 81 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 82 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return VARCHAR;}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 82 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 83 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return XOR;}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 83 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 84 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return IF;}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 84 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 85 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return EXISTS;}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 85 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 86 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return KEY;}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 86 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 87 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return PRIMARY;}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 87 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 88 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return JOIN;}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 88 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 89 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return LEFT;}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 89 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 90 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return USING;}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 91 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 92 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
@@ -1501,7 +1497,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 98 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 99 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
@@ -1512,7 +1508,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 106 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 107 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::INT,yylloc->first_column, yylloc->last_column);
@@ -1523,16 +1519,16 @@ YY_RULE_SETUP
 }
 	YY_BREAK
 case 68:
-#line 115 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
-case 69:
 #line 116 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
-case 70:
+case 69:
 #line 117 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
-case 71:
+case 70:
 #line 118 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+case 71:
+#line 119 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 case 72:
 YY_RULE_SETUP
-#line 118 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 119 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::FLOAT, yylloc->first_column, yylloc->last_column);
@@ -1543,7 +1539,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 126 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 127 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::STR, yylloc->first_column, yylloc->last_column);
@@ -1598,7 +1594,7 @@ case 74:
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 175 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 176 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {yyerror(yylloc, (ParseResult*)yyextra,nullptr, absl::StrCat("Unterminated string ", yytext));}
 	YY_BREAK
 case 75:
@@ -1606,12 +1602,12 @@ case 75:
 yyg->yy_c_buf_p = yy_cp -= 1;
 YY_DO_BEFORE_ACTION; /* set up yytext again */
 YY_RULE_SETUP
-#line 177 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 178 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {yyerror(yylloc, (ParseResult*)yyextra, nullptr,absl::StrCat("Unterminated string ", yytext));}
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 179 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 180 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::BINARY, yylloc->first_column, yylloc->last_column);
@@ -1639,7 +1635,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 204 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 205 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE,yylloc->first_column, yylloc->last_column);
@@ -1650,7 +1646,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 211 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 212 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::DATE, yylloc->first_column, yylloc->last_column);
@@ -1662,57 +1658,57 @@ YY_RULE_SETUP
 case 79:
 /* rule 79 can match eol */
 YY_RULE_SETUP
-#line 219 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 220 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 221 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 222 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return yytext[0];}
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 223 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 224 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 { return ANDOP;}
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 224 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 225 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return OR;}
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 225 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 226 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return COMP_EQ;}
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 226 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 227 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return COMP_GE;}
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 227 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 228 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return COMP_GT;}
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 228 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 229 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return COMP_LE;}
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 229 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 230 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return COMP_LT;}
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 230 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 231 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return COMP_NE;}
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 232 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 233 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::NAME, yylloc->first_column, yylloc->last_column);
@@ -1723,7 +1719,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 240 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 241 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	ParseResult* pResult = (ParseResult*)yyextra;
 	ParseNode* pNode = pResult->newSimpleNode( NodeType::PARAM, yylloc->first_column, yylloc->last_column, Operation::UNBOUND_PARAM);
@@ -1735,21 +1731,21 @@ YY_RULE_SETUP
 case 91:
 /* rule 91 can match eol */
 YY_RULE_SETUP
-#line 248 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 249 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {}
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 249 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 250 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 251 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 252 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {return ';';}
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 252 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 253 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 {
 	std::string_view s(yytext, 1);
 	yyerror(yylloc, (ParseResult*)yyextra,nullptr, absl::StrCat("mystery charactor ", s));
@@ -1758,10 +1754,10 @@ YY_RULE_SETUP
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 257 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 258 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
-#line 1765 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.lex.cpp"
+#line 1761 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.lex.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1826,7 +1822,8 @@ YY_FATAL_ERROR( "flex scanner jammed" );
 
 			else
 				{
-				yy_cp = yyg->yy_c_buf_p;
+				yy_cp = yyg->yy_last_accepting_cpos;
+				yy_current_state = yyg->yy_last_accepting_state;
 				goto yy_find_action;
 				}
 			}
@@ -2363,7 +2360,7 @@ static void yy_load_buffer_state  (yyscan_t yyscanner)
         b->yy_bs_column = 0;
     }
 
-        b->yy_is_interactive = file ? (isatty( fileno(file) ) > 0) : 0;
+        b->yy_is_interactive = 0;
     
 	errno = oerrno;
 }
@@ -2963,7 +2960,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 257 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 258 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 
 
 
