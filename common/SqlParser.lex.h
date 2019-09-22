@@ -250,14 +250,6 @@ void yyfree ( void * , yyscan_t yyscanner );
 
 #endif
 
-#ifndef YY_NO_UNISTD_H
-/* Special case for "unistd.h", since it is non-ANSI. We include it way
- * down here because we want the user's section 1 to have been scanned first.
- * The user has a chance to override it with an option.
- */
-#include <unistd.h>
-#endif
-
 #ifndef YY_EXTRA_TYPE
 #define YY_EXTRA_TYPE void *
 #endif
@@ -521,6 +513,6 @@ extern int yylex \
 #line 258 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
 
 
-#line 525 "common/SqlParser.lex.h"
+#line 517 "common/SqlParser.lex.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

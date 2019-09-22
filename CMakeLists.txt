@@ -59,6 +59,7 @@ if(FLEX_FOUND)
       OUTPUT ${FlexOutput}
       COMMAND ${FLEX_EXECUTABLE}
               --outfile=${FlexOutput}
+              --nounistd 
               ${CMAKE_SOURCE_DIR}/common/SqlParser.l
       DEPENDS ${CMAKE_SOURCE_DIR}/common/SqlParser.l
       COMMENT "Generating SqlParser.lex.cpp"
