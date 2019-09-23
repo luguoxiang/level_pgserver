@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.4.1.  */
 
 /* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,8 +31,11 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-#ifndef YY_YY_HOME_GUOXIANG_GOPATH_SRC_GITHUB_COM_LUGUOXIANG_LEVEL_PGSERVER_COMMON_SQLPARSER_TAB_H_INCLUDED
-# define YY_YY_HOME_GUOXIANG_GOPATH_SRC_GITHUB_COM_LUGUOXIANG_LEVEL_PGSERVER_COMMON_SQLPARSER_TAB_H_INCLUDED
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
+#ifndef YY_YY_COMMON_SQLPARSER_TAB_H_INCLUDED
+# define YY_YY_COMMON_SQLPARSER_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -40,7 +44,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 5 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1909  */
+#line 5 "common/SqlParser.y"
 
 typedef void* yyscan_t;
 #include "ParseResult.h"
@@ -48,7 +52,7 @@ typedef void* yyscan_t;
 #include <stdint.h>
 #include <absl/strings/str_cat.h>
 
-#line 52 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.h" /* yacc.c:1909  */
+#line 56 "common/SqlParser.tab.h"
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -153,16 +157,15 @@ typedef void* yyscan_t;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 13 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1909  */
+#line 13 "common/SqlParser.y"
 
 	ParseNode* pNode;
 
-#line 164 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.h" /* yacc.c:1909  */
-};
+#line 167 "common/SqlParser.tab.h"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -186,4 +189,4 @@ struct YYLTYPE
 
 int yyparse (ParseResult* pResult, yyscan_t scanner);
 
-#endif /* !YY_YY_HOME_GUOXIANG_GOPATH_SRC_GITHUB_COM_LUGUOXIANG_LEVEL_PGSERVER_COMMON_SQLPARSER_TAB_H_INCLUDED  */
+#endif /* !YY_YY_COMMON_SQLPARSER_TAB_H_INCLUDED  */

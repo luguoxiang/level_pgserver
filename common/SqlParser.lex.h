@@ -2,9 +2,9 @@
 #define yyHEADER_H 1
 #define yyIN_HEADER 1
 
-#line 6 "common/SqlParser.lex.h"
+#line 5 "common/SqlParser.lex.h"
 
-#line 8 "common/SqlParser.lex.h"
+#line 7 "common/SqlParser.lex.h"
 
 #define  YY_INT_ALIGNED short int
 
@@ -510,9 +510,9 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 258 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.l"
+#line 258 "common/SqlParser.l"
 
 
-#line 517 "common/SqlParser.lex.h"
+#line 516 "common/SqlParser.lex.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

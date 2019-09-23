@@ -1,8 +1,9 @@
-/* A Bison parser, made by GNU Bison 3.0.4.  */
+/* A Bison parser, made by GNU Bison 3.4.1.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2019 Free Software Foundation,
+   Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,11 +41,14 @@
    define necessary library symbols; they are noted "INFRINGES ON
    USER NAME SPACE" below.  */
 
+/* Undocumented macros, especially those whose name start with YY_,
+   are private implementation details.  Do not rely on them.  */
+
 /* Identify Bison output.  */
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.4"
+#define YYBISON_VERSION "3.4.1"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -61,15 +65,16 @@
 
 
 
-/* Copy the first part of user declarations.  */
-
-#line 67 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:339  */
 
 # ifndef YY_NULLPTR
-#  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULLPTR nullptr
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
 #  else
-#   define YY_NULLPTR 0
+#   define YY_NULLPTR ((void*)0)
 #  endif
 # endif
 
@@ -81,10 +86,10 @@
 # define YYERROR_VERBOSE 0
 #endif
 
-/* In a future release of Bison, this section will be replaced
-   by #include "SqlParser.tab.h".  */
-#ifndef YY_YY_HOME_GUOXIANG_GOPATH_SRC_GITHUB_COM_LUGUOXIANG_LEVEL_PGSERVER_COMMON_SQLPARSER_TAB_H_INCLUDED
-# define YY_YY_HOME_GUOXIANG_GOPATH_SRC_GITHUB_COM_LUGUOXIANG_LEVEL_PGSERVER_COMMON_SQLPARSER_TAB_H_INCLUDED
+/* Use api.header.include to #include this header
+   instead of duplicating it here.  */
+#ifndef YY_YY_COMMON_SQLPARSER_TAB_H_INCLUDED
+# define YY_YY_COMMON_SQLPARSER_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
 # define YYDEBUG 0
@@ -93,7 +98,7 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 5 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:355  */
+#line 5 "common/SqlParser.y"
 
 typedef void* yyscan_t;
 #include "ParseResult.h"
@@ -101,7 +106,7 @@ typedef void* yyscan_t;
 #include <stdint.h>
 #include <absl/strings/str_cat.h>
 
-#line 105 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:355  */
+#line 110 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
 
 /* Token type.  */
 #ifndef YYTOKENTYPE
@@ -206,16 +211,15 @@ typedef void* yyscan_t;
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-
 union YYSTYPE
 {
-#line 13 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:355  */
+#line 13 "common/SqlParser.y"
 
 	ParseNode* pNode;
 
-#line 217 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:355  */
-};
+#line 221 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
 
+};
 typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -239,10 +243,10 @@ struct YYLTYPE
 
 int yyparse (ParseResult* pResult, yyscan_t scanner);
 
-#endif /* !YY_YY_HOME_GUOXIANG_GOPATH_SRC_GITHUB_COM_LUGUOXIANG_LEVEL_PGSERVER_COMMON_SQLPARSER_TAB_H_INCLUDED  */
+#endif /* !YY_YY_COMMON_SQLPARSER_TAB_H_INCLUDED  */
 
-/* Copy the second part of user declarations.  */
-#line 17 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:358  */
+/* Second part of user prologue.  */
+#line 17 "common/SqlParser.y"
 
 #include <array>
 
@@ -253,7 +257,8 @@ int yyparse (ParseResult* pResult, yyscan_t scanner);
 extern void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,  const std::string& msg);
 
 
-#line 257 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:358  */
+#line 261 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
+
 
 #ifdef short
 # undef short
@@ -274,13 +279,13 @@ typedef signed char yytype_int8;
 #ifdef YYTYPE_UINT16
 typedef YYTYPE_UINT16 yytype_uint16;
 #else
-typedef unsigned short int yytype_uint16;
+typedef unsigned short yytype_uint16;
 #endif
 
 #ifdef YYTYPE_INT16
 typedef YYTYPE_INT16 yytype_int16;
 #else
-typedef short int yytype_int16;
+typedef short yytype_int16;
 #endif
 
 #ifndef YYSIZE_T
@@ -292,7 +297,7 @@ typedef short int yytype_int16;
 #  include <stddef.h> /* INFRINGES ON USER NAME SPACE */
 #  define YYSIZE_T size_t
 # else
-#  define YYSIZE_T unsigned int
+#  define YYSIZE_T unsigned
 # endif
 #endif
 
@@ -328,15 +333,6 @@ typedef short int yytype_int16;
 # define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
 #endif
 
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
-# else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
-# endif
-#endif
-
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
 # define YYUSE(E) ((void) (E))
@@ -344,7 +340,7 @@ typedef short int yytype_int16;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -363,6 +359,8 @@ typedef short int yytype_int16;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+
+#define YY_ASSERT(E) ((void) (0 && (E)))
 
 #if ! defined yyoverflow || YYERROR_VERBOSE
 
@@ -508,16 +506,16 @@ union yyalloc
 /* YYNSTATES -- Number of states.  */
 #define YYNSTATES  161
 
-/* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
-   by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   350
 
+/* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
+   as returned by yylex, with out-of-bounds checking.  */
 #define YYTRANSLATE(YYX)                                                \
-  ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
+  ((unsigned) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
 
 /* YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to TOKEN-NUM
-   as returned by yylex, without out-of-bounds checking.  */
+   as returned by yylex.  */
 static const yytype_uint8 yytranslate[] =
 {
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -836,22 +834,22 @@ static const yytype_uint8 yyr2[] =
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)                                  \
-do                                                              \
-  if (yychar == YYEMPTY)                                        \
-    {                                                           \
-      yychar = (Token);                                         \
-      yylval = (Value);                                         \
-      YYPOPSTACK (yylen);                                       \
-      yystate = *yyssp;                                         \
-      goto yybackup;                                            \
-    }                                                           \
-  else                                                          \
-    {                                                           \
-      yyerror (&yylloc, pResult, scanner, YY_("syntax error: cannot back up")); \
-      YYERROR;                                                  \
-    }                                                           \
-while (0)
+#define YYBACKUP(Token, Value)                                    \
+  do                                                              \
+    if (yychar == YYEMPTY)                                        \
+      {                                                           \
+        yychar = (Token);                                         \
+        yylval = (Value);                                         \
+        YYPOPSTACK (yylen);                                       \
+        yystate = *yyssp;                                         \
+        goto yybackup;                                            \
+      }                                                           \
+    else                                                          \
+      {                                                           \
+        yyerror (&yylloc, pResult, scanner, YY_("syntax error: cannot back up")); \
+        YYERROR;                                                  \
+      }                                                           \
+  while (0)
 
 /* Error token number */
 #define YYTERROR        1
@@ -910,10 +908,10 @@ do {                                            \
 /* Print *YYLOCP on YYO.  Private, do not rely on its existence. */
 
 YY_ATTRIBUTE_UNUSED
-static unsigned
+static int
 yy_location_print_ (FILE *yyo, YYLTYPE const * const yylocp)
 {
-  unsigned res = 0;
+  int res = 0;
   int end_col = 0 != yylocp->last_column ? yylocp->last_column - 1 : 0;
   if (0 <= yylocp->first_line)
     {
@@ -956,15 +954,15 @@ do {                                                                      \
 } while (0)
 
 
-/*----------------------------------------.
-| Print this symbol's value on YYOUTPUT.  |
-`----------------------------------------*/
+/*-----------------------------------.
+| Print this symbol's value on YYO.  |
+`-----------------------------------*/
 
 static void
-yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, ParseResult* pResult, yyscan_t scanner)
+yy_symbol_value_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, ParseResult* pResult, yyscan_t scanner)
 {
-  FILE *yyo = yyoutput;
-  YYUSE (yyo);
+  FILE *yyoutput = yyo;
+  YYUSE (yyoutput);
   YYUSE (yylocationp);
   YYUSE (pResult);
   YYUSE (scanner);
@@ -972,26 +970,26 @@ yy_symbol_value_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvalue
     return;
 # ifdef YYPRINT
   if (yytype < YYNTOKENS)
-    YYPRINT (yyoutput, yytoknum[yytype], *yyvaluep);
+    YYPRINT (yyo, yytoknum[yytype], *yyvaluep);
 # endif
   YYUSE (yytype);
 }
 
 
-/*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
+/*---------------------------.
+| Print this symbol on YYO.  |
+`---------------------------*/
 
 static void
-yy_symbol_print (FILE *yyoutput, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, ParseResult* pResult, yyscan_t scanner)
+yy_symbol_print (FILE *yyo, int yytype, YYSTYPE const * const yyvaluep, YYLTYPE const * const yylocationp, ParseResult* pResult, yyscan_t scanner)
 {
-  YYFPRINTF (yyoutput, "%s %s (",
+  YYFPRINTF (yyo, "%s %s (",
              yytype < YYNTOKENS ? "token" : "nterm", yytname[yytype]);
 
-  YY_LOCATION_PRINT (yyoutput, *yylocationp);
-  YYFPRINTF (yyoutput, ": ");
-  yy_symbol_value_print (yyoutput, yytype, yyvaluep, yylocationp, pResult, scanner);
-  YYFPRINTF (yyoutput, ")");
+  YY_LOCATION_PRINT (yyo, *yylocationp);
+  YYFPRINTF (yyo, ": ");
+  yy_symbol_value_print (yyo, yytype, yyvaluep, yylocationp, pResult, scanner);
+  YYFPRINTF (yyo, ")");
 }
 
 /*------------------------------------------------------------------.
@@ -1025,7 +1023,7 @@ do {                                                            \
 static void
 yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule, ParseResult* pResult, yyscan_t scanner)
 {
-  unsigned long int yylno = yyrline[yyrule];
+  unsigned long yylno = yyrline[yyrule];
   int yynrhs = yyr2[yyrule];
   int yyi;
   YYFPRINTF (stderr, "Reducing stack by rule %d (line %lu):\n",
@@ -1036,7 +1034,7 @@ yy_reduce_print (yytype_int16 *yyssp, YYSTYPE *yyvsp, YYLTYPE *yylsp, int yyrule
       YYFPRINTF (stderr, "   $%d = ", yyi + 1);
       yy_symbol_print (stderr,
                        yystos[yyssp[yyi + 1 - yynrhs]],
-                       &(yyvsp[(yyi + 1) - (yynrhs)])
+                       &yyvsp[(yyi + 1) - (yynrhs)]
                        , &(yylsp[(yyi + 1) - (yynrhs)])                       , pResult, scanner);
       YYFPRINTF (stderr, "\n");
     }
@@ -1140,7 +1138,10 @@ yytnamerr (char *yyres, const char *yystr)
           case '\\':
             if (*++yyp != '\\')
               goto do_not_strip_quotes;
-            /* Fall through.  */
+            else
+              goto append;
+
+          append:
           default:
             if (yyres)
               yyres[yyn] = *yyp;
@@ -1158,7 +1159,7 @@ yytnamerr (char *yyres, const char *yystr)
   if (! yyres)
     return yystrlen (yystr);
 
-  return yystpcpy (yyres, yystr) - yyres;
+  return (YYSIZE_T) (yystpcpy (yyres, yystr) - yyres);
 }
 # endif
 
@@ -1236,10 +1237,10 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                 yyarg[yycount++] = yytname[yyx];
                 {
                   YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
-                  if (! (yysize <= yysize1
-                         && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+                  if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
+                    yysize = yysize1;
+                  else
                     return 2;
-                  yysize = yysize1;
                 }
               }
         }
@@ -1251,6 +1252,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
       case N:                               \
         yyformat = S;                       \
       break
+    default: /* Avoid compiler warnings. */
       YYCASE_(0, YY_("syntax error"));
       YYCASE_(1, YY_("syntax error, unexpected %s"));
       YYCASE_(2, YY_("syntax error, unexpected %s, expecting %s"));
@@ -1262,9 +1264,10 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
 
   {
     YYSIZE_T yysize1 = yysize + yystrlen (yyformat);
-    if (! (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
+    if (yysize <= yysize1 && yysize1 <= YYSTACK_ALLOC_MAXIMUM)
+      yysize = yysize1;
+    else
       return 2;
-    yysize = yysize1;
   }
 
   if (*yymsg_alloc < yysize)
@@ -1417,23 +1420,33 @@ YYLTYPE yylloc = yyloc_default;
   yylsp[0] = yylloc;
   goto yysetstate;
 
+
 /*------------------------------------------------------------.
-| yynewstate -- Push a new state, which is found in yystate.  |
+| yynewstate -- push a new state, which is found in yystate.  |
 `------------------------------------------------------------*/
- yynewstate:
+yynewstate:
   /* In all cases, when you get here, the value and location stacks
      have just been pushed.  So pushing a state here evens the stacks.  */
   yyssp++;
 
- yysetstate:
-  *yyssp = yystate;
+
+/*--------------------------------------------------------------------.
+| yynewstate -- set current state (the top of the stack) to yystate.  |
+`--------------------------------------------------------------------*/
+yysetstate:
+  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+  YY_ASSERT (0 <= yystate && yystate < YYNSTATES);
+  *yyssp = (yytype_int16) yystate;
 
   if (yyss + yystacksize - 1 <= yyssp)
+#if !defined yyoverflow && !defined YYSTACK_RELOCATE
+    goto yyexhaustedlab;
+#else
     {
       /* Get the current used size of the three stacks, in elements.  */
-      YYSIZE_T yysize = yyssp - yyss + 1;
+      YYSIZE_T yysize = (YYSIZE_T) (yyssp - yyss + 1);
 
-#ifdef yyoverflow
+# if defined yyoverflow
       {
         /* Give user a chance to reallocate the stack.  Use copies of
            these so that the &'s don't force the real ones into
@@ -1451,15 +1464,11 @@ YYLTYPE yylloc = yyloc_default;
                     &yyvs1, yysize * sizeof (*yyvsp),
                     &yyls1, yysize * sizeof (*yylsp),
                     &yystacksize);
-
-        yyls = yyls1;
         yyss = yyss1;
         yyvs = yyvs1;
+        yyls = yyls1;
       }
-#else /* no yyoverflow */
-# ifndef YYSTACK_RELOCATE
-      goto yyexhaustedlab;
-# else
+# else /* defined YYSTACK_RELOCATE */
       /* Extend the stack our own way.  */
       if (YYMAXDEPTH <= yystacksize)
         goto yyexhaustedlab;
@@ -1476,36 +1485,34 @@ YYLTYPE yylloc = yyloc_default;
         YYSTACK_RELOCATE (yyss_alloc, yyss);
         YYSTACK_RELOCATE (yyvs_alloc, yyvs);
         YYSTACK_RELOCATE (yyls_alloc, yyls);
-#  undef YYSTACK_RELOCATE
+# undef YYSTACK_RELOCATE
         if (yyss1 != yyssa)
           YYSTACK_FREE (yyss1);
       }
 # endif
-#endif /* no yyoverflow */
 
       yyssp = yyss + yysize - 1;
       yyvsp = yyvs + yysize - 1;
       yylsp = yyls + yysize - 1;
 
       YYDPRINTF ((stderr, "Stack size increased to %lu\n",
-                  (unsigned long int) yystacksize));
+                  (unsigned long) yystacksize));
 
       if (yyss + yystacksize - 1 <= yyssp)
         YYABORT;
     }
-
-  YYDPRINTF ((stderr, "Entering state %d\n", yystate));
+#endif /* !defined yyoverflow && !defined YYSTACK_RELOCATE */
 
   if (yystate == YYFINAL)
     YYACCEPT;
 
   goto yybackup;
 
+
 /*-----------.
 | yybackup.  |
 `-----------*/
 yybackup:
-
   /* Do appropriate processing given the current state.  Read a
      lookahead token if we need one and don't already have one.  */
 
@@ -1578,7 +1585,7 @@ yydefault:
 
 
 /*-----------------------------.
-| yyreduce -- Do a reduction.  |
+| yyreduce -- do a reduction.  |
 `-----------------------------*/
 yyreduce:
   /* yyn is the number of a rule to reduce with.  */
@@ -1594,170 +1601,171 @@ yyreduce:
      GCC warning that YYVAL may be used uninitialized.  */
   yyval = yyvsp[1-yylen];
 
-  /* Default location.  */
+  /* Default location. */
   YYLLOC_DEFAULT (yyloc, (yylsp - yylen), yylen);
+  yyerror_range[1] = yyloc;
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 2:
-#line 145 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+  case 2:
+#line 145 "common/SqlParser.y"
     {
 		pResult->m_pResult = (yyval.pNode) = (yyvsp[-1].pNode);
 		YYACCEPT;
 	}
-#line 1609 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1617 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 3:
-#line 150 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 150 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newPlanNode( "ExplainStmt", Operation::EXPLAIN, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-1].pNode) });
 		pResult->m_pResult = (yyval.pNode);
 		YYACCEPT;
 	}
-#line 1619 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1627 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 4:
-#line 157 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 157 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1625 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1633 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 5:
-#line 158 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 158 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1631 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1639 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 6:
-#line 159 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 159 "common/SqlParser.y"
     { (yyval.pNode) = (yyvsp[0].pNode);}
-#line 1637 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1645 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 7:
-#line 160 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 160 "common/SqlParser.y"
     { (yyval.pNode) = (yyvsp[0].pNode);}
-#line 1643 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1651 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 8:
-#line 163 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 163 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1649 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1657 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 9:
-#line 164 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 164 "common/SqlParser.y"
     { (yyval.pNode) = (yyvsp[0].pNode);}
-#line 1655 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1663 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 10:
-#line 165 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 165 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1661 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1669 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 11:
-#line 168 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 168 "common/SqlParser.y"
     { (yyval.pNode) = (yyvsp[0].pNode);}
-#line 1667 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1675 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 12:
-#line 169 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 169 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1673 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1681 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 13:
-#line 170 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 170 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1679 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1687 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 14:
-#line 171 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 171 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1685 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1693 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 15:
-#line 172 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 172 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1691 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1699 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 16:
-#line 173 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 173 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1697 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1705 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 17:
-#line 174 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 174 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1703 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1711 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 18:
-#line 175 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 175 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 1709 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1717 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 19:
-#line 176 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 176 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::MEMBER, (yyloc).first_column, (yyloc).last_column,{ (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1715 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1723 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 20:
-#line 177 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 177 "common/SqlParser.y"
     {(yyval.pNode) = 0;YYERROR;}
-#line 1721 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1729 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 21:
-#line 180 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 180 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::ADD, (yyloc).first_column, (yyloc).last_column, {(yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1727 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1735 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 22:
-#line 181 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 181 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::SUB, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1733 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1741 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 23:
-#line 182 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 182 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::MUL, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1739 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1747 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 24:
-#line 183 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 183 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::DIV, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1745 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1753 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 25:
-#line 184 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 184 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::MOD, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1751 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1759 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 26:
-#line 185 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 185 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::MOD, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1757 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1765 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 27:
-#line 186 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 186 "common/SqlParser.y"
     {
 		if((yyvsp[0].pNode)->m_type == NodeType::INT)
 		{
@@ -1774,55 +1782,55 @@ yyreduce:
 			yyerror(&(yylsp[0]),pResult, nullptr, "minus is not supporteed");
 		}
 	}
-#line 1778 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1786 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 28:
-#line 202 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 202 "common/SqlParser.y"
     {
 		(yyval.pNode) = (yyvsp[0].pNode);
 	}
-#line 1786 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1794 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 29:
-#line 205 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 205 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::COMP_LE, (yyloc).first_column, (yyloc).last_column, {(yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1792 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1800 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 30:
-#line 206 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 206 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::COMP_LT, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1798 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1806 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 31:
-#line 207 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 207 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::COMP_EQ, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1804 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1812 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 32:
-#line 208 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 208 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::COMP_GE, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1810 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1818 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 33:
-#line 209 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 209 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::COMP_GT, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1816 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1824 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 34:
-#line 210 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 210 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::COMP_NE, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1822 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1830 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 35:
-#line 211 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 211 "common/SqlParser.y"
     {
 		auto sValue =  (yyvsp[0].pNode)->getString();
 		auto len =  sValue.length();
@@ -1834,223 +1842,223 @@ yyreduce:
 		(yyvsp[0].pNode)->setString(sValue.substr(1, len -2));
 		(yyval.pNode) = pResult->newExprNode( Operation::COMP_LIKE, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});
 	}
-#line 1838 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1846 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 36:
-#line 222 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 222 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::AND, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1844 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1852 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 37:
-#line 223 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 223 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newExprNode( Operation::OR, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)});}
-#line 1850 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1858 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 38:
-#line 224 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 224 "common/SqlParser.y"
     { (yyval.pNode) = (yyvsp[-1].pNode);}
-#line 1856 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1864 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 39:
-#line 228 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 228 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newExprNode(Operation::COMP_EQ, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)}); 
 	}
-#line 1864 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1872 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 40:
-#line 231 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 231 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newExprNode( Operation::COMP_NE, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-3].pNode), (yyvsp[0].pNode)}); 
 	}
-#line 1872 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1880 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 41:
-#line 236 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 236 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newExprNode( Operation::COMP_IN, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-4].pNode), (yyvsp[-1].pNode)});
 		}
-#line 1880 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1888 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 42:
-#line 239 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 239 "common/SqlParser.y"
     { 
 		(yyval.pNode) = pResult->newExprNode( Operation::COMP_NOT_IN, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-5].pNode), (yyvsp[-1].pNode)});
 	}
-#line 1888 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1896 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 43:
-#line 244 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 244 "common/SqlParser.y"
     {
         (yyval.pNode) = pResult->newFuncNode((yyvsp[-3].pNode)->getString(), (yyloc).first_column, (yyloc).last_column, { (yyvsp[-1].pNode) });
 }
-#line 1896 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1904 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 44:
-#line 249 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 249 "common/SqlParser.y"
     {
 	(yyval.pNode) = pResult->newListNode( "ValueList",(yyloc).first_column, (yyloc).last_column,  { (yyvsp[0].pNode) } );
 	}
-#line 1904 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1912 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 45:
-#line 252 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 252 "common/SqlParser.y"
     { 
 	(yyval.pNode) = pResult->newListNode( "ValueList",(yyloc).first_column, (yyloc).last_column,  { (yyvsp[-2].pNode), (yyvsp[0].pNode) } );
 	}
-#line 1912 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1920 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 46:
-#line 258 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 258 "common/SqlParser.y"
     {
 		ParseNode* pTable = (yyvsp[-1].pNode);
 		(yyval.pNode) = pResult->newPlanNode( "DeleteStmt", Operation::REMOVE, (yyloc).first_column, (yyloc).last_column, {pTable, (yyvsp[0].pNode) });
 	}
-#line 1921 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1929 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 47:
-#line 265 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 265 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newPlanNode( "Values", Operation::VALUES, (yyloc).first_column, (yyloc).last_column, { (yyvsp[0].pNode) });
 	}
-#line 1929 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1937 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 48:
-#line 271 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 271 "common/SqlParser.y"
     {
 	  	ParseNode* pTable = (yyvsp[-2].pNode);
 		(yyval.pNode) = pResult->newPlanNode( "InsertStmt", Operation::INSERT, (yyloc).first_column, (yyloc).last_column,  { pTable,(yyvsp[-1].pNode),(yyvsp[0].pNode) });
 	}
-#line 1938 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1946 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 49:
-#line 276 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 276 "common/SqlParser.y"
     {
 	  	ParseNode* pTable = (yyvsp[-2].pNode);
 		(yyval.pNode) = pResult->newPlanNode( "InsertStmt", Operation::INSERT, (yyloc).first_column, (yyloc).last_column, { pTable,(yyvsp[-1].pNode),(yyvsp[0].pNode) });
 
 	}
-#line 1948 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1956 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 50:
-#line 284 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 284 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newPlanNode("ShowTable",  Operation::SHOW_TABLES,  (yyloc).first_column, (yyloc).last_column, {});
 	}
-#line 1956 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1964 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 51:
-#line 290 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 290 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newPlanNode( "DescStmt", Operation::DESC_TABLE,  (yyloc).first_column, (yyloc).last_column, {(yyvsp[0].pNode) });
 	}
-#line 1964 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1972 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 52:
-#line 298 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 298 "common/SqlParser.y"
     {(yyval.pNode) = nullptr;}
-#line 1970 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1978 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 53:
-#line 299 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 299 "common/SqlParser.y"
     {
 		(yyval.pNode) = (yyvsp[-1].pNode);
 	}
-#line 1978 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1986 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 54:
-#line 304 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 304 "common/SqlParser.y"
     { 
 		(yyval.pNode) = pResult->newListNode( "ValueList",(yyloc).first_column, (yyloc).last_column,  { (yyvsp[-1].pNode) });
 	}
-#line 1986 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 1994 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 55:
-#line 307 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 307 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newListNode( "ValueList",(yyloc).first_column, (yyloc).last_column,  { (yyvsp[-4].pNode), (yyvsp[-1].pNode) });
 	}
-#line 1994 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2002 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 56:
-#line 311 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 311 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newListNode( "ExprList", (yyloc).first_column, (yyloc).last_column, { (yyvsp[0].pNode) });
 	}
-#line 2002 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2010 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 57:
-#line 314 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 314 "common/SqlParser.y"
     { 
 		(yyval.pNode) = pResult->newListNode( "ExprList", (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode) });
 	}
-#line 2010 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2018 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 58:
-#line 319 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 319 "common/SqlParser.y"
     { 
 		(yyval.pNode) = pResult->newListNode( "ColumnList", (yyloc).first_column, (yyloc).last_column, { (yyvsp[0].pNode) });
 	}
-#line 2018 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2026 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 59:
-#line 322 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 322 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newListNode( "ColumnList", (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode) });
 	}
-#line 2026 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2034 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 60:
-#line 327 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 327 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 2032 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2040 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 61:
-#line 328 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 328 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[-1].pNode);}
-#line 2038 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2046 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 62:
-#line 331 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 331 "common/SqlParser.y"
     {(yyval.pNode) = 0;}
-#line 2044 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2052 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 63:
-#line 332 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 332 "common/SqlParser.y"
     {(yyval.pNode) = (yyvsp[0].pNode);}
-#line 2050 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2058 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 64:
-#line 338 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 338 "common/SqlParser.y"
     {
 		ParseNode* pProject = (yyvsp[-8].pNode);
 		ParseNode* pTable = (yyvsp[-6].pNode);
@@ -2064,173 +2072,174 @@ yyreduce:
 		}
 		(yyval.pNode) = pResult->newPlanNode( "SelectStmt", Operation::SELECT, (yyloc).first_column, (yyloc).last_column, { pProject, pTable, pPredicate, (yyvsp[-3].pNode), (yyvsp[-2].pNode), (yyvsp[-1].pNode), (yyvsp[0].pNode) });
 }
-#line 2068 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2076 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 65:
-#line 354 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 354 "common/SqlParser.y"
     {(yyval.pNode) = 0;}
-#line 2074 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2082 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 66:
-#line 355 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 355 "common/SqlParser.y"
     {
 		(yyval.pNode) = (yyvsp[0].pNode);
 	}
-#line 2082 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2090 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 67:
-#line 360 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 360 "common/SqlParser.y"
     {(yyval.pNode) = 0;}
-#line 2088 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2096 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 68:
-#line 362 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 362 "common/SqlParser.y"
     {
 	       (yyval.pNode) = pResult->newParentNode( "Limit",(yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode)}); 
 	}
-#line 2096 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2104 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 69:
-#line 366 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 366 "common/SqlParser.y"
     {
 	       (yyval.pNode) = pResult->newParentNode( "Limit",(yyloc).first_column, (yyloc).last_column,{ (yyvsp[0].pNode), (yyvsp[-2].pNode) }); 
 	}
-#line 2104 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2112 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 70:
-#line 370 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 370 "common/SqlParser.y"
     {(yyval.pNode) = 0;}
-#line 2110 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2118 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 71:
-#line 371 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 371 "common/SqlParser.y"
     {
 		(yyval.pNode) = (yyvsp[0].pNode);
 	}
-#line 2118 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2126 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 72:
-#line 376 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 376 "common/SqlParser.y"
     {
 			auto pChild = pResult->newParentNode( "SortItem", (yyloc).first_column, (yyloc).last_column,{ (yyvsp[-1].pNode), (yyvsp[0].pNode) }); 
 			(yyval.pNode) = pResult->newListNode( "SortList",(yyloc).first_column, (yyloc).last_column, { pChild });
 		}
-#line 2127 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2135 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 73:
-#line 380 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 380 "common/SqlParser.y"
     { 
 			auto pChild =  pResult->newParentNode( "SortItem",(yyloc).first_column, (yyloc).last_column, { (yyvsp[-1].pNode), (yyvsp[0].pNode) });
 			(yyval.pNode) = pResult->newListNode( "SortList",(yyloc).first_column, (yyloc).last_column, { (yyvsp[-3].pNode),pChild });
 		}
-#line 2136 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2144 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 74:
-#line 386 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 386 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newInfoNode( Operation::ASC,  (yyloc).first_column, (yyloc).last_column);}
-#line 2142 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2150 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 75:
-#line 387 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 387 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newInfoNode(  Operation::ASC,  (yyloc).first_column, (yyloc).last_column);}
-#line 2148 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2156 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 76:
-#line 388 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 388 "common/SqlParser.y"
     {(yyval.pNode) = pResult->newInfoNode(  Operation::DESC,  (yyloc).first_column, (yyloc).last_column);}
-#line 2154 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2162 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 77:
-#line 391 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 391 "common/SqlParser.y"
     {(yyval.pNode) = 0;}
-#line 2160 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2168 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 78:
-#line 392 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 392 "common/SqlParser.y"
     {
 		(yyval.pNode) = (yyvsp[0].pNode);
 	}
-#line 2168 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2176 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 79:
-#line 398 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 398 "common/SqlParser.y"
     {(yyval.pNode) = 0;}
-#line 2174 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2182 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 80:
-#line 399 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 399 "common/SqlParser.y"
     {
 		(yyval.pNode) = (yyvsp[0].pNode);
 	}
-#line 2182 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2190 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 81:
-#line 404 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 404 "common/SqlParser.y"
     {
 		(yyval.pNode) = (yyvsp[0].pNode); 
 	}
-#line 2190 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2198 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 82:
-#line 406 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 406 "common/SqlParser.y"
     { 
 		(yyval.pNode) = pResult->newExprNode( Operation::AS, (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode) }); 
 	}
-#line 2198 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2206 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 83:
-#line 410 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 410 "common/SqlParser.y"
     { 
 		(yyval.pNode) = pResult->newListNode( "ExprList", (yyloc).first_column, (yyloc).last_column, { (yyvsp[0].pNode) });
 	}
-#line 2206 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2214 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 84:
-#line 413 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 413 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newListNode( "ExprList", (yyloc).first_column, (yyloc).last_column, { (yyvsp[-2].pNode), (yyvsp[0].pNode) });
 	}
-#line 2214 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2222 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 85:
-#line 416 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 416 "common/SqlParser.y"
     {
 		(yyval.pNode) = pResult->newInfoNode( Operation::ALL_COLUMNS,  (yyloc).first_column, (yyloc).last_column);
 	}
-#line 2222 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2230 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
   case 86:
-#line 421 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1646  */
+#line 421 "common/SqlParser.y"
     { 
 		(yyval.pNode) = (yyvsp[0].pNode);
 	}
-#line 2230 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2238 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
     break;
 
 
-#line 2234 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp" /* yacc.c:1646  */
+#line 2242 "/Users/guolu/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.tab.cpp"
+
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2256,14 +2265,13 @@ yyreduce:
   /* Now 'shift' the result of the reduction.  Determine what state
      that goes to, based on the state we popped back to and the rule
      number reduced by.  */
-
-  yyn = yyr1[yyn];
-
-  yystate = yypgoto[yyn - YYNTOKENS] + *yyssp;
-  if (0 <= yystate && yystate <= YYLAST && yycheck[yystate] == *yyssp)
-    yystate = yytable[yystate];
-  else
-    yystate = yydefgoto[yyn - YYNTOKENS];
+  {
+    const int yylhs = yyr1[yyn] - YYNTOKENS;
+    const int yyi = yypgoto[yylhs] + *yyssp;
+    yystate = (0 <= yyi && yyi <= YYLAST && yycheck[yyi] == *yyssp
+               ? yytable[yyi]
+               : yydefgoto[yylhs]);
+  }
 
   goto yynewstate;
 
@@ -2346,14 +2354,11 @@ yyerrlab:
 | yyerrorlab -- error raised explicitly by YYERROR.  |
 `---------------------------------------------------*/
 yyerrorlab:
+  /* Pacify compilers when the user code never invokes YYERROR and the
+     label yyerrorlab therefore never appears in user code.  */
+  if (0)
+    YYERROR;
 
-  /* Pacify compilers like GCC when the user code never invokes
-     YYERROR and the label yyerrorlab therefore never appears in user
-     code.  */
-  if (/*CONSTCOND*/ 0)
-     goto yyerrorlab;
-
-  yyerror_range[1] = yylsp[1-yylen];
   /* Do not reclaim the symbols of the rule whose action triggered
      this YYERROR.  */
   YYPOPSTACK (yylen);
@@ -2419,12 +2424,14 @@ yyacceptlab:
   yyresult = 0;
   goto yyreturn;
 
+
 /*-----------------------------------.
 | yyabortlab -- YYABORT comes here.  |
 `-----------------------------------*/
 yyabortlab:
   yyresult = 1;
   goto yyreturn;
+
 
 #if !defined yyoverflow || YYERROR_VERBOSE
 /*-------------------------------------------------.
@@ -2436,6 +2443,10 @@ yyexhaustedlab:
   /* Fall through.  */
 #endif
 
+
+/*-----------------------------------------------------.
+| yyreturn -- parsing is finished, return the result.  |
+`-----------------------------------------------------*/
 yyreturn:
   if (yychar != YYEMPTY)
     {
@@ -2465,7 +2476,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 426 "/home/guoxiang/gopath/src/github.com/luguoxiang/level_pgserver/common/SqlParser.y" /* yacc.c:1906  */
+#line 426 "common/SqlParser.y"
 
 
 void yyerror(YYLTYPE* yylloc, ParseResult* p, yyscan_t scanner,const std::string& msg)

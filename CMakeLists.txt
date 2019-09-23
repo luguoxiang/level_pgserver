@@ -43,9 +43,9 @@ if(BISON_FOUND)
     add_custom_command(
       OUTPUT ${BisonOutput}
       COMMAND ${BISON_EXECUTABLE}
-              --defines=${CMAKE_SOURCE_DIR}/common/SqlParser.tab.h
+              --defines=common/SqlParser.tab.h
               --output=${BisonOutput}
-              ${CMAKE_SOURCE_DIR}/common/SqlParser.y
+              common/SqlParser.y
       DEPENDS ${CMAKE_SOURCE_DIR}/common/SqlParser.y
       COMMENT "Generating SqlParser.tab.cpp"
     )
@@ -60,7 +60,7 @@ if(FLEX_FOUND)
       COMMAND ${FLEX_EXECUTABLE}
               --outfile=${FlexOutput}
               --nounistd 
-              ${CMAKE_SOURCE_DIR}/common/SqlParser.l
+              common/SqlParser.l
       DEPENDS ${CMAKE_SOURCE_DIR}/common/SqlParser.l
       COMMENT "Generating SqlParser.lex.cpp"
     )
