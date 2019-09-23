@@ -4,7 +4,7 @@ LevelPgServer is a simple database that support a limited set of SQL.
 
 * Use Postgress communication protocol
 * Using leveldb as storage layer, also support read only table backed by CSV file.
-* Simple query optimization with explain
+* Simple rule based query optimization with explain
 * Asynchronized IO with Boost asio
 * Build by modern C++ 17
 * Cross platform: Support Windows/Linux/Mac
