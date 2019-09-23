@@ -7,7 +7,7 @@ LevelPgServer is a simple database that support a limited set of SQL.
 * Simple query optimization with explain
 * Asynchronized IO with Boost asio
 * Build by modern C++ 17
-* Support Windows/Linux/Mac
+* Cross platform: Support Windows/Linux/Mac
 
 # Quick start
 ## Install
