@@ -59,6 +59,6 @@ void ParseResult::parse(const std::string_view sql) {
 	QueryRewritter rewritter(*this);
 	m_pResult = rewritter.rewrite(m_pResult);
 #ifndef NDEBUG
-	m_pResult->print(0);
+	//m_pResult->print(0);
 #endif
 }
