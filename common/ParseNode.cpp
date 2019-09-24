@@ -137,7 +137,7 @@ int64_t parseTime(std::string_view sTime) {
 	std::tm time = {};
 	std::stringstream ss;
 	ss << sTime;
-	if (sTime.length() < 12) {
+	if (sTime.length() <19) {
 		ss >> std::get_time(&time, "%Y-%m-%d");
 	} else {
 		ss >> std::get_time(&time, "%Y-%m-%d %H:%M:%S");
