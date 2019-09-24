@@ -10,18 +10,11 @@
 #include "SessionInfo.h"
 #include "SessionManager.h"
 
-constexpr int MAX_CONNECTION = 1000;
-
 PgServer::PgServer(int port)
 	: m_port(port)
 	, m_acceptor(m_ioService, tcp::endpoint(tcp::v4(), port)) {
 	LOG(INFO)<< "Start server on port "<< m_port;
 }
-
-
-
-
-
 
 void PgServer::startAccept() {
 
