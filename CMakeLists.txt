@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.9)
+cmake_minimum_required(VERSION 2.8.12)
 cmake_policy(SET CMP0048 NEW)
 project(level_pgserver VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
@@ -22,11 +22,6 @@ option(LEVELDB_INSTALL "Install LevelDB's header and library" OFF)
 
 add_definitions(-D GLOG_NO_ABBREVIATED_SEVERITIES)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set(FLEX_EXECUTABLE /usr/local/opt/flex/bin/flex)
-	set(BiSON_EXECUTABLE /usr/local/opt/bison/bin/bison)
-endif()
- 
 add_subdirectory(glog)
 add_subdirectory(leveldb)
 add_subdirectory(abseil-cpp)
